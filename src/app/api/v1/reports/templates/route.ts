@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { z } from 'zod';
 import { db } from '@/lib/db/client';
 import { ReportTemplateEngine, DEFAULT_TEMPLATES } from '@/lib/reports/template-engine';
@@ -32,16 +32,8 @@ const ListTemplatesSchema = z.object({
  * GET /api/v1/reports/templates
  * List available report templates with filtering and pagination
  */
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Unauthorized'),
-        { status: 401 }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const params = ListTemplatesSchema.parse({
       type: searchParams.get('type') || undefined,
@@ -64,16 +56,14 @@ export async function GET(request: NextRequest) {
       if (params.public) {
         where.isPublic = true;
       } else {
-        // User's own templates + public templates
         where.OR = [
-          { createdById: (session.user as any).id },
+          { createdById: context.userId },
           { isPublic: true }
         ];
       }
     } else {
-      // Default: user's templates + public templates
       where.OR = [
-        { createdById: (session.user as any).id },
+        { createdById: context.userId },
         { isPublic: true }
       ];
     }
@@ -90,17 +80,15 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Get total count
     const total = await db.reportTemplate.count({ where });
 
-    // Get templates
     const templates = await db.reportTemplate.findMany({
       where,
       skip,
       take: params.limit,
       orderBy: [
-        { isPublic: 'desc' }, // Public templates first
-        { updatedAt: 'desc' }   // Most recent first
+        { isPublic: 'desc' },
+        { updatedAt: 'desc' }
       ],
       include: {
         createdBy: {
@@ -118,7 +106,6 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Add default templates for first page or when no filters
     let defaultTemplates: any[] = [];
     if (params.page === 1 && !params.search) {
       const applicableDefaults = DEFAULT_TEMPLATES.filter(template => 
@@ -171,42 +158,16 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/v1/reports/templates
  * Create a new report template
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Unauthorized'),
-        { status: 401 }
-      );
-    }
-
-    // Check user permissions (coordinator or above)
-    const userRoles = await db.userRole.findMany({
-      where: { userId: (session.user as any).id },
-      include: {
-        role: {
-          include: {
-            permissions: {
-              include: { permission: true }
-            }
-          }
-        }
-      }
-    });
-
-    const hasPermission = userRoles.some(userRole =>
-      userRole.role.permissions.some(rolePermission =>
-        rolePermission.permission.code === 'REPORT_CREATE' ||
-        rolePermission.permission.code === 'ADMIN'
-      )
-    );
+    const hasPermission = context.permissions.includes('REPORT_CREATE') ||
+                          context.permissions.includes('ADMIN');
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -218,7 +179,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = CreateTemplateSchema.parse(body);
 
-    // Validate template structure
     const templateValidation = ReportTemplateEngine.validateTemplate(validatedData);
     if (!templateValidation.valid) {
       return NextResponse.json(
@@ -227,7 +187,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create template
     const template = await db.reportTemplate.create({
       data: {
         name: validatedData.name,
@@ -235,7 +194,7 @@ export async function POST(request: NextRequest) {
         type: validatedData.type,
         layout: validatedData.layout,
         isPublic: validatedData.isPublic,
-        createdById: (session.user as any).id
+        createdById: context.userId
       },
       include: {
         createdBy: {
@@ -268,4 +227,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

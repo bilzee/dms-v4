@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { db } from '@/lib/db/client';
 import { createApiResponse } from '@/types/api';
 import { promises as fs } from 'fs';
@@ -14,19 +14,12 @@ import path from 'path';
  * GET /api/v1/reports/executions/[id]
  * Get specific report execution status
  */
-export async function GET(
+export const GET = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Unauthorized'),
-        { status: 401 }
-      );
-    }
-
     const executionId = params.id;
 
     // Get execution with related configuration and template
@@ -56,7 +49,7 @@ export async function GET(
     }
 
     // Check if user has access to this execution
-    const hasAccess = execution.configuration.createdBy === (session.user as any).id || 
+    const hasAccess = execution.configuration.createdBy === context.userId || 
                       execution.configuration.template?.isPublic;
 
     if (!hasAccess) {
@@ -122,25 +115,18 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/v1/reports/executions/[id]/cancel
  * Cancel report execution
  */
-export async function POST(
+export const POST = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Unauthorized'),
-        { status: 401 }
-      );
-    }
-
     const executionId = params.id;
 
     // Get execution to verify access
@@ -159,7 +145,7 @@ export async function POST(
     }
 
     // Check if user can cancel this execution
-    const canCancel = execution.configuration.createdBy === (session.user as any).id && 
+    const canCancel = execution.configuration.createdBy === context.userId && 
                     (execution.status === 'PENDING' || execution.status === 'RUNNING');
 
     if (!canCancel) {
@@ -230,25 +216,18 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/v1/reports/executions/[id]
  * Delete report execution
  */
-export async function DELETE(
+export const DELETE = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Unauthorized'),
-        { status: 401 }
-      );
-    }
-
     const executionId = params.id;
 
     // Get execution to verify access
@@ -267,7 +246,7 @@ export async function DELETE(
     }
 
     // Check if user can delete this execution
-    const canDelete = execution.configuration.createdBy === (session.user as any).id;
+    const canDelete = execution.configuration.createdBy === context.userId;
 
     if (!canDelete) {
       return NextResponse.json(
@@ -306,7 +285,7 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * Helper functions

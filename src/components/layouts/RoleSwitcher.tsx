@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { RoleName } from '@/types/auth';
+import { ROLE_DASHBOARD_PATHS, ROLE_DISPLAY_NAMES, ROLE_DESCRIPTIONS } from '@/lib/auth/route-config';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,21 +26,6 @@ interface RoleSwitcherProps {
   className?: string;
 }
 
-const ROLE_DISPLAY_NAMES: Record<RoleName, string> = {
-  ASSESSOR: 'Assessor',
-  COORDINATOR: 'Coordinator', 
-  RESPONDER: 'Responder',
-  DONOR: 'Donor',
-  ADMIN: 'Admin',
-};
-
-const ROLE_DESCRIPTIONS: Record<RoleName, string> = {
-  ASSESSOR: 'Conduct rapid assessments and surveys',
-  COORDINATOR: 'Coordinate response efforts and teams',
-  RESPONDER: 'Provide direct disaster response',
-  DONOR: 'Manage donations and resources',
-  ADMIN: 'System administration and oversight',
-};
 
 const ROLE_COLORS: Record<RoleName, string> = {
   ASSESSOR: 'bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 hover:bg-blue-500/20 dark:hover:bg-blue-500/30',
@@ -116,16 +102,7 @@ export const RoleSwitcher = ({ className }: RoleSwitcherProps) => {
       switchRole(role);
       
       // Redirect to role-appropriate page using Next.js router
-      const rolePaths: Record<RoleName, string> = {
-        ASSESSOR: '/assessor/rapid-assessments',
-        COORDINATOR: '/dashboard',
-        RESPONDER: '/responder/planning', 
-        DONOR: '/dashboard',
-        ADMIN: '/dashboard',
-      };
-      
-      // Navigate to role-appropriate page without full page reload
-      router.push(rolePaths[role]);
+      router.push(ROLE_DASHBOARD_PATHS[role]);
       
     } catch (error) {
       console.error('Role switch failed:', error);

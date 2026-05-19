@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
+import { apiGet } from '@/lib/api'
 import { z } from 'zod'
 
 // Entity type definition based on the API response
@@ -11,15 +12,6 @@ const EntitySchema = z.object({
 
 export type Entity = z.infer<typeof EntitySchema>
 
-// API response schema
-const EntitiesResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.array(EntitySchema),
-  error: z.string().optional(),
-})
-
-type EntitiesResponse = z.infer<typeof EntitiesResponseSchema>
-
 // Query keys
 export const entityKeys = {
   all: ['entities'] as const,
@@ -29,20 +21,14 @@ export const entityKeys = {
 
 // Fetch entities function
 const fetchEntities = async (): Promise<Entity[]> => {
-  const response = await fetch('/api/v1/entities/public')
-  
-  if (!response.ok) {
-    throw new Error(`Failed to fetch entities: ${response.statusText}`)
+  const result = await apiGet<Entity[]>('/api/v1/entities/public')
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to fetch entities')
   }
-  
-  const data = await response.json()
-  const validatedData = EntitiesResponseSchema.parse(data)
-  
-  if (!validatedData.success) {
-    throw new Error(validatedData.error || 'Failed to fetch entities')
-  }
-  
-  return validatedData.data
+
+  // Validate the data with zod schema
+  const validatedData = z.array(EntitySchema).parse(result.data)
+  return validatedData
 }
 
 // Hook for fetching entities

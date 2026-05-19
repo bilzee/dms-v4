@@ -46,8 +46,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       endDate: searchParams.get('endDate'),
     };
 
-    console.log('Raw query params:', rawParams);
-
     // Validate query parameters
     const queryResult = QueryParamsSchema.safeParse(rawParams);
 
@@ -81,8 +79,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       ...(validatedData.startDate && validatedData.startDate !== null && { startDate: new Date(validatedData.startDate) }),
       ...(validatedData.endDate && validatedData.endDate !== null && { endDate: new Date(validatedData.endDate) }),
     };
-
-    console.log('Transformed query params:', queryParams);
 
     // Calculate comprehensive relationship statistics
     const statistics = await calculateRelationshipStatistics(queryParams);

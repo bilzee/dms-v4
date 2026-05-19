@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { apiGet } from '@/lib/api'
 
 interface CommitmentStats {
   totalCommitments: number
@@ -49,21 +50,10 @@ export function useCommitmentStats() {
         setLoading(true)
         
         // Fetch available commitments for the responder
-        const response = await fetch('/api/v1/commitments/available', {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-        })
+        const result = await apiGet<DonorCommitment[]>('/api/v1/commitments/available')
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch commitment statistics')
-        }
-
-        const data = await response.json()
-        
-        if (data.success && data.data) {
-          const commitments = data.data
+        if (result.success && result.data) {
+          const commitments = result.data
           
           // Calculate statistics
           const totalCommitments = commitments.length
@@ -88,6 +78,8 @@ export function useCommitmentStats() {
 
           // Get recent commitments for display (limit to 5)
           setRecentCommitments(commitments.slice(0, 5))
+        } else {
+          throw new Error(result.error || 'Failed to fetch commitment statistics')
         }
       } catch (err) {
         console.error('Error fetching commitment stats:', err)

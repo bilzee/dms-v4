@@ -1,109 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { v4 as uuidv4 } from 'uuid'
+import { NextRequest } from 'next/server'
 import { withAuth } from '@/lib/auth/middleware'
+import { successResponse, createdResponse, paginatedResponse, errorResponse, handleApiError } from '@/lib/api/response'
 import { IncidentService } from '@/lib/services/incident.service'
-import { 
+import {
   CreateIncidentSchema,
-  QueryIncidentSchema 
+  QueryIncidentSchema
 } from '@/lib/validation/incidents'
-import { IncidentListResponse } from '@/types/incidents'
 
 export const GET = withAuth(async (request, context) => {
   try {
     const url = new URL(request.url)
     const searchParams = Object.fromEntries(url.searchParams)
-    
+
     const query = QueryIncidentSchema.parse(searchParams)
-    
+
     const { incidents, total, totalPages } = await IncidentService.findAll(query)
 
-    const response: IncidentListResponse = {
-      data: incidents,
-      pagination: {
-        page: query.page,
-        limit: query.limit,
-        total,
-        totalPages
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        version: '1.0.0',
-        requestId: uuidv4()
-      }
-    }
-
-    return NextResponse.json(response, { status: 200 })
+    return paginatedResponse(incidents, query.page, query.limit, total)
   } catch (error) {
-    console.error('Get incidents error:', error)
-    
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })
 
 export const POST = withAuth(async (request: NextRequest, context) => {
   const { roles } = context;
   if (!roles.includes('ASSESSOR') && !roles.includes('COORDINATOR') && !roles.includes('ADMIN')) {
-    return NextResponse.json(
-      { success: false, error: 'Insufficient permissions. Assessor, Coordinator, or Admin role required.' },
-      { status: 403 }
-    );
+    return errorResponse('Insufficient permissions. Assessor, Coordinator, or Admin role required.', 403);
   }
 
   try {
-      const body = await request.json()
-      const input = CreateIncidentSchema.parse(body)
-      
-      const incident = await IncidentService.create(input, context.userId)
+    const body = await request.json()
+    const input = CreateIncidentSchema.parse(body)
 
-      return NextResponse.json(
-        {
-          data: incident,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 201 }
-      )
-    } catch (error) {
-      console.error('Create incident error:', error)
-      
-      if (error instanceof Error && error.message.includes('validation')) {
-        return NextResponse.json(
-          {
-            error: error.message,
-            meta: {
-              timestamp: new Date().toISOString(),
-              version: '1.0.0',
-              requestId: uuidv4()
-            }
-          },
-          { status: 400 }
-        )
-      }
-      
-      return NextResponse.json(
-        {
-          error: 'Internal server error',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 500 }
-      )
-    }
+    const incident = await IncidentService.create(input, context.userId)
+
+    return createdResponse(incident)
+  } catch (error) {
+    return handleApiError(error)
   }
-)
+})

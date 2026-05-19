@@ -1,81 +1,53 @@
-/**
- * Common API response types
- */
-
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data: T | null;
-  message: string;
-  errors?: string[];
-  timestamp?: string;
-  requestId?: string;
+export interface ApiResponse<T = unknown> {
+  success: boolean
+  data?: T
+  error?: string
+  details?: unknown
+  meta: {
+    timestamp: string
+    version: string
+    requestId: string
+  }
 }
 
-export interface PaginationParams {
-  page: number;
-  limit: number;
-  total?: number;
-  pages?: number;
+export interface PaginationInfo {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  pagination: PaginationParams;
+export interface PaginatedData<T> {
+  items: T[]
+  pagination: PaginationInfo
 }
 
-export interface ApiErrorResponse {
-  success: false;
-  data: null;
-  message: string;
-  errors?: string[];
-  statusCode?: number;
-  timestamp?: string;
-  requestId?: string;
-}
-
-export interface SortParams {
-  field: string;
-  direction: 'asc' | 'desc';
-}
-
-export interface FilterParams {
-  field: string;
-  operator: 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'nin' | 'contains' | 'startsWith';
-  value: any;
-}
-
-export interface SearchParams {
-  query?: string;
-  filters?: FilterParams[];
-  sort?: SortParams[];
-  pagination?: PaginationParams;
-}
-
-// Utility function to create standardized API responses
-export function createApiResponse<T>(
-  success: boolean,
-  data: T | null,
-  message: string,
-  errors?: string[]
-): ApiResponse<T> {
-  return {
-    success,
-    data,
-    message,
-    errors,
-    timestamp: new Date().toISOString(),
-    requestId: crypto.randomUUID()
-  };
-}
-
-// API Error constructor
 export class ApiError extends Error {
   constructor(
     message: string,
     public statusCode: number = 500,
-    public errors?: string[]
+    public details?: unknown
   ) {
-    super(message);
-    this.name = 'ApiError';
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+export function createApiResponse<T = unknown>(
+  success: boolean,
+  data: T | null,
+  message?: string,
+  details?: unknown
+): ApiResponse<T | null> & { message?: string; details?: unknown } {
+  return {
+    success,
+    data,
+    message,
+    details,
+    meta: {
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      requestId: crypto.randomUUID?.() || Math.random().toString(36).slice(2),
+    },
   }
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useQuery, useQueryClient, QueryClient } from '@tanstack/react-query';
+import { apiGet } from '@/lib/api';
 
 // Types for real-time updates
 interface RealTimeConfig {
@@ -214,18 +215,16 @@ class PollingManager {
         ...(this.config.incidentId && { incidentId: this.config.incidentId })
       });
 
-      const response = await fetch(`/api/v1/dashboard/situation?${params}`, {
+      const result = await apiGet(`/api/v1/dashboard/situation?${params}`, {
         headers: {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
         }
       });
 
-      if (!response.ok) {
-        throw new Error(`Polling failed: ${response.statusText}`);
+      if (!result.success) {
+        throw new Error(`Polling failed: ${result.error}`);
       }
-
-      const data = await response.json();
       
       // Invalidate relevant queries to trigger re-fetch
       if (this.config.incidentId) {

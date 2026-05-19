@@ -8,8 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth/auth-options'
+import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { PrismaClient, Priority } from '@prisma/client'
 import { z } from 'zod'
 
@@ -20,54 +19,21 @@ const updateGapFieldSchema = z.object({
   severity: z.nativeEnum(Priority)
 })
 
-// Helper to check user permissions
-async function checkPermissions(session: any, requiredRole: 'COORDINATOR' | 'ADMIN') {
-  if (!(session?.user as any)?.id) {
-    return { hasPermission: false, user: null }
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: (session!.user as any)!.id },
-    include: {
-      roles: {
-        include: {
-          role: true
-        }
-      }
-    }
-  })
-
-  if (!user) {
-    return { hasPermission: false, user: null }
-  }
-
-  const userRoles = user.roles.map(ur => ur.role.name)
-  
-  // Admin has all permissions
-  if (userRoles.includes('ADMIN')) {
-    return { hasPermission: true, user }
-  }
-
-  // Check specific role requirement
-  if (requiredRole === 'COORDINATOR' && userRoles.includes('COORDINATOR')) {
-    return { hasPermission: true, user }
-  }
-
-  return { hasPermission: false, user }
-}
-
 /**
  * GET /api/v1/gap-field-severities/[id]
  * Get specific gap field details
  */
-export async function GET(
+export const GET = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const session = await getServerSession(authOptions)
-    const { hasPermission } = await checkPermissions(session, 'COORDINATOR')
-    
+    // Check user has coordinator or admin role
+    const hasPermission = context.roles.some(role => 
+      role === 'COORDINATOR' || role === 'ADMIN'
+    )
+
     if (!hasPermission) {
       return NextResponse.json(
         { error: 'Insufficient permissions' }, 
@@ -109,36 +75,31 @@ export async function GET(
       { status: 500 }
     )
   }
-}
+})
 
 /**
  * PUT /api/v1/gap-field-severities/[id]
  * Update field severity (Coordinator access)
  */
-export async function PUT(
+export const PUT = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const session = await getServerSession(authOptions)
-    
-    // If no session, check if we're in development and allow access
-    let user = null
-    if (!session && process.env.NODE_ENV === 'development') {
-      console.log('Development mode: allowing update without authentication for gap field')
-    } else {
-      const { hasPermission, user: authUser } = await checkPermissions(session, 'COORDINATOR')
-      user = authUser
-      
-      if (!hasPermission) {
-        return NextResponse.json(
-          { 
-            error: 'Coordinator permissions required',
-            details: session ? 'User logged in but lacks coordinator role' : 'No active session'
-          }, 
-          { status: 403 }
-        )
-      }
+    // Check user has coordinator or admin role
+    const hasPermission = context.roles.some(role => 
+      role === 'COORDINATOR' || role === 'ADMIN'
+    )
+
+    if (!hasPermission) {
+      return NextResponse.json(
+        { 
+          error: 'Coordinator permissions required',
+          details: 'User lacks coordinator or admin role'
+        }, 
+        { status: 403 }
+      )
     }
 
     const body = await request.json()
@@ -161,7 +122,7 @@ export async function PUT(
       where: { id: params.id },
       data: {
         severity,
-        ...(user && { updatedBy: user.id })
+        updatedBy: context.userId
       },
       include: {
         createdByUser: {
@@ -173,20 +134,18 @@ export async function PUT(
       }
     })
 
-    // Log the severity change for audit trail (skip in development if no user)
-    if (process.env.NODE_ENV !== 'development' || (session?.user as any)?.id) {
-      await prisma.auditLog.create({
-        data: {
-          userId: (session?.user as any)?.id || 'development-user',
-          action: 'UPDATE_GAP_FIELD_SEVERITY',
-          resource: 'gap_field_severities',
-          resourceId: params.id,
-          oldValues: { severity: existingField.severity },
-          newValues: { severity },
-          timestamp: new Date()
-        }
-      })
-    }
+    // Log the severity change for audit trail
+    await prisma.auditLog.create({
+      data: {
+        userId: context.userId,
+        action: 'UPDATE_GAP_FIELD_SEVERITY',
+        resource: 'gap_field_severities',
+        resourceId: params.id,
+        oldValues: { severity: existingField.severity },
+        newValues: { severity },
+        timestamp: new Date()
+      }
+    })
 
     return NextResponse.json({
       success: true,
@@ -215,20 +174,21 @@ export async function PUT(
       { status: 500 }
     )
   }
-}
+})
 
 /**
  * DELETE /api/v1/gap-field-severities/[id]
  * Deactivate gap field (Admin access)
  */
-export async function DELETE(
+export const DELETE = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const session = await getServerSession(authOptions)
-    const { hasPermission, user } = await checkPermissions(session, 'ADMIN')
-    
+    // Check user has admin role
+    const hasPermission = context.roles.includes('ADMIN')
+
     if (!hasPermission) {
       return NextResponse.json(
         { error: 'Admin permissions required' }, 
@@ -253,14 +213,14 @@ export async function DELETE(
       where: { id: params.id },
       data: {
         isActive: false,
-        updatedBy: user!.id
+        updatedBy: context.userId
       }
     })
 
     // Log the deactivation for audit trail
     await prisma.auditLog.create({
       data: {
-        userId: user!.id,
+        userId: context.userId,
         action: 'DEACTIVATE_GAP_FIELD',
         resource: 'gap_field_severities',
         resourceId: params.id,
@@ -286,4 +246,4 @@ export async function DELETE(
       { status: 500 }
     )
   }
-}
+})

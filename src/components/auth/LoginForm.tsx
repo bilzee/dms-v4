@@ -24,12 +24,12 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>
 
 // Development test users (only visible in development)
+// Passwords are read from environment variables (DEV_TEST_USER_PASSWORDS)
 const DEV_TEST_USERS = [
   {
     id: 'admin',
     name: 'System Administrator',
     email: 'admin@dms.gov.ng',
-    password: 'admin123!',
     roles: ['Admin'],
     icon: Shield,
     description: 'Full system access'
@@ -38,7 +38,6 @@ const DEV_TEST_USERS = [
     id: 'coordinator',
     name: 'Crisis Coordinator',
     email: 'coordinator@dms.gov.ng',
-    password: 'coordinator123!',
     roles: ['Coordinator'],
     icon: Users,
     description: 'Verifies assessments, manages entities'
@@ -47,7 +46,6 @@ const DEV_TEST_USERS = [
     id: 'assessor',
     name: 'Field Assessor',
     email: 'assessor@test.com',
-    password: 'testpassword123',
     roles: ['Assessor'],
     icon: Heart,
     description: 'Conducts rapid assessments in the field'
@@ -56,7 +54,6 @@ const DEV_TEST_USERS = [
     id: 'responder',
     name: 'Response Responder',
     email: 'responder@dms.gov.ng',
-    password: 'responder123!',
     roles: ['Responder'],
     icon: Package,
     description: 'Plans and delivers disaster response resources'
@@ -65,7 +62,6 @@ const DEV_TEST_USERS = [
     id: 'donor',
     name: 'Donor Organization Contact',
     email: 'donor@test.com',
-    password: 'donor123!',
     roles: ['Donor'],
     icon: Heart,
     description: 'Donor role only - manages contributions and assessments'
@@ -74,12 +70,19 @@ const DEV_TEST_USERS = [
     id: 'multirole',
     name: 'Multi Role Test User',
     email: 'multirole@dms.gov.ng',
-    password: 'multirole123!',
     roles: ['Assessor', 'Coordinator', 'Donor', 'Responder'],
     icon: User,
     description: 'Test user with multiple roles including response planning'
   }
 ]
+
+const DEV_TEST_PASSWORDS: Record<string, string> = (() => {
+  try {
+    return JSON.parse(process.env.NEXT_PUBLIC_DEV_TEST_PASSWORDS || '{}')
+  } catch {
+    return {}
+  }
+})()
 
 export function LoginForm() {
   const [error, setError] = useState<string | null>(null)
@@ -102,7 +105,10 @@ export function LoginForm() {
     const user = DEV_TEST_USERS.find(u => u.id === userId)
     if (user) {
       setValue('email', user.email)
-      setValue('password', user.password)
+      const password = DEV_TEST_PASSWORDS[userId] || ''
+      if (password) {
+        setValue('password', password)
+      }
       setSelectedTestUser(userId)
     }
   }

@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useAuthStore } from '@/stores/auth.store'
+import { apiGet } from '@/lib/api'
 
 export interface Incident {
   id: string
@@ -26,7 +25,7 @@ interface UseIncidentsOptions {
   limit?: number
 }
 
-async function fetchIncidents(token: string, options: UseIncidentsOptions = {}): Promise<Incident[]> {
+export function useIncidents(options: UseIncidentsOptions = {}) {
   const { status = 'ACTIVE', limit = 50 } = options
   
   const params = new URLSearchParams()
@@ -37,33 +36,16 @@ async function fetchIncidents(token: string, options: UseIncidentsOptions = {}):
     params.append('limit', limit.toString())
   }
 
-  const response = await fetch(`/api/v1/incidents?${params.toString()}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  })
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch incidents')
-  }
-
-  const result = await response.json()
-  return result.data || []
-}
-
-export function useIncidents(options: UseIncidentsOptions = {}) {
-  const { token } = useAuthStore()
-
   return useQuery({
     queryKey: ['incidents', options],
-    queryFn: () => {
-      if (!token) {
-        throw new Error('No authentication token available')
+    queryFn: async () => {
+      const result = await apiGet<{ incidents: Incident[] }>(`/api/v1/incidents?${params.toString()}`)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch incidents')
       }
-      return fetchIncidents(token, options)
+      return result.data?.incidents || []
     },
-    enabled: !!token,
+    enabled: !!localStorage.getItem('auth_token'),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
   })

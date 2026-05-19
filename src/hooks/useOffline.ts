@@ -119,11 +119,9 @@ export const useOffline = () => {
 
       for (const item of queue) {
         try {
-          // Simulate API call with delay
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // In a real implementation, this would make HTTP requests to sync with server
-          console.log(`Syncing ${item.type} ${item.action}:`, item.entityUuid);
+          // TODO: Replace with actual API call to /api/v1/sync/batch when SyncService is implemented
+          // Currently removes items from queue without server sync
+          // See architecture docs for sync engine design
           
           // Remove from queue on success
           await removeFromSyncQueue(item.uuid);

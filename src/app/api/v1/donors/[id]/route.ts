@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
+import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { v4 as uuidv4 } from 'uuid'
 
 // Validation schema for updating donor
@@ -17,11 +18,32 @@ const UpdateDonorSchema = z.object({
   }).optional()
 })
 
-export async function GET(
-  request: NextRequest, 
+export const GET = withAuth(async (
+  request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
+    // Role check: ADMIN, COORDINATOR, or DONOR (own profile only)
+    const isAdmin = context.roles.includes('ADMIN')
+    const isCoordinator = context.roles.includes('COORDINATOR')
+    const isDonor = context.roles.includes('DONOR')
+
+    if (!isAdmin && !isCoordinator && !isDonor) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Insufficient permissions',
+          meta: {
+            timestamp: new Date().toISOString(),
+            version: '1.0',
+            requestId: uuidv4()
+          }
+        },
+        { status: 403 }
+      )
+    }
+
     const donorId = params.id
 
     if (!donorId) {
@@ -65,6 +87,25 @@ export async function GET(
         },
         { status: 404 }
       )
+    }
+
+    // DONOR users can only access their own profile
+    if (isDonor && !isAdmin && !isCoordinator) {
+      const userOrg = (context.user as any).organization
+      if (donor.name !== userOrg) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Insufficient permissions',
+            meta: {
+              timestamp: new Date().toISOString(),
+              version: '1.0',
+              requestId: uuidv4()
+            }
+          },
+          { status: 403 }
+        )
+      }
     }
 
     // Find the linked user through organization matching
@@ -111,21 +152,6 @@ export async function GET(
       }
     }
 
-    if (!donor) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Donor not found',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 404 }
-      )
-    }
-
     return NextResponse.json({
       success: true,
       data: donorWithUser,
@@ -138,7 +164,7 @@ export async function GET(
 
   } catch (error) {
     console.error('Get donor error:', error)
-    
+
     return NextResponse.json(
       {
         success: false,
@@ -152,13 +178,30 @@ export async function GET(
       { status: 500 }
     )
   }
-}
+})
 
-export async function PUT(
+export const PUT = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
+    // Role check: ADMIN or COORDINATOR only
+    if (!context.roles.some(r => ['ADMIN', 'COORDINATOR'].includes(r))) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Insufficient permissions',
+          meta: {
+            timestamp: new Date().toISOString(),
+            version: '1.0',
+            requestId: uuidv4()
+          }
+        },
+        { status: 403 }
+      )
+    }
+
     const donorId = params.id
     const body = await request.json()
 
@@ -231,21 +274,6 @@ export async function PUT(
       }
     })
 
-    if (!existingDonor) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Donor not found',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 404 }
-      )
-    }
-
     // Check for conflicts if updating name or email
     if (donorData.name && donorData.name !== existingDonor.name) {
       const nameConflict = await prisma.donor.findFirst({
@@ -254,7 +282,7 @@ export async function PUT(
           id: { not: donorId }
         }
       })
-      
+
       if (nameConflict) {
         return NextResponse.json(
           {
@@ -278,7 +306,7 @@ export async function PUT(
           id: { not: donorId }
         }
       })
-      
+
       if (emailConflict) {
         return NextResponse.json(
           {
@@ -304,7 +332,7 @@ export async function PUT(
             id: { not: existingUser?.id }
           }
         })
-        
+
         if (userEmailConflict) {
           return NextResponse.json(
             {
@@ -328,7 +356,7 @@ export async function PUT(
             id: { not: existingUser?.id }
           }
         })
-        
+
         if (usernameConflict) {
           return NextResponse.json(
             {
@@ -485,7 +513,7 @@ export async function PUT(
 
   } catch (error) {
     console.error('Update donor error:', error)
-    
+
     return NextResponse.json(
       {
         success: false,
@@ -499,4 +527,4 @@ export async function PUT(
       { status: 500 }
     )
   }
-}
+})

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
-
-const secret = process.env.NEXTAUTH_SECRET
+import { withAuth, AuthContext } from '@/lib/auth/middleware'
 
 // Default severity thresholds
 const defaultThresholds = {
@@ -79,17 +77,8 @@ const defaultThresholds = {
   ]
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    // Verify authentication
-    const token = await getToken({ req: request, secret })
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
     // Get query parameters
     const { searchParams } = new URL(request.url)
     const impactType = searchParams.get('impactType')
@@ -128,17 +117,16 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    // Verify authentication
-    const token = await getToken({ req: request, secret })
-    if (!token) {
+    // RBAC: Only ADMIN and COORDINATOR can create severity thresholds
+    if (!context.roles.some(r => ['ADMIN', 'COORDINATOR'].includes(r))) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+        { success: false, error: 'Insufficient permissions to create severity thresholds' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json()
@@ -188,4 +176,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

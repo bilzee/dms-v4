@@ -33,13 +33,6 @@ export const POST = withAuth(
       const { id } = await params
       const body = await request.json()
       
-      console.log('✅ API Debug - Verifying delivery:', { 
-        id, 
-        userId: context.userId, 
-        user: context.user,
-        action: body.action
-      })
-      
       // Validate input
       const validationResult = VerifyDeliverySchema.safeParse(body)
       if (!validationResult.success) {
@@ -196,13 +189,6 @@ export const POST = withAuth(
         })
         
         return updatedDelivery
-      })
-      
-      console.log('✅ Delivery verification processed successfully:', {
-        deliveryId: id,
-        action,
-        newStatus: result.verificationStatus,
-        verifiedBy: context.userId
       })
       
       const responseData = {

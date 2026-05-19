@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useAuth } from '@/hooks/useAuth';
+import { apiGet, apiPost } from '@/lib/api';
 import type { 
   VerificationQueueResponse, 
   VerificationQueueFilters,
@@ -10,104 +10,44 @@ import type {
   VerificationMetrics 
 } from '@/types/verification';
 
-// API functions
-async function fetchVerificationQueue(
-  filters: VerificationQueueFilters & { page?: number; limit?: number },
-  token: string
-): Promise<VerificationQueueResponse> {
-  const params = new URLSearchParams();
-  
-  if (filters.page) params.append('page', filters.page.toString());
-  if (filters.limit) params.append('limit', filters.limit.toString());
-  if (filters.status) params.append('status', filters.status);
-  if (filters.entityId) params.append('entityId', filters.entityId);
-  if (filters.assessmentType) params.append('assessmentType', filters.assessmentType);
-  
-  const response = await fetch(`/api/v1/verification/queue/assessments?${params}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  });
-  
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to fetch verification queue');
-  }
-  
-  return response.json();
-}
-
-async function verifyAssessment(
-  assessmentId: string, 
-  data: VerifyAssessmentRequest,
-  token: string
-): Promise<any> {
-  const response = await fetch(`/api/v1/assessments/${assessmentId}/verify`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(data),
-  });
-  
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to verify assessment');
-  }
-  
-  return response.json();
-}
-
-async function rejectAssessment(
-  assessmentId: string, 
-  data: RejectAssessmentRequest,
-  token: string
-): Promise<any> {
-  const response = await fetch(`/api/v1/assessments/${assessmentId}/reject`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(data),
-  });
-  
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to reject assessment');
-  }
-  
-  return response.json();
-}
-
 // Hook for verification queue
 export function useVerificationQueue(
   filters: VerificationQueueFilters & { page?: number; limit?: number } = {}
 ) {
-  const { token } = useAuth();
-  
   return useQuery({
     queryKey: ['verification-queue', filters],
-    queryFn: () => {
-      if (!token) throw new Error('No authentication token available');
-      return fetchVerificationQueue(filters, token);
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      
+      if (filters.page) params.append('page', filters.page.toString());
+      if (filters.limit) params.append('limit', filters.limit.toString());
+      if (filters.status) params.append('status', filters.status);
+      if (filters.entityId) params.append('entityId', filters.entityId);
+      if (filters.assessmentType) params.append('assessmentType', filters.assessmentType);
+
+      const result = await apiGet<VerificationQueueResponse>(`/api/v1/verification/queue/assessments?${params}`);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch verification queue');
+      }
+      return result.data!;
     },
     staleTime: 30000, // 30 seconds - refresh frequently for real-time updates
     refetchInterval: 60000, // Auto-refresh every minute
-    enabled: !!token, // Only run query if token exists
+    enabled: (() => { try { return !!localStorage.getItem('auth_token'); } catch { return false; } })(), // Only run query if token exists
   });
 }
 
 // Hook for verification actions
 export function useVerificationActions() {
   const queryClient = useQueryClient();
-  const { token } = useAuth();
   
   const verifyMutation = useMutation({
-    mutationFn: ({ assessmentId, data }: { assessmentId: string; data: VerifyAssessmentRequest }) => {
-      if (!token) throw new Error('No authentication token available');
-      return verifyAssessment(assessmentId, data, token);
+    mutationFn: async ({ assessmentId, data }: { assessmentId: string; data: VerifyAssessmentRequest }) => {
+      const result = await apiPost(`/api/v1/assessments/${assessmentId}/verify`, data);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to verify assessment');
+      }
+      return result;
     },
     onSuccess: (data) => {
       // Invalidate and refetch verification queue
@@ -125,9 +65,12 @@ export function useVerificationActions() {
   });
   
   const rejectMutation = useMutation({
-    mutationFn: ({ assessmentId, data }: { assessmentId: string; data: RejectAssessmentRequest }) => {
-      if (!token) throw new Error('No authentication token available');
-      return rejectAssessment(assessmentId, data, token);
+    mutationFn: async ({ assessmentId, data }: { assessmentId: string; data: RejectAssessmentRequest }) => {
+      const result = await apiPost(`/api/v1/assessments/${assessmentId}/reject`, data);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to reject assessment');
+      }
+      return result;
     },
     onSuccess: (data) => {
       // Invalidate and refetch verification queue
@@ -155,30 +98,18 @@ export function useVerificationActions() {
 
 // Hook for verification metrics (dashboard overview)
 export function useVerificationMetrics() {
-  const { token } = useAuth();
-  
   return useQuery({
     queryKey: ['verification-metrics'],
     queryFn: async (): Promise<VerificationMetrics> => {
-      if (!token) throw new Error('No authentication token available');
-      
-      const response = await fetch('/api/v1/verification/metrics', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to fetch verification metrics');
+      const result = await apiGet<{ metrics: VerificationMetrics }>('/api/v1/verification/metrics');
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch verification metrics');
       }
-      
-      const result = await response.json();
-      return result.data; // Extract the data property from API response
+      return result.data!.metrics;
     },
     staleTime: 300000, // 5 minutes
     refetchInterval: 300000, // Auto-refresh every 5 minutes
-    enabled: !!token, // Only run query if token exists
+    enabled: (() => { try { return !!localStorage.getItem('auth_token'); } catch { return false; } })(), // Only run query if token exists
   });
 }
 
@@ -203,14 +134,13 @@ export function useVerificationUpdates() {
 // Hook for bulk verification actions
 export function useBulkVerificationActions() {
   const queryClient = useQueryClient();
-  const { token } = useAuth();
   
   const bulkVerifyMutation = useMutation({
     mutationFn: async (assessmentIds: string[]) => {
-      if (!token) throw new Error('No authentication token available');
-      const promises = assessmentIds.map(id => 
-        verifyAssessment(id, { notes: 'Bulk verification' }, token)
-      );
+      const promises = assessmentIds.map(id => {
+        const result = apiPost(`/api/v1/assessments/${id}/verify`, { notes: 'Bulk verification' });
+        return result;
+      });
       return Promise.all(promises);
     },
     onSuccess: (data) => {
@@ -239,7 +169,7 @@ export function useVerificationFilters() {
     status: 'SUBMITTED', // Default to pending verification
   });
   
-  const updateFilter = (key: keyof VerificationQueueFilters, value: any) => {
+  const updateFilter = (key: keyof VerificationQueueFilters, value: string | string[] | undefined) => {
     setFilters(prev => ({
       ...prev,
       [key]: value

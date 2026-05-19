@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { getEntityIncidents, calculateRelationshipStatistics } from '@/lib/services/assessment-relationships.service';
 import type { RelationshipQueryParams } from '@/types/assessment-relationships';
 import { Priority, AssessmentType, VerificationStatus } from '@prisma/client';
@@ -30,29 +30,19 @@ const QueryParamsSchema = z.object({
   offset: z.string().optional().transform(val => val ? parseInt(val) : undefined),
 });
 
-export async function GET(
+export const GET = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    // Authentication check
-    const session = await getServerSession();
-    if (!session?.user) {
+    // RBAC: ASSESSOR, COORDINATOR, ADMIN can view entity incidents
+    if (!context.roles.some(r => ['ASSESSOR', 'COORDINATOR', 'ADMIN'].includes(r))) {
       return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
+        { success: false, error: 'Insufficient permissions to view entity incidents' },
+        { status: 403 }
       );
     }
-
-    // Authorization check - only coordinators and admins
-    // TODO: Implement proper role check when auth system is available
-    // const userRole = await getUserRole(session.user.id);
-    // if (!['COORDINATOR', 'ADMIN'].includes(userRole)) {
-    //   return NextResponse.json(
-    //     { success: false, error: 'Insufficient permissions' },
-    //     { status: 403 }
-    //   );
-    // }
 
     const entityId = params.id;
     const { searchParams } = new URL(request.url);
@@ -112,4 +102,4 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+});

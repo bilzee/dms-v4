@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DonorProfileUpdateInput } from '@/lib/validation/donor'
+import { apiGet, apiPatch, apiPost } from '@/lib/api'
 
 export interface DonorProfile {
   id: string
@@ -36,7 +37,7 @@ export interface DonorEntity {
   name: string
   type: string
   location?: string
-  coordinates?: any
+  coordinates?: { lat: number; lng: number } | null
   isActive: boolean
   autoApproveEnabled: boolean
   createdAt: string
@@ -76,48 +77,22 @@ export function useDonorProfile() {
   } = useQuery<DonorProfileResponse>({
     queryKey: ['donor-profile'],
     queryFn: async () => {
-      const token = localStorage.getItem('auth_token')
-      if (!token) {
-        throw new Error('No authentication token found')
+      const result = await apiGet<DonorProfileResponse>('/api/v1/donors/profile')
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch donor profile')
       }
-
-      const response = await fetch('/api/v1/donors/profile', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch donor profile')
-      }
-
-      return response.json()
+      return result.data!
     },
-    enabled: !!localStorage.getItem('auth_token')
+    enabled: (() => { try { return !!localStorage.getItem('auth_token') } catch { return false } })()
   })
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: DonorProfileUpdateInput) => {
-      const token = localStorage.getItem('auth_token')
-      if (!token) {
-        throw new Error('No authentication token found')
+      const result = await apiPatch('/api/v1/donors/profile', data)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update profile')
       }
-
-      const response = await fetch('/api/v1/donors/profile', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(data)
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to update profile')
-      }
-
-      return response.json()
+      return result.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['donor-profile'] })
@@ -149,30 +124,19 @@ export function useDonorEntities(filters?: {
   } = useQuery<DonorEntitiesResponse>({
     queryKey: ['donor-entities', filters],
     queryFn: async () => {
-      const token = localStorage.getItem('auth_token')
-      if (!token) {
-        throw new Error('No authentication token found')
-      }
-
       const params = new URLSearchParams()
       if (filters?.search) params.append('search', filters.search)
       if (filters?.type) params.append('type', filters.type)
       if (filters?.page) params.append('page', filters.page.toString())
       if (filters?.limit) params.append('limit', filters.limit.toString())
 
-      const response = await fetch(`/api/v1/donors/entities?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch donor entities')
+      const result = await apiGet<DonorEntitiesResponse>(`/api/v1/donors/entities?${params}`)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch donor entities')
       }
-
-      return response.json()
+      return result.data!
     },
-    enabled: !!localStorage.getItem('auth_token')
+    enabled: (() => { try { return !!localStorage.getItem('auth_token') } catch { return false } })()
   })
 
   return {
@@ -201,25 +165,20 @@ export function useDonorRegistration() {
         name: string
       }
     }) => {
-      const response = await fetch('/api/v1/donors', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Registration failed')
+      const result = await apiPost('/api/v1/donors', data)
+      if (!result.success) {
+        throw new Error(result.error || 'Registration failed')
       }
-
-      return response.json()
+      return result
     },
     onSuccess: (data) => {
       // Store auth token
-      localStorage.setItem('auth_token', data.data.token)
-      localStorage.setItem('user_data', JSON.stringify(data.data.user))
+      try {
+        localStorage.setItem('auth_token', data.data.token)
+        localStorage.setItem('user_data', JSON.stringify(data.data.user))
+      } catch (error) {
+        console.error('Failed to store auth data in localStorage:', error)
+      }
     }
   })
 

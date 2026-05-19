@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { RapidAssessmentService } from '@/lib/services/rapid-assessment.service'
 import { UpdateRapidAssessmentSchema } from '@/lib/validation/rapid-assessment'
-import { RapidAssessmentResponse } from '@/types/rapid-assessment'
+import { RapidAssessmentResponse, RapidAssessmentWithData } from '@/types/rapid-assessment'
 
 interface RouteParams {
   params: { id: string }
@@ -12,6 +12,21 @@ interface RouteParams {
 export const GET = withAuth(
   async (request: NextRequest, context: AuthContext, { params }: RouteParams) => {
     try {
+      // RBAC: ASSESSOR (own), COORDINATOR, ADMIN (any)
+      if (!context.roles.some(r => ['ASSESSOR', 'COORDINATOR', 'ADMIN'].includes(r))) {
+        return NextResponse.json(
+          {
+            error: 'Insufficient permissions to view assessments',
+            meta: {
+              timestamp: new Date().toISOString(),
+              version: '1.0.0',
+              requestId: uuidv4()
+            }
+          },
+          { status: 403 }
+        )
+      }
+
       const { id } = params
       
       const assessment = await RapidAssessmentService.findById(id)
@@ -31,8 +46,9 @@ export const GET = withAuth(
       }
 
       // Check if user has permission to view this assessment
-      if (assessment.assessorId !== context.userId) {
-        // TODO: Add role-based access for coordinators/admins
+      // COORDINATOR and ADMIN can view any assessment
+      const isPrivileged = context.roles.some(r => ['COORDINATOR', 'ADMIN'].includes(r))
+      if (!isPrivileged && assessment.assessorId !== context.userId) {
         return NextResponse.json(
           {
             error: 'Not authorized to view this assessment',
@@ -47,7 +63,7 @@ export const GET = withAuth(
       }
 
       const response: RapidAssessmentResponse = {
-        data: assessment,
+        data: assessment as unknown as RapidAssessmentWithData,
         meta: {
           timestamp: new Date().toISOString(),
           version: '1.0.0',
@@ -77,6 +93,21 @@ export const GET = withAuth(
 export const PUT = withAuth(
   async (request: NextRequest, context: AuthContext, { params }: RouteParams) => {
     try {
+      // RBAC: ASSESSOR (own), COORDINATOR, ADMIN
+      if (!context.roles.some(r => ['ASSESSOR', 'COORDINATOR', 'ADMIN'].includes(r))) {
+        return NextResponse.json(
+          {
+            error: 'Insufficient permissions to update assessments',
+            meta: {
+              timestamp: new Date().toISOString(),
+              version: '1.0.0',
+              requestId: uuidv4()
+            }
+          },
+          { status: 403 }
+        )
+      }
+
       const { id } = params
       const body = await request.json()
       const input = UpdateRapidAssessmentSchema.parse(body)
@@ -88,7 +119,7 @@ export const PUT = withAuth(
       )
 
       const response: RapidAssessmentResponse = {
-        data: assessment,
+        data: assessment as unknown as RapidAssessmentWithData,
         meta: {
           timestamp: new Date().toISOString(),
           version: '1.0.0',
@@ -146,6 +177,21 @@ export const PUT = withAuth(
 export const DELETE = withAuth(
   async (request: NextRequest, context: AuthContext, { params }: RouteParams) => {
     try {
+      // RBAC: Only COORDINATOR and ADMIN can delete assessments
+      if (!context.roles.some(r => ['COORDINATOR', 'ADMIN'].includes(r))) {
+        return NextResponse.json(
+          {
+            error: 'Insufficient permissions to delete assessments',
+            meta: {
+              timestamp: new Date().toISOString(),
+              version: '1.0.0',
+              requestId: uuidv4()
+            }
+          },
+          { status: 403 }
+        )
+      }
+
       const { id } = params
       
       await RapidAssessmentService.delete(id, context.userId)

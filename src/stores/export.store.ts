@@ -21,7 +21,7 @@ export interface ExportRequest {
     startDate: string;
     endDate: string;
   };
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
   options?: {
     includeCharts?: boolean;
     includeMaps?: boolean;
@@ -53,11 +53,34 @@ export interface ScheduledReport {
   id: string;
   userId: string;
   reportType: string;
-  schedule: any;
-  recipients: any[];
-  filters: any;
-  defaultDateRange: any;
-  options: any;
+  schedule: {
+    frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+    dayOfWeek?: number;
+    dayOfMonth?: number;
+    time: string;
+    timezone?: string;
+  };
+  recipients: Array<{
+    email: string;
+    name?: string;
+    format?: 'pdf' | 'csv' | 'html';
+  }>;
+  filters: Record<string, unknown>;
+  defaultDateRange: {
+    type: string;
+    startDate?: string;
+    endDate?: string;
+  };
+  options: {
+    includeCharts?: boolean;
+    includeMaps?: boolean;
+    includeImages?: boolean;
+    pageSize?: 'A4' | 'Letter';
+    orientation?: 'portrait' | 'landscape';
+    title?: string;
+    subtitle?: string;
+    watermark?: string;
+  };
   isActive: boolean;
   createdAt: Date;
   lastRun?: Date;
@@ -89,7 +112,7 @@ interface ExportState {
   downloadExport: (exportId: string) => void;
   getExportStatus: (exportId: string) => ExportStatus | undefined;
   updateExportStatus: (exportId: string, status: Partial<ExportStatus>) => void;
-  getExportOptions: (dataType: string) => any;
+  getExportOptions: (dataType: string) => { availableFormats: string[]; defaultFormat: string };
   
   // Modal actions
   openExportModal: (data: { dataType?: string; initialValues?: Partial<ExportRequest> }) => void;
@@ -270,13 +293,13 @@ export const useExportStore = create<ExportState>()(
               reportType: request.dataType,
               schedule: request.schedule,
               recipients: request.recipients || [],
-              filters: request.filters,
+              filters: request.filters || {},
               defaultDateRange: {
                 type: 'last_7_days', // Default, could be configurable
                 startDate: undefined,
                 endDate: undefined,
               },
-              options: request.options,
+              options: request.options || {},
               isActive: true,
               createdAt: new Date(),
               nextRun: new Date(result.data.nextRun),
@@ -318,7 +341,7 @@ export const useExportStore = create<ExportState>()(
             // Extract original request and retry
             const request: ExportRequest = {
               dataType: status.dataType,
-              format: status.format as any,
+              format: status.format as 'csv' | 'xlsx' | 'png' | 'svg' | 'pdf',
               dateRange: {
                 startDate: new Date().toISOString(),
                 endDate: new Date().toISOString(),

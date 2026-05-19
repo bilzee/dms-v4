@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { db } from '@/lib/db/client';
 import { z } from 'zod';
 
@@ -36,32 +35,26 @@ const ReportRequestSchema = z.object({
   })).optional(),
 });
 
-const ROLE_PERMISSIONS = {
-  assessor: ['incident-overview', 'assessment-summary'],
-  coordinator: ['incident-overview', 'assessment-summary', 'response-activity', 'resource-allocation', 'entity-status'],
-  responder: ['response-activity', 'resource-allocation', 'entity-status'],
-  donor: ['response-activity'],
-  admin: ['incident-overview', 'assessment-summary', 'response-activity', 'resource-allocation', 'entity-status', 'custom-dashboard'],
+const ROLE_PERMISSIONS: Record<string, string[]> = {
+  ASSESSOR: ['incident-overview', 'assessment-summary'],
+  COORDINATOR: ['incident-overview', 'assessment-summary', 'response-activity', 'resource-allocation', 'entity-status'],
+  RESPONDER: ['response-activity', 'resource-allocation', 'entity-status'],
+  DONOR: ['response-activity'],
+  ADMIN: ['incident-overview', 'assessment-summary', 'response-activity', 'resource-allocation', 'entity-status', 'custom-dashboard'],
 };
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const userRole = (session.user as any).role as string;
-    const allowedReports = ROLE_PERMISSIONS[userRole as keyof typeof ROLE_PERMISSIONS] || [];
+    // Use context.roles instead of (context.user as any).role
+    const allowedReports = context.roles
+      .flatMap(role => ROLE_PERMISSIONS[role] || []);
+    const uniqueAllowed = [...new Set(allowedReports)];
 
     const body = await request.json();
     const validatedData = ReportRequestSchema.parse(body);
 
     // Check role-based permissions
-    if (!allowedReports.includes(validatedData.reportType)) {
+    if (!uniqueAllowed.includes(validatedData.reportType)) {
       return NextResponse.json(
         { success: false, error: 'Insufficient permissions for this report type' },
         { status: 403 }
@@ -72,13 +65,13 @@ export async function POST(request: NextRequest) {
     const jobId = `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     // Start report generation asynchronously
-    generatePDFReport(jobId, validatedData, session.user)
+    generatePDFReport(jobId, validatedData, context.user)
       .then(async (result) => {
         if (result.success) {
           // Store completed job
           await storeReportJob(jobId, {
             ...result,
-            userId: (session.user as any).id,
+            userId: context.userId,
             createdAt: new Date(),
           });
         }
@@ -89,7 +82,7 @@ export async function POST(request: NextRequest) {
         storeReportJob(jobId, {
           success: false,
           error: error.message,
-          userId: (session.user as any).id,
+          userId: context.userId,
           createdAt: new Date(),
         });
       });
@@ -109,7 +102,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 async function generatePDFReport(
   jobId: string, 
@@ -890,20 +883,11 @@ function getEstimatedProcessingTime(reportType: string): number {
 // Job storage (in production, use proper database storage)
 async function storeReportJob(jobId: string, jobData: any): Promise<void> {
   // In production, store in database with proper cleanup
-  console.log(`Storing report job ${jobId}:`, jobData);
 }
 
 // Get report status
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const jobId = searchParams.get('jobId');
 
@@ -920,14 +904,15 @@ export async function GET(request: NextRequest) {
         },
       });
     } else {
-      // Get available report types
-      const userRole = (session.user as any).role as string;
-      const availableReports = ROLE_PERMISSIONS[userRole as keyof typeof ROLE_PERMISSIONS] || [];
+      // Get available report types using context.roles
+      const availableReports = context.roles
+        .flatMap(role => ROLE_PERMISSIONS[role] || []);
+      const uniqueAvailable = [...new Set(availableReports)];
 
       return NextResponse.json({
         success: true,
         data: {
-          availableReports,
+          availableReports: uniqueAvailable,
           formats: ['pdf', 'html'],
           maxFileSize: '100MB',
         },
@@ -940,4 +925,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

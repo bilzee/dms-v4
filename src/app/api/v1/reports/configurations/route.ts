@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { z } from 'zod';
 import { db } from '@/lib/db/client';
 import { DataAggregator, ReportFilters, AggregationConfig, FilterConfig, ReportFiltersSchema, AggregationConfigSchema } from '@/lib/reports/data-aggregator';
@@ -67,38 +67,13 @@ const ListConfigurationsSchema = z.object({
  * POST /api/v1/reports/configurations
  * Create new report configuration
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest, context: AuthContext) => {
   const startTime = Date.now();
 
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Unauthorized'),
-        { status: 401 }
-      );
-    }
-
     // Check user permissions
-    const userRoles = await db.userRole.findMany({
-      where: { userId: (session.user as any).id },
-      include: {
-        role: {
-          include: {
-            permissions: {
-              include: { permission: true }
-            }
-          }
-        }
-      }
-    });
-
-    const hasPermission = userRoles.some(userRole =>
-      userRole.role.permissions.some(rolePermission =>
-        rolePermission.permission.code === 'REPORT_CREATE' ||
-        rolePermission.permission.code === 'ADMIN'
-      )
-    );
+    const hasPermission = context.permissions.includes('REPORT_CREATE') ||
+                          context.permissions.includes('ADMIN');
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -115,7 +90,7 @@ export async function POST(request: NextRequest) {
       where: {
         id: validatedData.templateId,
         OR: [
-          { createdById: (session.user as any).id },
+          { createdById: context.userId },
           { isPublic: true }
         ]
       },
@@ -186,7 +161,7 @@ export async function POST(request: NextRequest) {
         aggregations: validatedData.aggregations,
         visualizations: validatedData.visualizations,
         schedule: validatedData.schedule,
-        createdBy: (session.user as any).id
+        createdBy: context.userId
       },
       include: {
         template: {
@@ -215,7 +190,7 @@ export async function POST(request: NextRequest) {
     // Log configuration creation
     await db.auditLog.create({
       data: {
-        userId: (session.user as any).id,
+        userId: context.userId,
         action: 'CREATE_REPORT_CONFIGURATION',
         resource: 'ReportConfiguration',
         resourceId: configuration.id,
@@ -248,21 +223,14 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * GET /api/v1/reports/configurations
  * List user's report configurations
  */
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Unauthorized'),
-        { status: 401 }
-      );
-    }
 
     const { searchParams } = new URL(request.url);
     const params = ListConfigurationsSchema.parse({
@@ -300,13 +268,13 @@ export async function GET(request: NextRequest) {
         where.isPublic = true;
       } else {
         where.OR = [
-          { createdBy: (session.user as any).id },
+          { createdBy: context.userId },
           { isPublic: true }
         ];
       }
     } else {
       where.OR = [
-        { createdBy: (session.user as any).id },
+        { createdBy: context.userId },
         { isPublic: true }
       ];
     }
@@ -396,4 +364,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

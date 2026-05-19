@@ -16,6 +16,14 @@ export const GET = withAuth(async (
   { params }: { params: { id: string } }
 ) => {
   try {
+    // RBAC: COORDINATOR, ADMIN, DONOR can view entity donors
+    if (!context.roles.some(r => ['COORDINATOR', 'ADMIN', 'DONOR'].includes(r))) {
+      return NextResponse.json(
+        { error: 'Insufficient permissions to view entity donors', meta: { timestamp: new Date().toISOString(), version: '1.0.0' } },
+        { status: 403 }
+      );
+    }
+
     // Validate the entity ID parameter
     const validationResult = EntityDonorsParamsSchema.safeParse(params)
     if (!validationResult.success) {

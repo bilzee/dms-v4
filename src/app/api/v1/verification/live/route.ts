@@ -55,10 +55,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
           request.signal.addEventListener('abort', () => {
             clearInterval(heartbeat);
             controller.close();
-            console.log(`SSE connection closed for user ${(user as any).id}`);
           });
-
-          console.log(`SSE connection established for user ${(user as any).id} on channels: ${channels.join(', ')}`);
         }
       });
 
@@ -137,7 +134,6 @@ export const POST = withAuth(async (request: NextRequest, context) => {
     // Handle different message types
     switch (type) {
       case 'SUBSCRIBE':
-        console.log(`User ${(user as any).id} subscribed to channels:`, channels || data?.channels);
         return NextResponse.json({
           success: true,
           message: 'Subscription successful',
@@ -146,7 +142,6 @@ export const POST = withAuth(async (request: NextRequest, context) => {
         });
 
       case 'BROADCAST':
-        console.log(`Broadcasting ${event} from user ${(user as any).id}:`, data);
         await broadcastConfigurationChange(event, data, channels);
         
         return NextResponse.json({
@@ -186,16 +181,6 @@ export const POST = withAuth(async (request: NextRequest, context) => {
 async function broadcastConfigurationChange(event: string, data: any, channels?: string[]) {
   try {
     // In production, this would use Redis pub/sub, WebSocket broadcasting, or similar
-    console.log(`Broadcasting configuration change: ${event}`, {
-      entityId: data.entityId,
-      entityName: data.entityName,
-      changes: data.changes,
-      timestamp: data.timestamp,
-      userId: data.userId,
-      userName: data.userName,
-      channels: channels || ['configuration_changes']
-    });
-
     // Simulate real-world broadcasting delay
     await new Promise(resolve => setTimeout(resolve, 50));
     
@@ -209,13 +194,6 @@ async function broadcastConfigurationChange(event: string, data: any, channels?:
 // Handle configuration updates
 async function handleConfigurationUpdate(data: any, user: any) {
   try {
-    console.log('Processing configuration update:', {
-      entityId: data.entityId,
-      userId: (user as any).id,
-      timestamp: new Date().toISOString(),
-      changes: data.changes
-    });
-
     // In production, this could:
     // - Update cached configuration data
     // - Trigger webhook notifications

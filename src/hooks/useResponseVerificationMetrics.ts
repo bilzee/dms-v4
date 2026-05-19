@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { apiGet } from '@/lib/api';
 
 export interface ResponseVerificationMetrics {
   totalPending: number;
@@ -26,13 +27,13 @@ export function useResponseVerificationMetrics() {
   return useQuery({
     queryKey: ['response-verification-metrics'],
     queryFn: async () => {
-      const response = await fetch('/api/v1/verification/metrics/responses');
+      const result = await apiGet<ResponseVerificationMetrics>('/api/v1/verification/metrics/responses');
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch response verification metrics');
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch response verification metrics');
       }
       
-      return response.json() as Promise<ResponseVerificationMetrics>;
+      return result.data!;
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
     refetchInterval: 5 * 60 * 1000, // 5 minutes

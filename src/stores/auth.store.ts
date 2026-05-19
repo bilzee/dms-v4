@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { AuthUser, RoleName } from '@/types/auth';
+import { apiGet } from '@/lib/api';
 
 interface RoleSessionState {
   [key: string]: {
@@ -56,17 +57,10 @@ const initializeAuthFromStorage = async () => {
     if (token) {
       try {
         // Validate token with backend using the /me endpoint
-        const response = await fetch('/api/v1/auth/me', {
-          method: 'GET',
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        })
+        const result = await apiGet<{ user: Omit<AuthUser, 'passwordHash'> }>('/api/v1/auth/me')
         
-        if (response.ok) {
-          const data = await response.json()
-          useAuthStore.getState().setUser(data.data.user, token)
+        if (result.success && result.data?.user) {
+          useAuthStore.getState().setUser(result.data.user, token)
         } else {
           // Token is invalid, clear both keys
           localStorage.removeItem('auth_token')

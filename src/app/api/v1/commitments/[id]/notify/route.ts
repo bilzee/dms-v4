@@ -1,39 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { db } from '@/lib/db/client';
 import { auditLog } from '@/lib/services/audit.service';
 
-export async function POST(
+export const POST = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    // Authentication check
-    const session = await getServerSession();
-    if (!session?.user || !(session.user as any).id) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     // Authorization check - COORDINATOR role required
-    const user = await db.user.findUnique({
-      where: { id: (session.user as any).id },
-      include: {
-        roles: {
-          include: {
-            role: true
-          }
-        }
-      }
-    });
+    const hasPermission = context.roles.some(role => 
+      role === 'COORDINATOR' || role === 'ADMIN'
+    );
 
-    const isCoordinator = user?.roles.some(userRole => userRole.role.name === 'COORDINATOR');
-    
-    if (!user || !isCoordinator) {
+    if (!hasPermission) {
       await auditLog({
-        userId: (session.user as any).id,
+        userId: context.userId,
         action: 'UNAUTHORIZED_NOTIFICATION',
         resource: 'COMMITMENT_NOTIFICATION',
         resourceId: params.id,
@@ -137,7 +120,7 @@ export async function POST(
 
     // Log successful notification
     await auditLog({
-      userId: (session.user as any).id,
+      userId: context.userId,
       action: 'SEND_COMMITMENT_NOTIFICATION',
       resource: 'COMMITMENT_NOTIFICATION',
       resourceId: commitmentId,
@@ -168,19 +151,16 @@ export async function POST(
     
     // Log error
     try {
-      const session = await getServerSession();
-      if (session?.user && (session.user as any).id) {
-        await auditLog({
-          userId: (session.user as any).id,
-          action: 'ERROR_SEND_NOTIFICATION',
-          resource: 'COMMITMENT_NOTIFICATION',
-          resourceId: params.id,
-          oldValues: null,
-          newValues: { error: error instanceof Error ? error.message : 'Unknown error' },
-          ipAddress: request.headers.get('x-forwarded-for') || undefined,
-          userAgent: request.headers.get('user-agent') || undefined
-        });
-      }
+      await auditLog({
+        userId: context.userId,
+        action: 'ERROR_SEND_NOTIFICATION',
+        resource: 'COMMITMENT_NOTIFICATION',
+        resourceId: params.id,
+        oldValues: null,
+        newValues: { error: error instanceof Error ? error.message : 'Unknown error' },
+        ipAddress: request.headers.get('x-forwarded-for') || undefined,
+        userAgent: request.headers.get('user-agent') || undefined
+      });
     } catch (auditError) {
       // Ignore audit log errors
     }
@@ -190,7 +170,7 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+})
 
 // Notification service implementation
 async function sendNotification(notificationData: any): Promise<{ success: boolean; method: string; details?: string }> {
@@ -227,7 +207,6 @@ Disaster Management Coordination Team
     };
 
     // Log the email (in production, this would send via email service)
-    console.log('EMAIL NOTIFICATION:', emailContent);
 
     // Simulate successful email send
     // const emailResult = await emailService.send(emailContent);

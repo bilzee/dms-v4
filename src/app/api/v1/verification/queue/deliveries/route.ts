@@ -39,11 +39,6 @@ export const GET = withAuth(
       const sortOrder = searchParams.get('sortOrder') || 'desc'
       const search = searchParams.get('search')
       
-      console.log('📋 API Debug - Getting delivery verification queue:', {
-        userId: context.userId,
-        filters: { page, limit, status, entityId, responderId, dateFrom, dateTo }
-      })
-      
       // Build where clause for delivered responses submitted for verification with enhanced filtering
       const where: any = {
         status: 'DELIVERED',
@@ -256,12 +251,6 @@ export const GET = withAuth(
           }
         }
       }
-
-      console.log('✅ Delivery verification queue retrieved successfully:', {
-        totalDeliveries: total,
-        currentPage: page,
-        totalPages: Math.ceil(total / limit)
-      })
 
       return NextResponse.json(responseData, { status: 200 })
     } catch (error) {

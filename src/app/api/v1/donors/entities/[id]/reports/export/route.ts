@@ -5,7 +5,7 @@ import {
   ExportRequestSchema, 
   ExportResponseSchema
 } from '@/lib/validation/entity-insights';
-import { generateEntityReport } from '@/lib/services/assessment-export.service';
+import { generateEntityReport, Entity as ExportEntity } from '@/lib/services/assessment-export.service';
 
 interface RouteParams {
   params: { id: string }
@@ -87,7 +87,7 @@ export const POST = withAuth(async (request: NextRequest, context, { params }: R
     // Generate the report
     const reportData = await generateEntityReport(
       entityId,
-      entityAssignment.entity,
+      entityAssignment.entity as unknown as ExportEntity,
       exportRequest
     );
 

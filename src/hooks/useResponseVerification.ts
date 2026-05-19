@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/hooks/useAuth';
+import { apiGet, apiPost } from '@/lib/api';
 import type { 
   ResponseVerificationQueueResponse, 
   ResponseVerificationFilters,
@@ -14,7 +14,6 @@ interface UseResponseVerificationQueueParams extends ResponseVerificationFilters
 }
 
 export function useResponseVerificationQueue(params: UseResponseVerificationQueueParams = {}) {
-  const { token } = useAuth();
   const {
     page = 1,
     limit = 10,
@@ -33,44 +32,28 @@ export function useResponseVerificationQueue(params: UseResponseVerificationQueu
   return useQuery({
     queryKey: ['response-verification-queue', params],
     queryFn: async () => {
-      const response = await fetch(`/api/v1/verification/queue/responses?${queryParams}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch response verification queue');
+      const result = await apiGet<ResponseVerificationQueueResponse>(`/api/v1/verification/queue/responses?${queryParams}`);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch response verification queue');
       }
-      
-      return response.json() as Promise<ResponseVerificationQueueResponse>;
+      return result.data!;
     },
-    enabled: !!token,
+    enabled: !!localStorage.getItem('auth_token'),
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 
 export function useVerifyResponse() {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async ({ responseId, data }: { responseId: string; data: VerifyResponseRequest }) => {
-      const response = await fetch(`/api/v1/responses/${responseId}/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(data),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to verify response');
+      const result = await apiPost(`/api/v1/responses/${responseId}/verify`, data);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to verify response');
       }
-      
-      return response.json();
+      return result.data;
     },
     onSuccess: () => {
       // Invalidate and refetch verification queue
@@ -80,25 +63,15 @@ export function useVerifyResponse() {
 }
 
 export function useRejectResponse() {
-  const { token } = useAuth();
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async ({ responseId, data }: { responseId: string; data: RejectResponseRequest }) => {
-      const response = await fetch(`/api/v1/responses/${responseId}/reject`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(data),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to reject response');
+      const result = await apiPost(`/api/v1/responses/${responseId}/reject`, data);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to reject response');
       }
-      
-      return response.json();
+      return result.data;
     },
     onSuccess: () => {
       // Invalidate and refetch verification queue

@@ -29,18 +29,6 @@ export const POST = withAuth(
       responseId = id
       const body = await request.json()
       
-      console.log('🚚 API Debug - Confirming delivery:', { 
-        id, 
-        userId: context.userId, 
-        user: context.user,
-        deliveryData: {
-          deliveredItemsCount: body.deliveredItems?.length,
-          hasLocation: !!body.deliveryLocation,
-          hasNotes: !!body.deliveryNotes,
-          mediaCount: body.mediaAttachmentIds?.length || 0
-        }
-      })
-      
       // Validate input
       const validationResult = ConfirmDeliverySchema.safeParse(body)
       if (!validationResult.success) {
@@ -80,13 +68,6 @@ export const POST = withAuth(
           { status: 404 }
         )
       }
-
-      console.log('✅ Delivery confirmed successfully:', {
-        responseId: response.id,
-        newStatus: response.status,
-        verificationStatus: response.verificationStatus,
-        responseDate: response.responseDate
-      })
 
       const responseData = {
         success: true,

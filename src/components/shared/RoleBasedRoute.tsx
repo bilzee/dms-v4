@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { RoleName } from '@/types/auth';
+import {
+  ROLE_DASHBOARD_PATHS,
+  ROLE_PATH_PATTERNS,
+  ROLE_ACCESSIBLE_PATHS,
+} from '@/lib/auth/route-config';
 
 interface RoleBasedRouteProps {
   children: React.ReactNode;
@@ -14,8 +19,8 @@ interface RoleBasedRouteProps {
   errorComponent?: React.ReactNode;
 }
 
-export const RoleBasedRoute = ({ 
-  children, 
+export const RoleBasedRoute = ({
+  children,
   requiredRole,
   requiredRoles = [],
   fallbackPath,
@@ -29,51 +34,35 @@ export const RoleBasedRoute = ({
 
   useEffect(() => {
     const checkAccess = async () => {
-
-      // Redirect to login if not authenticated
       if (!isAuthenticated) {
         router.push('/login');
         return;
       }
 
-      // Wait for current role to be set
       if (!currentRole) {
-        // If no current role but user has roles, set first available role
         if (availableRoles.length > 0) {
-          const rolePaths: Record<RoleName, string> = {
-            ASSESSOR: '/assessor/dashboard',
-            COORDINATOR: '/coordinator/dashboard',
-            RESPONDER: '/responder/dashboard',
-            DONOR: '/donor/dashboard',
-            ADMIN: '/admin/dashboard',
-          };
-          
-          router.push(rolePaths[availableRoles[0]]);
+          router.push(ROLE_DASHBOARD_PATHS[availableRoles[0]]);
           return;
         }
         return;
       }
 
-      // Check if user has required role
       if (requiredRole && currentRole !== requiredRole) {
-        // If custom error component provided, don't redirect, show error instead
         if (errorComponent) {
           setIsChecking(false);
           return;
         }
-        const fallback = fallbackPath || getDefaultPath(currentRole);
+        const fallback = fallbackPath || ROLE_DASHBOARD_PATHS[currentRole] || '/dashboard';
         router.push(fallback);
         return;
       }
 
-      // Check if user has any of the required roles
       if (requiredRoles.length > 0 && (!currentRole || !requiredRoles.includes(currentRole))) {
-        // If custom error component provided, don't redirect, show error instead
         if (errorComponent) {
           setIsChecking(false);
           return;
         }
-        const fallback = fallbackPath || getDefaultPath(currentRole);
+        const fallback = fallbackPath || ROLE_DASHBOARD_PATHS[currentRole] || '/dashboard';
         router.push(fallback);
         return;
       }
@@ -88,7 +77,6 @@ export const RoleBasedRoute = ({
     return loadingComponent || <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
-  // Check access again and show error component if provided and access is denied
   if (requiredRole && currentRole !== requiredRole) {
     return errorComponent || <>{children}</>;
   }
@@ -100,18 +88,6 @@ export const RoleBasedRoute = ({
   return <>{children}</>;
 };
 
-const getDefaultPath = (role: RoleName): string => {
-  const paths: Record<RoleName, string> = {
-    ASSESSOR: '/assessor/dashboard',
-    COORDINATOR: '/coordinator/dashboard',
-    RESPONDER: '/responder/dashboard',
-    DONOR: '/donor/dashboard',
-    ADMIN: '/admin/dashboard',
-  };
-  return paths[role] || '/dashboard';
-};
-
-// Hook for role-based navigation
 export const useRoleNavigation = () => {
   const { currentRole, availableRoles } = useAuth();
   const router = useRouter();
@@ -120,76 +96,20 @@ export const useRoleNavigation = () => {
     const targetRole = role || currentRole;
     if (!targetRole) return;
 
-    const paths: Record<RoleName, string> = {
-      ASSESSOR: '/assessor/dashboard',
-      COORDINATOR: '/coordinator/dashboard',
-      RESPONDER: '/responder/dashboard',
-      DONOR: '/donor/dashboard',
-      ADMIN: '/admin/dashboard',
-    };
-
-    router.push(paths[targetRole]);
+    router.push(ROLE_DASHBOARD_PATHS[targetRole]);
   };
 
   const canAccessPath = (path: string): boolean => {
     if (!currentRole) return false;
 
-    const rolePaths: Record<RoleName, RegExp[]> = {
-      ASSESSOR: [/^\/assessor/, /^\/assessments/, /^\/surveys/],
-      COORDINATOR: [/^\/coordinator/, /^\/coordination/, /^\/responses/, /^\/verification/],
-      RESPONDER: [/^\/responder/, /^\/response/, /^\/incidents/],
-      DONOR: [/^\/donor/, /^\/donations/, /^\/resources/],
-      ADMIN: [/^\/admin/, /^\/users/, /^\/roles/, /^\/system/],
-    };
-
-    const allowedPatterns = rolePaths[currentRole] || [];
+    const allowedPatterns = ROLE_PATH_PATTERNS[currentRole] || [];
     return allowedPatterns.some(pattern => pattern.test(path));
   };
 
   const getAccessiblePaths = (): string[] => {
     if (!currentRole) return [];
 
-    const pathMappings: Record<RoleName, string[]> = {
-      ASSESSOR: [
-        '/assessor/dashboard',
-        '/assessments',
-        '/assessments/new',
-        '/surveys',
-        '/profile'
-      ],
-      COORDINATOR: [
-        '/coordinator/dashboard',
-        '/coordination',
-        '/responses',
-        '/verification',
-        '/reports',
-        '/profile'
-      ],
-      RESPONDER: [
-        '/responder/dashboard',
-        '/response',
-        '/incidents',
-        '/tasks',
-        '/profile'
-      ],
-      DONOR: [
-        '/donor/dashboard',
-        '/donations',
-        '/resources',
-        '/impact',
-        '/profile'
-      ],
-      ADMIN: [
-        '/admin/dashboard',
-        '/users',
-        '/roles',
-        '/system',
-        '/reports',
-        '/profile'
-      ]
-    };
-
-    return pathMappings[currentRole] || [];
+    return ROLE_ACCESSIBLE_PATHS[currentRole] || [];
   };
 
   return {

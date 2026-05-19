@@ -1,39 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { db } from '@/lib/db/client';
 import { auditLog } from '@/lib/services/audit.service';
 
-export async function GET(
+export const GET = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    // Authentication check
-    const session = await getServerSession();
-    if (!(session?.user as any)?.id) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     // Authorization check - COORDINATOR role required
-    const user = await db.user.findUnique({
-      where: { id: (session!.user as any).id },
-      select: { 
-        roles: { 
-          select: { 
-            role: { 
-              select: { name: true } 
-            } 
-          } 
-        } 
-      }
-    });
+    const hasPermission = context.roles.some(role => 
+      role === 'COORDINATOR' || role === 'ADMIN'
+    );
 
-    if (!user || !user.roles.some(ur => ur.role.name === 'COORDINATOR')) {
+    if (!hasPermission) {
       await auditLog({
-        userId: (session!.user as any).id,
+        userId: context.userId,
         action: 'UNAUTHORIZED_ACCESS',
         resource: 'DONOR_RECOMMENDATIONS',
         resourceId: params.id,
@@ -142,19 +125,16 @@ export async function GET(
     
     // Log error
     try {
-      const session = await getServerSession();
-      if (session?.user && (session.user as any).id) {
-        await auditLog({
-          userId: (session!.user as any).id,
-          action: 'ERROR_ACCESS_DONOR_RECOMMENDATIONS',
-          resource: 'DONOR_RECOMMENDATIONS',
-          resourceId: params.id,
-          oldValues: null,
-          newValues: { error: error instanceof Error ? error.message : 'Unknown error' },
-          ipAddress: request.headers.get('x-forwarded-for') || undefined,
-          userAgent: request.headers.get('user-agent') || undefined
-        });
-      }
+      await auditLog({
+        userId: context.userId,
+        action: 'ERROR_ACCESS_DONOR_RECOMMENDATIONS',
+        resource: 'DONOR_RECOMMENDATIONS',
+        resourceId: params.id,
+        oldValues: null,
+        newValues: { error: error instanceof Error ? error.message : 'Unknown error' },
+        ipAddress: request.headers.get('x-forwarded-for') || undefined,
+        userAgent: request.headers.get('user-agent') || undefined
+      });
     } catch (auditError) {
       // Ignore audit log errors
     }
@@ -164,4 +144,4 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+})

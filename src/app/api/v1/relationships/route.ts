@@ -50,8 +50,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       offset: searchParams.get('offset'),
     };
 
-    console.log('Relationships raw query params:', rawParams);
-
     // Validate query parameters
     const queryResult = QueryParamsSchema.safeParse(rawParams);
 
@@ -91,8 +89,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     // Set defaults for pagination
     queryParams.limit = queryParams.limit || 100;
     queryParams.offset = queryParams.offset || 0;
-
-    console.log('Relationships transformed query params:', queryParams);
 
     // Get comprehensive relationship data
     const relationships = await getEntityIncidentRelationships(queryParams);

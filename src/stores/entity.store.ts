@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { useAuthStore } from '@/stores/auth.store';
+import { apiGet, apiPost, apiDelete } from '@/lib/api';
 
 export interface EntityAssignment {
   id: string;
@@ -31,8 +33,8 @@ export interface Entity {
   name: string;
   type: string;
   location: string | null;
-  coordinates?: any;
-  metadata?: any;
+  coordinates?: { lat: number; lng: number } | null;
+  metadata?: Record<string, unknown> | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -50,43 +52,40 @@ export interface User {
   }>;
 }
 
+function getAuthToken(): string | null {
+  return useAuthStore.getState().token;
+}
+
 interface EntityState {
-  // Assignment data
   assignments: EntityAssignment[];
   entities: Entity[];
   assignableUsers: User[];
   
-  // UI state
   isLoading: boolean;
   selectedEntities: string[];
   selectedUsers: string[];
   bulkAssignModalOpen: boolean;
   assignmentSearchQuery: string;
   
-  // Pagination
   currentPage: number;
   totalPages: number;
   
-  // Actions
   setAssignments: (assignments: EntityAssignment[]) => void;
   setEntities: (entities: Entity[]) => void;
   setAssignableUsers: (users: User[]) => void;
   addAssignment: (assignment: EntityAssignment) => void;
   removeAssignment: (assignmentId: string) => void;
   
-  // Entity assignment operations
   createAssignment: (userId: string, entityId: string) => Promise<boolean>;
   createBulkAssignments: (userIds: string[], entityIds: string[]) => Promise<boolean>;
   deleteAssignment: (assignmentId: string) => Promise<boolean>;
   
-  // Data fetching
   fetchAssignments: (page?: number) => Promise<void>;
   fetchEntities: () => Promise<void>;
   fetchAssignableUsers: () => Promise<void>;
   fetchUserAssignments: (userId: string) => Promise<EntityAssignment[]>;
   fetchEntityAssignments: (entityId: string) => Promise<EntityAssignment[]>;
   
-  // UI state management
   setLoading: (loading: boolean) => void;
   setSelectedEntities: (entityIds: string[]) => void;
   setSelectedUsers: (userIds: string[]) => void;
@@ -96,7 +95,6 @@ interface EntityState {
   setBulkAssignModalOpen: (open: boolean) => void;
   setAssignmentSearchQuery: (query: string) => void;
   
-  // Utility
   getUserAssignedEntities: (userId: string) => Entity[];
   getEntityAssignedUsers: (entityId: string) => User[];
   isUserAssignedToEntity: (userId: string, entityId: string) => boolean;
@@ -105,7 +103,6 @@ interface EntityState {
 export const useEntityStore = create<EntityState>()(
   persist(
     (set, get) => ({
-      // Initial state
       assignments: [],
       entities: [],
       assignableUsers: [],
@@ -117,7 +114,6 @@ export const useEntityStore = create<EntityState>()(
       currentPage: 1,
       totalPages: 1,
 
-      // Basic setters
       setAssignments: (assignments) => set({ assignments }),
       setEntities: (entities) => set({ entities }),
       setAssignableUsers: (users) => set({ assignableUsers: users }),
@@ -128,305 +124,132 @@ export const useEntityStore = create<EntityState>()(
         assignments: state.assignments.filter(a => a.id !== assignmentId)
       })),
 
-      // Assignment operations
       createAssignment: async (userId: string, entityId: string) => {
-        const authStore = (window as any).authStore?.getState?.();
-        const token = authStore?.token;
-        
-        if (!token) {
-          console.error('No auth token available');
-          return false;
-        }
+        const token = getAuthToken();
+        if (!token) return false;
 
-        try {
-          const response = await fetch('/api/v1/entity-assignments', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              userId,
-              entityId,
-              assignedBy: authStore.user?.id
-            }),
-          });
+        const assignedBy = useAuthStore.getState().user?.id;
+        const result = await apiPost('/api/v1/entity-assignments', { userId, entityId, assignedBy });
 
-          if (!response.ok) {
-            const error = await response.json();
-            console.error('Error creating assignment:', error.error);
-            return false;
-          }
+        if (!result.success) return false;
 
-          const result = await response.json();
-          get().addAssignment(result.data);
-          return true;
-        } catch (error) {
-          console.error('Error creating assignment:', error);
-          return false;
-        }
+        get().addAssignment(result.data);
+        return true;
       },
 
       createBulkAssignments: async (userIds: string[], entityIds: string[]) => {
-        const authStore = (window as any).authStore?.getState?.();
-        const token = authStore?.token;
-        
-        if (!token) {
-          console.error('No auth token available');
-          return false;
-        }
+        const token = getAuthToken();
+        if (!token) return false;
 
-        try {
-          const response = await fetch('/api/v1/entity-assignments/bulk', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              userIds,
-              entityIds,
-              assignedBy: authStore.user?.id
-            }),
-          });
+        const assignedBy = useAuthStore.getState().user?.id;
+        const result = await apiPost('/api/v1/entity-assignments/bulk', { userIds, entityIds, assignedBy });
 
-          if (!response.ok) {
-            const error = await response.json();
-            console.error('Error creating bulk assignments:', error.error);
-            return false;
-          }
+        if (!result.success) return false;
 
-          const result = await response.json();
-          
-          // Add new assignments to store
-          const currentAssignments = get().assignments;
-          set({ assignments: [...currentAssignments, ...result.data] });
-          
-          return true;
-        } catch (error) {
-          console.error('Error creating bulk assignments:', error);
-          return false;
-        }
+        const currentAssignments = get().assignments;
+        set({ assignments: [...currentAssignments, ...result.data] });
+        return true;
       },
 
       deleteAssignment: async (assignmentId: string) => {
-        const authStore = (window as any).authStore?.getState?.();
-        const token = authStore?.token;
-        
-        if (!token) {
-          console.error('No auth token available');
-          return false;
-        }
+        const token = getAuthToken();
+        if (!token) return false;
 
-        try {
-          const response = await fetch(`/api/v1/entity-assignments/${assignmentId}`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          });
+        const result = await apiDelete(`/api/v1/entity-assignments/${assignmentId}`);
 
-          if (!response.ok) {
-            const error = await response.json();
-            console.error('Error deleting assignment:', error.error);
-            return false;
-          }
+        if (!result.success) return false;
 
-          get().removeAssignment(assignmentId);
-          return true;
-        } catch (error) {
-          console.error('Error deleting assignment:', error);
-          return false;
-        }
+        get().removeAssignment(assignmentId);
+        return true;
       },
 
-      // Data fetching
       fetchAssignments: async (page = 1) => {
-        const authStore = (window as any).authStore?.getState?.();
-        const token = authStore?.token;
-        
-        if (!token) {
-          console.error('No auth token available');
-          return;
-        }
+        const token = getAuthToken();
+        if (!token) return;
 
         set({ isLoading: true });
 
-        try {
-          const response = await fetch(`/api/v1/entity-assignments?page=${page}&limit=10`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          });
+        const result = await apiGet<{ assignments: EntityAssignment[]; pagination: { page: number; totalPages: number } }>(`/api/v1/entity-assignments?page=${page}&limit=10`);
 
-          if (!response.ok) {
-            throw new Error('Failed to fetch assignments');
-          }
-
-          const result = await response.json();
+        if (result.success && result.data) {
           set({ 
-            assignments: result.data,
-            currentPage: result.pagination.page,
-            totalPages: result.pagination.pages,
+            assignments: result.data.assignments,
+            currentPage: result.data.pagination?.page ?? page,
+            totalPages: result.data.pagination?.totalPages ?? 1,
             isLoading: false 
           });
-        } catch (error) {
-          console.error('Error fetching assignments:', error);
+        } else {
           set({ isLoading: false });
         }
       },
 
       fetchEntities: async () => {
-        const authStore = (window as any).authStore?.getState?.();
-        const token = authStore?.token;
-        
-        if (!token) {
-          console.error('No auth token available');
-          return;
-        }
+        const token = getAuthToken();
+        if (!token) return;
 
-        try {
-          // Assume entities endpoint exists - would need to be created
-          const response = await fetch('/api/v1/entities', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          });
+        const result = await apiGet<Entity[]>('/api/v1/entities');
 
-          if (!response.ok) {
-            throw new Error('Failed to fetch entities');
-          }
-
-          const result = await response.json();
+        if (result.success && result.data) {
           set({ entities: result.data });
-        } catch (error) {
-          console.error('Error fetching entities:', error);
         }
       },
 
       fetchAssignableUsers: async () => {
-        const authStore = (window as any).authStore?.getState?.();
-        const token = authStore?.token;
-        
-        if (!token) {
-          console.error('No auth token available');
-          return;
-        }
+        const token = getAuthToken();
+        if (!token) return;
 
-        try {
-          // Fetch users with ASSESSOR or RESPONDER roles
-          const response = await fetch('/api/v1/users?roles=ASSESSOR,RESPONDER', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          });
+        const result = await apiGet<User[]>('/api/v1/users?roles=ASSESSOR,RESPONDER');
 
-          if (!response.ok) {
-            throw new Error('Failed to fetch assignable users');
-          }
-
-          const result = await response.json();
+        if (result.success && result.data) {
           set({ assignableUsers: result.data });
-        } catch (error) {
-          console.error('Error fetching assignable users:', error);
         }
       },
 
       fetchUserAssignments: async (userId: string) => {
-        const authStore = (window as any).authStore?.getState?.();
-        const token = authStore?.token;
-        
-        if (!token) {
-          console.error('No auth token available');
-          return [];
-        }
+        const token = getAuthToken();
+        if (!token) return [];
 
-        try {
-          const response = await fetch(`/api/v1/entity-assignments/user/${userId}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to fetch user assignments');
-          }
-
-          const result = await response.json();
-          return result.data;
-        } catch (error) {
-          console.error('Error fetching user assignments:', error);
-          return [];
-        }
+        const result = await apiGet<EntityAssignment[]>(`/api/v1/entity-assignments/user/${userId}`);
+        return result.success && result.data ? result.data : [];
       },
 
       fetchEntityAssignments: async (entityId: string) => {
-        const authStore = (window as any).authStore?.getState?.();
-        const token = authStore?.token;
-        
-        if (!token) {
-          console.error('No auth token available');
-          return [];
-        }
+        const token = getAuthToken();
+        if (!token) return [];
 
-        try {
-          const response = await fetch(`/api/v1/entity-assignments/entity/${entityId}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to fetch entity assignments');
-          }
-
-          const result = await response.json();
-          return result.data;
-        } catch (error) {
-          console.error('Error fetching entity assignments:', error);
-          return [];
-        }
+        const result = await apiGet<EntityAssignment[]>(`/api/v1/entity-assignments/entity/${entityId}`);
+        return result.success && result.data ? result.data : [];
       },
 
-      // UI state management
       setLoading: (loading) => set({ isLoading: loading }),
-      
       setSelectedEntities: (entityIds) => set({ selectedEntities: entityIds }),
-      
       setSelectedUsers: (userIds) => set({ selectedUsers: userIds }),
-      
       toggleEntitySelection: (entityId) => set((state) => ({
         selectedEntities: state.selectedEntities.includes(entityId)
           ? state.selectedEntities.filter(id => id !== entityId)
           : [...state.selectedEntities, entityId]
       })),
-      
       toggleUserSelection: (userId) => set((state) => ({
         selectedUsers: state.selectedUsers.includes(userId)
           ? state.selectedUsers.filter(id => id !== userId)
           : [...state.selectedUsers, userId]
       })),
-      
       clearSelections: () => set({ selectedEntities: [], selectedUsers: [] }),
-      
       setBulkAssignModalOpen: (open) => set({ bulkAssignModalOpen: open }),
-      
       setAssignmentSearchQuery: (query) => set({ assignmentSearchQuery: query }),
 
-      // Utility functions
       getUserAssignedEntities: (userId: string) => {
         const state = get();
         const userAssignments = state.assignments.filter(a => a.userId === userId);
         return userAssignments.map(a => a.entity).map(entityData => {
-          // Find full entity data
           const fullEntity = state.entities.find(e => e.id === entityData.id);
           return fullEntity || {
             id: entityData.id,
             name: entityData.name,
             type: entityData.type,
             location: entityData.location,
-            coordinates: null,
-            metadata: null,
+            coordinates: null as { lat: number; lng: number } | null,
+            metadata: null as Record<string, unknown> | null,
             isActive: true,
             createdAt: '',
             updatedAt: ''

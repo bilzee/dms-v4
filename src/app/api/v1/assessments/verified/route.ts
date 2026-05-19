@@ -9,6 +9,14 @@ const VerifiedAssessmentsQuerySchema = z.object({
 
 export const GET = withAuth(async (request, context) => {
   try {
+    // RBAC: ASSESSOR, COORDINATOR, ADMIN can view verified assessments
+    if (!context.roles.some(r => ['ASSESSOR', 'COORDINATOR', 'ADMIN'].includes(r))) {
+      return NextResponse.json(
+        { error: 'Insufficient permissions to view verified assessments', meta: { timestamp: new Date().toISOString(), version: '1.0.0' } },
+        { status: 403 }
+      );
+    }
+
     const url = new URL(request.url)
     const searchParams = Object.fromEntries(url.searchParams)
     

@@ -1,26 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
-
-const secret = process.env.NEXTAUTH_SECRET
+import { withAuth, AuthContext } from '@/lib/auth/middleware'
 
 // For demo purposes, store changes in memory
 // In production, this would be stored in a database
 const thresholdUpdates: Record<string, any> = {}
 
-export async function GET(
+export const GET = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    // Verify authentication
-    const token = await getToken({ req: request, secret })
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
     const { id } = params
 
     // In a real implementation, fetch from database
@@ -55,20 +45,20 @@ export async function GET(
       { status: 500 }
     )
   }
-}
+})
 
-export async function PUT(
+export const PUT = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    // Verify authentication
-    const token = await getToken({ req: request, secret })
-    if (!token) {
+    // RBAC: Only ADMIN and COORDINATOR can update severity thresholds
+    if (!context.roles.some(r => ['ADMIN', 'COORDINATOR'].includes(r))) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+        { success: false, error: 'Insufficient permissions to update severity thresholds' },
+        { status: 403 }
+      );
     }
 
     const { id } = params
@@ -128,20 +118,20 @@ export async function PUT(
       { status: 500 }
     )
   }
-}
+})
 
-export async function DELETE(
+export const DELETE = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    // Verify authentication
-    const token = await getToken({ req: request, secret })
-    if (!token) {
+    // RBAC: Only ADMIN can delete severity thresholds
+    if (!context.roles.includes('ADMIN')) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
+        { success: false, error: 'Insufficient permissions to delete severity thresholds' },
+        { status: 403 }
+      );
     }
 
     const { id } = params
@@ -165,4 +155,4 @@ export async function DELETE(
       { status: 500 }
     )
   }
-}
+})

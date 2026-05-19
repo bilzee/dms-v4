@@ -1,25 +1,25 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { conflictResolver } from '@/lib/sync/conflict';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
+import { successResponse, errorResponse, handleApiError } from '@/lib/api/response';
 
-// Prevent static generation during build
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    // Authorization check (coordinator role required)
-    // TODO: Implement proper role checking when auth system is available
-    
-    // Get conflict statistics
+    if (!context.roles.includes('COORDINATOR') && !context.roles.includes('ADMIN')) {
+      return errorResponse('Insufficient permissions. Coordinator or Admin role required.', 403);
+    }
+
     const stats = await conflictResolver.getConflictStats();
-    
-    // Transform stats for API response
+
     const summary = {
       totalConflicts: stats.total,
       unresolvedConflicts: stats.unresolved,
       autoResolvedConflicts: stats.autoResolved,
       manuallyResolvedConflicts: stats.manuallyResolved,
-      resolutionRate: stats.total > 0 ? 
-        Math.round(((stats.autoResolved + stats.manuallyResolved) / stats.total) * 100) : 0,
+      resolutionRate: stats.total > 0
+        ? Math.round(((stats.autoResolved + stats.manuallyResolved) / stats.total) * 100) : 0,
       conflictsByType: {
         assessment: stats.byType.assessment,
         response: stats.byType.response,
@@ -33,24 +33,12 @@ export async function GET(request: NextRequest) {
         isResolved: conflict.isResolved,
         resolutionMethod: conflict.resolutionStrategy.toUpperCase(),
         autoResolved: conflict.metadata?.autoResolved || false
-      })),
-      lastUpdated: new Date().toISOString()
+      }))
     };
-    
-    return NextResponse.json({
-      success: true,
-      data: summary
-    });
-    
+
+    return successResponse(summary);
+
   } catch (error) {
-    console.error('Error retrieving conflict summary:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to retrieve conflict summary',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
-}
+});

@@ -4,6 +4,13 @@ import { MultiUserAssignmentService } from '@/lib/assignment/multi-user-service'
 
 export const GET = withAuth(async (request: NextRequest, context) => {
   try {
+    // RBAC: Only COORDINATOR and ADMIN can view collaboration data
+    if (!context.roles.some(r => ['COORDINATOR', 'ADMIN'].includes(r))) {
+      return NextResponse.json(
+        { error: 'Insufficient permissions to view collaboration data' },
+        { status: 403 }
+      );
+    }
 
     const url = new URL(request.url);
     const entityId = url.searchParams.get('entityId');

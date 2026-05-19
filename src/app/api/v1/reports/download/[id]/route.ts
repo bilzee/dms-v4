@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { db } from '@/lib/db/client';
 import { createApiResponse } from '@/types/api';
 import { promises as fs } from 'fs';
@@ -14,19 +14,12 @@ import path from 'path';
  * GET /api/v1/reports/download/[id]
  * Download generated report file
  */
-export async function GET(
+export const GET = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Unauthorized'),
-        { status: 401 }
-      );
-    }
-
     const executionId = params.id;
 
     // Get execution with related configuration and template
@@ -64,7 +57,7 @@ export async function GET(
     }
 
     // Check if user has access to this report
-    const hasAccess = execution.configuration.createdBy === (session.user as any).id || 
+    const hasAccess = execution.configuration.createdBy === context.userId || 
                        execution.configuration.template?.isPublic;
 
     if (!hasAccess) {
@@ -158,7 +151,7 @@ export async function GET(
     // Log download for audit
     await db.auditLog.create({
       data: {
-        userId: (session.user as any).id,
+        userId: context.userId,
         action: 'REPORT_DOWNLOADED',
         resource: 'ReportExecution',
         resourceId: executionId,
@@ -224,7 +217,7 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * GET /api/v1/reports/download/[id]/info
@@ -232,17 +225,10 @@ export async function GET(
  */
 async function GET_INFO(
   request: NextRequest,
+  userId: string,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Unauthorized'),
-        { status: 401 }
-      );
-    }
-
     const executionId = params.id;
 
     // Get execution with related configuration and template
@@ -280,7 +266,7 @@ async function GET_INFO(
     }
 
     // Check if user has access to this report
-    const hasAccess = execution.configuration.createdBy === (session.user as any).id || 
+    const hasAccess = execution.configuration.createdBy === userId || 
                        execution.configuration.template?.isPublic;
 
     if (!hasAccess) {
@@ -340,7 +326,7 @@ async function GET_INFO(
       where: {
         action: 'REPORT_DOWNLOADED',
         resourceId: executionId,
-        userId: (session.user as any).id
+        userId: userId
       },
       orderBy: { timestamp: 'desc' },
       take: 10
@@ -362,7 +348,7 @@ async function GET_INFO(
         templateName: execution.configuration.template?.name,
         creatorName: execution.configuration.creator?.name,
         createdBy: execution.configuration.createdBy,
-        isOwner: execution.configuration.createdBy === (session.user as any).id,
+        isOwner: execution.configuration.createdBy === userId,
         hasPublicTemplate: execution.configuration.template?.isPublic
       },
       file: fileInfo,

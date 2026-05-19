@@ -1,11 +1,24 @@
-// Verification broadcast service for real-time updates
-// This service handles WebSocket broadcasting and queue snapshots
+import { prisma } from '@/lib/db/client';
 
-// Helper function to broadcast updates to connected clients
+interface QueueMetrics {
+  totalPending: number;
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+}
+
+interface QueueSnapshot {
+  timestamp: string;
+  assessments: QueueMetrics;
+  deliveries: QueueMetrics;
+  totalPending: number;
+}
+
 export function broadcastVerificationUpdate(update: {
   type: 'assessment' | 'delivery';
   action: 'created' | 'updated' | 'verified' | 'rejected';
-  data: any;
+  data: Record<string, unknown>;
 }) {
   const message = JSON.stringify({
     messageType: 'verification_update',
@@ -13,15 +26,11 @@ export function broadcastVerificationUpdate(update: {
     ...update
   });
 
-  // In a full WebSocket implementation, this would send to all connected clients
-  // For now, this is a placeholder for future WebSocket functionality
   console.log('Broadcasting verification update:', message);
 }
 
-// Helper function to get current queue status for real-time updates
-export async function getQueueSnapshot() {
+export async function getQueueSnapshot(): Promise<QueueSnapshot | null> {
   try {
-    // Get current queue metrics for both assessments and deliveries
     const [assessmentMetrics, deliveryMetrics] = await Promise.all([
       getAssessmentQueueMetrics(),
       getDeliveryQueueMetrics()
@@ -31,7 +40,7 @@ export async function getQueueSnapshot() {
       timestamp: new Date().toISOString(),
       assessments: assessmentMetrics,
       deliveries: deliveryMetrics,
-      totalPending: (assessmentMetrics.totalPending || 0) + (deliveryMetrics.totalPending || 0)
+      totalPending: assessmentMetrics.totalPending + deliveryMetrics.totalPending
     };
   } catch (error) {
     console.error('Error getting queue snapshot:', error);
@@ -39,11 +48,13 @@ export async function getQueueSnapshot() {
   }
 }
 
-async function getAssessmentQueueMetrics() {
-  // This would query the database for current assessment queue metrics
-  // Implementation depends on your database setup
+async function getAssessmentQueueMetrics(): Promise<QueueMetrics> {
+  const unverified = await prisma.rapidAssessment.count({
+    where: { verificationStatus: 'SUBMITTED' }
+  });
+
   return {
-    totalPending: 0, // Placeholder
+    totalPending: unverified,
     critical: 0,
     high: 0,
     medium: 0,
@@ -51,11 +62,13 @@ async function getAssessmentQueueMetrics() {
   };
 }
 
-async function getDeliveryQueueMetrics() {
-  // This would query the database for current delivery queue metrics
-  // Implementation depends on your database setup
+async function getDeliveryQueueMetrics(): Promise<QueueMetrics> {
+  const unverified = await prisma.rapidResponse.count({
+    where: { verificationStatus: 'SUBMITTED' }
+  });
+
   return {
-    totalPending: 0, // Placeholder
+    totalPending: unverified,
     critical: 0,
     high: 0,
     medium: 0,

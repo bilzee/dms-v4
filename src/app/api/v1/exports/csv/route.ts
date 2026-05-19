@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { db } from '@/lib/db/client';
 import { z } from 'zod';
 
@@ -12,32 +11,25 @@ const CSVExportRequestSchema = z.object({
   filters: z.record(z.any()).optional(),
 });
 
-const ROLE_PERMISSIONS = {
-  assessor: ['assessments'],
-  coordinator: ['assessments', 'responses', 'entities', 'incidents'],
-  responder: ['responses', 'entities', 'incidents'],
-  donor: ['commitments'],
-  admin: ['assessments', 'responses', 'entities', 'incidents', 'commitments'],
+const ROLE_PERMISSIONS: Record<string, string[]> = {
+  ASSESSOR: ['assessments'],
+  COORDINATOR: ['assessments', 'responses', 'entities', 'incidents'],
+  RESPONDER: ['responses', 'entities', 'incidents'],
+  DONOR: ['commitments'],
+  ADMIN: ['assessments', 'responses', 'entities', 'incidents', 'commitments'],
 };
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const validatedData = CSVExportRequestSchema.parse(body);
 
-    // Check role-based permissions
-    const userRole = (session.user as any).role as string;
-    const allowedDataTypes = ROLE_PERMISSIONS[userRole as keyof typeof ROLE_PERMISSIONS] || [];
+    // Check role-based permissions using context.roles
+    const allowedDataTypes = context.roles
+      .flatMap(role => ROLE_PERMISSIONS[role] || []);
+    const uniqueAllowed = [...new Set(allowedDataTypes)];
     
-    if (!allowedDataTypes.includes(validatedData.dataType)) {
+    if (!uniqueAllowed.includes(validatedData.dataType)) {
       return NextResponse.json(
         { success: false, error: 'Insufficient permissions for this data type' },
         { status: 403 }
@@ -45,6 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate CSV data based on type
+    const userRole = context.roles[0] || '';
     const csvData = await generateCSVData(validatedData, userRole);
     
     // Generate filename with timestamp
@@ -67,7 +60,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 async function generateCSVData(request: z.infer<typeof CSVExportRequestSchema>, userRole: string): Promise<string> {
   const { dataType, startDate, endDate, filters } = request;
@@ -311,9 +304,9 @@ async function generateCommitmentsCSV(userRole: string, startDate?: string, endD
     }),
   };
 
-  // Note: Additional donor filtering would need session context
+  // Note: Additional donor filtering could be added using context.user
   // if (userRole === 'donor') {
-  //   whereClause.donorId = session?.user?.organizationId;
+  //   whereClause.donorId = (context.user as any).organizationId;
   // }
 
   const commitments = await db.donorCommitment.findMany({
@@ -380,23 +373,17 @@ async function generateCommitmentsCSV(userRole: string, startDate?: string, endD
 }
 
 // Get available export types for current user
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const userRole = (session.user as any).role as string;
-    const allowedDataTypes = ROLE_PERMISSIONS[userRole as keyof typeof ROLE_PERMISSIONS] || [];
+    // Use context.roles instead of (context.user as any).role
+    const allowedDataTypes = context.roles
+      .flatMap(role => ROLE_PERMISSIONS[role] || []);
+    const uniqueAllowed = [...new Set(allowedDataTypes)];
 
     return NextResponse.json({
       success: true,
       data: {
-        availableExports: allowedDataTypes,
+        availableExports: uniqueAllowed,
         formats: ['csv', 'xlsx'],
         maxFileSize: '50MB',
       },
@@ -408,4 +395,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

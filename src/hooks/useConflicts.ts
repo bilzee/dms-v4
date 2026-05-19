@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { apiGet } from '@/lib/api';
 import { ConflictApiResponse, ConflictSummary, ConflictFilters, PaginatedConflictResponse } from '@/types/conflict';
 
 interface UseConflictsReturn {
@@ -43,19 +44,13 @@ export function useConflicts(): UseConflictsReturn {
       if (filters.dateFrom) queryParams.set('dateFrom', filters.dateFrom);
       if (filters.dateTo) queryParams.set('dateTo', filters.dateTo);
 
-      const response = await fetch(`/api/v1/sync/conflicts?${queryParams.toString()}`);
+      const result = await apiGet<PaginatedConflictResponse>(`/api/v1/sync/conflicts?${queryParams.toString()}`);
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data: PaginatedConflictResponse = await response.json();
-      
-      if (data.success) {
-        setConflicts(data.data);
-        setPagination(data.pagination);
+      if (result.success && result.data) {
+        setConflicts(result.data.data);
+        setPagination(result.data.pagination);
       } else {
-        throw new Error('Failed to fetch conflicts');
+        throw new Error(result.error || 'Failed to fetch conflicts');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch conflicts');
@@ -67,18 +62,12 @@ export function useConflicts(): UseConflictsReturn {
 
   const fetchSummary = useCallback(async () => {
     try {
-      const response = await fetch('/api/v1/sync/conflicts/summary');
+      const result = await apiGet<ConflictSummary>('/api/v1/sync/conflicts/summary');
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.success) {
-        setSummary(data.data);
+      if (result.success && result.data) {
+        setSummary(result.data);
       } else {
-        throw new Error('Failed to fetch conflict summary');
+        throw new Error(result.error || 'Failed to fetch conflict summary');
       }
     } catch (err) {
       console.error('Error fetching conflict summary:', err);
@@ -95,6 +84,7 @@ export function useConflicts(): UseConflictsReturn {
       if (filters.dateFrom) queryParams.set('dateFrom', filters.dateFrom);
       if (filters.dateTo) queryParams.set('dateTo', filters.dateTo);
 
+      // Keep raw fetch for CSV file download (apiGet parses JSON)
       const response = await fetch(`/api/v1/sync/conflicts/export?${queryParams.toString()}`);
       
       if (!response.ok) {

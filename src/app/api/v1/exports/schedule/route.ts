@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { db } from '@/lib/db/client';
 import { z } from 'zod';
 
@@ -46,12 +45,12 @@ const ScheduleReportRequestSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-const ROLE_PERMISSIONS = {
-  assessor: ['assessment-summary'],
-  coordinator: ['incident-overview', 'assessment-summary', 'response-activity', 'resource-allocation', 'entity-status'],
-  responder: ['response-activity', 'resource-allocation', 'entity-status'],
-  donor: ['response-activity'],
-  admin: ['incident-overview', 'assessment-summary', 'response-activity', 'resource-allocation', 'entity-status', 'custom-dashboard'],
+const ROLE_PERMISSIONS: Record<string, string[]> = {
+  ASSESSOR: ['assessment-summary'],
+  COORDINATOR: ['incident-overview', 'assessment-summary', 'response-activity', 'resource-allocation', 'entity-status'],
+  RESPONDER: ['response-activity', 'resource-allocation', 'entity-status'],
+  DONOR: ['response-activity'],
+  ADMIN: ['incident-overview', 'assessment-summary', 'response-activity', 'resource-allocation', 'entity-status', 'custom-dashboard'],
 };
 
 // Scheduled reports storage (in production, use proper database table)
@@ -75,24 +74,18 @@ const scheduledReports: Map<string, ScheduledReport> = new Map();
 // In-memory cron job manager (in production, use proper job queue like Bull/Agenda)
 const cronJobs: Map<string, NodeJS.Timeout> = new Map();
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const userRole = (session.user as any).role as string;
-    const allowedReports = ROLE_PERMISSIONS[userRole as keyof typeof ROLE_PERMISSIONS] || [];
+    // Use context.roles instead of (context.user as any).role
+    const allowedReports = context.roles
+      .flatMap(role => ROLE_PERMISSIONS[role] || []);
+    const uniqueAllowed = [...new Set(allowedReports)];
 
     const body = await request.json();
     const validatedData = ScheduleReportRequestSchema.parse(body);
 
     // Check role-based permissions
-    if (!allowedReports.includes(validatedData.reportType)) {
+    if (!uniqueAllowed.includes(validatedData.reportType)) {
       return NextResponse.json(
         { success: false, error: 'Insufficient permissions for this report type' },
         { status: 403 }
@@ -104,7 +97,7 @@ export async function POST(request: NextRequest) {
     
     const scheduledReport: ScheduledReport = {
       id: scheduledReportId,
-      userId: (session.user as any).id,
+      userId: context.userId,
       reportType: validatedData.reportType,
       schedule: validatedData.schedule,
       recipients: validatedData.recipients,
@@ -142,18 +135,10 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const reportId = searchParams.get('id');
 
@@ -169,7 +154,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Check ownership
-      if (report.userId !== (session.user as any).id) {
+      if (report.userId !== context.userId) {
         return NextResponse.json(
           { success: false, error: 'Access denied' },
           { status: 403 }
@@ -183,7 +168,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Get all scheduled reports for user
       const userReports = Array.from(scheduledReports.values())
-        .filter(report => report.userId === (session.user as any).id);
+        .filter(report => report.userId === context.userId);
 
       return NextResponse.json({
         success: true,
@@ -206,18 +191,10 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function PUT(request: NextRequest) {
+export const PUT = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const reportId = searchParams.get('id');
 
@@ -237,7 +214,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check ownership
-    if (existingReport.userId !== (session.user as any).id) {
+    if (existingReport.userId !== context.userId) {
       return NextResponse.json(
         { success: false, error: 'Access denied' },
         { status: 403 }
@@ -294,18 +271,10 @@ export async function PUT(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(request: NextRequest) {
+export const DELETE = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const reportId = searchParams.get('id');
 
@@ -325,7 +294,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Check ownership
-    if (existingReport.userId !== (session.user as any).id) {
+    if (existingReport.userId !== context.userId) {
       return NextResponse.json(
         { success: false, error: 'Access denied' },
         { status: 403 }
@@ -353,7 +322,7 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 function calculateNextRun(schedule: any): Date {
   const now = new Date();
@@ -452,8 +421,6 @@ function scheduleReportJob(reportId: string, scheduledReport: ScheduledReport): 
 }
 
 async function executeScheduledReport(reportId: string, scheduledReport: ScheduledReport): Promise<void> {
-  console.log(`Executing scheduled report: ${reportId} (${scheduledReport.reportType})`);
-  
   // Calculate date range based on default settings
   const now = new Date();
   let startDate: Date;
@@ -527,8 +494,6 @@ async function executeScheduledReport(reportId: string, scheduledReport: Schedul
 }
 
 async function sendReportEmail(recipient: any, reportData: any, scheduledReport: ScheduledReport): Promise<void> {
-  console.log(`Sending report email to ${recipient.email} (${recipient.format})`);
-  
   // In production, implement actual email sending with services like:
   // - SendGrid, AWS SES, Nodemailer, etc.
   // - Include report attachment or download link
@@ -552,5 +517,4 @@ async function sendReportEmail(recipient: any, reportData: any, scheduledReport:
     `,
   };
   
-  console.log('Email content (in production, would be sent):', emailContent);
 }

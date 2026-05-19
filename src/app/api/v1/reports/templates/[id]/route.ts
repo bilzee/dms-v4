@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { z } from 'zod';
 import { db } from '@/lib/db/client';
 import { ReportTemplateEngine } from '@/lib/reports/template-engine';
@@ -25,22 +25,14 @@ const UpdateTemplateSchema = z.object({
  * GET /api/v1/reports/templates/[id]
  * Get specific report template with preview data
  */
-export async function GET(
+export const GET = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Unauthorized'),
-        { status: 401 }
-      );
-    }
-
     const templateId = params.id;
 
-    // Check if it's a default template
     if (templateId.startsWith('default_')) {
       const defaultTemplateName = templateId.replace('default_', '').replace(/_/g, ' ');
       const defaultTemplate = await import('@/lib/reports/template-engine')
@@ -58,9 +50,8 @@ export async function GET(
         );
       }
 
-      // const mockData = ReportTemplateEngine.generateMockData(defaultTemplate);
       const preview = ReportTemplateEngine.renderTemplatePreview(defaultTemplate);
-      const mockData = {}; // Temporary placeholder
+      const mockData = {};
 
       return NextResponse.json(
         createApiResponse(true, {
@@ -74,12 +65,11 @@ export async function GET(
       );
     }
 
-    // Get user template
     const template = await db.reportTemplate.findFirst({
       where: {
         id: templateId,
         OR: [
-          { createdById: (session.user as any).id },
+          { createdById: context.userId },
           { isPublic: true }
         ]
       },
@@ -106,7 +96,6 @@ export async function GET(
       );
     }
 
-    // Generate preview for the template
     const preview = ReportTemplateEngine.renderTemplatePreview(template as any);
 
     return NextResponse.json(
@@ -124,28 +113,20 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * PATCH /api/v1/reports/templates/[id]
  * Update specific report template
  */
-export async function PATCH(
+export const PATCH = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Unauthorized'),
-        { status: 401 }
-      );
-    }
-
     const templateId = params.id;
 
-    // Don't allow updating default templates
     if (templateId.startsWith('default_')) {
       return NextResponse.json(
         createApiResponse(false, null, 'Default templates cannot be modified'),
@@ -153,11 +134,10 @@ export async function PATCH(
       );
     }
 
-    // Check if user owns the template
     const existingTemplate = await db.reportTemplate.findFirst({
       where: {
         id: templateId,
-        createdById: (session.user as any).id
+        createdById: context.userId
       }
     });
 
@@ -168,26 +148,8 @@ export async function PATCH(
       );
     }
 
-    // Check user permissions
-    const userRoles = await db.userRole.findMany({
-      where: { userId: (session.user as any).id },
-      include: {
-        role: {
-          include: {
-            permissions: {
-              include: { permission: true }
-            }
-          }
-        }
-      }
-    });
-
-    const hasPermission = userRoles.some(userRole =>
-      userRole.role.permissions.some(rolePermission =>
-        rolePermission.permission.code === 'REPORT_UPDATE' ||
-        rolePermission.permission.code === 'ADMIN'
-      )
-    );
+    const hasPermission = context.permissions.includes('REPORT_UPDATE') ||
+                          context.permissions.includes('ADMIN');
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -199,7 +161,6 @@ export async function PATCH(
     const body = await request.json();
     const validatedData = UpdateTemplateSchema.parse(body);
 
-    // Validate updated template structure if layout is being updated
     if (validatedData.layout) {
       const updatedTemplate = {
         ...existingTemplate,
@@ -215,7 +176,6 @@ export async function PATCH(
       }
     }
 
-    // Update template
     const updatedTemplate = await db.reportTemplate.update({
       where: { id: templateId },
       data: validatedData,
@@ -255,28 +215,20 @@ export async function PATCH(
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/v1/reports/templates/[id]
  * Delete specific report template
  */
-export async function DELETE(
+export const DELETE = withAuth(async (
   request: NextRequest,
+  context: AuthContext,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Unauthorized'),
-        { status: 401 }
-      );
-    }
-
     const templateId = params.id;
 
-    // Don't allow deleting default templates
     if (templateId.startsWith('default_')) {
       return NextResponse.json(
         createApiResponse(false, null, 'Default templates cannot be deleted'),
@@ -284,11 +236,10 @@ export async function DELETE(
       );
     }
 
-    // Check if user owns the template
     const existingTemplate = await db.reportTemplate.findFirst({
       where: {
         id: templateId,
-        createdById: (session.user as any).id
+        createdById: context.userId
       }
     });
 
@@ -299,26 +250,8 @@ export async function DELETE(
       );
     }
 
-    // Check user permissions
-    const userRoles = await db.userRole.findMany({
-      where: { userId: (session.user as any).id },
-      include: {
-        role: {
-          include: {
-            permissions: {
-              include: { permission: true }
-            }
-          }
-        }
-      }
-    });
-
-    const hasPermission = userRoles.some(userRole =>
-      userRole.role.permissions.some(rolePermission =>
-        rolePermission.permission.code === 'REPORT_DELETE' ||
-        rolePermission.permission.code === 'ADMIN'
-      )
-    );
+    const hasPermission = context.permissions.includes('REPORT_DELETE') ||
+                          context.permissions.includes('ADMIN');
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -327,7 +260,6 @@ export async function DELETE(
       );
     }
 
-    // Check if template has configurations
     const configurationsCount = await db.reportConfiguration.count({
       where: { templateId }
     });
@@ -339,7 +271,6 @@ export async function DELETE(
       );
     }
 
-    // Delete template
     await db.reportTemplate.delete({
       where: { id: templateId }
     });
@@ -356,4 +287,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
+});

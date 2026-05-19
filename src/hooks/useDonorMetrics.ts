@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { apiGet } from '@/lib/api';
 
 export interface DonorMetrics {
   donorId: string;
@@ -77,20 +78,16 @@ export function useDonorMetrics(params?: {
     queryKey: ['donor-metrics', params],
     queryFn: async () => {
       const url = `/api/v1/donors/metrics${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-      const response = await fetch(url);
+      const result = await apiGet<DonorMetricsResponse>(url);
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch donor metrics');
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch donor metrics');
       }
       
-      return response.json() as Promise<{
-        success: boolean;
-        data: DonorMetricsResponse;
-      }>;
+      return result.data!;
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
     refetchInterval: 5 * 60 * 1000, // 5 minutes
-    select: (data) => data.data
   });
 }
 

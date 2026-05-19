@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { z } from 'zod';
 import { db } from '@/lib/db/client';
 import { DataAggregator, ReportFilters, ReportFiltersSchema } from '@/lib/reports/data-aggregator';
@@ -70,38 +70,12 @@ const ScheduleReportSchema = z.object({
  * POST /api/v1/reports/generate
  * Generate report immediately
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest, context: AuthContext) => {
   const startTime = Date.now();
 
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Unauthorized'),
-        { status: 401 }
-      );
-    }
-
-    // Check user permissions
-    const userRoles = await db.userRole.findMany({
-      where: { userId: (session.user as any).id },
-      include: {
-        role: {
-          include: {
-            permissions: {
-              include: { permission: true }
-            }
-          }
-        }
-      }
-    });
-
-    const hasPermission = userRoles.some(userRole =>
-      userRole.role.permissions.some(rolePermission =>
-        rolePermission.permission.code === 'REPORT_GENERATE' ||
-        rolePermission.permission.code === 'ADMIN'
-      )
-    );
+    const hasPermission = context.permissions.includes('REPORT_GENERATE') ||
+                          context.permissions.includes('ADMIN');
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -113,18 +87,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = GenerateReportSchema.parse(body);
 
-    // Get or create report configuration
     let template;
     let filters;
     let configurationId = validatedData.configurationId;
 
     if (validatedData.configurationId) {
-      // Use existing configuration
       const configuration = await db.reportConfiguration.findFirst({
         where: {
           id: validatedData.configurationId,
           OR: [
-            { createdBy: (session.user as any).id },
+            { createdBy: context.userId },
             { template: { isPublic: true } }
           ]
         },
@@ -143,7 +115,6 @@ export async function POST(request: NextRequest) {
       template = configuration.template;
       filters = configuration.filters as ReportFilters;
     } else if (validatedData.templateId) {
-      // Use existing template
       const templateResult = await fetch(
         `${process.env.NEXTAUTH_URL}/api/v1/reports/templates/${validatedData.templateId}`,
         {
@@ -164,7 +135,6 @@ export async function POST(request: NextRequest) {
       template = templateResponse.data;
       filters = validatedData.filters || { filters: [], aggregations: [], limit: 100 };
       
-      // Create temporary configuration for templateId
       const tempConfig = await db.reportConfiguration.create({
         data: {
           templateId: validatedData.templateId,
@@ -172,18 +142,17 @@ export async function POST(request: NextRequest) {
           filters: filters,
           aggregations: [],
           visualizations: [],
-          createdBy: (session.user as any).id
+          createdBy: context.userId
         }
       });
       configurationId = tempConfig.id;
     } else if (validatedData.template) {
-      // Use inline template - need to save as temporary template first
       const tempTemplate = await db.reportTemplate.create({
         data: {
           name: `Temp template ${Date.now()}`,
           type: 'CUSTOM',
           layout: validatedData.template,
-          createdById: (session.user as any).id,
+          createdById: context.userId,
           isPublic: false
         }
       });
@@ -191,7 +160,6 @@ export async function POST(request: NextRequest) {
       template = tempTemplate;
       filters = validatedData.filters || { filters: [], aggregations: [], limit: 100 };
       
-      // Create temporary configuration for inline template
       const tempConfig = await db.reportConfiguration.create({
         data: {
           templateId: tempTemplate.id,
@@ -199,7 +167,7 @@ export async function POST(request: NextRequest) {
           filters: filters,
           aggregations: [],
           visualizations: [],
-          createdBy: (session.user as any).id
+          createdBy: context.userId
         }
       });
       configurationId = tempConfig.id;
@@ -210,7 +178,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create report execution record
     const execution = await db.reportExecution.create({
       data: {
         configurationId: configurationId!,
@@ -220,22 +187,19 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Start background report generation
     const jobId = `report_${execution.id}_${Date.now()}`;
     
-    // Don't wait for completion - return immediately with execution ID
     generateReportBackground({
       executionId: execution.id,
       template,
       filters,
       format: validatedData.format,
       options: validatedData.options || {},
-      userId: (session.user as any).id,
+      userId: context.userId,
       jobId
     }).catch(error => {
       console.error(`Background report generation failed for job ${jobId}:`, error);
       
-      // Update execution with error
       db.reportExecution.update({
         where: { id: execution.id },
         data: {
@@ -273,42 +237,16 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST /api/v1/reports/schedule
  * Schedule automated report generation
  */
-export async function PUT(request: NextRequest) {
+export const PUT = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Unauthorized'),
-        { status: 401 }
-      );
-    }
-
-    // Check user permissions
-    const userRoles = await db.userRole.findMany({
-      where: { userId: (session.user as any).id },
-      include: {
-        role: {
-          include: {
-            permissions: {
-              include: { permission: true }
-            }
-          }
-        }
-      }
-    });
-
-    const hasPermission = userRoles.some(userRole =>
-      userRole.role.permissions.some(rolePermission =>
-        rolePermission.permission.code === 'REPORT_SCHEDULE' ||
-        rolePermission.permission.code === 'ADMIN'
-      )
-    );
+    const hasPermission = context.permissions.includes('REPORT_SCHEDULE') ||
+                          context.permissions.includes('ADMIN');
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -320,12 +258,11 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const validatedData = ScheduleReportSchema.parse(body);
 
-    // Validate configuration exists and user has access
     const configuration = await db.reportConfiguration.findFirst({
       where: {
         id: validatedData.configurationId,
         OR: [
-          { createdBy: (session.user as any).id },
+          { createdBy: context.userId },
           { template: { isPublic: true } }
         ]
       }
@@ -338,26 +275,23 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Create scheduled execution
     const scheduledExecution = await db.reportExecution.create({
       data: {
         configurationId: validatedData.configurationId,
         status: 'PENDING',
-        format: 'PDF', // Default format for scheduled reports
+        format: 'PDF',
         createdAt: new Date()
       }
     });
 
-    // Store schedule configuration
     const scheduleData = {
       ...validatedData.schedule,
       executionId: scheduledExecution.id,
-      userId: (session.user as any).id,
+      userId: context.userId,
       recipients: validatedData.recipients || [],
       options: validatedData.options || {}
     };
 
-    // Save schedule to file system or database
     const scheduleFile = path.join(process.cwd(), 'schedules', `${scheduledExecution.id}.json`);
     await fs.mkdir(path.dirname(scheduleFile), { recursive: true });
     await fs.writeFile(scheduleFile, JSON.stringify(scheduleData, null, 2));
@@ -387,7 +321,7 @@ export async function PUT(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * Background report generation function
@@ -410,9 +344,6 @@ async function generateReportBackground({
   jobId: string;
 }) {
   try {
-    console.log(`Starting background report generation for job ${jobId}`);
-
-    // Update execution status
     await db.reportExecution.update({
       where: { id: executionId },
       data: {
@@ -421,19 +352,16 @@ async function generateReportBackground({
       }
     });
 
-    // Determine data source from template
     const dataSource = inferDataSourceFromTemplate(template);
 
-    // Fetch data based on template and filters
     const dataResult = await DataAggregator.executeQuery(dataSource as any, {
       ...filters,
-      limit: options.includeRawData ? 10000 : 1000 // Higher limit for raw data
+      limit: options.includeRawData ? 10000 : 1000
     }, {
       includeCount: true,
       includeAggregations: true
     });
 
-    // Generate report based on format
     let filePath: string;
     let fileSize: number;
 
@@ -486,10 +414,8 @@ async function generateReportBackground({
         throw new Error(`Unsupported format: ${format}`);
     }
 
-    // Generate filename if not provided
     const filename = options.filename || generateFilename(template, format);
 
-    // Move file to final location with proper filename
     const finalPath = path.join(
       process.cwd(), 
       'reports', 
@@ -499,10 +425,8 @@ async function generateReportBackground({
     await fs.mkdir(path.dirname(finalPath), { recursive: true });
     await fs.rename(filePath, finalPath);
 
-    // Get file info
     const fileStats = await fs.stat(finalPath);
 
-    // Update execution with success
     await db.reportExecution.update({
       where: { id: executionId },
       data: {
@@ -512,10 +436,6 @@ async function generateReportBackground({
       }
     });
 
-    // Log successful generation
-    console.log(`Report generation completed for job ${jobId}: ${finalPath}`);
-
-    // Send notifications if scheduled
     await sendReportNotifications(executionId, finalPath, filename, fileSize);
 
     return {
@@ -528,7 +448,6 @@ async function generateReportBackground({
   } catch (error) {
     console.error(`Report generation failed for job ${jobId}:`, error);
     
-    // Update execution with error
     await db.reportExecution.update({
       where: { id: executionId },
       data: {
@@ -559,7 +478,6 @@ async function generatePDFReport({
   const PDFDocument = require('pdfkit').default;
   const fs = require('fs');
 
-  // Create PDF document
   const doc = new PDFDocument({
     size: options.pageSize || 'A4',
     layout: options.orientation || 'portrait',
@@ -581,17 +499,14 @@ async function generatePDFReport({
   const tempPath = path.join(process.cwd(), 'temp', `${executionId}_temp.pdf`);
   await fs.mkdir(path.dirname(tempPath), { recursive: true });
 
-  // Add content to PDF based on template layout
   doc.pipe(fs.createWriteStream(tempPath));
 
-  // Process layout elements
   if (template.layout) {
     for (const element of template.layout) {
       await addPDFElement(doc, element, data, options);
     }
   }
 
-  // Finalize PDF
   doc.end();
 
   return {
@@ -619,13 +534,11 @@ async function generateCSVReport({
 
   let csvContent = '';
 
-  // Add headers if enabled
   if (options.includeHeaders && data.length > 0) {
     const headers = Object.keys(data[0]);
     csvContent += headers.join(',') + '\n';
   }
 
-  // Add data rows
   for (const row of data) {
     const values = Object.values(row).map(value => 
       value === null || value === undefined ? '' : `"${String(value).replace(/"/g, '""')}"`
@@ -658,7 +571,6 @@ async function generateHTMLReport({
   const tempPath = path.join(process.cwd(), 'temp', `${executionId}_temp.html`);
   await fs.mkdir(path.dirname(tempPath), { recursive: true });
 
-  // Generate HTML content
   const htmlContent = await ReportTemplateEngine.renderTemplatePreview({
     ...template,
     layout: template.layout || [],
@@ -727,27 +639,22 @@ async function generateExcelReport({
   const ExcelJS = require('exceljs');
   const workbook = new ExcelJS.Workbook();
 
-  // Create worksheet
   const worksheet = workbook.addWorksheet(template.name || 'Report');
 
-  // Add headers if enabled
   if (options.includeHeaders && data.length > 0) {
     const headers = Object.keys(data[0]);
     worksheet.addRow(headers);
     
-    // Style headers
     worksheet.getRow(1).eachCell((cell: any) => {
       cell.font = { bold: true };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } };
     });
   }
 
-  // Add data rows
   for (const row of data) {
     worksheet.addRow(Object.values(row));
   }
 
-  // Auto-fit columns
   worksheet.columns.forEach((column: any) => {
     if (column.eachCell) {
       let maxLength = 0;
@@ -810,7 +717,6 @@ async function addPDFElement(doc: any, element: any, data: any[], options: any) 
         const columns = element.config.columns || Object.keys(data[0]);
         const startY = position.y * 20 + 20;
         
-        // Draw table headers
         doc.fontSize(10);
         doc.font('Helvetica-Bold');
         let currentY = startY;
@@ -821,7 +727,6 @@ async function addPDFElement(doc: any, element: any, data: any[], options: any) 
         
         currentY += 20;
         
-        // Draw table rows
         doc.font('Helvetica');
         data.slice(0, 20).forEach((row) => {
           columns.forEach((column: string, index: number) => {
@@ -832,9 +737,7 @@ async function addPDFElement(doc: any, element: any, data: any[], options: any) 
       }
       break;
 
-    // Add more element types as needed
     default:
-      // Placeholder for unsupported elements
       doc.fontSize(12);
       doc.font('Helvetica');
       doc.text(`[${element.type.toUpperCase()}]`, position.x * 50, position.y * 20 + 20);
@@ -842,9 +745,6 @@ async function addPDFElement(doc: any, element: any, data: any[], options: any) 
   }
 }
 
-/**
- * Infer data source from template
- */
 function inferDataSourceFromTemplate(template: any): string {
   switch (template.type) {
     case 'ASSESSMENT':
@@ -857,13 +757,10 @@ function inferDataSourceFromTemplate(template: any): string {
       return 'donors';
     case 'CUSTOM':
     default:
-      return 'assessments'; // Default
+      return 'assessments';
   }
 }
 
-/**
- * Get estimated generation time
- */
 function getEstimatedGenerationTime(template: any, filters: any, format: string): number {
   const baseTime = {
     'PDF': 30,
@@ -878,18 +775,12 @@ function getEstimatedGenerationTime(template: any, filters: any, format: string)
   return (baseTime[format as keyof typeof baseTime] || 30) * complexityMultiplier * dataMultiplier;
 }
 
-/**
- * Generate filename
- */
 function generateFilename(template: any, format: string): string {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
   const name = template.name?.replace(/[^a-zA-Z0-9]/g, '_') || 'report';
   return `${name}_${timestamp}.${format.toLowerCase()}`;
 }
 
-/**
- * Get next scheduled run
- */
 function getNextScheduledRun(schedule: any): Date {
   const now = new Date();
   let nextRun = new Date(schedule.startDate);
@@ -917,9 +808,6 @@ function getNextScheduledRun(schedule: any): Date {
   }
 }
 
-/**
- * Send report notifications
- */
 async function sendReportNotifications(
   executionId: string, 
   filePath: string, 
@@ -927,7 +815,6 @@ async function sendReportNotifications(
   fileSize: number
 ): Promise<void> {
   try {
-    // Get execution details including schedule
     const execution = await db.reportExecution.findFirst({
       where: { id: executionId },
       include: {
@@ -941,31 +828,16 @@ async function sendReportNotifications(
 
     if (!execution) return;
 
-    // Check if this is a scheduled report
     const scheduleFile = path.join(process.cwd(), 'schedules', `${executionId}.json`);
     const hasSchedule = await fs.access(scheduleFile).then(() => true).catch(() => false);
 
     if (hasSchedule) {
       const scheduleData = JSON.parse(await fs.readFile(scheduleFile, 'utf8'));
       
-      // Send emails to recipients
       for (const recipient of scheduleData.recipients || []) {
-        // This would integrate with your email service
-        console.log(`Sending report to ${recipient.email} (${recipient.format})`);
-        
-        // Example email sending logic (implement with your email service)
-        // await emailService.send({
-        //   to: recipient.email,
-        //   subject: `Report: ${execution.configuration?.template?.name}`,
-        //   attachments: [{
-        //     filename: filename,
-        //     path: filePath
-        //   }]
-        // });
       }
     }
 
-    // Create notification in system
     await db.auditLog.create({
       data: {
         userId: execution.configuration?.createdBy || 'system',
@@ -984,6 +856,5 @@ async function sendReportNotifications(
 
   } catch (error) {
     console.error('Error sending report notifications:', error);
-    // Don't throw - notifications shouldn't fail the generation
   }
 }

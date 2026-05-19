@@ -16,6 +16,14 @@ interface RouteParams {
 
 export const GET = withAuth(async (request: NextRequest, context, { params }: RouteParams) => {
   try {
+    // RBAC: ASSESSOR, COORDINATOR, ADMIN can view assessment summary
+    if (!context.roles.some(r => ['ASSESSOR', 'COORDINATOR', 'ADMIN'].includes(r))) {
+      return NextResponse.json(
+        { success: false, error: 'Insufficient permissions to view assessment summary' },
+        { status: 403 }
+      );
+    }
+
     // Get incident with assessments for summary calculation
     const { id: incidentId } = params;
 

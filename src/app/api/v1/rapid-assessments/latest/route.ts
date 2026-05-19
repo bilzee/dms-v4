@@ -4,6 +4,14 @@ import { RapidAssessmentService } from '@/lib/services/rapid-assessment.service'
 
 export const GET = withAuth(async (request, context) => {
   try {
+    // RBAC: ASSESSOR, COORDINATOR, ADMIN can view latest assessments
+    if (!context.roles.some(r => ['ASSESSOR', 'COORDINATOR', 'ADMIN'].includes(r))) {
+      return NextResponse.json(
+        { success: false, error: 'Insufficient permissions to view latest assessments' },
+        { status: 403 }
+      );
+    }
+
     const url = new URL(request.url)
     const incidentId = url.searchParams.get('incidentId')
     const entityId = url.searchParams.get('entityId')

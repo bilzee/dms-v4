@@ -1,11 +1,17 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/db/client';
+import { EntityType } from '@prisma/client';
+
+export interface Coordinates {
+  lat: number;
+  lng: number;
+}
 
 export interface Entity {
   id: string;
   name: string;
   type: string;
   location?: string;
-  coordinates?: any;
+  coordinates?: Coordinates | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -18,33 +24,16 @@ export interface EntityListResponse {
   errors?: string[];
 }
 
-export class EntityService {
-  private prisma: PrismaClient;
-
-  constructor() {
-    this.prisma = new PrismaClient();
-  }
-
-  /**
-   * Get all active entities
-   */
+class EntityServiceImpl {
   async getAllEntities(): Promise<EntityListResponse> {
     try {
-      const entities = await this.prisma.entity.findMany({
-        where: {
-          isActive: true
-        },
-        orderBy: {
-          name: 'asc'
-        }
+      const entities = await prisma.entity.findMany({
+        where: { isActive: true },
+        orderBy: { name: 'asc' }
       });
 
-      return {
-        success: true,
-        data: entities as any
-      };
+      return { success: true, data: entities as unknown as Entity[] };
     } catch (error) {
-      console.error('Error fetching entities:', error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Failed to fetch entities',
@@ -53,27 +42,15 @@ export class EntityService {
     }
   }
 
-  /**
-   * Get entities by type
-   */
   async getEntitiesByType(type: string): Promise<EntityListResponse> {
     try {
-      const entities = await this.prisma.entity.findMany({
-        where: {
-          type: type.toUpperCase() as any,
-          isActive: true
-        },
-        orderBy: {
-          name: 'asc'
-        }
+      const entities = await prisma.entity.findMany({
+        where: { type: type.toUpperCase() as EntityType, isActive: true },
+        orderBy: { name: 'asc' }
       });
 
-      return {
-        success: true,
-        data: entities as any
-      };
+      return { success: true, data: entities as unknown as Entity[] };
     } catch (error) {
-      console.error('Error fetching entities by type:', error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Failed to fetch entities',
@@ -82,40 +59,21 @@ export class EntityService {
     }
   }
 
-  /**
-   * Search entities by name, type, or location
-   */
   async searchEntities(searchTerm: string): Promise<EntityListResponse> {
     try {
-      const entities = await this.prisma.entity.findMany({
+      const entities = await prisma.entity.findMany({
         where: {
           isActive: true,
           OR: [
-            {
-              name: {
-                contains: searchTerm,
-                mode: 'insensitive'
-              }
-            },
-            {
-              location: {
-                contains: searchTerm,
-                mode: 'insensitive'
-              }
-            }
+            { name: { contains: searchTerm, mode: 'insensitive' } },
+            { location: { contains: searchTerm, mode: 'insensitive' } }
           ]
         },
-        orderBy: {
-          name: 'asc'
-        }
+        orderBy: { name: 'asc' }
       });
 
-      return {
-        success: true,
-        data: entities as any
-      };
+      return { success: true, data: entities as unknown as Entity[] };
     } catch (error) {
-      console.error('Error searching entities:', error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Failed to search entities',
@@ -124,29 +82,16 @@ export class EntityService {
     }
   }
 
-  /**
-   * Get entity by ID
-   */
   async getEntityById(id: string): Promise<{ success: boolean; data?: Entity; message?: string; errors?: string[] }> {
     try {
-      const entity = await this.prisma.entity.findUnique({
-        where: { id }
-      });
+      const entity = await prisma.entity.findUnique({ where: { id } });
 
       if (!entity) {
-        return {
-          success: false,
-          message: 'Entity not found',
-          errors: ['Entity with provided ID does not exist']
-        };
+        return { success: false, message: 'Entity not found', errors: ['Entity with provided ID does not exist'] };
       }
 
-      return {
-        success: true,
-        data: entity as any
-      };
+      return { success: true, data: entity as unknown as Entity };
     } catch (error) {
-      console.error('Error fetching entity:', error);
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Failed to fetch entity',
@@ -156,4 +101,4 @@ export class EntityService {
   }
 }
 
-export const entityService = new EntityService();
+export const entityService = new EntityServiceImpl();

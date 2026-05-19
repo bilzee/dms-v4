@@ -10,14 +10,34 @@ interface ExportRequest {
   includeTrends?: boolean;
 }
 
-interface Entity {
+interface Coordinates {
+  lat: number;
+  lng: number;
+}
+
+interface AssessmentForExport {
+  id: string;
+  rapidAssessmentType: string;
+  rapidAssessmentDate: Date;
+  verificationStatus: string;
+  assessor?: { name: string } | null;
+  healthAssessment?: Record<string, unknown> | null;
+  foodAssessment?: Record<string, unknown> | null;
+  washAssessment?: Record<string, unknown> | null;
+  shelterAssessment?: Record<string, unknown> | null;
+  securityAssessment?: Record<string, unknown> | null;
+  populationAssessment?: Record<string, unknown> | null;
+  gapAnalysis?: Record<string, unknown> | null;
+}
+
+export interface Entity {
   id: string;
   name: string;
   type: string;
   location: string | null;
-  coordinates: any;
-  metadata: any;
-  rapidAssessments: any[];
+  coordinates: Coordinates | null;
+  metadata: Record<string, unknown> | null;
+  rapidAssessments: AssessmentForExport[];
 }
 
 interface ReportData {
@@ -77,11 +97,11 @@ export async function generateEntityReport(
 function generateCSVReport(
   entityId: string,
   entity: Entity,
-  assessments: any[],
+  assessments: AssessmentForExport[],
   exportRequest: ExportRequest
 ): ReportData {
   const csvRows = [];
-  const metadata = entity.metadata as any || {};
+  const metadata = entity.metadata || {};
 
   // CSV Header
   csvRows.push('Entity Assessment Report');
@@ -141,7 +161,7 @@ function generateCSVReport(
     csvRows.push('Gap Analysis Summary');
     csvRows.push('Category,Severity,Description,Recommended Actions');
     
-    const gapAnalysis = analyzeGaps(assessments, metadata.population || 1000);
+    const gapAnalysis = analyzeGaps(assessments, (metadata.population as number) || (metadata.totalPopulation as number) || 1000);
     gapAnalysis.forEach(gap => {
       const actions = gap.recommendedActions.join('; ');
       csvRows.push(`${gap.category},${gap.severity},"${gap.description}","${actions}"`);
@@ -165,10 +185,10 @@ function generateCSVReport(
 function generatePDFReport(
   entityId: string,
   entity: Entity,
-  assessments: any[],
+  assessments: AssessmentForExport[],
   exportRequest: ExportRequest
 ): ReportData {
-  const metadata = entity.metadata as any || {};
+  const metadata = entity.metadata || {};
 
   // Generate HTML content for PDF
   const htmlContent = `
@@ -254,7 +274,7 @@ function generatePDFReport(
                 </tr>
             </thead>
             <tbody>
-                ${generateGapAnalysisRows(assessments, metadata.population || 1000)}
+                ${generateGapAnalysisRows(assessments, (metadata.population as number) || (metadata.totalPopulation as number) || 1000)}
             </tbody>
         </table>
     </div>
@@ -299,7 +319,7 @@ function generatePDFReport(
 /**
  * Helper function to generate assessment summary table rows
  */
-function generateAssessmentSummaryRows(assessments: any[]): string {
+function generateAssessmentSummaryRows(assessments: AssessmentForExport[]): string {
   const assessmentTypes = ['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION'];
   
   return assessmentTypes.map(type => {
@@ -323,7 +343,14 @@ function generateAssessmentSummaryRows(assessments: any[]): string {
 /**
  * Helper function to generate gap analysis table rows
  */
-function generateGapAnalysisRows(assessments: any[], population: number): string {
+interface GapAnalysisResult {
+  category: string;
+  severity: string;
+  description: string;
+  recommendedActions: string[];
+}
+
+function generateGapAnalysisRows(assessments: AssessmentForExport[], population: number): string {
   const gaps = analyzeGaps(assessments, population);
   
   return gaps.map(gap => {
@@ -345,7 +372,7 @@ function generateGapAnalysisRows(assessments: any[], population: number): string
 /**
  * Helper function to generate detailed assessment table rows
  */
-function generateDetailedAssessmentRows(assessments: any[]): string {
+function generateDetailedAssessmentRows(assessments: AssessmentForExport[]): string {
   return assessments.map(assessment => {
     const keyMetrics = extractKeyMetrics(assessment);
     const gaps = extractGaps(assessment);
@@ -366,9 +393,9 @@ function generateDetailedAssessmentRows(assessments: any[]): string {
 /**
  * Extract key metrics from assessment data
  */
-function extractKeyMetrics(assessment: any): string {
+function extractKeyMetrics(assessment: AssessmentForExport): string {
   const type = assessment.rapidAssessmentType;
-  let data: any;
+  let data: Record<string, unknown> | null | undefined;
   const metrics = [];
 
   switch (type) {
@@ -405,7 +432,7 @@ function extractKeyMetrics(assessment: any): string {
       if (data) {
         metrics.push(data.areSheltersSufficient ? 'Shelter: Sufficient' : 'Shelter: Insufficient');
         metrics.push(data.hasSafeStructures ? 'Safety: Yes' : 'Safety: No');
-        if (data.numberSheltersRequired > 0) metrics.push(`Required: ${data.numberSheltersRequired}`);
+        if ((data.numberSheltersRequired as number) > 0) metrics.push(`Required: ${data.numberSheltersRequired}`);
       }
       break;
 
@@ -423,8 +450,8 @@ function extractKeyMetrics(assessment: any): string {
       if (data) {
         if (data.totalPopulation) metrics.push(`Population: ${data.totalPopulation}`);
         if (data.totalHouseholds) metrics.push(`Households: ${data.totalHouseholds}`);
-        if (data.numberLivesLost > 0) metrics.push(`Lives Lost: ${data.numberLivesLost}`);
-        if (data.numberInjured > 0) metrics.push(`Injured: ${data.numberInjured}`);
+        if ((data.numberLivesLost as number) > 0) metrics.push(`Lives Lost: ${data.numberLivesLost}`);
+        if ((data.numberInjured as number) > 0) metrics.push(`Injured: ${data.numberInjured}`);
       }
       break;
   }
@@ -435,9 +462,9 @@ function extractKeyMetrics(assessment: any): string {
 /**
  * Extract gaps from assessment data
  */
-function extractGaps(assessment: any): string {
+function extractGaps(assessment: AssessmentForExport): string {
   const type = assessment.rapidAssessmentType;
-  let data: any;
+  let data: Record<string, unknown> | null | undefined;
   const gaps = [];
 
   switch (type) {
@@ -455,7 +482,7 @@ function extractGaps(assessment: any): string {
       if (data) {
         if (!data.isFoodSufficient) gaps.push('Insufficient food');
         if (!data.hasRegularMealAccess) gaps.push('Irregular meal access');
-        if (data.availableFoodDurationDays < 7) gaps.push('Low food reserves');
+        if ((data.availableFoodDurationDays as number) < 7) gaps.push('Low food reserves');
       }
       break;
 
@@ -493,15 +520,15 @@ function extractGaps(assessment: any): string {
 /**
  * Analyze gaps across all assessments
  */
-function analyzeGaps(assessments: any[], population: number): any[] {
-  const gaps: any[] = [];
-  const latestAssessments = new Map<string, any>();
+function analyzeGaps(assessments: AssessmentForExport[], population: number): GapAnalysisResult[] {
+  const gaps: GapAnalysisResult[] = [];
+  const latestAssessments = new Map<string, AssessmentForExport>();
 
   // Get latest assessment for each category
   assessments.forEach(assessment => {
     const type = assessment.rapidAssessmentType;
     if (!latestAssessments.has(type) || 
-        assessment.rapidAssessmentDate > latestAssessments.get(type).rapidAssessmentDate) {
+        assessment.rapidAssessmentDate > latestAssessments.get(type)!.rapidAssessmentDate) {
       latestAssessments.set(type, assessment);
     }
   });
@@ -514,7 +541,7 @@ function analyzeGaps(assessments: any[], population: number): any[] {
         category: type,
         severity: 'high', // Simplified severity classification
         description: categoryGaps,
-        recommendedActions: getRecommendedActions(type as any, categoryGaps)
+        recommendedActions: getRecommendedActions(type as AssessmentType, categoryGaps)
       });
     }
   });

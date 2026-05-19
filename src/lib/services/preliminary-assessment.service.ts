@@ -1,11 +1,33 @@
 import { prisma } from '@/lib/db/client'
-import { PreliminaryAssessment, Incident } from '@prisma/client'
+import { PreliminaryAssessment, Incident, Prisma } from '@prisma/client'
 import { 
   PreliminaryAssessmentInput, 
   CreatePreliminaryAssessmentInput,
   UpdatePreliminaryAssessmentInput,
   QueryPreliminaryAssessmentInput 
 } from '@/lib/validation/preliminary-assessment'
+
+// Type for preliminary assessment with relations
+interface PreliminaryAssessmentWithRelations extends PreliminaryAssessment {
+  incident?: Incident | null;
+  affectedEntities?: Array<{
+    id: string;
+    preliminaryAssessmentId: string;
+    entityId: string;
+    entity: {
+      id: string;
+      name: string;
+      type: string;
+      location: string | null;
+      coordinates: unknown;
+      metadata: unknown;
+      isActive: boolean;
+      autoApproveEnabled: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+  }>;
+}
 
 export class PreliminaryAssessmentService {
   static async create(
@@ -57,7 +79,7 @@ export class PreliminaryAssessmentService {
       }
     })
 
-    return assessment as any
+    return assessment as unknown as PreliminaryAssessment & { incident?: Incident }
   }
 
   static async findById(id: string): Promise<(PreliminaryAssessment & { incident?: Incident }) | null> {
@@ -71,7 +93,7 @@ export class PreliminaryAssessmentService {
           }
         }
       }
-    }) as any
+    }) as unknown as (PreliminaryAssessment & { incident?: Incident }) | null
   }
 
   static async findByUserId(
@@ -84,7 +106,7 @@ export class PreliminaryAssessmentService {
   }> {
     const { page, limit, incidentId, lga, ward } = query
 
-    const where: any = {}
+    const where: Prisma.PreliminaryAssessmentWhereInput = {}
 
     // Add filters
     if (incidentId) {
@@ -122,7 +144,7 @@ export class PreliminaryAssessmentService {
     })
 
     return {
-      assessments: assessments as any,
+      assessments: assessments as unknown as (PreliminaryAssessment & { incident?: Incident })[],
       total,
       totalPages
     }
@@ -137,7 +159,7 @@ export class PreliminaryAssessmentService {
   }> {
     const { page, limit, userId, incidentId, lga, ward } = query
 
-    const where: any = {}
+    const where: Prisma.PreliminaryAssessmentWhereInput = {}
 
     // Add filters
     if (userId) {
@@ -180,7 +202,7 @@ export class PreliminaryAssessmentService {
     })
 
     return {
-      assessments: assessments as any,
+      assessments: assessments as unknown as (PreliminaryAssessment & { incident?: Incident })[],
       total,
       totalPages
     }
@@ -223,7 +245,7 @@ export class PreliminaryAssessmentService {
       }
     })
 
-    return assessment as any
+    return assessment as unknown as PreliminaryAssessment & { incident?: Incident }
   }
 
   static async delete(id: string): Promise<void> {

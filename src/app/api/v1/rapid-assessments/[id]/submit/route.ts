@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { RapidAssessmentService } from '@/lib/services/rapid-assessment.service'
-import { RapidAssessmentResponse } from '@/types/rapid-assessment'
+import { RapidAssessmentResponse, RapidAssessmentWithData } from '@/types/rapid-assessment'
 
 interface RouteParams {
   params: { id: string }
@@ -11,6 +11,21 @@ interface RouteParams {
 export const POST = withAuth(
   async (request: NextRequest, context: AuthContext, { params }: RouteParams) => {
     try {
+      // RBAC: ASSESSOR, COORDINATOR, ADMIN can submit assessments
+      if (!context.roles.some(r => ['ASSESSOR', 'COORDINATOR', 'ADMIN'].includes(r))) {
+        return NextResponse.json(
+          {
+            error: 'Insufficient permissions to submit assessments',
+            meta: {
+              timestamp: new Date().toISOString(),
+              version: '1.0.0',
+              requestId: uuidv4()
+            }
+          },
+          { status: 403 }
+        )
+      }
+
       const { id } = params
       
       const assessment = await RapidAssessmentService.submit(
@@ -19,7 +34,7 @@ export const POST = withAuth(
       )
 
       const response: RapidAssessmentResponse = {
-        data: assessment,
+        data: assessment as unknown as RapidAssessmentWithData,
         meta: {
           timestamp: new Date().toISOString(),
           version: '1.0.0',

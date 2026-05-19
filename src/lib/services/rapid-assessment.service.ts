@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db/client'
-import { RapidAssessment, AssessmentType } from '@prisma/client'
+import { RapidAssessment, AssessmentType, Prisma, Priority } from '@prisma/client'
 import { 
   CreateRapidAssessmentInput,
   UpdateRapidAssessmentInput,
@@ -16,17 +16,119 @@ import {
   analyzeFoodGaps, 
   analyzeWASHGaps, 
   analyzeShelterGaps, 
-  analyzeSecurityGaps 
+  analyzeSecurityGaps,
+  HealthGapAnalysis,
+  FoodGapAnalysis,
+  WASHGapAnalysis,
+  ShelterGapAnalysis,
+  SecurityGapAnalysis
 } from '@/lib/services/gap-analysis.service'
 
 // Type for returned assessments with their specific data
+export interface HealthAssessmentData {
+  id: string;
+  rapidAssessmentId: string;
+  hasFunctionalClinic: boolean;
+  hasEmergencyServices: boolean;
+  numberHealthFacilities: number;
+  healthFacilityType: string;
+  qualifiedHealthWorkers: number;
+  hasTrainedStaff: boolean;
+  hasMedicineSupply: boolean;
+  hasMedicalSupplies: boolean;
+  hasMaternalChildServices: boolean;
+  commonHealthIssues: string;
+  additionalHealthDetails?: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PopulationAssessmentData {
+  id: string;
+  rapidAssessmentId: string;
+  totalHouseholds: number;
+  totalPopulation: number;
+  populationMale: number;
+  populationFemale: number;
+  populationUnder5: number;
+  pregnantWomen: number;
+  lactatingMothers: number;
+  personWithDisability: number;
+  elderlyPersons: number;
+  separatedChildren: number;
+  numberLivesLost: number;
+  numberInjured: number;
+  additionalPopulationDetails?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface FoodAssessmentData {
+  id: string;
+  rapidAssessmentId: string;
+  isFoodSufficient: boolean;
+  hasRegularMealAccess: boolean;
+  hasInfantNutrition: boolean;
+  foodSource: string;
+  availableFoodDurationDays: number;
+  additionalFoodRequiredPersons: number;
+  additionalFoodRequiredHouseholds: number;
+  additionalFoodDetails?: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WASHAssessmentData {
+  id: string;
+  rapidAssessmentId: string;
+  waterSource: string;
+  isWaterSufficient: boolean;
+  hasCleanWaterAccess: boolean;
+  functionalLatrinesAvailable: number;
+  areLatrinesSufficient: boolean;
+  hasHandwashingFacilities: boolean;
+  hasOpenDefecationConcerns: boolean;
+  additionalWashDetails?: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ShelterAssessmentData {
+  id: string;
+  rapidAssessmentId: string;
+  areSheltersSufficient: boolean;
+  hasSafeStructures: boolean;
+  shelterTypes: string;
+  requiredShelterType: string;
+  numberSheltersRequired: number;
+  areOvercrowded: boolean;
+  provideWeatherProtection: boolean;
+  additionalShelterDetails?: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SecurityAssessmentData {
+  id: string;
+  rapidAssessmentId: string;
+  isSafeFromViolence: boolean;
+  gbvCasesReported: boolean;
+  hasSecurityPresence: boolean;
+  hasProtectionReportingMechanism: boolean;
+  vulnerableGroupsHaveAccess: boolean;
+  hasLighting: boolean;
+  additionalSecurityDetails?: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export type RapidAssessmentWithData = RapidAssessment & {
-  healthAssessment?: any
-  populationAssessment?: any
-  foodAssessment?: any
-  wASHAssessment?: any
-  shelterAssessment?: any
-  securityAssessment?: any
+  healthAssessment?: HealthAssessmentData | null
+  populationAssessment?: PopulationAssessmentData | null
+  foodAssessment?: FoodAssessmentData | null
+  wASHAssessment?: WASHAssessmentData | null
+  shelterAssessment?: ShelterAssessmentData | null
+  securityAssessment?: SecurityAssessmentData | null
 }
 
 export class RapidAssessmentService {
@@ -80,7 +182,7 @@ export class RapidAssessmentService {
       let typeSpecificAssessment = null
       switch (type) {
         case 'HEALTH':
-          const healthData = (input as any).healthData
+          const healthData = (input as CreateRapidAssessmentInput & { healthData: HealthAssessmentInput }).healthData
           typeSpecificAssessment = await tx.healthAssessment.create({
             data: {
               rapidAssessmentId: rapidAssessment.id,
@@ -91,7 +193,7 @@ export class RapidAssessmentService {
           break
 
         case 'POPULATION':
-          const populationData = (input as any).populationData
+          const populationData = (input as CreateRapidAssessmentInput & { populationData: PopulationAssessmentInput }).populationData
           typeSpecificAssessment = await tx.populationAssessment.create({
             data: {
               rapidAssessmentId: rapidAssessment.id,
@@ -101,7 +203,7 @@ export class RapidAssessmentService {
           break
 
         case 'FOOD':
-          const foodData = (input as any).foodData
+          const foodData = (input as CreateRapidAssessmentInput & { foodData: FoodAssessmentInput }).foodData
           typeSpecificAssessment = await tx.foodAssessment.create({
             data: {
               rapidAssessmentId: rapidAssessment.id,
@@ -112,7 +214,7 @@ export class RapidAssessmentService {
           break
 
         case 'WASH':
-          const washData = (input as any).washData
+          const washData = (input as CreateRapidAssessmentInput & { washData: WASHAssessmentInput }).washData
           if (!washData) {
             throw new Error('WASH assessment data (washData) is required but missing from input')
           }
@@ -126,7 +228,7 @@ export class RapidAssessmentService {
           break
 
         case 'SHELTER':
-          const shelterData = (input as any).shelterData
+          const shelterData = (input as CreateRapidAssessmentInput & { shelterData: ShelterAssessmentInput }).shelterData
           typeSpecificAssessment = await tx.shelterAssessment.create({
             data: {
               rapidAssessmentId: rapidAssessment.id,
@@ -138,7 +240,7 @@ export class RapidAssessmentService {
           break
 
         case 'SECURITY':
-          const securityData = (input as any).securityData
+          const securityData = (input as CreateRapidAssessmentInput & { securityData: SecurityAssessmentInput }).securityData
           typeSpecificAssessment = await tx.securityAssessment.create({
             data: {
               rapidAssessmentId: rapidAssessment.id,
@@ -201,7 +303,7 @@ export class RapidAssessmentService {
       }
     })
 
-    return assessment as RapidAssessmentWithData
+    return assessment as unknown as RapidAssessmentWithData
   }
 
   static async findByUserId(
@@ -216,7 +318,7 @@ export class RapidAssessmentService {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: any = { assessorId: userId }
+    const where: Prisma.RapidAssessmentWhereInput = { assessorId: userId }
 
     if (entityId) where.entityId = entityId
     if (type) where.rapidAssessmentType = type
@@ -266,7 +368,7 @@ export class RapidAssessmentService {
     })
 
     return {
-      assessments,
+      assessments: assessments as unknown as RapidAssessmentWithData[],
       total,
       totalPages: Math.ceil(total / limit)
     }
@@ -283,7 +385,7 @@ export class RapidAssessmentService {
     const skip = (page - 1) * limit
 
     // Build where clause
-    const where: any = {}
+    const where: Prisma.RapidAssessmentWhereInput = {}
 
     if (userId) where.assessorId = userId
     if (entityId) where.entityId = entityId
@@ -342,7 +444,7 @@ export class RapidAssessmentService {
     })
 
     return {
-      assessments,
+      assessments: assessments as unknown as RapidAssessmentWithData[],
       total,
       totalPages: Math.ceil(total / limit)
     }
@@ -382,7 +484,7 @@ export class RapidAssessmentService {
       }
     })
 
-    return updatedAssessment
+    return updatedAssessment as unknown as RapidAssessmentWithData
   }
 
   static async delete(id: string, deletedBy: string): Promise<void> {
@@ -435,7 +537,7 @@ export class RapidAssessmentService {
     // Automatically trigger gap analysis calculation after successful submission
     await this.triggerGapAnalysis(id)
 
-    return updatedAssessment
+    return updatedAssessment as unknown as RapidAssessmentWithData
   }
 
   /**
@@ -451,37 +553,37 @@ export class RapidAssessmentService {
       }
 
       // Calculate gap analysis based on assessment type and data
-      const gapAnalysisData: any = {}
-      let calculatedSeverity: any = null
+      const gapAnalysisData: { gapAnalysis?: HealthGapAnalysis | FoodGapAnalysis | WASHGapAnalysis | ShelterGapAnalysis | SecurityGapAnalysis } = {}
+      let calculatedSeverity: string | null = null
 
       switch (assessment.rapidAssessmentType) {
         case 'HEALTH':
           if (assessment.healthAssessment) {
-            gapAnalysisData.gapAnalysis = await analyzeHealthGaps(assessment.healthAssessment)
+            gapAnalysisData.gapAnalysis = await analyzeHealthGaps(assessment.healthAssessment as unknown as Record<string, unknown>)
             calculatedSeverity = gapAnalysisData.gapAnalysis.severity
           }
           break
         case 'FOOD':
           if (assessment.foodAssessment) {
-            gapAnalysisData.gapAnalysis = await analyzeFoodGaps(assessment.foodAssessment)
+            gapAnalysisData.gapAnalysis = await analyzeFoodGaps(assessment.foodAssessment as unknown as Record<string, unknown>)
             calculatedSeverity = gapAnalysisData.gapAnalysis.severity
           }
           break
         case 'WASH':
           if (assessment.wASHAssessment) {
-            gapAnalysisData.gapAnalysis = await analyzeWASHGaps(assessment.wASHAssessment)
+            gapAnalysisData.gapAnalysis = await analyzeWASHGaps(assessment.wASHAssessment as unknown as Record<string, unknown>)
             calculatedSeverity = gapAnalysisData.gapAnalysis.severity
           }
           break
         case 'SHELTER':
           if (assessment.shelterAssessment) {
-            gapAnalysisData.gapAnalysis = await analyzeShelterGaps(assessment.shelterAssessment)
+            gapAnalysisData.gapAnalysis = await analyzeShelterGaps(assessment.shelterAssessment as unknown as Record<string, unknown>)
             calculatedSeverity = gapAnalysisData.gapAnalysis.severity
           }
           break
         case 'SECURITY':
           if (assessment.securityAssessment) {
-            gapAnalysisData.gapAnalysis = await analyzeSecurityGaps(assessment.securityAssessment)
+            gapAnalysisData.gapAnalysis = await analyzeSecurityGaps(assessment.securityAssessment as unknown as Record<string, unknown>)
             calculatedSeverity = gapAnalysisData.gapAnalysis.severity
           }
           break
@@ -492,15 +594,17 @@ export class RapidAssessmentService {
         await prisma.rapidAssessment.update({
           where: { id: assessmentId },
           data: {
-            ...gapAnalysisData,
-            priority: calculatedSeverity // Set priority to match severity from gap analysis
+            gapAnalysis: gapAnalysisData.gapAnalysis as unknown as Prisma.InputJsonObject,
+            priority: calculatedSeverity as unknown as Priority // Set priority to match severity from gap analysis
           }
         })
       } else if (Object.keys(gapAnalysisData).length > 0) {
         // Fallback: update without priority change if severity calculation failed
         await prisma.rapidAssessment.update({
           where: { id: assessmentId },
-          data: gapAnalysisData
+          data: {
+            gapAnalysis: gapAnalysisData.gapAnalysis as unknown as Prisma.InputJsonObject
+          }
         })
       }
 
@@ -539,37 +643,37 @@ export class RapidAssessmentService {
       for (const assessment of allAssessments) {
         try {
           // Calculate gap analysis based on assessment type and data
-          const gapAnalysisData: any = {}
-          let calculatedSeverity: any = null
+          const gapAnalysisData: { gapAnalysis?: HealthGapAnalysis | FoodGapAnalysis | WASHGapAnalysis | ShelterGapAnalysis | SecurityGapAnalysis } = {}
+          let calculatedSeverity: string | null = null
 
           switch (assessment.rapidAssessmentType) {
             case 'HEALTH':
               if (assessment.healthAssessment) {
-                gapAnalysisData.gapAnalysis = await analyzeHealthGaps(assessment.healthAssessment)
+                gapAnalysisData.gapAnalysis = await analyzeHealthGaps(assessment.healthAssessment as unknown as Record<string, unknown>)
                 calculatedSeverity = gapAnalysisData.gapAnalysis.severity
               }
               break
             case 'FOOD':
               if (assessment.foodAssessment) {
-                gapAnalysisData.gapAnalysis = await analyzeFoodGaps(assessment.foodAssessment)
+                gapAnalysisData.gapAnalysis = await analyzeFoodGaps(assessment.foodAssessment as unknown as Record<string, unknown>)
                 calculatedSeverity = gapAnalysisData.gapAnalysis.severity
               }
               break
             case 'WASH':
               if (assessment.washAssessment) {
-                gapAnalysisData.gapAnalysis = await analyzeWASHGaps(assessment.washAssessment)
+                gapAnalysisData.gapAnalysis = await analyzeWASHGaps(assessment.washAssessment as unknown as Record<string, unknown>)
                 calculatedSeverity = gapAnalysisData.gapAnalysis.severity
               }
               break
             case 'SHELTER':
               if (assessment.shelterAssessment) {
-                gapAnalysisData.gapAnalysis = await analyzeShelterGaps(assessment.shelterAssessment)
+                gapAnalysisData.gapAnalysis = await analyzeShelterGaps(assessment.shelterAssessment as unknown as Record<string, unknown>)
                 calculatedSeverity = gapAnalysisData.gapAnalysis.severity
               }
               break
             case 'SECURITY':
               if (assessment.securityAssessment) {
-                gapAnalysisData.gapAnalysis = await analyzeSecurityGaps(assessment.securityAssessment)
+                gapAnalysisData.gapAnalysis = await analyzeSecurityGaps(assessment.securityAssessment as unknown as Record<string, unknown>)
                 calculatedSeverity = gapAnalysisData.gapAnalysis.severity
               }
               break
@@ -580,8 +684,8 @@ export class RapidAssessmentService {
             await prisma.rapidAssessment.update({
               where: { id: assessment.id },
               data: {
-                ...gapAnalysisData,
-                priority: calculatedSeverity // Set priority to match severity from gap analysis
+                gapAnalysis: gapAnalysisData.gapAnalysis as unknown as Prisma.InputJsonObject,
+                priority: calculatedSeverity as unknown as Priority
               }
             })
             console.log(`Updated assessment ${assessment.id} (${assessment.rapidAssessmentType}) - Priority: ${calculatedSeverity}`)
@@ -647,7 +751,7 @@ export class RapidAssessmentService {
         }
       })
 
-      return assessment as RapidAssessmentWithData
+      return assessment as unknown as RapidAssessmentWithData
     } catch (error) {
       console.error('Error finding latest assessment:', error)
       throw new Error('Failed to find latest assessment')

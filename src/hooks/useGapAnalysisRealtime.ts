@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect } from 'react';
+import { apiGet } from '@/lib/api';
 
 interface GapAnalysisSummaryData {
   totalEntities: number;
@@ -84,30 +85,17 @@ export function useGapAnalysisRealtime({
 
       const url = `/api/v1/dashboard/situation?incidentId=${encodeURIComponent(incidentId)}&includeGapSummary=true`;
 
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include cookies for authentication
-      });
+      const result = await apiGet<{ gapAnalysisSummary: GapAnalysisSummaryData }>(url);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error || 
-          errorData.message || 
-          `Failed to fetch gap analysis summary: ${response.status} ${response.statusText}`
-        );
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch gap analysis summary');
       }
 
-      const result = await response.json();
-      
-      if (!result.success || !result.data?.gapAnalysisSummary) {
+      if (!result.data?.gapAnalysisSummary) {
         throw new Error('Invalid response format or missing gap analysis data');
       }
 
-      return result.data.gapAnalysisSummary as GapAnalysisSummaryData;
+      return result.data.gapAnalysisSummary;
     },
     enabled: enabled && !!incidentId,
     refetchInterval,

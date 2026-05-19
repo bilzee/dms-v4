@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { RapidAssessmentService } from '@/lib/services/rapid-assessment.service'
 import { QueryRapidAssessmentSchema } from '@/lib/validation/rapid-assessment'
-import { RapidAssessmentListResponse } from '@/types/rapid-assessment'
+import { RapidAssessmentListResponse, RapidAssessmentWithData } from '@/types/rapid-assessment'
 
 interface RouteParams {
   params: { userId: string }
@@ -14,8 +14,9 @@ export const GET = withAuth(
     try {
       const { userId } = params
       
-      // Verify user can only access their own assessments
-      if (userId !== context.userId) {
+      // RBAC: User can access their own assessments, COORDINATOR/ADMIN can access any
+      const isPrivileged = context.roles.some(r => ['COORDINATOR', 'ADMIN'].includes(r))
+      if (!isPrivileged && userId !== context.userId) {
         return NextResponse.json(
           {
             error: 'Not authorized to access these assessments',
@@ -40,7 +41,7 @@ export const GET = withAuth(
       )
 
       const response: RapidAssessmentListResponse = {
-        data: assessments,
+        data: assessments as unknown as RapidAssessmentWithData[],
         pagination: {
           page: query.page,
           limit: query.limit,

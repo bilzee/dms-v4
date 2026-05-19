@@ -3,7 +3,8 @@ import {
   RapidResponse, 
   ResponseStatus, 
   VerificationStatus,
-  SyncStatus 
+  SyncStatus,
+  Prisma
 } from '@prisma/client'
 import { 
   CreatePlannedResponseInput,
@@ -14,11 +15,57 @@ import {
   ConfirmDeliveryInput
 } from '@/lib/validation/response'
 
+// Auto-approval configuration shape stored in entity metadata
+interface AutoApprovalConfigData {
+  scope?: string;
+  responseTypes?: string[];
+  maxPriority?: string;
+  requiresDocumentation?: boolean;
+}
+
+interface AssessmentRelation {
+  id: string;
+  rapidAssessmentType: string;
+  rapidAssessmentDate: Date;
+  status: string;
+  verificationStatus: string;
+  location?: string | null;
+  coordinates?: unknown;
+  entity?: {
+    id: string;
+    name: string;
+    type: string;
+    location?: string | null;
+    coordinates?: unknown;
+  };
+}
+
+interface EntityRelation {
+  id: string;
+  name: string;
+  type: string;
+  location?: string | null;
+  coordinates?: unknown;
+}
+
+interface ResponderRelation {
+  id: string;
+  name: string;
+  email: string;
+}
+
+interface DonorRelation {
+  id: string;
+  name: string;
+  type: string;
+  contactEmail?: string | null;
+}
+
 export type RapidResponseWithData = RapidResponse & {
-  assessment?: any
-  entity?: any
-  responder?: any
-  donor?: any
+  assessment?: AssessmentRelation | null
+  entity?: EntityRelation | null
+  responder?: ResponderRelation | null
+  donor?: DonorRelation | null
 }
 
 export class ResponseService {
@@ -57,7 +104,7 @@ export class ResponseService {
           status: 'PLANNED' as ResponseStatus,
           verificationStatus: 'DRAFT' as VerificationStatus,
           syncStatus: 'LOCAL' as SyncStatus,
-          items: items as any, // JSON field
+          items: items as unknown as Prisma.InputJsonValue, // JSON field
           plannedDate: new Date()
         },
         include: {
@@ -114,7 +161,7 @@ export class ResponseService {
       return response
     })
 
-    return result
+    return result as unknown as RapidResponseWithData
   }
 
   static async createDeliveredResponse(
@@ -170,7 +217,7 @@ export class ResponseService {
       return response
     })
 
-    return result
+    return result as unknown as RapidResponseWithData
   }
 
   static async getResponseById(
@@ -234,7 +281,7 @@ export class ResponseService {
     // Validate requester has access to this entity's responses
     await this.validateEntityAssignment(requesterId, response.entityId)
 
-    return response
+    return response as unknown as RapidResponseWithData
   }
 
   static async updatePlannedResponse(
@@ -260,7 +307,7 @@ export class ResponseService {
       }
 
       // If response was rejected, resubmit for verification and clear rejection reason
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         ...input,
         updatedAt: new Date()
       }
@@ -338,7 +385,7 @@ export class ResponseService {
     }
 
     // Build where clause
-    const where: any = {
+    const where: Prisma.RapidResponseWhereInput = {
       entityId: { in: entityIds },
       status: 'PLANNED'
     }
@@ -386,7 +433,7 @@ export class ResponseService {
       take: limit
     })
 
-    return { responses, total }
+    return { responses: responses as unknown as RapidResponseWithData[], total }
   }
 
   static async getAssignedResponsesForResponder(
@@ -408,7 +455,7 @@ export class ResponseService {
     }
 
     // Build where clause - include ALL statuses, not just PLANNED
-    const where: any = {
+    const where: Prisma.RapidResponseWhereInput = {
       entityId: { in: entityIds }
     }
 
@@ -456,7 +503,7 @@ export class ResponseService {
       take: limit
     })
 
-    return { responses, total }
+    return { responses: responses as unknown as RapidResponseWithData[], total }
   }
 
   static async confirmDelivery(
@@ -490,12 +537,13 @@ export class ResponseService {
       entityFound: !!entityAutoApproval,
       autoApproveEnabled: entityAutoApproval?.autoApproveEnabled,
       metadata: entityAutoApproval?.metadata,
-      hasConfig: !!(entityAutoApproval?.metadata as any)?.autoApproval
+      hasConfig: !!(entityAutoApproval?.metadata as Record<string, unknown> | null)?.autoApproval
     })
 
     if (entityAutoApproval?.autoApproveEnabled) {
       // Check if auto-approval conditions are met
-      const config = (entityAutoApproval.metadata as any)?.autoApproval
+      const metadataRecord = entityAutoApproval.metadata as Record<string, unknown> | null
+      const config = metadataRecord?.autoApproval as AutoApprovalConfigData | undefined
       
       console.log('🔍 Auto-approval config:', config)
       
@@ -510,7 +558,7 @@ export class ResponseService {
         }
       }
       
-      const shouldAutoVerify = this.checkAutoApprovalConditions(responseWithDeliveryData, config)
+      const shouldAutoVerify = config ? this.checkAutoApprovalConditions(responseWithDeliveryData, config) : false
       
       console.log('🔍 Auto-approval evaluation:', {
         shouldAutoVerify,
@@ -532,14 +580,14 @@ export class ResponseService {
     const result = await prisma.$transaction(async (tx) => {
       const oldValues = {
         status: existingResponse.status,
-        deliveredItems: (existingResponse as any).deliveredItems,
-        deliveryLocation: (existingResponse as any).deliveryLocation,
-        deliveryNotes: (existingResponse as any).deliveryNotes,
-        mediaAttachmentIds: (existingResponse as any).mediaAttachmentIds,
+        deliveredItems: existingResponse.items,
+        deliveryLocation: (existingResponse.resources as Record<string, unknown> | null)?.deliveryLocation,
+        deliveryNotes: (existingResponse.resources as Record<string, unknown> | null)?.deliveryNotes,
+        mediaAttachmentIds: (existingResponse.resources as Record<string, unknown> | null)?.mediaAttachmentIds,
         verificationStatus: existingResponse.verificationStatus
       }
 
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         status: 'DELIVERED',
         verificationStatus,
         items: input.deliveredItems, // Store delivered items in the existing JSON field
@@ -615,12 +663,12 @@ export class ResponseService {
       return response
     })
 
-    return result
+    return result as unknown as RapidResponseWithData
   }
 
   private static checkAutoApprovalConditions(
-    response: any,
-    config: any
+    response: { type: string; priority: string; resources?: Record<string, unknown> | null },
+    config: AutoApprovalConfigData
   ): boolean {
     console.log('🔍 Checking auto-approval conditions:', {
       hasConfig: !!config,
@@ -666,14 +714,15 @@ export class ResponseService {
     
     // Check documentation requirement
     if (config.requiresDocumentation) {
-      const resources = response.resources || {}
+      const resources = (response.resources || {}) as Record<string, unknown>
+      const mediaAttachmentIds = resources.mediaAttachmentIds as unknown[] | undefined
       const hasDocumentation = resources.deliveryNotes && 
-        (resources.mediaAttachmentIds?.length > 0 || resources.deliveryLocation)
+        ((mediaAttachmentIds?.length ?? 0) > 0 || resources.deliveryLocation)
       
       console.log('🔍 Documentation check:', {
         requiresDocumentation: config.requiresDocumentation,
         hasDeliveryNotes: !!resources.deliveryNotes,
-        hasMediaAttachments: !!resources.mediaAttachmentIds?.length,
+        hasMediaAttachments: !!(mediaAttachmentIds?.length),
         hasDeliveryLocation: !!resources.deliveryLocation,
         hasDocumentation
       })
@@ -709,7 +758,7 @@ export class ResponseService {
   private static async validateAssessmentAccess(
     assessmentId: string,
     entityId: string
-  ): Promise<any> {
+  ): Promise<{ id: string; entityId: string; verificationStatus: string; status: string }> {
     const assessment = await prisma.rapidAssessment.findUnique({
       where: { id: assessmentId },
       select: {
@@ -736,13 +785,13 @@ export class ResponseService {
   }
 
   private static async createAuditLog(
-    tx: any,
+    tx: Prisma.TransactionClient,
     userId: string,
     action: string,
     resource: string,
     resourceId: string,
-    oldValues: any,
-    newValues: any
+    oldValues: Record<string, unknown> | null,
+    newValues: Record<string, unknown>
   ): Promise<void> {
     await tx.auditLog.create({
       data: {
@@ -750,8 +799,8 @@ export class ResponseService {
         action,
         resource,
         resourceId,
-        oldValues: oldValues as any,
-        newValues: newValues as any
+        oldValues: oldValues as unknown as Prisma.InputJsonValue,
+        newValues: newValues as unknown as Prisma.InputJsonValue
       }
     })
   }

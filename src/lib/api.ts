@@ -144,6 +144,43 @@ export const apiPut = async <T = any>(
 }
 
 /**
+ * Make an authenticated PATCH request
+ */
+export const apiPatch = async <T = any>(
+  url: string,
+  body?: any,
+  options?: RequestInit
+): Promise<ApiResponse<T>> => {
+  try {
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        ...getAuthHeaders(),
+        ...options?.headers
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      ...options
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.error || `HTTP ${response.status}: ${response.statusText}`
+      }
+    }
+
+    return data
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Network error'
+    }
+  }
+}
+
+/**
  * Make an authenticated DELETE request
  */
 export const apiDelete = async <T = any>(url: string, options?: RequestInit): Promise<ApiResponse<T>> => {

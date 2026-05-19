@@ -1,30 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db/client';
 import { DonorRegistrationSchema } from '@/lib/validation/donor';
 import { AuthService } from '@/lib/auth/service';
-import { v4 as uuidv4 } from 'uuid';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
+import { successResponse, createdResponse, paginatedResponse, errorResponse, handleApiError } from '@/lib/api/response';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     // Validate input
     const validation = DonorRegistrationSchema.safeParse(body);
     if (!validation.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Validation failed',
-          details: validation.error.errors,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 400 }
-      );
+      return errorResponse('Validation failed', 400, validation.error.errors);
     }
 
     const { name, type, contactEmail, contactPhone, organization, userCredentials } = validation.data;
@@ -40,18 +28,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingDonor) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Organization with this name or email already exists',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 409 }
-      );
+      return errorResponse('Organization with this name or email already exists', 409);
     }
 
     // Check for duplicate user email
@@ -65,18 +42,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'User with this email or username already exists',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 409 }
-      );
+      return errorResponse('User with this email or username already exists', 409);
     }
 
     // Get DONOR role
@@ -85,18 +51,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!donorRole) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Donor role not found in system',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 500 }
-      );
+      return errorResponse('Donor role not found in system', 500);
     }
 
     // Create donor and user in a transaction
@@ -170,43 +125,25 @@ export async function POST(request: NextRequest) {
     // Remove sensitive data
     const { passwordHash, ...userWithoutPassword } = result.user as any;
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        donor: result.donor,
-        user: userWithoutPassword,
-        token,
-        roles: ['DONOR']
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        version: '1.0',
-        requestId: uuidv4()
-      }
-    }, { status: 201 });
+    return createdResponse({
+      donor: result.donor,
+      user: userWithoutPassword,
+      token,
+      roles: ['DONOR']
+    });
 
   } catch (error) {
-    console.error('Donor registration error:', error);
-    
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
+    if (!context.roles.some(r => ['ADMIN', 'COORDINATOR'].includes(r))) {
+      return errorResponse('Insufficient permissions', 403);
+    }
     const { searchParams } = new URL(request.url);
-    
+
     // Parse query parameters
     const search = searchParams.get('search');
     const type = searchParams.get('type') as any;
@@ -216,7 +153,7 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     const where: any = {};
-    
+
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -252,40 +189,9 @@ export async function GET(request: NextRequest) {
       take: limit
     });
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        donors,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-          hasNext: page * limit < total,
-          hasPrev: page > 1
-        }
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        version: '1.0',
-        requestId: uuidv4()
-      }
-    });
+    return paginatedResponse(donors, page, limit, total);
 
   } catch (error) {
-    console.error('Donors list error:', error);
-    
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
-}
+});

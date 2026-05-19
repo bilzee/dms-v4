@@ -103,7 +103,7 @@ export interface VerificationQueueState {
   setAssessments: (assessments: VerificationQueueItem[]) => void;
   setAssessmentsLoading: (loading: boolean) => void;
   setAssessmentsError: (error: string | null) => void;
-  setAssessmentPagination: (pagination: any) => void;
+  setAssessmentPagination: (pagination: Partial<{ page: number; limit: number; total: number; totalPages: number }>) => void;
   setAssessmentFilters: (filters: Partial<VerificationFilters>) => void;
   setAssessmentQueueDepth: (depth: QueueDepth) => void;
   setAssessmentMetrics: (metrics: QueueMetrics) => void;
@@ -111,7 +111,7 @@ export interface VerificationQueueState {
   setDeliveries: (deliveries: VerificationQueueItem[]) => void;
   setDeliveriesLoading: (loading: boolean) => void;
   setDeliveriesError: (error: string | null) => void;
-  setDeliveryPagination: (pagination: any) => void;
+  setDeliveryPagination: (pagination: Partial<{ page: number; limit: number; total: number; totalPages: number }>) => void;
   setDeliveryFilters: (filters: Partial<VerificationFilters>) => void;
   setDeliveryQueueDepth: (depth: QueueDepth) => void;
   setDeliveryMetrics: (metrics: QueueMetrics) => void;

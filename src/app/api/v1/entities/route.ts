@@ -1,18 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db/client';
 import { withAuth } from '@/lib/auth/middleware';
+import { paginatedResponse, errorResponse, handleApiError } from '@/lib/api/response';
 
 export const GET = withAuth(async (request: NextRequest, context) => {
   const { user, roles } = context;
-  
+
   if (!roles.includes('COORDINATOR') && !roles.includes('ADMIN')) {
-    return NextResponse.json(
-      { success: false, error: 'Insufficient permissions. Coordinator or Admin role required.' },
-      { status: 403 }
-    );
+    return errorResponse('Insufficient permissions. Coordinator or Admin role required.', 403);
   }
     try {
-      console.log('DEBUG: Entities API - User roles:', context.roles) // Debug logging
       const url = new URL(request.url);
       const page = parseInt(url.searchParams.get('page') || '1');
       const limit = parseInt(url.searchParams.get('limit') || '50');
@@ -37,23 +34,10 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         })
       ]);
 
-      return NextResponse.json({
-        success: true,
-        data: entities,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit)
-        }
-      });
+      return paginatedResponse(entities, page, limit, total);
 
     } catch (error) {
-      console.error('Error fetching entities:', error);
-      return NextResponse.json(
-        { error: 'Internal server error' },
-        { status: 500 }
-      );
+      return handleApiError(error);
     }
   }
 );

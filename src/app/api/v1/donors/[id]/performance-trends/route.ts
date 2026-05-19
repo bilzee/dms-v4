@@ -11,12 +11,12 @@ const PerformanceTrendsQuerySchema = z.object({
 export const GET = withAuth(async (request: NextRequest, context, { params }) => {
   try {
     const { roles } = context;
-    
-    // Allow all authenticated users to view performance trends
-    if (!roles || roles.length === 0) {
+
+    // RBAC: DONOR (own), COORDINATOR, ADMIN can view performance trends
+    if (!roles.some(r => ['DONOR', 'COORDINATOR', 'ADMIN'].includes(r))) {
       return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
+        { success: false, error: 'Insufficient permissions to view performance trends' },
+        { status: 403 }
       );
     }
 

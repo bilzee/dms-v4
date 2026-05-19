@@ -14,11 +14,11 @@ export const GET = withAuth(async (request: NextRequest, context) => {
   try {
     const { roles } = context;
     
-    // Allow all authenticated users to view leaderboard
-    if (!roles || roles.length === 0) {
+    // RBAC: DONOR (own ranking), COORDINATOR, ADMIN can view leaderboard
+    if (!roles.some(r => ['DONOR', 'COORDINATOR', 'ADMIN'].includes(r))) {
       return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
+        { success: false, error: 'Insufficient permissions to view leaderboard' },
+        { status: 403 }
       );
     }
 

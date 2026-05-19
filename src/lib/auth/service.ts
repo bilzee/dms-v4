@@ -116,36 +116,25 @@ export class AuthService {
     user: UserWithRoles
     token: string
   } | null> {
-    console.log('🔍 AuthService.authenticate: Attempting login for email:', email)
-    
     const user = await this.getUserByEmail(email)
-    
+
     if (!user) {
-      console.log('❌ AuthService.authenticate: User not found for email:', email)
       return null
     }
 
-    console.log('✅ AuthService.authenticate: User found:', user.id, user.email, 'Active:', user.isActive, 'Locked:', user.isLocked)
-
     if (!user.isActive) {
-      console.log('❌ AuthService.authenticate: Account is deactivated')
       throw new Error('Account is deactivated')
     }
 
     if (user.isLocked) {
-      console.log('❌ AuthService.authenticate: Account is locked')
       throw new Error('Account is locked')
     }
 
-    console.log('🔑 AuthService.authenticate: Checking password...')
     const isPasswordValid = await this.comparePassword(password, user.passwordHash)
-    
+
     if (!isPasswordValid) {
-      console.log('❌ AuthService.authenticate: Invalid password')
       return null
     }
-
-    console.log('✅ AuthService.authenticate: Password valid, generating token...')
 
     // Update last login
     await db.user.update({

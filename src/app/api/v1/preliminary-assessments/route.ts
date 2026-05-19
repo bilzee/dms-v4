@@ -10,6 +10,14 @@ import { PreliminaryAssessmentListResponse } from '@/types/preliminary-assessmen
 
 export const GET = withAuth(async (request, context) => {
   try {
+    // RBAC: Only ASSESSOR, COORDINATOR, ADMIN can list preliminary assessments
+    if (!context.roles.some(r => ['ASSESSOR', 'COORDINATOR', 'ADMIN'].includes(r))) {
+      return NextResponse.json(
+        { success: false, error: 'Insufficient permissions to view preliminary assessments' },
+        { status: 403 }
+      );
+    }
+
     const url = new URL(request.url);
     const searchParams = Object.fromEntries(url.searchParams);
     
@@ -52,6 +60,14 @@ export const GET = withAuth(async (request, context) => {
 
 export const POST = withAuth(async (request, context) => {
   try {
+    // RBAC: Only ASSESSOR can create preliminary assessments
+    if (!context.roles.includes('ASSESSOR')) {
+      return NextResponse.json(
+        { success: false, error: 'Insufficient permissions to create preliminary assessments' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const input = CreatePreliminaryAssessmentSchema.parse(body);
     

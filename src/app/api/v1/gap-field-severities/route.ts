@@ -9,8 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth/auth-options'
+import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
@@ -32,73 +31,25 @@ const createGapFieldSchema = z.object({
   description: z.string().optional()
 })
 
-const updateGapFieldSchema = z.object({
-  severity: z.nativeEnum(Priority)
-})
-
-// Helper to check user permissions
-async function checkPermissions(session: any, requiredRole: 'COORDINATOR' | 'ADMIN') {
-  if (!session?.user?.id) {
-    return { hasPermission: false, user: null }
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: session!.user!.id },
-    include: {
-      roles: {
-        include: {
-          role: true
-        }
-      }
-    }
-  })
-
-  if (!user) {
-    return { hasPermission: false, user: null }
-  }
-
-  const userRoles = user.roles.map(ur => ur.role.name)
-  
-  // Admin has all permissions
-  if (userRoles.includes('ADMIN')) {
-    return { hasPermission: true, user }
-  }
-
-  // Check specific role requirement
-  if (requiredRole === 'COORDINATOR' && userRoles.includes('COORDINATOR')) {
-    return { hasPermission: true, user }
-  }
-
-  return { hasPermission: false, user }
-}
-
 /**
  * GET /api/v1/gap-field-severities
  * List gap field severities with optional filtering
  */
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession(authOptions)
-    
-    // Debug logging
-    console.log('Gap Field API - Session:', session?.user ? { userId: (session.user as any).id, email: (session.user as any).email } : 'No session')
-    
-    // If no session, check if we're in development and allow access
-    if (!session && process.env.NODE_ENV === 'development') {
-      console.log('Development mode: allowing access without authentication for gap fields')
-      // Skip permission check in development
-    } else {
-      const { hasPermission } = await checkPermissions(session, 'COORDINATOR')
-      
-      if (!hasPermission) {
-        return NextResponse.json(
-          { 
-            error: 'Insufficient permissions',
-            details: session ? 'User logged in but lacks coordinator role' : 'No active session'
-          }, 
-          { status: 403 }
-        )
-      }
+    // Check user has coordinator or admin role
+    const hasPermission = context.roles.some(role => 
+      role === 'COORDINATOR' || role === 'ADMIN'
+    )
+
+    if (!hasPermission) {
+      return NextResponse.json(
+        { 
+          error: 'Insufficient permissions',
+          details: 'User lacks coordinator or admin role'
+        }, 
+        { status: 403 }
+      )
     }
 
     const { searchParams } = new URL(request.url)
@@ -176,17 +127,17 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})
 
 /**
  * POST /api/v1/gap-field-severities
  * Create new gap field (Admin only)
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession(authOptions)
-    const { hasPermission, user } = await checkPermissions(session, 'ADMIN')
-    
+    // Check user has admin role
+    const hasPermission = context.roles.includes('ADMIN')
+
     if (!hasPermission) {
       return NextResponse.json(
         { error: 'Admin permissions required' }, 
@@ -217,7 +168,7 @@ export async function POST(request: NextRequest) {
     const gapField = await prisma.gapFieldSeverity.create({
       data: {
         ...data,
-        createdBy: user!.id
+        createdBy: context.userId
       },
       include: {
         createdByUser: {
@@ -253,4 +204,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

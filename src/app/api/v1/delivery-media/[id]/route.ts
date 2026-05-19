@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { v4 as uuidv4 } from 'uuid'
-import { withAuth, AuthContext } from '@/lib/auth/middleware'
-import { deliveryMediaService } from '@/lib/services/delivery-media.service'
+import { NextRequest } from 'next/server';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
+import { deliveryMediaService } from '@/lib/services/delivery-media.service';
+import { successResponse, errorResponse, handleApiError } from '@/lib/api/response';
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -9,200 +9,54 @@ interface RouteParams {
 
 export const DELETE = withAuth(
   async (request: NextRequest, context: AuthContext, { params }: RouteParams) => {
-    const { user, roles } = context;
-    
-    // Only RESPONDER who uploaded the media or COORDINATOR can delete
-    if (!roles.includes('RESPONDER') && !roles.includes('COORDINATOR')) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Insufficient permissions. Responder or Coordinator role required.' 
-        },
-        { status: 403 }
-      );
+    if (!context.roles.includes('RESPONDER') && !context.roles.includes('COORDINATOR')) {
+      return errorResponse('Insufficient permissions. Responder or Coordinator role required.', 403);
     }
-    
+
     try {
-      const { id } = await params
-      
-      console.log('🗑️ API Debug - Deleting delivery media:', {
-        mediaId: id,
-        userId: context.userId,
-        userRole: roles
-      })
-      
-      await deliveryMediaService.deleteMedia(id)
-      
-      console.log('✅ Delivery media deleted successfully:', { mediaId: id })
-      
-      return NextResponse.json({
-        success: true,
-        message: 'Delivery media deleted successfully',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      })
+      const { id } = await params;
+      await deliveryMediaService.deleteMedia(id);
+      return successResponse({ message: 'Delivery media deleted successfully' });
+
     } catch (error) {
-      console.error('❌ Delete delivery media error:', error)
-      
-      if (error instanceof Error && error.message.includes('not found')) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: error.message,
-            meta: {
-              timestamp: new Date().toISOString(),
-              version: '1.0.0',
-              requestId: uuidv4()
-            }
-          },
-          { status: 404 }
-        )
-      }
-      
-      return NextResponse.json(
-        {
-          success: false,
-          error: error instanceof Error ? error.message : 'Internal server error',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 500 }
-      )
+      return handleApiError(error);
     }
   }
-)
+);
 
 export const PUT = withAuth(
   async (request: NextRequest, context: AuthContext, { params }: RouteParams) => {
-    const { user, roles } = context;
-    
-    // Only COORDINATOR can update media verification status
-    if (!roles.includes('COORDINATOR')) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Insufficient permissions. Coordinator role required.' 
-        },
-        { status: 403 }
-      );
+    if (!context.roles.includes('COORDINATOR')) {
+      return errorResponse('Insufficient permissions. Coordinator role required.', 403);
     }
-    
+
     try {
-      const { id } = await params
-      const body = await request.json()
-      const { action, feedback } = body
-      
-      console.log('🔍 API Debug - Updating delivery media:', {
-        mediaId: id,
-        action,
-        userId: context.userId,
-        userRole: roles
-      })
-      
+      const { id } = await params;
+      const body = await request.json();
+      const { action, feedback, status } = body;
+
       if (action === 'mark_for_verification') {
-        await deliveryMediaService.markMediaForVerification(id)
-        
-        return NextResponse.json({
-          success: true,
-          message: 'Media marked for verification',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        })
+        await deliveryMediaService.markMediaForVerification(id);
+        return successResponse({ message: 'Media marked for verification' });
       }
-      
+
       if (action === 'update_verification_status') {
-        const { status } = body
-        
         if (!['verified', 'rejected'].includes(status)) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: 'Invalid verification status. Must be "verified" or "rejected"',
-              meta: {
-                timestamp: new Date().toISOString(),
-                version: '1.0.0',
-                requestId: uuidv4()
-              }
-            },
-            { status: 400 }
-          )
+          return errorResponse('Invalid verification status. Must be "verified" or "rejected"', 400);
         }
-        
+
         await deliveryMediaService.updateMediaVerificationStatus(
           id,
           status as 'verified' | 'rejected',
           feedback
-        )
-        
-        console.log('✅ Media verification status updated:', {
-          mediaId: id,
-          newStatus: status,
-          feedback
-        })
-        
-        return NextResponse.json({
-          success: true,
-          message: `Media ${status} successfully`,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        })
+        );
+        return successResponse({ message: `Media ${status} successfully` });
       }
-      
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Invalid action. Supported actions: mark_for_verification, update_verification_status',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 400 }
-      )
-      
+
+      return errorResponse('Invalid action. Supported actions: mark_for_verification, update_verification_status', 400);
+
     } catch (error) {
-      console.error('❌ Update delivery media error:', error)
-      
-      if (error instanceof Error && error.message.includes('not found')) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: error.message,
-            meta: {
-              timestamp: new Date().toISOString(),
-              version: '1.0.0',
-              requestId: uuidv4()
-            }
-          },
-          { status: 404 }
-        )
-      }
-      
-      return NextResponse.json(
-        {
-          success: false,
-          error: error instanceof Error ? error.message : 'Internal server error',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 500 }
-      )
+      return handleApiError(error);
     }
   }
-)
+);

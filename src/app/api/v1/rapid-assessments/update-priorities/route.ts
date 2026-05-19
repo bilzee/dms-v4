@@ -21,12 +21,8 @@ export const POST = withAuth(async (request, context) => {
       )
     }
 
-    console.log(`User ${context.userId} starting historical assessment priority update`)
-
     // Update all historical assessments
     const result = await RapidAssessmentService.updateAllHistoricalAssessmentPriorities()
-
-    console.log(`Historical assessment priority update completed by user ${context.userId}:`, result)
 
     return NextResponse.json({
       success: true,

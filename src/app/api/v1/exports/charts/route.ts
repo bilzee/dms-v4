@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
 
 const ROLE_PERMISSIONS = {
   assessor: ['read'],
@@ -32,17 +31,9 @@ interface ChartDataPoint {
   coordinates?: { lat: number; lng: number };
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const userRole = (session.user as any).role as string;
+    const userRole = (context.user as any).role as string;
     const permissions = ROLE_PERMISSIONS[userRole as keyof typeof ROLE_PERMISSIONS] || [];
 
     if (!permissions.includes('export')) {
@@ -105,7 +96,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 async function generateChart(chartType: string, data: ChartDataPoint[], options: any): Promise<Buffer> {
   try {
@@ -471,15 +462,8 @@ function getContentType(format: string): string {
 }
 
 // Get available chart types and formats
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
 
     return NextResponse.json({
       success: true,
@@ -503,4 +487,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

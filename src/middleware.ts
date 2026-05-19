@@ -1,67 +1,119 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { AuthService } from '@/lib/auth/service';
+import { ROLE_ROUTE_PREFIXES } from '@/lib/auth/route-config';
 
-// Role-based route mappings
-const ROLE_ROUTES = {
-  ASSESSOR: ['/assessor', '/assessments', '/surveys'],
-  COORDINATOR: ['/coordinator', '/coordination', '/responses', '/verification'],
-  RESPONDER: ['/responder', '/response', '/incidents'],
-  DONOR: ['/donor', '/donations', '/resources'],
-  ADMIN: ['/admin', '/users', '/roles', '/system'],
-} as const;
-
-// Public routes that don't require authentication
 const PUBLIC_ROUTES = [
   '/login',
-  '/register', 
+  '/register',
   '/forgot-password',
   '/reset-password',
-  '/api/v1/auth',  // Allow all auth API endpoints
-  '/api/health',   // Allow health check
-  '/_next',        // Allow Next.js assets
+  '/api/v1/auth/login',
+  '/api/v1/auth/refresh',
+  '/api/v1/donors',
+  '/api/health',
+  '/_next',
   '/manifest.json',
   '/favicon.ico',
+  '/offline.html',
 ];
 
-// Default dashboard paths by role
-const DEFAULT_DASHBOARD: Record<string, string> = {
-  ASSESSOR: '/assessor/dashboard',
-  COORDINATOR: '/coordinator/dashboard',
-  RESPONDER: '/responder/dashboard',
-  DONOR: '/donor/dashboard',
-  ADMIN: '/admin/dashboard',
-};
+const AUTH_REQUIRED_ROUTES = [
+  '/api/v1',
+  '/(auth)',
+];
+
+function isPublicRoute(pathname: string): boolean {
+  if (pathname === '/') return true;
+  if (pathname === '/login' || pathname === '/register') return true;
+  return PUBLIC_ROUTES.some(route => {
+    if (route === '/api/v1/donors') {
+      return pathname === route;
+    }
+    return pathname.startsWith(route);
+  });
+}
+
+function isApiRoute(pathname: string): boolean {
+  return pathname.startsWith('/api/');
+}
+
+function canAccessPath(pathname: string, roles: string[]): boolean {
+  if (pathname.startsWith('/(auth)/dashboard')) return true;
+  if (pathname.startsWith('/(auth)/roles')) return true;
+
+  for (const role of roles) {
+    const routes = ROLE_ROUTE_PREFIXES[role];
+    if (routes?.some(route => pathname.startsWith(route))) {
+      return true;
+    }
+  }
+  return false;
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public routes
-  if (PUBLIC_ROUTES.some(route => pathname.startsWith(route))) {
+  if (isPublicRoute(pathname)) {
     return NextResponse.next();
   }
 
-  // For now, allow all other routes during development
-  // TODO: Implement proper JWT token validation for protected routes
-  return NextResponse.next();
-}
+  const isAuthRequired = AUTH_REQUIRED_ROUTES.some(route => pathname.startsWith(route));
+  if (!isAuthRequired) {
+    return NextResponse.next();
+  }
 
-function canAccessPath(pathname: string, role: string): boolean {
-  const allowedRoutes = ROLE_ROUTES[role as keyof typeof ROLE_ROUTES];
-  if (!allowedRoutes) return false;
+  if (isApiRoute(pathname)) {
+    return NextResponse.next({
+      headers: { 'x-middleware-processed': 'true' },
+    });
+  }
 
-  return allowedRoutes.some(route => pathname.startsWith(route));
+  const authorization = request.headers.get('Authorization');
+  const cookieToken = request.cookies.get('auth_token')?.value;
+
+  let token: string | null = null;
+  if (authorization?.startsWith('Bearer ')) {
+    token = authorization.substring(7);
+  } else if (cookieToken) {
+    token = cookieToken;
+  }
+
+  if (!token) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('callbackUrl', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  try {
+    const payload = AuthService.verifyToken(token);
+
+    if (!payload.roles || payload.roles.length === 0) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('error', 'no_roles');
+      return NextResponse.redirect(loginUrl);
+    }
+
+    if (!canAccessPath(pathname, payload.roles)) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('error', 'access_denied');
+      return NextResponse.redirect(loginUrl);
+    }
+
+    const response = NextResponse.next();
+    response.headers.set('x-user-id', payload.userId);
+    response.headers.set('x-user-roles', payload.roles.join(','));
+    return response;
+  } catch {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('callbackUrl', pathname);
+    loginUrl.searchParams.set('error', 'session_expired');
+    return NextResponse.redirect(loginUrl);
+  }
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
