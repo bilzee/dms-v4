@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { shallow } from 'zustand/shallow';
+import { apiGet } from '@/lib/api';
 
 export interface QueueMetrics {
   averageWaitTime: number;
@@ -306,25 +307,20 @@ export const useVerificationStore = create<VerificationQueueState>()(
           }
         });
 
-        const response = await fetch(`/api/v1/verification/queue/assessments?${params}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        const result = await apiGet(`/api/v1/verification/queue/assessments?${params}`);
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to fetch assessments');
         }
 
-        const data = await response.json();
-        
-        if (data.success) {
-          set({
-            assessments: data.data,
-            assessmentPagination: data.pagination,
-            assessmentQueueDepth: data.queueDepth,
-            assessmentMetrics: data.metrics,
-            lastUpdate: new Date().toISOString()
-          });
-        } else {
-          throw new Error(data.error || 'Failed to fetch assessments');
-        }
+        const body = result.data as any;
+        set({
+          assessments: body?.data || [],
+          assessmentPagination: body?.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 },
+          assessmentQueueDepth: body?.queueDepth || { total: 0, critical: 0, high: 0, medium: 0, low: 0 },
+          assessmentMetrics: body?.metrics || { averageWaitTime: 0, verificationRate: 0, oldestPending: null },
+          lastUpdate: new Date().toISOString()
+        });
       } catch (error) {
         set({ 
           assessmentError: error instanceof Error ? error.message : 'Unknown error',
@@ -361,25 +357,20 @@ export const useVerificationStore = create<VerificationQueueState>()(
           }
         });
 
-        const response = await fetch(`/api/v1/verification/queue/deliveries?${params}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        const result = await apiGet(`/api/v1/verification/queue/deliveries?${params}`);
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to fetch deliveries');
         }
 
-        const data = await response.json();
-        
-        if (data.success) {
-          set({
-            deliveries: data.data,
-            deliveryPagination: data.pagination,
-            deliveryQueueDepth: data.queueDepth,
-            deliveryMetrics: data.metrics,
-            lastUpdate: new Date().toISOString()
-          });
-        } else {
-          throw new Error(data.error || 'Failed to fetch deliveries');
-        }
+        const body = result.data as any;
+        set({
+          deliveries: body?.data || [],
+          deliveryPagination: body?.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 },
+          deliveryQueueDepth: body?.queueDepth || { total: 0, critical: 0, high: 0, medium: 0, low: 0 },
+          deliveryMetrics: body?.metrics || { averageWaitTime: 0, verificationRate: 0, oldestPending: null },
+          lastUpdate: new Date().toISOString()
+        });
       } catch (error) {
         set({ 
           deliveryError: error instanceof Error ? error.message : 'Unknown error',

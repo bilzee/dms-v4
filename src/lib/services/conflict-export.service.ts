@@ -1,4 +1,6 @@
 import { ConflictApiResponse, ConflictExportOptions } from '@/types/conflict';
+import { apiGet } from '@/lib/api'
+import { createAuthenticatedFetch } from '@/lib/auth/token-utils'
 
 export interface ExportProgress {
   total: number;
@@ -46,7 +48,7 @@ export class ConflictExportService {
       });
 
       // Fetch data from export endpoint
-      const response = await fetch(`/api/v1/sync/conflicts/export?${queryParams.toString()}`);
+      const response = await createAuthenticatedFetch(`/api/v1/sync/conflicts/export?${queryParams.toString()}`);
       
       if (!response.ok) {
         throw new Error(`Export failed: ${response.status} ${response.statusText}`);
@@ -298,8 +300,8 @@ export class ConflictExportService {
       if (options.dateTo) queryParams.set('dateTo', options.dateTo);
       queryParams.set('limit', '1'); // Just get count
 
-      const response = await fetch(`/api/v1/sync/conflicts?${queryParams.toString()}`);
-      const data = await response.json();
+      const result = await apiGet(`/api/v1/sync/conflicts?${queryParams.toString()}`);
+      const data = result.data as any;
 
       const estimatedCount = data.pagination?.total || 0;
       const estimatedSizeKB = Math.ceil(estimatedCount * 0.5); // Rough estimate: 0.5KB per conflict

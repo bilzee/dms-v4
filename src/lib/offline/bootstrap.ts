@@ -3,6 +3,8 @@
 
 import { offlineDB } from '@/lib/db/offline';
 import { useSyncStore } from '@/stores/sync.store';
+import { apiGet } from '@/lib/api'
+import { getAuthToken } from '@/lib/auth/token-utils'
 
 export interface BootstrapProgress {
   stage: 'initializing' | 'entities' | 'incidents' | 'assessments' | 'config' | 'completed';
@@ -193,34 +195,39 @@ export class OfflineBootstrapService {
       const isOnline = navigator.onLine;
       
       if (isOnline) {
-        const response = await fetch('/api/v1/entities?active=true&limit=1000', {
-          headers: { 'Cache-Control': 'no-cache' }
+        if (!getAuthToken()) {
+          const entitiesCount = await offlineDB.entities.count()
+          if (entitiesCount === 0) throw new Error('No entities available offline and not authenticated')
+          console.log(`📍 Using ${entitiesCount} cached entities (no auth)`)
+          return
+        }
+
+        const result = await apiGet('/api/v1/entities?active=true&limit=1000')
+
+        if (!result.success) {
+          throw new Error(`Failed to fetch entities: ${result.error}`)
+        }
+
+        const entities = result.data as any[]
+
+        // Store in offline DB
+        await offlineDB.transaction('rw', offlineDB.entities, async () => {
+          await offlineDB.entities.clear(); // Clear old data
+
+          for (const entity of entities) {
+            await offlineDB.entities.put({
+              uuid: entity.id,
+              name: entity.name,
+              type: entity.type,
+              data: JSON.stringify(entity),
+              keyVersion: 1,
+              lastModified: new Date(),
+              syncStatus: 'synced'
+            });
+          }
         });
 
-        if (response.ok) {
-          const entities = await response.json();
-          
-          // Store in offline DB
-          await offlineDB.transaction('rw', offlineDB.entities, async () => {
-            await offlineDB.entities.clear(); // Clear old data
-            
-            for (const entity of entities) {
-              await offlineDB.entities.put({
-                uuid: entity.id,
-                name: entity.name,
-                type: entity.type,
-                data: JSON.stringify(entity),
-                keyVersion: 1,
-                lastModified: new Date(),
-                syncStatus: 'synced'
-              });
-            }
-          });
-
-          console.log(`📍 Loaded ${entities.length} entities for offline use`);
-        } else {
-          throw new Error(`Failed to fetch entities: ${response.status}`);
-        }
+        console.log(`📍 Loaded ${entities.length} entities for offline use`);
       } else {
         // Offline - check if we have cached entities
         const entitiesCount = await offlineDB.entities.count();
@@ -243,13 +250,21 @@ export class OfflineBootstrapService {
       const isOnline = navigator.onLine;
       
       if (isOnline) {
-        const response = await fetch('/api/v1/incidents?status=ACTIVE&limit=100', {
-          headers: { 'Cache-Control': 'no-cache' }
-        });
+        if (!getAuthToken()) {
+          const cached = localStorage.getItem('drms_offline_incidents')
+          if (!cached) console.warn('⚠️ No incidents available offline and not authenticated')
+          else {
+            const { data } = JSON.parse(cached)
+            console.log(`🚨 Using ${data.length} cached incidents (no auth)`)
+          }
+          return
+        }
 
-        if (response.ok) {
-          const incidents = await response.json();
-          
+        const result = await apiGet('/api/v1/incidents?status=ACTIVE&limit=100')
+
+        if (result.success) {
+          const incidents = result.data as any[]
+
           // Store in localStorage for now (until incident offline DB is ready)
           localStorage.setItem('drms_offline_incidents', JSON.stringify({
             data: incidents,
@@ -301,13 +316,21 @@ export class OfflineBootstrapService {
       const isOnline = navigator.onLine;
       
       if (isOnline) {
-        const response = await fetch('/api/v1/assessments/verified?limit=500', {
-          headers: { 'Cache-Control': 'no-cache' }
-        });
+        if (!getAuthToken()) {
+          const cached = localStorage.getItem('drms_offline_verified_assessments')
+          if (!cached) console.warn('⚠️ No verified assessments available offline and not authenticated')
+          else {
+            const { data } = JSON.parse(cached)
+            console.log(`✅ Using ${data.length} cached verified assessments (no auth)`)
+          }
+          return
+        }
 
-        if (response.ok) {
-          const assessments = await response.json();
-          
+        const result = await apiGet('/api/v1/assessments/verified?limit=500')
+
+        if (result.success) {
+          const assessments = result.data as any[]
+
           // Store verified assessments for response planning
           localStorage.setItem('drms_offline_verified_assessments', JSON.stringify({
             data: assessments,

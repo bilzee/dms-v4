@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
+import { getAuthToken } from '@/lib/auth/token-utils';
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -85,9 +86,13 @@ export default function EntityPerformancePage() {
     queryKey: ['entity-performance-metrics'],
     queryFn: async () => {
       // Fetch demographics and assessments data
+      const token = getAuthToken();
+      if (!token) throw new Error('Not authenticated');
+
+      const headers = { 'Authorization': `Bearer ${token}` };
       const [demographicsRes, assessmentsRes] = await Promise.all([
-        fetch('/api/v1/donors/entities/impact/demographics'),
-        fetch('/api/v1/donors/entities/impact/assessments/latest')
+        fetch('/api/v1/donors/entities/impact/demographics', { headers }),
+        fetch('/api/v1/donors/entities/impact/assessments/latest', { headers })
       ]);
 
       if (!demographicsRes.ok || !assessmentsRes.ok) {

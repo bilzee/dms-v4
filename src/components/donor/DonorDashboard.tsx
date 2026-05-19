@@ -141,7 +141,11 @@ export function DonorDashboard() {
     
     if (!donorId) return null
     
-    const response = await fetch('/api/v1/leaderboard?limit=100&sortBy=overall')
+    const response = await fetch('/api/v1/leaderboard?limit=100&sortBy=overall', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
     if (!response.ok) {
       throw new Error('Failed to fetch leaderboard')
     }

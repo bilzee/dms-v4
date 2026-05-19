@@ -6,6 +6,7 @@ import {
   CreatePreliminaryAssessmentRequest 
 } from '@/types/preliminary-assessment'
 import { offlineDB } from '@/lib/db/offline'
+import { apiGet, apiPost, apiPut } from '@/lib/api'
 import { useOfflineStore } from '@/stores/offline.store'
 
 interface PreliminaryAssessmentDraft {
@@ -72,38 +73,16 @@ export const usePreliminaryAssessmentStore = create<PreliminaryAssessmentState>(
         set({ isLoading: true, error: null })
         
         try {
-          // Get token from consistent storage
-          const getToken = () => {
-            if (typeof window === 'undefined') return null
-            return localStorage.getItem('auth_token') || localStorage.getItem('token')
-          }
-
           // Check if we're online
           const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : false
           
           if (isOnline) {
             // Try to submit online first
             try {
-              const token = getToken()
-              if (!token) {
-                throw new Error('No authentication token available')
-              }
-
-              const response = await fetch('/api/v1/preliminary-assessments', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(data)
-              })
-
-              if (!response.ok) {
-                throw new Error('Online submission failed')
-              }
-
-              const result = await response.json()
-              const assessment = result.data
+              const apiResult = await apiPost('/api/v1/preliminary-assessments', data)
+              if (!apiResult.success) throw new Error(apiResult.error || 'Online submission failed')
+              const body = apiResult.data as any
+              const assessment = body?.data || body
 
               // Update recent assessments and remove current draft if submitted successfully
               const state = get()
@@ -202,33 +181,10 @@ export const usePreliminaryAssessmentStore = create<PreliminaryAssessmentState>(
         set({ isLoading: true, error: null })
         
         try {
-          // Get token from consistent storage
-          const getToken = () => {
-            if (typeof window === 'undefined') return null
-            return localStorage.getItem('auth_token') || localStorage.getItem('token')
-          }
-
-          const token = getToken()
-          if (!token) {
-            throw new Error('No authentication token available')
-          }
-
-          const response = await fetch(`/api/v1/preliminary-assessments/${id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ data })
-          })
-
-          if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.error || 'Failed to update assessment')
-          }
-
-          const result = await response.json()
-          const assessment = result.data
+          const apiResult = await apiPut(`/api/v1/preliminary-assessments/${id}`, { data })
+          if (!apiResult.success) throw new Error(apiResult.error || 'Failed to update assessment')
+          const body = apiResult.data as any
+          const assessment = body?.data || body
 
           // Update in recent assessments
           const state = get()
@@ -253,32 +209,12 @@ export const usePreliminaryAssessmentStore = create<PreliminaryAssessmentState>(
         set({ isLoading: true, error: null })
         
         try {
-          // Get token from consistent storage
-          const getToken = () => {
-            if (typeof window === 'undefined') return null
-            return localStorage.getItem('auth_token') || localStorage.getItem('token')
-          }
-
-          const token = getToken()
-          if (!token) {
-            throw new Error('No authentication token available')
-          }
-
-          const response = await fetch('/api/v1/preliminary-assessments?limit=10', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          })
-
-          if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.error || 'Failed to load assessments')
-          }
-
-          const result = await response.json()
+          const apiResult = await apiGet('/api/v1/preliminary-assessments?limit=10')
+          if (!apiResult.success) throw new Error(apiResult.error || 'Failed to load assessments')
+          const body = apiResult.data as any
           
           set({ 
-            recentAssessments: result.data,
+            recentAssessments: body?.data || body,
             isLoading: false 
           })
         } catch (error) {
@@ -476,27 +412,9 @@ export const usePreliminaryAssessmentStore = create<PreliminaryAssessmentState>(
             try {
               const decryptedData = await offlineDB.decryptData(assessment.data, assessment.keyVersion)
               
-              // Get token from consistent storage
-              const getToken = () => {
-                if (typeof window === 'undefined') return null
-                return localStorage.getItem('auth_token') || localStorage.getItem('token')
-              }
+              const apiResult = await apiPost('/api/v1/preliminary-assessments', decryptedData)
 
-              const token = getToken()
-              if (!token) {
-                throw new Error('No authentication token available')
-              }
-
-              const response = await fetch('/api/v1/preliminary-assessments', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(decryptedData)
-              })
-
-              if (response.ok) {
+              if (apiResult.success) {
                 // Mark as synced
                 await offlineDB.updateAssessment(assessment.uuid, { syncStatus: 'synced' })
                 successCount++

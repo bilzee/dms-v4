@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { Incident } from '@prisma/client'
 import { CreateIncidentRequest, IncidentData } from '@/types/incidents'
+import { apiGet, apiPost, apiPut } from '@/lib/api'
 
 interface IncidentState {
   // Current incidents
@@ -55,21 +56,12 @@ export const useIncidentStore = create<IncidentState>()(
         set({ isLoading: true, error: null })
         
         try {
-          const response = await fetch('/api/v1/incidents', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify(data)
-          })
+          const result = await apiPost('/api/v1/incidents', data)
 
-          if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.error || 'Failed to create incident')
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to create incident')
           }
 
-          const result = await response.json()
           const incident = result.data
 
           // Update incidents list
@@ -95,21 +87,12 @@ export const useIncidentStore = create<IncidentState>()(
         set({ isLoading: true, error: null })
         
         try {
-          const response = await fetch('/api/v1/incidents/from-assessment', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify({ assessmentId, incidentData })
-          })
+          const result = await apiPost('/api/v1/incidents/from-assessment', { assessmentId, incidentData })
 
-          if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.error || 'Failed to create incident from assessment')
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to create incident from assessment')
           }
 
-          const result = await response.json()
           const { incident, assessment } = result.data
 
           // Update incidents list
@@ -135,18 +118,12 @@ export const useIncidentStore = create<IncidentState>()(
         set({ isLoading: true, error: null })
         
         try {
-          const response = await fetch('/api/v1/incidents?limit=50', {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          })
+          const result = await apiGet('/api/v1/incidents?limit=50')
 
-          if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.error || 'Failed to load incidents')
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to load incidents')
           }
 
-          const result = await response.json()
           const incidents = result.data
           
           set({ 
@@ -163,14 +140,9 @@ export const useIncidentStore = create<IncidentState>()(
 
       loadIncidentTypes: async () => {
         try {
-          const response = await fetch('/api/v1/incidents/types', {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          })
+          const result = await apiGet('/api/v1/incidents/types')
 
-          if (response.ok) {
-            const result = await response.json()
+          if (result.success) {
             set({ incidentTypes: result.data })
           }
           // If it fails, keep the default types
@@ -183,21 +155,12 @@ export const useIncidentStore = create<IncidentState>()(
         set({ isLoading: true, error: null })
         
         try {
-          const response = await fetch(`/api/v1/incidents/${id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify({ status })
-          })
+          const result = await apiPut(`/api/v1/incidents/${id}`, { status })
 
-          if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.error || 'Failed to update incident status')
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to update incident status')
           }
 
-          const result = await response.json()
           const incident = result.data
 
           // Update incidents list

@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useVerificationDeliveries } from '@/hooks/useVerificationDeliveries'
+import { apiPost } from '@/lib/api'
 import { 
   Card, 
   CardContent, 
@@ -109,61 +111,36 @@ export default function DeliveryVerificationQueuePage() {
   const queryClient = useQueryClient()
 
   // Fetch delivery verification queue
-  const { 
-    data: queueData, 
-    isLoading: isLoadingQueue, 
+  const {
+    data: queueData,
+    isLoading: isLoadingQueue,
     error: queueError,
     isFetching: isFetchingQueue
-  } = useQuery({
-    queryKey: ['delivery-verification-queue', filters],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        page: filters.page.toString(),
-        limit: filters.limit.toString()
-      })
-      
-      if (filters.status && filters.status !== 'ALL') params.append('status', filters.status)
-      if (filters.entityId) params.append('entityId', filters.entityId)
-      if (filters.responderId) params.append('responderId', filters.responderId)
-      if (filters.dateFrom) params.append('dateFrom', filters.dateFrom)
-      if (filters.dateTo) params.append('dateTo', filters.dateTo)
-
-      const response = await fetch(`/api/v1/verification/queue/deliveries?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch delivery verification queue')
-      return response.json()
-    },
-    staleTime: 30 * 1000, // 30 seconds
-    gcTime: 5 * 60 * 1000, // 5 minutes
+  } = useVerificationDeliveries({
+    page: filters.page,
+    limit: filters.limit,
+    status: filters.status !== 'ALL' ? filters.status : undefined,
   })
 
   // Verification mutation
   const verifyDeliveryMutation = useMutation({
-    mutationFn: async ({ 
-      deliveryId, 
-      action, 
-      rejectionReason, 
-      feedback 
+    mutationFn: async ({
+      deliveryId,
+      action,
+      rejectionReason,
+      feedback
     }: {
       deliveryId: string
       action: 'approve' | 'reject' | 'request_info'
       rejectionReason?: string
       feedback?: string
     }) => {
-      const response = await fetch(`/api/v1/verification/queue/deliveries/${deliveryId}/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, rejectionReason, feedback })
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to verify delivery')
-      }
-      
-      return response.json()
+      const result = await apiPost(`/api/v1/verification/queue/deliveries/${deliveryId}/verify`, { action, rejectionReason, feedback })
+      if (!result.success) throw new Error(result.error || 'Failed to verify delivery')
+      return result.data!
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['delivery-verification-queue'] })
+      queryClient.invalidateQueries({ queryKey: ['verification-deliveries'] })
       setSelectedDelivery(null)
       setRejectionReason('')
       setFeedback('')

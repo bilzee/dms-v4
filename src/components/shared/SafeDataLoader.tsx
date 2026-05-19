@@ -1,6 +1,6 @@
 'use client'
 
-import React, { ReactNode, useState, useEffect } from 'react'
+import React, { ReactNode, useState, useEffect, useRef, useCallback } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Loader2, AlertTriangle, RefreshCw, Wifi, WifiOff } from 'lucide-react'
@@ -48,6 +48,10 @@ export function SafeDataLoader<T = any>({
     typeof navigator !== 'undefined' ? navigator.onLine : true
   )
 
+  const retryCountRef = useRef(0)
+  const queryFnRef = useRef(queryFn)
+  queryFnRef.current = queryFn
+
   useEffect(() => {
     const handleOnline = () => setIsOnline(true)
     const handleOffline = () => setIsOnline(false)
@@ -61,7 +65,7 @@ export function SafeDataLoader<T = any>({
     }
   }, [])
 
-  const loadData = async (isRetry = false) => {
+  const loadData = useCallback(async (isRetry = false) => {
     if (!enabled) return
 
     setState(prev => ({
@@ -71,7 +75,8 @@ export function SafeDataLoader<T = any>({
     }))
 
     try {
-      const result = await queryFn()
+      const result = await queryFnRef.current()
+      retryCountRef.current = 0
       setState({
         data: result,
         isLoading: false,
@@ -81,20 +86,20 @@ export function SafeDataLoader<T = any>({
     } catch (error) {
       console.error('SafeDataLoader error:', error)
       
-      // Retry logic
-      if (state.retryCount < maxRetries) {
+      retryCountRef.current += 1
+
+      if (retryCountRef.current <= maxRetries) {
         setState(prev => ({
           ...prev,
-          retryCount: prev.retryCount + 1
+          retryCount: retryCountRef.current
         }))
         
-        // Exponential backoff
-        const delay = Math.pow(2, state.retryCount) * 1000
+        const delay = Math.pow(2, retryCountRef.current - 1) * 1000
         setTimeout(() => loadData(true), delay)
         return
       }
 
-      // Final error state
+      retryCountRef.current = 0
       const errorMessage = error instanceof Error ? error.message : String(error)
       setState({
         data: fallbackData,
@@ -103,16 +108,18 @@ export function SafeDataLoader<T = any>({
         retryCount: 0
       })
     }
-  }
+  }, [enabled, maxRetries, fallbackData])
 
   useEffect(() => {
+    retryCountRef.current = 0
     loadData()
-  }, [enabled, queryFn])
+  }, [enabled, queryFn, loadData])
 
-  const retry = () => {
+  const retry = useCallback(() => {
+    retryCountRef.current = 0
     setState(prev => ({ ...prev, error: null, retryCount: 0 }))
     loadData(true)
-  }
+  }, [loadData])
 
   // Render fallback components for specific states
   if (state.isLoading) {

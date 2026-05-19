@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useAdminDonors } from '@/hooks/useAdminDonors'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -47,29 +48,10 @@ interface Donor {
 }
 
 export default function DonorManagementPage() {
-  const [donors, setDonors] = useState<Donor[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: donorsData, isLoading: loading } = useAdminDonors()
+  const donors: Donor[] = Array.isArray(donorsData?.donors) ? donorsData.donors : []
   const [searchTerm, setSearchTerm] = useState('')
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all')
-
-  useEffect(() => {
-    fetchDonors()
-  }, [])
-
-  const fetchDonors = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/v1/donors')
-      if (response.ok) {
-        const data = await response.json()
-        setDonors(Array.isArray(data.data?.donors) ? data.data.donors : [])
-      }
-    } catch (error) {
-      console.error('Failed to fetch donors:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const filteredDonors = (Array.isArray(donors) ? donors : []).filter(donor => {
     const matchesSearch = donor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

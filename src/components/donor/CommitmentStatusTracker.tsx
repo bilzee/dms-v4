@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { apiPatch } from '@/lib/api'
 
 // UI components
 import { Button } from '@/components/ui/button'
@@ -94,19 +95,9 @@ export function CommitmentStatusTracker({
 
   const updateStatusMutation = useMutation({
     mutationFn: async (data: StatusUpdateFormData) => {
-      const response = await fetch(`/api/v1/commitments/${commitment.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to update commitment status')
-      }
-      
-      const result = await response.json()
-      return result.data
+      const result = await apiPatch(`/api/v1/commitments/${commitment.id}`, data)
+      if (!result.success) throw new Error(result.error || 'Failed to update commitment status')
+      return result.data!
     },
     onSuccess: (updatedCommitment) => {
       toast.success('Commitment status updated successfully!')

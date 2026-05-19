@@ -3,6 +3,7 @@ import { ConfirmDeliveryInput } from '@/lib/validation/response'
 import { deliveryMediaService } from './delivery-media.service'
 import { offlineDB } from '@/lib/db/offline'
 import { GPSLocation } from '@/hooks/useGPS'
+import { apiPost } from '@/lib/api'
 
 export interface DeliveryOfflineOperation {
   uuid: string
@@ -222,20 +223,13 @@ export class DeliveryOfflineService {
     deliveryData: ConfirmDeliveryInput,
     responseId: string
   ): Promise<any> {
-    const response = await fetch(`/api/v1/responses/${responseId}/deliver`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(deliveryData)
-    })
+    const result = await apiPost(`/api/v1/responses/${responseId}/deliver`, deliveryData)
     
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || 'Failed to submit delivery confirmation')
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to submit delivery confirmation')
     }
     
-    return response.json()
+    return result.data
   }
 
   // Store delivery confirmation data in offline cache

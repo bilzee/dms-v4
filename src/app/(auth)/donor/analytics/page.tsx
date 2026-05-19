@@ -27,6 +27,7 @@ import {
 import { EntityInsightsCards } from '@/components/donor/EntityInsightsCards'
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '@/lib/api'
+import { useDonorMetrics } from '@/hooks/useDonorMetrics'
 
 interface EntityData {
   id: string
@@ -81,29 +82,22 @@ export default function DonorAnalyticsPage() {
     }
   })
 
-  // Fetch donor metrics
-  const { data: metricsData, isLoading: metricsLoading } = useQuery({
-    queryKey: ['donor-metrics'],
-    queryFn: async () => {
-      try {
-        const response = await fetch('/api/v1/donors/metrics?timeframe=30d')
-        if (!response.ok) {
-          console.warn('Metrics API returned:', response.status, response.statusText)
-          return null // Return null instead of throwing error
-        }
-        const result = await response.json()
-        return result.data as DonorMetrics || null
-      } catch (error) {
-        console.warn('Failed to fetch donor metrics:', error)
-        return null // Return null on error
+  // Fetch donor metrics via shared hook
+  const { data: metricsResponse, isLoading: metricsLoading } = useDonorMetrics({ dateRange: '30d' })
+  const metrics: DonorMetrics | null = metricsResponse?.overall
+    ? {
+        totalDonors: metricsResponse.overall.totalDonors,
+        commitments: metricsResponse.overall.totalCommitments,
+        totalResponses: metricsResponse.overall.totalResponses,
+        averageVerificationRate: metricsResponse.overall.averageVerificationRate,
+        totalVerifiedResponses: metricsResponse.overall.totalVerifiedResponses,
+        topPerformers: metricsResponse.overall.topPerformers,
       }
-    }
-  })
+    : null
 
   const isLoading = entitiesLoading || metricsLoading
 
   const entities = entitiesData || []
-  const metrics = metricsData
 
   return (
     <RoleBasedRoute requiredRole="DONOR">

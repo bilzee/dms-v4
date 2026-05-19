@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,11 +25,13 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useIncidents } from '@/hooks/useIncidents'
+import { useIncidentAssessmentSummary } from '@/hooks/useIncidentDetails'
 import type { 
   EntityIncidentRelationship,
   RelationshipQueryParams 
 } from '@/types/assessment-relationships';
-import type { Priority, AssessmentType, Incident } from '@prisma/client';
+import type { Priority, AssessmentType } from '@prisma/client';
 
 // Dynamic imports for client-side only components
 const AssessmentRelationshipMap = dynamic(
@@ -59,18 +60,7 @@ export default function EntityIncidentMapPage() {
   });
 
   // Fetch all incidents for dropdown
-  const { data: incidents, isLoading: incidentsLoading } = useQuery({
-    queryKey: ['incidents'],
-    queryFn: async () => {
-      const response = await fetch('/api/v1/incidents');
-      if (!response.ok) {
-        throw new Error('Failed to fetch incidents');
-      }
-      const result = await response.json();
-      return result.data as Incident[];
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  const { data: incidents, isLoading: incidentsLoading } = useIncidents({ status: 'ALL', limit: 100 });
 
   // Set default incident when incidents are loaded
   useEffect(() => {
@@ -84,18 +74,7 @@ export default function EntityIncidentMapPage() {
   const selectedIncident = incidents?.find(inc => inc.id === selectedIncidentId);
 
   // Get assessment summary for selected incident
-  const { data: assessmentSummary, isLoading: summaryLoading } = useQuery({
-    queryKey: ['incident-assessment-summary', selectedIncidentId],
-    queryFn: async () => {
-      if (!selectedIncidentId) return null;
-      const response = await fetch(`/api/v1/incidents/${selectedIncidentId}/assessment-summary`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch assessment summary');
-      }
-      return response.json();
-    },
-    enabled: !!selectedIncidentId
-  });
+  const { data: assessmentSummary, isLoading: summaryLoading } = useIncidentAssessmentSummary(selectedIncidentId);
 
   // Query parameters
   const queryParams: RelationshipQueryParams = useMemo(() => ({
@@ -345,7 +324,7 @@ export default function EntityIncidentMapPage() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Assessments</p>
                   <p className="text-2xl font-bold">
-                    {summaryLoading ? '...' : assessmentSummary?.data?.totalAssessments || 0}
+                    {summaryLoading ? '...' : assessmentSummary?.totalAssessments || 0}
                   </p>
                 </div>
                 <FileText className="h-8 w-8 text-blue-600" />
@@ -359,7 +338,7 @@ export default function EntityIncidentMapPage() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Affected Entities</p>
                   <p className="text-2xl font-bold">
-                    {summaryLoading ? '...' : assessmentSummary?.data?.totalEntities || 0}
+                    {summaryLoading ? '...' : assessmentSummary?.totalEntities || 0}
                   </p>
                 </div>
                 <Users className="h-8 w-8 text-green-600" />
@@ -373,7 +352,7 @@ export default function EntityIncidentMapPage() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Critical Priority</p>
                   <p className="text-2xl font-bold">
-                    {summaryLoading ? '...' : assessmentSummary?.data?.priorityDistribution?.CRITICAL || 0}
+                    {summaryLoading ? '...' : assessmentSummary?.priorityDistribution?.CRITICAL || 0}
                   </p>
                 </div>
                 <AlertTriangle className="h-8 w-8 text-red-600" />

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/stores/auth.store'
+import { getAuthToken } from '@/lib/auth/token-utils'
+import { apiGet } from '@/lib/api'
 
 /**
  * AuthInitializer - Initializes authentication state from localStorage on app startup
@@ -14,23 +16,17 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
     const initializeAuth = async () => {
       if (typeof window === 'undefined') return
       
-      const token = localStorage.getItem('auth_token') || localStorage.getItem('token')
+      const token = getAuthToken()
       const { isAuthenticated } = useAuthStore.getState()
       
       if (token && !isAuthenticated) {
         console.log('🔄 AuthInitializer: Found token, validating and restoring auth state...')
         
         try {
-          const response = await fetch('/api/v1/auth/me', {
-            method: 'GET',
-            headers: { 
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          })
+          const result = await apiGet('/api/v1/auth/me')
           
-          if (response.ok) {
-            const data = await response.json()
+          if (result.success) {
+            const data = result.data as any
             useAuthStore.getState().setUser(data.data.user, token)
             console.log('✅ AuthInitializer: Auth state restored successfully')
           } else {

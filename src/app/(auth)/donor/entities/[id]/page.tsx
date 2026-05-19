@@ -4,6 +4,7 @@ import React from 'react'
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { getAuthToken } from '@/lib/auth/token-utils'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -84,7 +85,11 @@ export default function EntityInsightsPage() {
   const { data: demographics, isLoading: demographicsLoading, error: demographicsError } = useQuery({
     queryKey: ['entity-demographics', id],
     queryFn: async () => {
-      const response = await fetch(`/api/v1/donors/entities/${id}/demographics`)
+      const token = getAuthToken()
+      if (!token) throw new Error('Not authenticated')
+      const response = await fetch(`/api/v1/donors/entities/${id}/demographics`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
       if (!response.ok) {
         throw new Error('Failed to fetch entity demographics')
       }
@@ -98,7 +103,11 @@ export default function EntityInsightsPage() {
   const { data: latestAssessments, isLoading: assessmentsLoading, error: assessmentsError } = useQuery({
     queryKey: ['latest-assessments', id],
     queryFn: async () => {
-      const response = await fetch(`/api/v1/donors/entities/${id}/assessments/latest`)
+      const token = getAuthToken()
+      if (!token) throw new Error('Not authenticated')
+      const response = await fetch(`/api/v1/donors/entities/${id}/assessments/latest`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
       if (!response.ok) {
         throw new Error('Failed to fetch latest assessments')
       }

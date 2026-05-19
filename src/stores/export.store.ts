@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
+import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
+import { createAuthenticatedFetch } from '@/lib/auth/token-utils';
+
 export interface ExportStatus {
   id: string;
   dataType: string;
@@ -171,7 +174,7 @@ export const useExportStore = create<ExportState>()(
 
           try {
             // Start export process
-            const response = await fetch('/api/v1/exports/csv', {
+            const response = await createAuthenticatedFetch('/api/v1/exports/csv', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -272,23 +275,16 @@ export const useExportStore = create<ExportState>()(
 
         scheduleExport: async (request: ScheduleExportRequest) => {
           try {
-            const response = await fetch('/api/v1/exports/schedule', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(request),
-            });
+            const result = await apiPost('/api/v1/exports/schedule', request);
 
-            if (!response.ok) {
-              throw new Error(`Failed to schedule export: ${response.statusText}`);
-            }
+            if (!result.success) throw new Error(result.error || 'Failed to schedule export');
 
-            const result = await response.json();
-            
+            const scheduledReportId = result.data.scheduledReportId;
+            const nextRun = result.data.nextRun;
+
             // Add to scheduled reports
             const newScheduledReport: ScheduledReport = {
-              id: result.data.scheduledReportId,
+              id: scheduledReportId,
               userId: 'current-user', // This would come from session
               reportType: request.dataType,
               schedule: request.schedule,
@@ -302,7 +298,7 @@ export const useExportStore = create<ExportState>()(
               options: request.options || {},
               isActive: true,
               createdAt: new Date(),
-              nextRun: new Date(result.data.nextRun),
+              nextRun: new Date(nextRun),
             };
 
             set((state) => ({
@@ -312,7 +308,7 @@ export const useExportStore = create<ExportState>()(
             // Show success message
             if (typeof window !== 'undefined') {
               // In production, use proper notification system
-              alert(`Export scheduled successfully for ${new Date(result.data.nextRun).toLocaleDateString()}`);
+              alert(`Export scheduled successfully for ${new Date(nextRun).toLocaleDateString()}`);
             }
           } catch (error) {
             console.error('Failed to schedule export:', error);
@@ -410,17 +406,9 @@ export const useExportStore = create<ExportState>()(
         // Scheduled reports actions
         loadScheduledReports: async () => {
           try {
-            const response = await fetch('/api/v1/exports/schedule');
-            
-            if (!response.ok) {
-              throw new Error(`Failed to load scheduled reports: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-            
-            set({
-              scheduledReports: result.data || [],
-            });
+            const result = await apiGet('/api/v1/exports/schedule');
+            if (!result.success) throw new Error(result.error || 'Failed to load scheduled reports');
+            set({ scheduledReports: result.data || [] });
           } catch (error) {
             console.error('Failed to load scheduled reports:', error);
           }
@@ -432,20 +420,8 @@ export const useExportStore = create<ExportState>()(
 
         updateScheduledReport: async (reportId: string, updates: Partial<ScheduledReport>) => {
           try {
-            const response = await fetch(`/api/v1/exports/schedule?id=${reportId}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(updates),
-            });
-
-            if (!response.ok) {
-              throw new Error(`Failed to update scheduled report: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-            
+            const result = await apiPut(`/api/v1/exports/schedule?id=${reportId}`, updates);
+            if (!result.success) throw new Error(result.error || 'Failed to update scheduled report');
             set((state) => ({
               scheduledReports: state.scheduledReports.map(report =>
                 report.id === reportId ? { ...report, ...result.data } : report
@@ -458,14 +434,8 @@ export const useExportStore = create<ExportState>()(
 
         deleteScheduledReport: async (reportId: string) => {
           try {
-            const response = await fetch(`/api/v1/exports/schedule?id=${reportId}`, {
-              method: 'DELETE',
-            });
-
-            if (!response.ok) {
-              throw new Error(`Failed to delete scheduled report: ${response.statusText}`);
-            }
-
+            const result = await apiDelete(`/api/v1/exports/schedule?id=${reportId}`);
+            if (!result.success) throw new Error(result.error || 'Failed to delete scheduled report');
             set((state) => ({
               scheduledReports: state.scheduledReports.filter(report => report.id !== reportId),
             }));

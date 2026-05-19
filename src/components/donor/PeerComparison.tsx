@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -45,9 +44,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { 
-  LeaderboardEntry, 
-  LeaderboardResponse 
+  LeaderboardEntry
 } from '@/types/gamification';
+import { useLeaderboard } from '@/hooks/useLeaderboard';
 
 interface PeerComparisonProps {
   donorId: string;
@@ -80,32 +79,19 @@ export function PeerComparison({
   const [currentChartType, setCurrentChartType] = useState<'radar' | 'bar'>(chartType);
 
   // Fetch leaderboard data for comparison
-  const { data: leaderboardData, isLoading } = useQuery<LeaderboardResponse>({
-    queryKey: ['leaderboard-comparison', donorId, comparisonType, metricFocus],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        limit: '100',
-        sortBy: metricFocus,
-        ...(showRegional && region && { region })
-      });
-
-      const response = await fetch(`/api/v1/leaderboard?${params}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch comparison data');
-      }
-      return response.json();
-    },
-    staleTime: 10 * 60 * 1000, // 10 minutes cache
-    retry: 2
+  const { data: leaderboardData, isLoading } = useLeaderboard({
+    limit: 100,
+    sortBy: metricFocus,
+    ...(showRegional && region ? { region } : {})
   });
 
   const comparisonData = useMemo(() => {
     if (!leaderboardData?.data?.rankings) return null;
 
-    const userRanking = leaderboardData.data.rankings.find(r => r.donor.id === donorId);
+    const userRanking = leaderboardData.data.rankings.find((r: any) => r.donor.id === donorId);
     if (!userRanking) return null;
 
-    const rankings = leaderboardData.data.rankings;
+    const rankings: any[] = leaderboardData.data.rankings;
     const totalDonors = rankings.length;
 
     // Calculate percentiles

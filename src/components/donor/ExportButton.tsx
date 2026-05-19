@@ -23,6 +23,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { createAuthenticatedFetch } from '@/lib/auth/token-utils';
 import type { ExportRequest } from '@/types/gamification';
 
 interface ExportButtonProps {
@@ -63,7 +64,7 @@ export function ExportButton({
         includeCharts
       };
 
-      const response = await fetch('/api/v1/reports/performance/export', {
+      const response = await createAuthenticatedFetch('/api/v1/reports/performance/export', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

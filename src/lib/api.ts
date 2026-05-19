@@ -1,6 +1,4 @@
-/**
- * API utility functions for making authenticated requests to the backend
- */
+import { getAuthToken } from '@/lib/auth/token-utils'
 
 export interface ApiResponse<T = any> {
   success: boolean
@@ -13,17 +11,8 @@ export interface ApiResponse<T = any> {
   }
 }
 
-/**
- * Get the current auth token from localStorage
- */
-export const getAuthToken = (): string | null => {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem('auth_token')
-}
+export { getAuthToken }
 
-/**
- * Get headers for authenticated API requests
- */
 export const getAuthHeaders = (): Record<string, string> => {
   const token = getAuthToken()
   const headers: Record<string, string> = {

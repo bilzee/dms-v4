@@ -1,3 +1,6 @@
+import { getAuthToken } from '@/lib/auth/token-utils'
+import { apiGet } from '@/lib/api'
+
 export interface AuthUser {
   id: string
   email: string
@@ -11,22 +14,18 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       return null;
     }
 
-    const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+    const token = getAuthToken();
     if (!token) {
       return null;
     }
 
-    const response = await fetch('/api/v1/auth/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const result = await apiGet('/api/v1/auth/me');
 
-    if (!response.ok) {
+    if (!result.success) {
       return null;
     }
 
-    const data = await response.json();
+    const data = result.data as any;
     if (!data?.data?.user) {
       return null;
     }

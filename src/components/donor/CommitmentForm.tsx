@@ -25,6 +25,7 @@ import { Plus, Trash2, Package, MapPin, AlertTriangle, DollarSign, CheckCircle2,
 
 // Types and validation
 import { CreateCommitmentInput, CommitmentItemInput } from '@/lib/validation/commitment'
+import { apiGet, apiPost } from '@/lib/api'
 
 // Form validation schema
 const CommitmentFormSchema = z.object({
@@ -74,14 +75,9 @@ export function CommitmentForm({ donorId, onSuccess, onCancel, initialData, preS
   const { data: entitiesData, isLoading: entitiesLoading } = useQuery({
     queryKey: ['donor-entities'],
     queryFn: async () => {
-      const response = await fetch('/api/v1/donors/entities', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
-      })
-      if (!response.ok) throw new Error('Failed to fetch entities')
-      const data = await response.json()
-      return data.success ? data.data : {}
+      const result = await apiGet('/api/v1/donors/entities')
+      if (!result.success) throw new Error(result.error || 'Failed to fetch entities')
+      return result.data || {}
     }
   })
 
@@ -104,19 +100,12 @@ export function CommitmentForm({ donorId, onSuccess, onCancel, initialData, preS
   const { data: incidentsData, isLoading: incidentsLoading } = useQuery({
     queryKey: ['incidents', selectedEntityId],
     queryFn: async () => {
-      // If no entity is selected, return empty array
       if (!selectedEntityId) return []
-      
-      const response = await fetch(`/api/v1/incidents?entityId=${selectedEntityId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
-      })
-      if (!response.ok) throw new Error('Failed to fetch incidents')
-      const data = await response.json()
-      return data.data || []
+      const result = await apiGet(`/api/v1/incidents?entityId=${selectedEntityId}`)
+      if (!result.success) throw new Error(result.error || 'Failed to fetch incidents')
+      return result.data || []
     },
-    enabled: !!selectedEntityId // Only run query when entity is selected
+    enabled: !!selectedEntityId
   })
   
   const incidents = incidentsData || []
@@ -151,21 +140,8 @@ export function CommitmentForm({ donorId, onSuccess, onCancel, initialData, preS
 
   const createCommitmentMutation = useMutation({
     mutationFn: async (data: CommitmentFormData) => {
-      const response = await fetch(`/api/v1/donors/${donorId}/commitments`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: JSON.stringify(data)
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to create commitment')
-      }
-      
-      const result = await response.json()
+      const result = await apiPost(`/api/v1/donors/${donorId}/commitments`, data)
+      if (!result.success) throw new Error(result.error || 'Failed to create commitment')
       return result.data
     },
     onSuccess: (data) => {

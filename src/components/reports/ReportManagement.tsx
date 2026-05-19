@@ -6,7 +6,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,15 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ReportExecutionStatus } from '@prisma/client';
+import {
+  useReportConfigurations,
+  useReportExecutions,
+  useReportStatistics,
+  useDeleteConfiguration,
+  useDeleteExecution,
+  useDuplicateConfiguration,
+} from '@/hooks/useReportManagement'
+import { createAuthenticatedFetch } from '@/lib/auth/token-utils'
 
 // Local enum for format types until Prisma schema is updated
 enum FormatType {
@@ -107,111 +116,31 @@ export function ReportManagement({ className }: ReportManagementProps) {
   }, [search]);
 
   // Fetch configurations
-  const { data: configurations, isLoading: configsLoading, error: configsError } = useQuery({
-    queryKey: ['report-configurations', debouncedSearch, statusFilter, formatFilter, timeRange.days],
-    queryFn: async () => {
-      const searchParams: Record<string, string> = {
-        search: debouncedSearch,
-        timeRange: timeRange.days.toString()
-      };
-      if (statusFilter !== 'all') {
-        searchParams.status = statusFilter;
-      }
-      const params = new URLSearchParams(searchParams);
+  const configParams: Record<string, string> = {
+    search: debouncedSearch,
+    timeRange: timeRange.days.toString()
+  };
+  if (statusFilter !== 'all') configParams.status = statusFilter;
 
-      const response = await fetch(`/api/v1/reports/configurations?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch configurations');
-      
-      const result = await response.json();
-      return result.data;
-    },
-    placeholderData: (previousData) => previousData,
-    staleTime: 30 * 1000 // 30 seconds
-  });
+  const { data: configurations, isLoading: configsLoading, error: configsError } = useReportConfigurations(configParams);
 
   // Fetch executions
-  const { data: executions, isLoading: executionsLoading, error: executionsError } = useQuery({
-    queryKey: ['report-executions', debouncedSearch, statusFilter, formatFilter, timeRange.days],
-    queryFn: async () => {
-      const searchParams: Record<string, string> = {
-        search: debouncedSearch,
-        timeRange: timeRange.days.toString()
-      };
-      if (statusFilter !== 'all') {
-        searchParams.status = statusFilter;
-      }
-      if (formatFilter !== 'all') {
-        searchParams.format = formatFilter;
-      }
-      const params = new URLSearchParams(searchParams);
+  const executionParams: Record<string, string> = {
+    search: debouncedSearch,
+    timeRange: timeRange.days.toString()
+  };
+  if (statusFilter !== 'all') executionParams.status = statusFilter;
+  if (formatFilter !== 'all') executionParams.format = formatFilter;
 
-      const response = await fetch(`/api/v1/reports/executions?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch executions');
-      
-      const result = await response.json();
-      return result.data;
-    },
-    placeholderData: (previousData) => previousData,
-    staleTime: 10 * 1000 // 10 seconds
-  });
+  const { data: executions, isLoading: executionsLoading, error: executionsError } = useReportExecutions(executionParams);
 
   // Get statistics
-  const { data: statistics, isLoading: statsLoading } = useQuery({
-    queryKey: ['report-statistics', timeRange.days],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        timeRange: timeRange.days.toString()
-      });
-
-      const response = await fetch(`/api/v1/reports/statistics?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch statistics');
-      
-      const result = await response.json();
-      return result.data;
-    },
-    placeholderData: (previousData) => previousData,
-    staleTime: 60 * 1000 // 1 minute
-  });
+  const { data: statistics, isLoading: statsLoading } = useReportStatistics({ timeRange: timeRange.days.toString() });
 
   // Mutations
-  const deleteConfigurationMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/v1/reports/configurations/${id}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) throw new Error('Failed to delete configuration');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['report-configurations'] });
-    }
-  });
-
-  const deleteExecutionMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/v1/reports/executions/${id}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) throw new Error('Failed to delete execution');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['report-executions'] });
-    }
-  });
-
-  const duplicateConfigurationMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/v1/reports/configurations/${id}/duplicate`, {
-        method: 'POST'
-      });
-      if (!response.ok) throw new Error('Failed to duplicate configuration');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['report-configurations'] });
-    }
-  });
+  const deleteConfigurationMutation = useDeleteConfiguration();
+  const deleteExecutionMutation = useDeleteExecution();
+  const duplicateConfigurationMutation = useDuplicateConfiguration();
 
   // Refresh data
   const refreshData = useCallback(() => {
@@ -223,7 +152,7 @@ export function ReportManagement({ className }: ReportManagementProps) {
   // Download report
   const downloadReport = useCallback(async (executionId: string, format: FormatType) => {
     try {
-      const response = await fetch(`/api/v1/reports/download/${executionId}`, {
+      const response = await createAuthenticatedFetch(`/api/v1/reports/download/${executionId}`, {
         headers: {
           'Accept': format === FormatType.PDF ? 'application/pdf' : 
                   format === FormatType.CSV ? 'text/csv' : 

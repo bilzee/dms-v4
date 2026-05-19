@@ -19,39 +19,21 @@ import {
   Filter
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { apiGet } from '@/lib/api'
 
 export default function DonorAssessmentsPage() {
   const { user } = useAuth()
-  const [assessments, setAssessments] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchAssessments()
-  }, [])
-
-  const fetchAssessments = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/v1/rapid-assessments', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch assessments')
-      }
-
-      const result = await response.json()
-      setAssessments(result.data || [])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: assessmentsData, isLoading: loading, error: queryError, refetch: fetchAssessments } = useQuery({
+    queryKey: ['rapid-assessments'],
+    queryFn: async () => {
+      const result = await apiGet('/api/v1/rapid-assessments')
+      if (!result.success) throw new Error(result.error || 'Failed to fetch assessments')
+      return result.data || []
+    },
+  })
+  const assessments = Array.isArray(assessmentsData) ? assessmentsData : []
+  const error = queryError?.message || null
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -110,7 +92,7 @@ export default function DonorAssessmentsPage() {
               View disaster assessments and response needs (Read-only access)
             </p>
           </div>
-          <Button variant="outline" onClick={fetchAssessments} disabled={loading}>
+          <Button variant="outline" onClick={() => fetchAssessments()} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>

@@ -27,6 +27,7 @@ import { User, Building, Mail, Phone, Edit2, Save, X, Upload, CheckCircle, Alert
 // Types
 import { DonorProfileUpdateInput } from '@/lib/validation/donor'
 import { useAuthStore } from '@/stores/auth.store'
+import { apiGet, apiPatch } from '@/lib/api'
 
 // Validation schema
 const DonorProfileFormSchema = z.object({
@@ -61,17 +62,8 @@ export function DonorProfile({ donorId }: DonorProfileProps) {
   const { data: donorData, isLoading, error } = useQuery({
     queryKey: ['donor-profile'],
     queryFn: async () => {
-      const response = await fetch('/api/v1/donors/profile', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch donor profile')
-      }
-      
-      const result = await response.json()
+      const result = await apiGet('/api/v1/donors/profile')
+      if (!result.success) throw new Error(result.error || 'Failed to fetch donor profile')
       return result.data
     },
     enabled: !!user
@@ -80,20 +72,9 @@ export function DonorProfile({ donorId }: DonorProfileProps) {
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: DonorProfileUpdateInput) => {
-      const response = await fetch('/api/v1/donors/profile', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: JSON.stringify(data)
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to update profile')
-      }
-      
-      return response.json()
+      const result = await apiPatch('/api/v1/donors/profile', data)
+      if (!result.success) throw new Error(result.error || 'Failed to update profile')
+      return result.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['donor-profile'] })
