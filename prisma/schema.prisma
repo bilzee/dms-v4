@@ -82,7 +82,7 @@ model User {
 
 model Role {
   id          String           @id @default(uuid())
-  name        RoleName         @unique
+  name        String           @unique
   description String
   createdAt   DateTime         @default(now())
   permissions RolePermission[]
@@ -517,6 +517,18 @@ model GapFieldSeverity {
   @@index([severity], map: "idx_severity")
   @@index([isActive], map: "idx_active")
   @@map("gap_field_severities")
+}
+
+model SystemSetting {
+  id        String   @id @default(uuid())
+  section   String
+  key       String
+  value     Json
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@unique([section, key])
+  @@map("system_settings")
 }
 
 enum RoleName {

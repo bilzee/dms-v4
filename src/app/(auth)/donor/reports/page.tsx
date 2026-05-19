@@ -55,7 +55,7 @@ interface ReportConfig {
 }
 
 export default function DonorReportsPage() {
-  const { currentRole, user } = useAuth()
+  const { currentRole, user, token } = useAuth()
   const [reportConfig, setReportConfig] = useState<ReportConfig>({
     format: 'pdf',
     includeCharts: true,
@@ -89,32 +89,36 @@ export default function DonorReportsPage() {
   const handleGenerateReport = async () => {
     setIsGenerating(true)
     try {
-      // This would call a report generation API
-      // For now, we'll simulate the report generation
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Create a mock report download
-      const reportData = {
-        title: 'Donor Impact Report',
-        dateRange: reportConfig.dateRange,
-        entities: entities.filter(e => reportConfig.entities.length === 0 || reportConfig.entities.includes(e.id)),
-        generatedAt: new Date().toISOString(),
-        format: reportConfig.format
-      }
-
-      // Create a downloadable blob
-      const blob = new Blob([JSON.stringify(reportData, null, 2)], { 
-        type: reportConfig.format === 'csv' ? 'text/csv' : 'application/json' 
+      const response = await fetch('/api/v1/donors/reports/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          format: reportConfig.format === 'excel' ? 'csv' : reportConfig.format,
+          includeCharts: reportConfig.includeCharts,
+          includeTrends: reportConfig.includeTrends,
+          includeGapAnalysis: reportConfig.includeGapAnalysis,
+          dateRange: reportConfig.dateRange,
+          entityIds: reportConfig.entities.length > 0
+            ? reportConfig.entities
+            : entities.map(e => e.id)
+        })
       })
+
+      if (!response.ok) throw new Error('Report generation failed')
+
+      const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `donor-report-${new Date().toISOString().split('T')[0]}.${reportConfig.format}`
+      const fileExt = reportConfig.format === 'excel' ? 'csv' : reportConfig.format
+      a.download = `donor-report-${new Date().toISOString().split('T')[0]}.${fileExt}`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-
     } catch (error) {
       console.error('Failed to generate report:', error)
     } finally {

@@ -1,39 +1,23 @@
-// @ts-nocheck
 'use client';
-// TODO: This component requires @dnd-kit packages - temporarily disabled for compilation
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import React, { useState, useCallback, useRef } from 'react';
-// TODO: Install @dnd-kit packages for drag and drop functionality
-// import { useDrop, useDrag } from '@dnd-kit/core';
-// import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-// import { sortableKeyboardCoordinates, verticalListSortingStrategy, SortableContext } from '@dnd-kit/sortable';
-
-// Temporary type definitions until @dnd-kit is installed
-interface ElementTemplate {
-  type: string;
-  name: string;
-  icon: any;
-  category: string;
-  title?: string;
-  description?: string;
-}
-
-// Mock drag and drop hooks
-const useDrag = (config: any) => {
-  const result = config.collect ? config.collect({ isDragging: () => false }) : { isDragging: false };
-  return [result, () => {}] as [any, any];
-};
-
-const useSensors = () => [];
-const useSensor = (sensor: any, config?: any) => sensor;
-const PointerSensor = () => {};
-const KeyboardSensor = () => {};
-const sortableKeyboardCoordinates = {};
-const useDrop = (config: any) => {
-  const result = config.collect ? config.collect({ isDragging: () => false, isOver: () => false }) : { isDragging: false, isOver: false };
-  return [result, () => {}] as [any, any];
-};
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { 
   LayoutGrid, 
   Move, 
@@ -132,25 +116,14 @@ interface ReportBuilderProps {
 
 // Separate component for draggable template cards to avoid hooks in callbacks
 function DraggableTemplateCard({ template, onAdd }: { 
-  template: ElementTemplate; 
-  onAdd: (type: string) => void; 
+  template: typeof ELEMENT_TEMPLATES[number]; 
+  onAdd: (type: ReportElementType) => void; 
 }) {
-  const [{ isDragging }, drag] = useDrag({
-    type: 'element',
-    item: { type: template.type, fromSidebar: true },
-    collect: (monitor: any) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-
   return (
     <Card
       key={template.type}
-      ref={drag}
-      className={cn(
-        "cursor-move transition-opacity",
-        isDragging && "opacity-50"
-      )}
+      className="cursor-pointer transition-opacity hover:opacity-80"
+      onClick={() => onAdd(template.type)}
     >
       <CardContent className="p-3 flex items-center gap-3">
         <template.icon className="h-8 w-8 text-blue-600" />
@@ -161,7 +134,7 @@ function DraggableTemplateCard({ template, onAdd }: {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => onAdd(template.type)}
+          onClick={(e) => { e.stopPropagation(); onAdd(template.type); }}
           className="h-8 w-8 p-0"
         >
           <Plus className="h-4 w-4" />
@@ -394,11 +367,15 @@ export function ReportBuilder({
   const [showGrid, setShowGrid] = useState(true);
   const [activeTab, setActiveTab] = useState('elements');
 
-  // DND sensors
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    // For now, drag-and-drop reordering of elements is not implemented
+    // Elements can be repositioned via the properties panel
+  }, []);
 
   // Add element from sidebar
   const addElement = useCallback((elementType: ReportElementType, position?: { x: number; y: number }) => {
@@ -408,7 +385,7 @@ export function ReportBuilder({
     const newElement: ReportElement = {
       id: `element_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type: elementType,
-      position: position || {
+      position: position ? { x: position.x, y: position.y, width: template.defaultSize.width, height: template.defaultSize.height } : {
         x: 0,
         y: Math.floor(elements.length / GRID_COLUMNS),
         width: template.defaultSize.width,
@@ -499,7 +476,7 @@ export function ReportBuilder({
   const generatePreview = useCallback(() => {
     const layout: ReportLayout[] = elements.map(el => ({
       id: el.id,
-      type: el.type,
+      type: el.type as ReportLayout['type'],
       position: el.position,
       config: {
         ...el.config,
@@ -508,7 +485,11 @@ export function ReportBuilder({
         ...el.style
       },
       dataSource: el.dataSource,
-      visualization: el.visualization
+      visualization: el.visualization ? {
+        ...el.visualization,
+        type: el.visualization.type as ReportLayout['visualization'] extends undefined ? never : NonNullable<ReportLayout['visualization']>['type'],
+        config: el.visualization.config ?? {}
+      } : undefined
     }));
 
     const template: ReportTemplate = {
@@ -537,22 +518,6 @@ export function ReportBuilder({
       onSave(template);
     }
   }, [generatePreview, onSave]);
-
-  // DND handlers for canvas
-  const [{ isOver: isCanvasOver }, dropCanvas] = useDrop({
-    accept: ['element'],
-    drop: (item: { type: ReportElementType; fromSidebar?: boolean }) => {
-      if (item.fromSidebar) {
-        // Add new element from sidebar
-        addElement(item.type);
-      }
-    },
-    collect: (monitor: any) => ({
-      isOver: monitor.isOver(),
-    }),
-  });
-
-  // DND handlers for elements - removed problematic hook function
 
   return (
     <div className={cn("flex h-screen bg-gray-50", className)}>
@@ -657,6 +622,7 @@ export function ReportBuilder({
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
       >
         <div className="flex-1 flex flex-col">
           {/* Toolbar */}
@@ -716,11 +682,9 @@ export function ReportBuilder({
           {/* Canvas Area */}
           <div className="flex-1 overflow-auto p-8">
             <div
-              ref={dropCanvas}
               className={cn(
                 "relative bg-white rounded-lg shadow-sm border-2 transition-colors",
                 showGrid && "bg-grid-pattern border-dashed border-gray-300",
-                isCanvasOver && "border-blue-400 bg-blue-50",
                 "min-w-[800px] min-h-[600px]"
               )}
               style={{
@@ -752,7 +716,7 @@ export function ReportBuilder({
                       "absolute border-2 rounded-md bg-white shadow-sm transition-all",
                       element.locked && "border-gray-400 cursor-not-allowed",
                       selectedElement?.id === element.id && "border-blue-500 ring-2 ring-blue-200",
-                      isDragging && "opacity-50 border-blue-400 shadow-lg"
+                      ""
                     )}
                     style={{
                       left: `${element.position.x * 100 + (element.position.x + 1) * GRID_MARGIN}px`,
@@ -1259,7 +1223,8 @@ function DataConfiguration({
               value={element.visualization.type}
               onValueChange={(value) => onChange({
                 visualization: { 
-                  ...element.visualization, 
+                  ...element.visualization!,
+                  config: element.visualization?.config ?? {},
                   type: value as VisualizationType 
                 }
               })}

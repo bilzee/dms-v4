@@ -21,6 +21,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { useVerificationMetrics } from '@/hooks/useRealTimeVerification';
+import { useAuth } from '@/hooks/useAuth';
 import { useVerificationStore } from '@/stores/verification.store';
 import { cn } from '@/lib/utils';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
@@ -32,7 +33,31 @@ interface VerificationAnalyticsProps {
 export function VerificationAnalytics({ className }: VerificationAnalyticsProps) {
   const [timeRange, setTimeRange] = useState('24h');
   const [isLoading, setIsLoading] = useState(false);
-  
+  const { token } = useAuth();
+  const [analyticsData, setAnalyticsData] = useState<{
+    totalProcessed: number;
+    throughput: number;
+    verificationRate: number;
+    systemLoad: string;
+    timeSeries: Array<{ time: string; assessments: number; deliveries: number; verified: number }>;
+  } | null>(null);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      if (!token) return;
+      try {
+        const res = await fetch(`/api/v1/verification/analytics?timeRange=${timeRange}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAnalyticsData(data.data);
+        }
+      } catch {}
+    };
+    fetchAnalytics();
+  }, [token, timeRange]);
+
   const { combined: metrics, assessmentQueueDepth, deliveryQueueDepth } = useVerificationMetrics();
   const { 
     assessments, 
@@ -63,12 +88,13 @@ export function VerificationAnalytics({ className }: VerificationAnalyticsProps)
   // Performance metrics
   const performanceMetrics = useMemo(() => {
     return {
-      totalProcessed: Math.floor(Math.random() * 100) + 50, // Mock data
+      totalProcessed: analyticsData?.totalProcessed ?? (Math.floor(Math.random() * 100) + 50),
       averageProcessingTime: metrics.averageWaitTime,
-      throughput: Math.floor(Math.random() * 10) + 5, // items per hour
-      backlogTrend: calculateTrend(assessmentQueueDepth.total, assessmentQueueDepth.total + 5)
+      throughput: analyticsData?.throughput ?? (Math.floor(Math.random() * 10) + 5),
+      backlogTrend: calculateTrend(assessmentQueueDepth.total, assessmentQueueDepth.total + 5),
+      systemLoad: analyticsData?.systemLoad || 'Unknown'
     };
-  }, [metrics, assessmentQueueDepth]);
+  }, [metrics, assessmentQueueDepth, analyticsData]);
 
   // Queue distribution data
   const queueDistribution = useMemo(() => {
@@ -92,14 +118,17 @@ export function VerificationAnalytics({ className }: VerificationAnalyticsProps)
 
   // Time series data (mock data for visualization)
   const timeSeriesData = useMemo(() => {
+    if (analyticsData?.timeSeries && analyticsData.timeSeries.length > 0) {
+      return analyticsData.timeSeries;
+    }
     const hours = timeRange === '24h' ? 24 : timeRange === '7d' ? 7 * 24 : 30 * 24;
     return Array.from({ length: Math.min(hours, 24) }, (_, i) => ({
       time: i === 0 ? 'Now' : `-${i}h`,
-      assessments: Math.floor(Math.random() * 20) + 5,
-      deliveries: Math.floor(Math.random() * 15) + 3,
-      verified: Math.floor(Math.random() * 25) + 10
+      assessments: 0,
+      deliveries: 0,
+      verified: 0
     })).reverse();
-  }, [timeRange]);
+  }, [timeRange, analyticsData]);
 
   const refreshData = async () => {
     setIsLoading(true);
@@ -302,7 +331,7 @@ export function VerificationAnalytics({ className }: VerificationAnalyticsProps)
         </TabsContent>
 
         <TabsContent value="performance" className="space-y-4">
-          <PerformanceAnalysis metrics={performanceMetrics} />
+          <PerformanceAnalysis metrics={performanceMetrics} systemLoad={analyticsData?.systemLoad} />
         </TabsContent>
       </Tabs>
     </div>
@@ -558,7 +587,7 @@ function TrendsChart({ data }: { data: any[] }) {
 }
 
 // Performance Analysis Component
-function PerformanceAnalysis({ metrics }: { metrics: any }) {
+function PerformanceAnalysis({ metrics, systemLoad }: { metrics: any; systemLoad?: string }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card>
@@ -604,7 +633,11 @@ function PerformanceAnalysis({ metrics }: { metrics: any }) {
             </div>
             <div className="flex justify-between items-center">
               <span>System Load</span>
-              <Badge className="bg-yellow-100 text-yellow-800">Moderate</Badge>
+              <Badge className={cn(
+                systemLoad === 'Low' ? 'bg-green-100 text-green-800' :
+                systemLoad === 'High' ? 'bg-red-100 text-red-800' :
+                'bg-yellow-100 text-yellow-800'
+              )}>{systemLoad || 'Unknown'}</Badge>
             </div>
           </div>
         </CardContent>

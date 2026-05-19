@@ -43,6 +43,25 @@ function AdminDashboard() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = React.useState('overview')
 
+  const [healthData, setHealthData] = React.useState<{
+    databaseSync: string
+    apiResponseTime: number
+    activeUsers: number
+    storageUsage: number
+    lastBackup: string
+  } | null>(null)
+
+  React.useEffect(() => {
+    const token = getAuthToken()
+    if (!token) return
+    fetch('/api/v1/system/health', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data?.data) setHealthData(data.data) })
+      .catch(() => {})
+  }, [user])
+
   // Data fetching functions
   const fetchSystemStats = async () => {
     const token = getAuthToken()
@@ -260,7 +279,7 @@ function AdminDashboard() {
                                   <Activity className="h-4 w-4 mr-2 text-green-600" />
                                   <span>API Health</span>
                                 </div>
-                                <Badge variant="default">Healthy</Badge>
+                                <Badge variant={healthData?.apiResponseTime && healthData.apiResponseTime < 500 ? 'default' : 'destructive'}>{healthData?.apiResponseTime ? `${healthData.apiResponseTime}ms` : 'Loading...'}</Badge>
                               </div>
                               
                               <div className="flex items-center justify-between p-3 border rounded">
@@ -268,7 +287,7 @@ function AdminDashboard() {
                                   <Database className="h-4 w-4 mr-2 text-blue-600" />
                                   <span>Database</span>
                                 </div>
-                                <Badge variant="default">Connected</Badge>
+                                <Badge variant={healthData?.databaseSync === 'Healthy' || healthData?.databaseSync === 'Degraded' ? 'default' : 'destructive'}>{healthData?.databaseSync || 'Loading...'}</Badge>
                               </div>
                               
                               <div className="flex items-center justify-between p-3 border rounded">

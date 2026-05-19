@@ -1,5 +1,6 @@
 'use client'
 
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useCommitmentStats } from '@/hooks/use-commitment-stats'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,8 +27,55 @@ import {
 } from 'lucide-react'
 
 export default function DashboardPage() {
-  const { user, hasPermission, hasRole } = useAuth()
+  const { user, hasPermission, hasRole, token } = useAuth()
   const { stats, recentCommitments, loading, error } = useCommitmentStats()
+
+  const [systemHealth, setSystemHealth] = useState<{
+    databaseSync: string
+    apiResponseTime: number
+    activeUsers: number
+    storageUsage: number
+    lastBackup: string
+  } | null>(null)
+  const [activeIncidents, setActiveIncidents] = useState(0)
+  const [pendingVerifications, setPendingVerifications] = useState(0)
+
+  useEffect(() => {
+    if (!token) return
+    const headers = { 'Authorization': `Bearer ${token}` }
+
+    const fetchHealth = async () => {
+      try {
+        const res = await fetch('/api/v1/system/health', { headers })
+        if (res.ok) {
+          const data = await res.json()
+          setSystemHealth(data.data)
+        }
+      } catch {}
+    }
+
+    const fetchDashboardCounts = async () => {
+      try {
+        const [incidentsRes, assessmentsRes] = await Promise.all([
+          fetch('/api/v1/incidents?status=ACTIVE', { headers }),
+          fetch('/api/v1/rapid-assessments?status=SUBMITTED&verificationStatus=DRAFT', { headers })
+        ])
+        if (incidentsRes.ok) {
+          const incData = await incidentsRes.json()
+          setActiveIncidents(incData.data?.incidents?.length || incData.data?.length || 0)
+        }
+        if (assessmentsRes.ok) {
+          const assData = await assessmentsRes.json()
+          setPendingVerifications(assData.data?.assessments?.length || assData.data?.length || 0)
+        }
+      } catch {}
+    }
+
+    fetchHealth()
+    fetchDashboardCounts()
+    const interval = setInterval(fetchHealth, 60000)
+    return () => clearInterval(interval)
+  }, [token])
 
   if (!user) {
     return (
@@ -129,7 +177,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">System Status</p>
-                <p className="text-2xl font-bold text-green-600">Online</p>
+                <p className={`text-2xl font-bold ${systemHealth?.databaseSync !== 'Down' ? 'text-green-600' : 'text-red-600'}`}>{systemHealth?.databaseSync !== 'Down' ? 'Online' : 'Offline'}</p>
               </div>
               <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
             </div>
@@ -143,7 +191,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Active Incidents</p>
-                  <p className="text-2xl font-bold text-orange-600">3</p>
+                  <p className="text-2xl font-bold text-orange-600">{activeIncidents}</p>
                 </div>
                 <AlertTriangle className="h-8 w-8 text-orange-600 opacity-50" />
               </div>
@@ -175,7 +223,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Pending Verifications</p>
-                  <p className="text-2xl font-bold text-purple-600">7</p>
+                  <p className="text-2xl font-bold text-purple-600">{pendingVerifications}</p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-purple-600 opacity-50" />
               </div>
@@ -239,25 +287,25 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm">Database Sync</span>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-green-600">Healthy</span>
+                  <div className={`w-2 h-2 ${systemHealth?.databaseSync === 'Healthy' ? 'bg-green-500' : systemHealth?.databaseSync === 'Down' ? 'bg-red-500' : 'bg-yellow-500'} rounded-full`}></div>
+                  <span className={`text-sm ${systemHealth?.databaseSync === 'Healthy' ? 'text-green-600' : systemHealth?.databaseSync === 'Down' ? 'text-red-600' : 'text-yellow-600'}`}>{systemHealth?.databaseSync || '...'}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">API Response Time</span>
-                <span className="text-sm font-medium">142ms</span>
+                <span className="text-sm font-medium">{systemHealth?.apiResponseTime || '...'}ms</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Active Users</span>
-                <span className="text-sm font-medium">24</span>
+                <span className="text-sm font-medium">{systemHealth?.activeUsers || '...'}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Storage Usage</span>
-                <span className="text-sm font-medium">67%</span>
+                <span className="text-sm font-medium">{systemHealth?.storageUsage ?? '...'}%</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Last Backup</span>
-                <span className="text-sm font-medium">2 hours ago</span>
+                <span className="text-sm font-medium">{systemHealth?.lastBackup || '...'}</span>
               </div>
               <Link href="/system/health">
                 <Button variant="outline" className="w-full mt-4" size="sm">
@@ -287,7 +335,7 @@ export default function DashboardPage() {
                 <div className="bg-white/60 rounded-lg p-4 border border-teal-100">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Live Incidents</span>
-                    <span className="font-bold text-teal-600">3 Active</span>
+                    <span className="font-bold text-teal-600">{activeIncidents} Active</span>
                   </div>
                 </div>
                 <Link href="/coordinator/situation-dashboard">
@@ -407,7 +455,7 @@ export default function DashboardPage() {
                 <div className="bg-white/60 rounded-lg p-4 border border-orange-100">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Pending Items</span>
-                    <span className="font-bold text-orange-600">7</span>
+                    <span className="font-bold text-orange-600">{pendingVerifications}</span>
                   </div>
                 </div>
                 <Link href="/coordinator/verification">
@@ -436,7 +484,7 @@ export default function DashboardPage() {
                 <div className="bg-white/60 rounded-lg p-4 border border-red-100">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Active Users</span>
-                    <span className="font-bold text-red-600">24</span>
+                    <span className="font-bold text-red-600">{systemHealth?.activeUsers || '...'}</span>
                   </div>
                 </div>
                 <Link href="/users/new">

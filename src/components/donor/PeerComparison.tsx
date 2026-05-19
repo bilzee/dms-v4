@@ -7,22 +7,33 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-// TODO: Replace recharts with Chart.js/react-chartjs-2
-// import { 
-//   Radar as RadarChart,
-//   Radar,
-//   PolarGrid,
-//   PolarAngleAxis,
-//   PolarRadiusAxis,
-//   ResponsiveContainer,
-//   BarChart,
-//   Bar,
-//   XAxis,
-//   YAxis,
-//   CartesianGrid,
-//   Tooltip,
-//   Legend
-// } from 'recharts';
+import {
+  Chart as ChartJS,
+  RadialLinearScale,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+import { Radar, Bar } from 'react-chartjs-2';
+
+ChartJS.register(
+  RadialLinearScale,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Filler,
+  Title,
+  Tooltip,
+  Legend
+);
 import { 
   Users, 
   TrendingUp, 
@@ -331,23 +342,73 @@ export function PeerComparison({
         <CardContent>
           <div className="h-80">
             {currentChartType === 'radar' && radarData && (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                <div className="text-center">
-                  <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Radar Chart Placeholder</p>
-                  <p className="text-xs mt-1">TODO: Implement with Chart.js</p>
-                </div>
-              </div>
+              <Radar
+                data={{
+                  labels: radarData.map(d => d.metric),
+                  datasets: [
+                    {
+                      label: 'You',
+                      data: radarData.map(d => d['You']),
+                      backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                      borderColor: 'rgb(59, 130, 246)',
+                      pointBackgroundColor: 'rgb(59, 130, 246)',
+                    },
+                    {
+                      label: 'Top 25%',
+                      data: radarData.map(d => d['Top 25%']),
+                      backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                      borderColor: 'rgb(16, 185, 129)',
+                      pointBackgroundColor: 'rgb(16, 185, 129)',
+                    },
+                    {
+                      label: 'Average',
+                      data: radarData.map(d => d['Average']),
+                      backgroundColor: 'rgba(156, 163, 175, 0.2)',
+                      borderColor: 'rgb(156, 163, 175)',
+                      pointBackgroundColor: 'rgb(156, 163, 175)',
+                    }
+                  ]
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    r: { beginAtZero: true, max: 100 }
+                  }
+                }}
+              />
             )}
             
             {currentChartType === 'bar' && barData && (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                <div className="text-center">
-                  <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Bar Chart Placeholder</p>
-                  <p className="text-xs mt-1">TODO: Implement with Chart.js</p>
-                </div>
-              </div>
+              <Bar
+                data={{
+                  labels: barData.map(d => d.metric),
+                  datasets: [
+                    {
+                      label: 'Your Score',
+                      data: barData.map(d => d['Your Score']),
+                      backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    },
+                    {
+                      label: 'Top 25%',
+                      data: barData.map(d => d['Top 25%']),
+                      backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    },
+                    {
+                      label: 'Average',
+                      data: barData.map(d => d['Average']),
+                      backgroundColor: 'rgba(156, 163, 175, 0.8)',
+                    }
+                  ]
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: { beginAtZero: true }
+                  }
+                }}
+              />
             )}
           </div>
         </CardContent>

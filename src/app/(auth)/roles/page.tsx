@@ -36,8 +36,9 @@ interface Role {
 interface Permission {
   id: string
   name: string
+  code: string
   description: string
-  module: string
+  category: string
 }
 
 export default function RolesPage() {
@@ -262,10 +263,21 @@ export default function RolesPage() {
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit Role
                               </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => {
+                              <DropdownMenuItem
+                                onClick={async () => {
                                   if (confirm('Are you sure you want to delete this role?')) {
-                                    // Handle delete
+                                    try {
+                                      const res = await fetch(`/api/v1/roles/${role.id}`, {
+                                        method: 'DELETE',
+                                        headers: { 'Authorization': `Bearer ${token}` }
+                                      })
+                                      if (res.ok) {
+                                        fetchRoles()
+                                      } else {
+                                        const data = await res.json()
+                                        alert(data.error || 'Failed to delete role')
+                                      }
+                                    } catch { alert('Failed to delete role') }
                                   }
                                 }}
                                 className="text-red-600"
@@ -347,49 +359,47 @@ function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
     setIsLoading(true)
 
     try {
-      // Replace with actual API call
-      // const response = await fetch('/api/v1/roles' + (role ? `/${role.id}` : ''), {
-      //   method: role ? 'PUT' : 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${token}`
-      //   },
-      //   body: JSON.stringify({
-      //     name,
-      //     description,
-      //     permissions: selectedPermissions
-      //   })
-      // })
+      const response = await fetch('/api/v1/roles' + (role ? `/${role.id}` : ''), {
+        method: role ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: name.toUpperCase(),
+          description,
+          permissions: selectedPermissions
+        })
+      })
 
-      // if (response.ok) {
-      //   onSuccess()
-      // } else {
-      //   throw new Error('Failed to save role')
-      // }
-
-      // For now, simulate success
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      onSuccess()
+      if (response.ok) {
+        onSuccess()
+      } else {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to save role')
+      }
     } catch (error) {
       console.error('Error saving role:', error)
+      alert(error instanceof Error ? error.message : 'Failed to save role')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const togglePermission = (permissionId: string) => {
+  const togglePermission = (permissionCode: string) => {
     setSelectedPermissions(prev => 
-      prev.includes(permissionId)
-        ? prev.filter(p => p !== permissionId)
-        : [...prev, permissionId]
+      prev.includes(permissionCode)
+        ? prev.filter(p => p !== permissionCode)
+        : [...prev, permissionCode]
     )
   }
 
   const groupedPermissions = permissions.reduce((acc, permission) => {
-    if (!acc[permission.module]) {
-      acc[permission.module] = []
+    const group = permission.category || 'General'
+    if (!acc[group]) {
+      acc[group] = []
     }
-    acc[permission.module].push(permission)
+    acc[group].push(permission)
     return acc
   }, {} as Record<string, Permission[]>)
 
@@ -430,12 +440,12 @@ function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
                   <div key={permission.id} className="flex items-center space-x-2">
                     <input
                       type="checkbox"
-                      id={permission.id}
-                      checked={selectedPermissions.includes(permission.id)}
-                      onChange={() => togglePermission(permission.id)}
+                      id={permission.code}
+                      checked={selectedPermissions.includes(permission.code)}
+                      onChange={() => togglePermission(permission.code)}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <label htmlFor={permission.id} className="text-sm">
+                    <label htmlFor={permission.code} className="text-sm">
                       <span className="font-medium">{permission.name}</span>
                       <span className="text-gray-500 ml-1">- {permission.description}</span>
                     </label>

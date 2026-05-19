@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/hooks/useAuth'
+import { getAuthToken } from '@/lib/auth/token-utils'
 import { 
   Settings, 
   Globe, 
@@ -91,36 +92,58 @@ export default function SystemSettingsPage() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
   const { hasPermission } = useAuth()
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      const token = getAuthToken()
+      if (!token) return
+      try {
+        const response = await fetch('/api/v1/system/settings', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        if (response.ok) {
+          const data = await response.json()
+          if (data.data) {
+            setSettings(data.data)
+          }
+        }
+      } catch (error) {
+        console.error('Error loading settings:', error)
+      } finally {
+        setSettingsLoaded(true)
+      }
+    }
+    loadSettings()
+  }, [])
 
   const handleSave = async (section: keyof SystemSettings) => {
     setIsLoading(true)
     setSaveStatus('saving')
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Replace with actual API call
-      // const response = await fetch('/api/v1/admin/settings', {
-      //   method: 'PUT',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${token}`
-      //   },
-      //   body: JSON.stringify({
-      //     section,
-      //     settings: settings[section]
-      //   })
-      // })
+      const token = getAuthToken()
+      if (!token) throw new Error('Not authenticated')
 
-      // if (response.ok) {
-      //   setSaveStatus('success')
-      // } else {
-      //   throw new Error('Failed to save settings')
-      // }
+      const response = await fetch('/api/v1/system/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          section,
+          settings: settings[section]
+        })
+      })
 
-      setSaveStatus('success')
+      if (response.ok) {
+        setSaveStatus('success')
+      } else {
+        throw new Error('Failed to save settings')
+      }
+
       setTimeout(() => setSaveStatus('idle'), 3000)
     } catch (error) {
       console.error('Error saving settings:', error)
