@@ -429,7 +429,7 @@ export function CommitmentDashboard({ donorId, preSelectedEntityId }: Commitment
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => router.push(`/donor/commitments/${commitment.id}`)}
+                          onClick={() => router.push(`/donor/dashboard?tab=commitments&detail=${commitment.id}`)}
                         >
                           <Eye className="h-4 w-4 mr-1" />
                           View
@@ -439,7 +439,7 @@ export function CommitmentDashboard({ donorId, preSelectedEntityId }: Commitment
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => router.push(`/donor/commitments/${commitment.id}/edit`)}
+                            onClick={() => router.push(`/donor/dashboard?tab=commitments&edit=${commitment.id}`)}
                           >
                             <Edit className="h-4 w-4 mr-1" />
                             Edit

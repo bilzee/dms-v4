@@ -478,6 +478,7 @@ export function ReportManagement({ className }: ReportManagementProps) {
                   Create your first report configuration to get started
                 </p>
                 <Button onClick={() => window.location.href = '/reports/builder'}>
+                  <FileText className="h-4 w-4 mr-2" />
                   Create Configuration
                 </Button>
               </div>

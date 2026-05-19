@@ -8,6 +8,7 @@ import { useRoleNavigation } from '@/components/shared/RoleBasedRoute';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 import { 
   LayoutDashboard,
   FileText,
@@ -26,6 +27,7 @@ import {
   Award,
   Trophy,
   MapPin,
+  LogOut,
   Menu
 } from 'lucide-react';
 
@@ -60,8 +62,8 @@ const getNavigationItems = (role: string | null): NavItem[] => {
     },
     {
       name: 'Logout',
-      href: '/logout',
-      icon: Settings,
+      href: '#logout',
+      icon: LogOut,
       description: 'Sign out of your account'
     }
   ];
@@ -103,7 +105,7 @@ const getNavigationItems = (role: string | null): NavItem[] => {
       },
       {
         name: 'Operations Management',
-        href: '/coordinator/operations',
+        href: '#coordinator-operations',
         icon: Users,
         children: [
           { 
@@ -111,6 +113,12 @@ const getNavigationItems = (role: string | null): NavItem[] => {
             href: '/coordinator/verification', 
             icon: FileText,
             description: 'Manage verification workflows' 
+          },
+          {
+            name: 'Verification Metrics',
+            href: '/verification/metrics',
+            icon: BarChart3,
+            description: 'View verification analytics and metrics'
           },
           { 
             name: 'Entity Assignment', 
@@ -126,7 +134,7 @@ const getNavigationItems = (role: string | null): NavItem[] => {
           },
           { 
             name: 'Resource Allocation', 
-            href: '/resources', 
+            href: '/coordinator/resource-management',
             icon: Package,
             description: 'Coordinate resource distribution' 
           },
@@ -140,7 +148,7 @@ const getNavigationItems = (role: string | null): NavItem[] => {
       },
       {
         name: 'Donor Relations',
-        href: '/coordinator/donor-relations',
+        href: '#coordinator-donor-relations',
         icon: HandHeart,
         children: [
           {
@@ -165,7 +173,7 @@ const getNavigationItems = (role: string | null): NavItem[] => {
       },
       {
         name: 'Configuration',
-        href: '/coordinator/configuration',
+        href: '#coordinator-configuration',
         icon: Settings,
         children: [
           {
@@ -190,7 +198,7 @@ const getNavigationItems = (role: string | null): NavItem[] => {
       },
       {
         name: 'Mapping & Visualization',
-        href: '/coordinator/mapping',
+        href: '#coordinator-mapping',
         icon: MapPin,
         children: [
           { 
@@ -213,15 +221,15 @@ const getNavigationItems = (role: string | null): NavItem[] => {
           { name: 'Response Plans', href: '/responder/planning/', icon: Package }
         ]
       },
-      { 
-        name: 'My Tasks', 
-        href: '/tasks', 
-        icon: FileText 
+      {
+        name: 'My Tasks',
+        href: '#tasks',
+        icon: FileText
       },
-      { 
-        name: 'Team Status', 
-        href: '/team', 
-        icon: Users 
+      {
+        name: 'Team Status',
+        href: '#team',
+        icon: Users
       }
     ],
     DONOR: [
@@ -232,7 +240,7 @@ const getNavigationItems = (role: string | null): NavItem[] => {
       },
       {
         name: 'My Commitments',
-        href: '/donor/commitments',
+        href: '#donor-commitments',
         icon: HandHeart,
         children: [
           { 
@@ -255,7 +263,7 @@ const getNavigationItems = (role: string | null): NavItem[] => {
           },
           { 
             name: 'Donation Management', 
-            href: '/donor/donations', 
+            href: '/donor/responses',
             icon: Package,
             description: 'Manage donation details' 
           }
@@ -280,7 +288,7 @@ const getNavigationItems = (role: string | null): NavItem[] => {
           },
           { 
             name: 'Entity Impact', 
-            href: '/donor/entities/impact', 
+            href: '/donor/entities/performance',
             icon: TrendingUp,
             description: 'Measure positive impact' 
           }
@@ -308,8 +316,20 @@ const getNavigationItems = (role: string | null): NavItem[] => {
             href: '/donor/leaderboard', 
             icon: Trophy,
             description: 'Compare with other donors' 
+          },
+          {
+            name: 'Analytics',
+            href: '/donor/analytics',
+            icon: BarChart3,
+            description: 'Detailed donation analytics'
           }
         ]
+      },
+      {
+        name: 'My Profile',
+        href: '/donor/profile',
+        icon: User,
+        description: 'Manage your organization profile'
       }
     ],
     ADMIN: [
@@ -331,7 +351,7 @@ const getNavigationItems = (role: string | null): NavItem[] => {
           },
           { 
             name: 'Add New User', 
-            href: '/admin/users/new', 
+            href: '/admin/users?action=create',
             icon: Users,
             description: 'Create a new user account' 
           },
@@ -364,7 +384,7 @@ const getNavigationItems = (role: string | null): NavItem[] => {
       },
       {
         name: 'System Administration',
-        href: '/admin/system',
+        href: '#admin-system',
         icon: Settings,
         children: [
           { 
@@ -396,6 +416,7 @@ const getNavigationItems = (role: string | null): NavItem[] => {
 
 export const Navigation = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const { currentRole } = useAuth();
   const { canAccessPath } = useRoleNavigation();
   
@@ -507,6 +528,36 @@ export const Navigation = () => {
           )}
         </div>
       );
+    }
+
+    const handleLogout = async () => {
+      try {
+        await fetch('/api/v1/auth/logout', { method: 'POST' });
+      } catch {}
+      router.push('/login');
+    };
+
+    if (item.href === '#logout') {
+      return (
+        <Button
+          variant="ghost"
+          className={cn(
+            "w-full justify-start font-normal transition-colors",
+            depth > 0 && "ml-4",
+            "hover:bg-accent hover:text-accent-foreground"
+          )}
+          onClick={handleLogout}
+        >
+          <div className="flex items-center gap-3">
+            <item.icon className="h-4 w-4 transition-colors" />
+            <span>{item.name}</span>
+          </div>
+        </Button>
+      );
+    }
+
+    if (item.href.startsWith('#')) {
+      return null;
     }
 
     return (

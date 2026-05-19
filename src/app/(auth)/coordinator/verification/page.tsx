@@ -5,8 +5,9 @@ import { VerificationDashboard } from '@/components/verification/VerificationDas
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute';
 import { useAuth } from '@/hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Shield, User } from 'lucide-react';
+import { AlertTriangle, Shield, User, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function VerificationPage() {
   const { currentRole, availableRoles } = useAuth();
@@ -86,6 +87,14 @@ export default function VerificationPage() {
       }
       errorComponent={isClient ? <RoleAccessError /> : null}
     >
+      <div className="mb-4">
+        <Link href="/verification/metrics">
+          <Button variant="outline" size="sm">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            View Verification Metrics
+          </Button>
+        </Link>
+      </div>
       <VerificationDashboard />
     </RoleBasedRoute>
   );

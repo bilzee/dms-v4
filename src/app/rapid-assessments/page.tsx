@@ -16,16 +16,16 @@ export default function RapidAssessmentsPage() {
           router.replace('/assessor/rapid-assessments')
           break
         case 'COORDINATOR':
-          router.replace('/coordinator/rapid-assessments')
+          router.replace('/assessor/rapid-assessments')
           break
         case 'RESPONDER':
-          router.replace('/responder/rapid-assessments')
+          router.replace('/assessor/rapid-assessments')
           break
         case 'DONOR':
           router.replace('/donor/rapid-assessments')
           break
         case 'ADMIN':
-          router.replace('/admin/rapid-assessments')
+          router.replace('/assessor/rapid-assessments')
           break
         default:
           router.replace('/dashboard')

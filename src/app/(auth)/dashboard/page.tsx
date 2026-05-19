@@ -159,7 +159,7 @@ export default function DashboardPage() {
             </>
           )}
           {hasPermission('MANAGE_USERS') && (
-            <Link href="/users/new">
+            <Link href="/admin/users">
               <Button size="sm" variant="outline">
                 <UserCog className="h-4 w-4 mr-2" />
                 Add User
@@ -265,7 +265,7 @@ export default function DashboardPage() {
                 <span>Resource allocation updated</span>
                 <span className="text-muted-foreground ml-auto">2 hours ago</span>
               </div>
-              <Link href="/dashboard/crisis">
+              <Link href="/coordinator/situation-dashboard">
                 <Button variant="outline" className="w-full mt-4" size="sm">
                   View All Activity
                 </Button>
@@ -487,7 +487,7 @@ export default function DashboardPage() {
                     <span className="font-bold text-red-600">{systemHealth?.activeUsers || '...'}</span>
                   </div>
                 </div>
-                <Link href="/users/new">
+                <Link href="/admin/users">
                   <Button className="w-full bg-red-600 hover:bg-red-700">
                     Add New User
                   </Button>

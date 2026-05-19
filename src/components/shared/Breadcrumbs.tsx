@@ -26,40 +26,39 @@ const breadcrumbStructure: Record<string, BreadcrumbItem[]> = {
   ],
   '/coordinator/analytics': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Analytics', href: '/coordinator/analytics' }
+    { name: 'Analytics', href: '/coordinator/situation-dashboard' }
   ],
   '/coordinator/settings': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Settings', href: '/coordinator/settings' }
+    { name: 'Settings', href: '/coordinator/settings/gap-field-management' }
   ],
   '/assessor/preliminary-assessment': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Assessments', href: '/assessments' },
+    { name: 'Assessments', href: '/assessor/rapid-assessments' },
     { name: 'Preliminary', href: '/assessor/preliminary-assessment' }
   ],
   '/rapid-assessments': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Assessments', href: '/assessments' },
+    { name: 'Assessments', href: '/assessor/rapid-assessments' },
     { name: 'Rapid', href: '/rapid-assessments' }
   ],
-  '/assessments/my': [
+  '/assessor/rapid-assessments': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Assessments', href: '/assessments' },
-    { name: 'My Assessments', href: '/assessments/my' }
+    { name: 'Assessments', href: '/assessor/rapid-assessments' }
   ],
-  '/assessments/new': [
+  '/assessor/rapid-assessments/new': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Assessments', href: '/assessments' },
-    { name: 'New Assessment', href: '/assessments/new' }
+    { name: 'Assessments', href: '/assessor/rapid-assessments' },
+    { name: 'New Assessment', href: '/assessor/rapid-assessments/new' }
   ],
   '/surveys': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Assessments', href: '/assessments' },
-    { name: 'Surveys', href: '/surveys' }
+    { name: 'Assessments', href: '/assessor/rapid-assessments' },
+    { name: 'Surveys', href: '/assessor/preliminary-assessment' }
   ],
   '/assessor/reports': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Reports', href: '/assessor/reports' }
+    { name: 'Reports', href: '/coordinator/reports' }
   ],
   '/responder/planning': [
     { name: 'Dashboard', href: '/dashboard' },
@@ -77,7 +76,7 @@ const breadcrumbStructure: Record<string, BreadcrumbItem[]> = {
   ],
   '/responder/resources': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Resources', href: '/responder/resources' }
+    { name: 'Resources', href: '/coordinator/resource-management' }
   ],
   '/donor/dashboard': [
     { name: 'Dashboard', href: '/dashboard' },
@@ -100,33 +99,33 @@ const breadcrumbStructure: Record<string, BreadcrumbItem[]> = {
     { name: 'Dashboard', href: '/dashboard' },
     { name: 'Leaderboard', href: '/donor/leaderboard' }
   ],
-  '/users': [
+  '/admin/users': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'User Management', href: '/users' }
+    { name: 'User Management', href: '/admin/users' }
   ],
   '/users/new': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'User Management', href: '/users' },
-    { name: 'Add User', href: '/users/new' }
+    { name: 'User Management', href: '/admin/users' },
+    { name: 'Add User', href: '/admin/users' }
   ],
   '/roles': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'User Management', href: '/users' },
+    { name: 'User Management', href: '/admin/users' },
     { name: 'Role Management', href: '/roles' }
   ],
   '/system/settings': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'System', href: '/system' },
+    { name: 'System', href: '/system/settings' },
     { name: 'Settings', href: '/system/settings' }
   ],
   '/system/audit': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'System', href: '/system' },
+    { name: 'System', href: '/system/settings' },
     { name: 'Audit Logs', href: '/system/audit' }
   ],
   '/system/database': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'System', href: '/system' },
+    { name: 'System', href: '/system/settings' },
     { name: 'Database', href: '/system/database' }
   ],
   '/admin/donors': [
@@ -140,15 +139,15 @@ const breadcrumbStructure: Record<string, BreadcrumbItem[]> = {
   ],
   '/incidents': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Active Incidents', href: '/incidents' }
+    { name: 'Active Incidents', href: '/coordinator/incidents' }
   ],
   '/tasks': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'My Tasks', href: '/tasks' }
+    { name: 'My Tasks', href: '/responder/planning' }
   ],
   '/team': [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Team Status', href: '/team' }
+    { name: 'Team Status', href: '/responder/planning' }
   ],
   '/profile': [
     { name: 'Dashboard', href: '/dashboard' },
@@ -163,7 +162,7 @@ const generateDynamicBreadcrumbs = (pathname: string): BreadcrumbItem[] => {
   if (pathname.includes('?tab=exports') || pathname.includes('/dashboard?tab=exports')) {
     return [
       { name: 'Dashboard', href: '/dashboard' },
-      { name: 'Settings', href: '/coordinator/settings' },
+      { name: 'Settings', href: '/coordinator/settings/gap-field-management' },
       { name: 'Export Functions', href: '/coordinator/dashboard?tab=exports' }
     ];
   }
@@ -171,7 +170,7 @@ const generateDynamicBreadcrumbs = (pathname: string): BreadcrumbItem[] => {
   if (pathname.includes('?tab=reports') || pathname.includes('/dashboard?tab=reports')) {
     return [
       { name: 'Dashboard', href: '/dashboard' },
-      { name: 'Settings', href: '/coordinator/settings' },
+      { name: 'Settings', href: '/coordinator/settings/gap-field-management' },
       { name: 'Report Builder', href: '/coordinator/dashboard?tab=reports' }
     ];
   }

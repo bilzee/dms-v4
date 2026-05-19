@@ -4,6 +4,9 @@ import { useAuth } from '@/hooks/useAuth'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { DonorDashboard } from '@/components/donor/DonorDashboard'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
+import { User } from 'lucide-react'
 
 export default function DonorDashboardPage() {
   const { currentRole, user } = useAuth()
@@ -20,6 +23,12 @@ export default function DonorDashboardPage() {
                 Welcome back, {(user as any)?.name}. Your current role is: <Badge variant="outline">{currentRole}</Badge>
               </p>
             </div>
+            <Link href="/donor/profile">
+              <Button variant="outline" size="sm">
+                <User className="h-4 w-4 mr-2" />
+                My Profile
+              </Button>
+            </Link>
           </div>
         </div>
 

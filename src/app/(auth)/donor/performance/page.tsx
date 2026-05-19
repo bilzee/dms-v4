@@ -158,8 +158,8 @@ export default function PerformancePage() {
                 </p>
               </a>
               
-              <a 
-                href="/donor/commitments" 
+              <a
+                href="/donor/dashboard?tab=commitments"
                 className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <h3 className="font-semibold text-green-600">Manage Commitments</h3>

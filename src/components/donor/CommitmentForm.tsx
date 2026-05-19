@@ -171,7 +171,7 @@ export function CommitmentForm({ donorId, onSuccess, onCancel, initialData, preS
     onSuccess: (data) => {
       toast.success('Commitment created successfully!')
       onSuccess?.()
-      router.push(`/donor/commitments/${data.id}`)
+      router.push(`/donor/dashboard?tab=commitments&detail=${data.id}`)
     },
     onError: (error: Error) => {
       toast.error(error.message)

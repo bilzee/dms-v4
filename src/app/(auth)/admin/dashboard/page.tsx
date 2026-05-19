@@ -353,13 +353,13 @@ function AdminDashboard() {
                           </CardHeader>
                           <CardContent className="space-y-4">
                             <Button asChild className="w-full">
-                              <a href="/users">Manage Users</a>
+                              <a href="/admin/users">Manage Users</a>
                             </Button>
                             <Button asChild variant="outline" className="w-full">
                               <a href="/roles">Role Management</a>
                             </Button>
                             <Button asChild variant="outline" className="w-full">
-                              <a href="/admin/users/new">Create User</a>
+                              <a href="/admin/users?action=create">Create User</a>
                             </Button>
                           </CardContent>
                         </Card>
