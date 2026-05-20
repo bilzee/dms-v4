@@ -28,7 +28,7 @@ import {
   Eye
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { apiGet } from '@/lib/api';
+import { apiGet, extractArray } from '@/lib/api';
 import { Entity, Incident, Donor } from '@/types/commitment';
 
 interface ResourceGapAnalysisProps {
@@ -122,8 +122,7 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
     queryFn: async () => {
       const result = await apiGet('/api/v1/entities')
       if (!result.success) return []
-      const d = result.data as any
-      return d?.data || d || [];
+      return extractArray<Entity>(result.data as any);
     }
   });
 
@@ -134,8 +133,7 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
     queryFn: async () => {
       const result = await apiGet('/api/v1/incidents')
       if (!result.success) return []
-      const d = result.data as any
-      return d?.data || d || [];
+      return extractArray<Incident>(result.data as any);
     }
   });
 

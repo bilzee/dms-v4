@@ -38,7 +38,7 @@ import { responseOfflineService } from '@/lib/services/response-offline.service'
 import { ResponseService } from '@/lib/services/response-client.service'
 import { CreatePlannedResponseInput, CreateDeliveredResponseInput, ResponseItem } from '@/lib/validation/response'
 import { useAuthStore } from '@/stores/auth.store'
-import { apiGet } from '@/lib/api'
+import { apiGet, extractArray } from '@/lib/api'
 
 const ResponseItemSchema = z.object({
   name: z.string().min(1, 'Item name is required'),
@@ -131,7 +131,7 @@ export function ResponsePlanningForm({
       if (!user || !token) throw new Error('User not authenticated')
       const result = await apiGet(`/api/v1/entities/assigned?userId=${(user as any).id}`)
       if (!result.success) throw new Error('Failed to fetch assigned entities')
-      return (result.data as any)?.data || result.data || []
+      return extractArray(result.data as any)
     },
     enabled: !!user && !!token
   })
@@ -144,7 +144,7 @@ export function ResponsePlanningForm({
       if (!selectedEntityId || !token) return []
       const result = await apiGet(`/api/v1/assessments/verified?entityId=${selectedEntityId}`)
       if (!result.success) throw new Error('Failed to fetch verified assessments')
-      return (result.data as any)?.data || result.data || []
+      return extractArray(result.data as any)
     },
     enabled: !!selectedEntityId && !!token
   })
@@ -159,7 +159,7 @@ export function ResponsePlanningForm({
         console.warn('Failed to fetch entity donors:', result.error)
         return []
       }
-      return (result.data as any)?.data || result.data || []
+      return extractArray(result.data as any)
     },
     enabled: !!selectedEntityId && !!token
   })

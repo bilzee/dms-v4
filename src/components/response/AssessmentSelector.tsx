@@ -18,7 +18,7 @@ import { FileText, Calendar, MapPin, User, AlertTriangle, CheckCircle, Clock } f
 import { responseOfflineService } from '@/lib/services/response-offline.service'
 import { ResponseService } from '@/lib/services/response.service'
 import { useAuthStore } from '@/stores/auth.store'
-import { apiGet } from '@/lib/api'
+import { apiGet, extractArray } from '@/lib/api'
 
 interface AssessmentSelectorProps {
   entityId: string
@@ -70,7 +70,7 @@ export function AssessmentSelector({
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch verified assessments')
       }
-      const assessments = (result.data as any)?.data || result.data || []
+      const assessments = extractArray(result.data as any)
       
       // Check each assessment for existing responses
       const assessmentsWithConflicts = await Promise.all(

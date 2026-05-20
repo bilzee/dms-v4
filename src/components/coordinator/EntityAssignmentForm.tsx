@@ -3,7 +3,7 @@
 import React from 'react';
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { apiGet, apiPost, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiDelete, extractArray } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -119,19 +119,19 @@ export default function CoordinatorEntitiesPage() {
       ]);
       if (entitiesResult.success) {
         const d = entitiesResult.data as any;
-        setEntities(d?.data || d || []);
+        setEntities(extractArray(d));
       }
       if (usersResult.success) {
         const d = usersResult.data as any;
-        setUsers(d?.data || d || []);
+        setUsers(extractArray(d));
       }
       if (donorsResult.success) {
         const d = donorsResult.data as any;
-        setDonors(d?.data || d || []);
+        setDonors(extractArray(d));
       }
       if (assignmentsResult.success) {
         const d = assignmentsResult.data as any;
-        setAssignments(d?.data || d || []);
+        setAssignments(extractArray(d));
       }
     } catch (error) {
       console.error('Error fetching data:', error);

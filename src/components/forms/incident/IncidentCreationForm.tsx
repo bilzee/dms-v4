@@ -21,7 +21,7 @@ import { useIncident } from '@/hooks/useIncident'
 import { IncidentSchema } from '@/lib/validation/incidents'
 import { IncidentData } from '@/types/incidents'
 import { AlertTriangle, Plus, Zap, MapPin, Loader2 } from 'lucide-react'
-import { apiGet } from '@/lib/api'
+import { apiGet, extractArray } from '@/lib/api'
 import { z } from 'zod'
 
 type FormData = z.infer<typeof IncidentSchema>
@@ -158,7 +158,7 @@ export function IncidentCreationForm({
       try {
         const result = await apiGet('/api/v1/preliminary-assessments')
         if (result.success) {
-          const data = (result.data as any)?.data || result.data || []
+          const data = extractArray(result.data as any)
           const unlinkedAssessments = data.filter((assessment: any) => !assessment.incidentId)
           setPreliminaryAssessments(unlinkedAssessments)
         }

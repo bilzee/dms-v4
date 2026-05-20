@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
-import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiPut, apiDelete, extractArray } from '@/lib/api';
 import { createAuthenticatedFetch } from '@/lib/auth/token-utils';
 
 export interface ExportStatus {
@@ -408,7 +408,7 @@ export const useExportStore = create<ExportState>()(
           try {
             const result = await apiGet('/api/v1/exports/schedule');
             if (!result.success) throw new Error(result.error || 'Failed to load scheduled reports');
-            set({ scheduledReports: result.data || [] });
+            set({ scheduledReports: extractArray(result.data) });
           } catch (error) {
             console.error('Failed to load scheduled reports:', error);
           }

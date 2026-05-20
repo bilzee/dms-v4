@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { apiGet, apiPost, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiDelete, extractArray } from '@/lib/api';
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -78,18 +78,15 @@ function CoordinatorEntitiesPageContent() {
       ]);
 
       if (entitiesResult.success) {
-        const entityData = entitiesResult.data?.data || entitiesResult.data;
-        setEntities(Array.isArray(entityData) ? entityData : (entityData?.items || []));
+        setEntities(extractArray(entitiesResult.data));
       }
 
       if (usersResult.success) {
-        const userData = usersResult.data?.data || usersResult.data;
-        setUsers(Array.isArray(userData) ? userData : []);
+        setUsers(extractArray(usersResult.data));
       }
 
       if (assignmentsResult.success) {
-        const assignmentData = assignmentsResult.data?.data || assignmentsResult.data;
-        setAssignments(Array.isArray(assignmentData) ? assignmentData : []);
+        setAssignments(extractArray(assignmentsResult.data));
       }
     } catch (error) {
       console.error('Error fetching data:', error);

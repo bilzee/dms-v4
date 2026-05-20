@@ -13,7 +13,7 @@ import { PlusCircle, FileText, Clock, CheckCircle, AlertTriangle, Filter, X, Map
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import { apiGet } from '@/lib/api'
+import { apiGet, extractArray } from '@/lib/api'
 import { PreliminaryAssessment, Incident } from '@prisma/client'
 
 // Type for assessment with incident relation
@@ -54,7 +54,7 @@ export default function PreliminaryAssessmentPage() {
         const result = await apiGet(`/api/v1/preliminary-assessments/user/${user.id}?page=1&limit=100`)
         
         if (result.success) {
-          const allAssessments: PreliminaryAssessmentWithIncident[] = result.data || []
+          const allAssessments: PreliminaryAssessmentWithIncident[] = extractArray<PreliminaryAssessmentWithIncident>(result.data)
           setAssessments(allAssessments)
           
           // Apply client-side filtering

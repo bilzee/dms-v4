@@ -27,7 +27,7 @@ import { AssessmentSelector } from '@/components/response/AssessmentSelector'
 
 // Services and types
 import { useAuthStore } from '@/stores/auth.store'
-import { apiGet, apiPost } from '@/lib/api'
+import { apiGet, apiPost, extractArray } from '@/lib/api'
 import { CommitmentService, type CommitmentItem } from '@/lib/services/commitment.service'
 import { ResponseService } from '@/lib/services/response.service'
 import { CreateDeliveredResponseInput } from '@/lib/validation/response'
@@ -118,7 +118,7 @@ export function DonorCommitmentImportForm({
       if (!filters.entityId || filters.entityId === 'all') return []
       const result = await apiGet(`/api/v1/assessments/verified?entityId=${filters.entityId}`)
       if (!result.success) throw new Error('Failed to fetch verified assessments')
-      return (result.data as any)?.data || result.data || []
+      return extractArray(result.data as any)
     },
     enabled: !!filters.entityId && filters.entityId !== 'all'
   })

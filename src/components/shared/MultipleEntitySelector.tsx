@@ -19,7 +19,7 @@ import { Card, CardContent } from '@/components/ui/card'
 // Internal services and hooks
 import type { Entity } from '@/lib/services/entity-assignment.service'
 import { useAuthStore } from '@/stores/auth.store'
-import { apiGet } from '@/lib/api'
+import { apiGet, extractArray } from '@/lib/api'
 
 interface MultipleEntitySelectorProps {
   value?: string[]
@@ -65,7 +65,7 @@ export function MultipleEntitySelector({
         throw new Error(result.error || 'Failed to fetch available entities')
       }
       const d = result.data as any
-      return d?.entities || d?.data?.entities || []
+      return d?.entities || extractArray(d)
     },
     enabled: !!user && !!token && isClient, // Only run query on client side after hydration
     staleTime: 5 * 60 * 1000, // 5 minutes

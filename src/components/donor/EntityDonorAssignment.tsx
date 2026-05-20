@@ -31,7 +31,7 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { apiGet, apiPost } from '@/lib/api';
+import { apiGet, apiPost, extractArray } from '@/lib/api';
 import type { Donor, Entity, Incident, DonorCommitment } from '@prisma/client';
 
 interface EntityDonorAssignmentProps {
@@ -97,8 +97,7 @@ export function EntityDonorAssignment({ className }: EntityDonorAssignmentProps)
     queryFn: async () => {
       const result = await apiGet('/api/v1/entities');
       if (!result.success) return [];
-      const data = result.data;
-      return Array.isArray(data) ? data : [];
+      return extractArray<Entity>(result.data);
     }
   });
 
@@ -109,8 +108,7 @@ export function EntityDonorAssignment({ className }: EntityDonorAssignmentProps)
     queryFn: async () => {
       const result = await apiGet('/api/v1/donors');
       if (!result.success) return [];
-      const data = result.data;
-      return Array.isArray(data) ? data : [];
+      return extractArray<Donor>(result.data);
     }
   });
 
@@ -121,8 +119,7 @@ export function EntityDonorAssignment({ className }: EntityDonorAssignmentProps)
     queryFn: async () => {
       const result = await apiGet('/api/v1/incidents');
       if (!result.success) return [];
-      const data = result.data;
-      return Array.isArray(data) ? data : [];
+      return extractArray<Incident>(result.data);
     }
   });
 

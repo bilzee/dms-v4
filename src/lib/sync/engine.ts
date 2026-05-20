@@ -1,5 +1,5 @@
 import { offlineDB, SyncQueueItem } from '../db/offline';
-import { apiPost } from '@/lib/api';
+import { apiPost, extractArray } from '@/lib/api';
 
 export interface SyncChange {
   type: 'assessment' | 'response' | 'entity';
@@ -249,7 +249,7 @@ export class SyncEngine {
         throw new Error(apiResult.error || 'Sync API error')
       }
 
-      const syncResults: SyncResult[] = (apiResult.data as any)?.data || apiResult.data || []
+      const syncResults: SyncResult[] = extractArray<SyncResult>(apiResult.data)
 
       // Process results and update queue
       for (let i = 0; i < syncResults.length; i++) {

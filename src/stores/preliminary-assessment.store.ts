@@ -6,7 +6,7 @@ import {
   CreatePreliminaryAssessmentRequest 
 } from '@/types/preliminary-assessment'
 import { offlineDB } from '@/lib/db/offline'
-import { apiGet, apiPost, apiPut } from '@/lib/api'
+import { apiGet, apiPost, apiPut, extractArray } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth.store'
 import { useOfflineStore } from '@/stores/offline.store'
 
@@ -215,7 +215,7 @@ export const usePreliminaryAssessmentStore = create<PreliminaryAssessmentState>(
           const body = apiResult.data as any
           
           set({ 
-            recentAssessments: body?.data || body,
+            recentAssessments: extractArray(body),
             isLoading: false 
           })
         } catch (error) {

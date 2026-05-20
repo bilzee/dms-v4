@@ -13,7 +13,7 @@ import {
   AlertCircle,
   Users
 } from 'lucide-react';
-import { apiGet } from '@/lib/api';
+import { apiGet, extractArray } from '@/lib/api';
 
 interface TopDonorsProps {
   incidentId?: string;
@@ -36,7 +36,8 @@ const fetchTopDonors = async (incidentId?: string): Promise<TopDonor[]> => {
     throw new Error(result.error || 'Failed to fetch donor metrics')
   }
   const d = result.data as any
-  return d?.data?.overall?.topPerformers?.slice(0, 3) || d?.overall?.topPerformers?.slice(0, 3) || []
+  const performers = d?.data?.overall?.topPerformers || d?.overall?.topPerformers || []
+  return extractArray<TopDonor>(performers).slice(0, 3)
 };
 
 /**

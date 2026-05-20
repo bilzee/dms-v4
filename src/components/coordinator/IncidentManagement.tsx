@@ -42,7 +42,7 @@ import { IncidentCreationForm } from '@/components/forms/incident/IncidentCreati
 
 // Token utilities
 import { getAuthToken } from '@/lib/auth/token-utils'
-import { apiGet, apiPut } from '@/lib/api'
+import { apiGet, apiPut, extractArray } from '@/lib/api'
 import { 
   AlertTriangle, 
   MapPin, 
@@ -152,7 +152,7 @@ export function IncidentManagement({
     if (!result.success) throw new Error('Failed to fetch incidents')
     const raw = result.data as any
     return {
-      incidents: Array.isArray(raw) ? raw : (raw?.items || []),
+      incidents: extractArray(raw),
       pagination: raw?.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 }
     }
   }
@@ -164,7 +164,8 @@ export function IncidentManagement({
       if (!token) throw new Error('No authentication token available')
       const result = await apiGet('/api/v1/incidents/types')
       if (!result.success) throw new Error('Failed to fetch incident types')
-      return (result.data as any)?.data || result.data || ['Flood', 'Fire', 'Earthquake', 'Landslide', 'Drought', 'Storm', 'Epidemic', 'Conflict', 'Industrial Accident', 'Other']
+      const types = extractArray<string>(result.data as any)
+      return types.length > 0 ? types : ['Flood', 'Fire', 'Earthquake', 'Landslide', 'Drought', 'Storm', 'Epidemic', 'Conflict', 'Industrial Accident', 'Other']
     } catch (error) {
       return ['Flood', 'Fire', 'Earthquake', 'Landslide', 'Drought', 'Storm', 'Epidemic', 'Conflict', 'Industrial Accident', 'Other']
     }
@@ -269,7 +270,7 @@ export function IncidentManagement({
       if (token) {
         const assessResult = await apiGet('/api/v1/preliminary-assessments?limit=100')
         if (assessResult.success) {
-          const allAssessments = (assessResult.data as any)?.data || assessResult.data || []
+          const allAssessments = extractArray(assessResult.data as any)
           const linkedAssessments = allAssessments.filter((assessment: any) =>
             assessment.incidentId === incident.id
           )
