@@ -17,11 +17,11 @@ export const ROLE_ROUTE_PREFIXES: Record<string, string[]> = {
 };
 
 export const ROLE_PATH_PATTERNS: Record<RoleName, RegExp[]> = {
-  ASSESSOR: [/^\/assessor\//, /^\/rapid-assessments/],
-  COORDINATOR: [/^\/coordinator\//, /^\/reports/],
-  RESPONDER: [/^\/responder\//, /^\/rapid-assessments/],
-  DONOR: [/^\/donor\//],
-  ADMIN: [/^\/admin\//, /^\/roles/, /^\/system\//, /^\/reports/],
+  ASSESSOR: [/^\/assessor\//, /^\/rapid-assessments/, /^\/dashboard$/, /^\/profile$/, /^\/help$/],
+  COORDINATOR: [/^\/coordinator\//, /^\/reports/, /^\/verification/, /^\/dashboard$/, /^\/profile$/, /^\/help$/],
+  RESPONDER: [/^\/responder\//, /^\/rapid-assessments/, /^\/dashboard$/, /^\/profile$/, /^\/help$/],
+  DONOR: [/^\/donor\//, /^\/dashboard$/, /^\/profile$/, /^\/help$/],
+  ADMIN: [/^\/admin\//, /^\/roles/, /^\/system\//, /^\/reports/, /^\/dashboard$/, /^\/profile$/, /^\/help$/],
 };
 
 export const ROLE_ACCESSIBLE_PATHS: Record<RoleName, string[]> = {

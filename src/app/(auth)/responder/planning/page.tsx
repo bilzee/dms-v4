@@ -24,7 +24,7 @@ import { ResponsePlanningDashboard } from '@/components/response/ResponsePlannin
 
 // Hooks and utilities
 import { useAuthStore } from '@/stores/auth.store'
-import { apiGet } from '@/lib/api'
+import { apiGet, extractArray } from '@/lib/api'
 
 function ResponsePlanningPageContent() {
   const { user, token } = useAuthStore()
@@ -41,10 +41,11 @@ function ResponsePlanningPageContent() {
   const getPlannedResponses = async () => {
     if (!user) throw new Error('User not authenticated')
     const result = await apiGet('/api/v1/responses/planned/assigned?page=1&limit=50')
-    if (!result.success) throw new Error(result.error || 'Failed to fetch planned responses')
+    if (result.error) throw new Error(result.error)
+    const responses = extractArray(result.data)
     return {
-      responses: (result.data as any)?.responses || result.data || [],
-      total: (result.data as any)?.total || (result.data as any)?.pagination?.total || 0
+      responses,
+      total: (result as any)?.meta?.total || responses.length
     }
   }
 

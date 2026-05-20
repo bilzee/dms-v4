@@ -1,5 +1,5 @@
 import { CreatePlannedResponseInput, CreateDeliveredResponseInput, ResponseItem } from '@/lib/validation/response'
-import { apiGet, apiPost, apiPut } from '@/lib/api'
+import { apiGet, apiPost, apiPut, extractArray } from '@/lib/api'
 
 export class ResponseService {
   private static readonly BASE_URL = '/api/v1/responses'
@@ -56,13 +56,13 @@ export class ResponseService {
     if (query.limit) searchParams.append('limit', query.limit.toString())
 
     const result = await apiGet(`${this.BASE_URL}/planned/assigned?${searchParams}`)
-    if (!result.success) {
-      throw new Error(result.error || 'Failed to get assigned responses')
+    if (result.error) {
+      throw new Error(result.error)
     }
     const d = result.data as any
     return {
-      responses: d?.data || d || [],
-      total: d?.meta?.total || (result.meta as any)?.total || 0
+      responses: extractArray(d),
+      total: d?.meta?.total || (result as any)?.meta?.total || 0
     }
   }
 

@@ -123,6 +123,138 @@ Removed the function (24 lines) and cleaned up unused imports (`apiGet`, `getAut
 
 ---
 
+## BUG-006: Verification queue counts are mocked/frozen (MEDIUM)
+
+**Date:** 2026-05-20
+**Status:** Fixed
+**Files:** `src/components/verification/VerificationAnalytics.tsx`
+
+### Problem
+
+The Verification Analytics dashboard displayed hardcoded static values (12 pending, 8 verified, etc.) instead of real data from the API. This made the verification queue appear active even when empty, misleading coordinators.
+
+### Root Cause
+
+Component used hardcoded mock data instead of fetching from the verification queue API endpoints.
+
+### Fix
+
+Replaced hardcoded values with dynamic data fetched from `/api/v1/verification/analytics`.
+
+---
+
+## BUG-007: Navigation sidebar shows all routes regardless of user role (HIGH)
+
+**Date:** 2026-05-20
+**Status:** Fixed
+**Files:** `src/components/layout/RoleBasedSidebar.tsx`
+
+### Problem
+
+The sidebar navigation displayed links for ALL role-specific routes (Assessor, Responder, Coordinator, Donor) regardless of the logged-in user's role. A Donor user would see Responder planning links, an Assessor would see Coordinator verification links, etc.
+
+### Root Cause
+
+The sidebar component did not filter navigation items by the user's active role. All navigation groups were rendered unconditionally.
+
+### Fix
+
+Added role-based filtering to the sidebar. Navigation items are now filtered by matching the item's `requiredRole` against `user.activeRole` or `user.roles`. Only items matching the user's current role are displayed.
+
+### Verification
+
+- Coordinator user sees only Coordinator links
+- Assessor user sees only Assessor links
+- Responder user sees only Responder links
+- Donor user sees only Donor links
+
+---
+
+## BUG-008: Coordinator entity-management page crashes on load (CRITICAL)
+
+**Date:** 2026-05-20
+**Status:** Fixed
+**Files:** `src/app/(auth)/coordinator/entity-management/page.tsx`
+
+### Problem
+
+The Coordinator Entity Management page crashed when loading because the code assumed `apiGet` returns `{ data: Entity[] }` but the actual paginated API returns `{ success: true, data: { items: Entity[], pagination: {...} } }`. Accessing `entitiesData.data.map()` on an object without a `.map()` method threw a TypeError.
+
+### Root Cause
+
+Same as BUG-009 (see below). The `useQuery` type was `{ data: Entity[] }` but the actual response had a nested structure.
+
+### Fix
+
+Updated the `useQuery` types to `{ items: Entity[], pagination: any }` and used `extractArray()` to safely extract the entity array from the paginated response.
+
+---
+
+## BUG-009: Systemic paginated response handling breaks all data-fetching pages (CRITICAL)
+
+**Date:** 2026-05-20
+**Status:** Fixed
+**Files:**
+- `src/app/(auth)/coordinator/entity-management/page.tsx`
+- `src/app/(auth)/donor/responses/page.tsx`
+- `src/app/(auth)/responder/responses/page.tsx`
+- `src/app/(auth)/responder/dashboard/page.tsx`
+- `src/app/(auth)/responder/planning/page.tsx`
+- `src/components/donor/CommitmentForm.tsx`
+- `src/stores/incident.store.ts`
+- `src/stores/verification.store.ts`
+- `src/lib/offline/bootstrap.ts`
+- `src/lib/services/response-client.service.ts`
+
+### Problem
+
+The application has **three distinct API response shapes**:
+
+1. **Shape A** (via `paginatedResponse()`): `{ success: true, data: { items: [...], pagination: {...} } }`
+2. **Shape B** (via `successResponse()`): `{ success: true, data: [...] }`
+3. **Shape C** (raw `NextResponse.json()`): `{ data: [...], meta: {...} }` — **NO `success` field**
+
+Most frontend code assumed `result.data` is always a plain array. This caused two failure modes:
+
+1. **`result.data` is `{ items: [...] }` not an array** — calling `.map()` or `.reduce()` on it throws TypeError
+2. **`!result.success` on Shape C APIs** — `result.success` is `undefined` (falsy), so `if (!result.success) throw new Error(...)` always throws, even on successful 200 responses
+
+This broke virtually every page that fetches paginated data: entity management, incidents, responses, verification queue, donor commitments, and offline bootstrap.
+
+### Root Cause
+
+No standardized response unwrapping pattern. The `apiGet()` helper returns raw JSON without any normalization. Each page and store had its own assumption about the response shape, and most assumed wrong.
+
+### Fix
+
+Applied two patterns consistently:
+
+1. **Use `extractArray(result.data)`** from `src/lib/api.ts` to safely extract arrays from any response shape (handles all three shapes)
+2. **Use `if (result.error)` instead of `if (!result.success)`** for APIs that return Shape C (no `success` field) — this avoids false-positive error throws
+
+Created the `extractArray()` helper in `src/lib/api.ts` that checks `Array.isArray(data)`, then `data.items`, then `data.data`, falling back to `[]`.
+
+### Verification
+
+All role-specific pages tested via Chrome DevTools:
+
+| User Role | Page | Result |
+|-----------|------|--------|
+| Coordinator | Dashboard | Loads with stats, verification queue |
+| Coordinator | Entity Management | Shows 5 entities with pagination |
+| Coordinator | Incidents | Shows 2 active incidents |
+| Assessor | Rapid Assessments | Shows 3 assessments (FOOD, WASH, HEALTH) |
+| Assessor | Preliminary Assessment | Loads with empty state |
+| Assessor | Create New Assessment | Loads with offline data prompt |
+| Responder | Planning | Shows 0 plans with empty state |
+| Responder | Response Deliveries | Shows "No responses assigned" |
+| Responder | Dashboard | Shows 0 plans with empty state |
+| Donor | Dashboard | Loads with welcome message |
+| Donor | Commitment Status | Shows "No responses assigned" |
+| Donor | Entity Locations | Shows 1 assigned entity |
+
+---
+
 ## Test Results
 
 All bugs verified fixed via Chrome DevTools against running dev server:
@@ -137,3 +269,4 @@ All bugs verified fixed via Chrome DevTools against running dev server:
 | Logout | Redirects to `/login` |
 | Console errors | Zero |
 | Build (`npx next build`) | Clean, 0 errors |
+| Multi-role testing | All 4 roles tested, all pages load without errors |

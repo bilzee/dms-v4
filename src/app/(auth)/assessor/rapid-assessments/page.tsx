@@ -13,7 +13,7 @@ import { PlusCircle, Activity, FileText, Clock, CheckCircle, AlertTriangle, Filt
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import { apiGet } from '@/lib/api'
+import { apiGet, extractArray } from '@/lib/api'
 import { RapidAssessment, Entity, Incident } from '@prisma/client'
 
 // Type for assessment with entity and incident relations
@@ -103,7 +103,7 @@ export default function AssessorRapidAssessmentsPage() {
         const result = await apiGet(`/api/v1/rapid-assessments?${queryParams}`)
         
         if (result.success) {
-          const allAssessments: RapidAssessmentWithEntity[] = result.data || []
+          const allAssessments: RapidAssessmentWithEntity[] = extractArray(result.data)
           setAssessments(allAssessments)
           
           // Apply client-side filtering for entity name and date filtering
@@ -158,7 +158,7 @@ export default function AssessorRapidAssessmentsPage() {
               const result = await apiGet(`/api/v1/rapid-assessments?userId=me`)
               
               if (result.success) {
-                setAssessments(result.data || [])
+                setAssessments(extractArray(result.data))
               }
             }
           } catch (error) {

@@ -23,7 +23,7 @@ import { EmptyResponses, EmptySearchResults } from '@/components/shared/EmptySta
 import { Package, Truck, Search, Filter, Clock, CheckCircle, ArrowLeft, Plus, AlertTriangle, User, X, Edit, Info, Shield } from 'lucide-react'
 
 // API utilities
-import { apiGet } from '@/lib/api'
+import { apiGet, extractArray } from '@/lib/api'
 
 function ResponderResponsesPageContent() {
   const router = useRouter()
@@ -73,13 +73,13 @@ function ResponderResponsesPageContent() {
         if (!user) throw new Error('User not authenticated')
         
         const result = await apiGet('/api/v1/responses/assigned?page=1&limit=100')
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to fetch responses')
+        if (result.error) {
+          throw new Error(result.error)
         }
-        
+        const responses = extractArray(result.data)
         return {
-          responses: result.data || [],
-          total: (result.data as any)?.pagination?.total || (result.data as any)?.total || 0
+          responses,
+          total: (result as any)?.meta?.total || (result.data as any)?.pagination?.total || responses.length
         }
       }}
       enabled={!!user}

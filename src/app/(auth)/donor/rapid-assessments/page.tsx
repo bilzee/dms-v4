@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
-import { apiGet } from '@/lib/api'
+import { apiGet, extractArray } from '@/lib/api'
 
 export default function DonorAssessmentsPage() {
   const { user } = useAuth()
@@ -29,7 +29,7 @@ export default function DonorAssessmentsPage() {
     queryFn: async () => {
       const result = await apiGet('/api/v1/rapid-assessments')
       if (!result.success) throw new Error(result.error || 'Failed to fetch assessments')
-      return result.data || []
+      return extractArray(result.data)
     },
   })
   const assessments = Array.isArray(assessmentsData) ? assessmentsData : []

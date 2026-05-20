@@ -9,7 +9,7 @@ import { PlusCircle, Activity, FileText, Clock, CheckCircle, AlertTriangle } fro
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import { apiGet } from '@/lib/api'
+import { apiGet, extractArray } from '@/lib/api'
 
 const assessmentTypes = [
   { value: 'HEALTH', label: 'Health Assessment' },
@@ -35,7 +35,7 @@ export default function AssessorDashboard() {
           const result = await apiGet('/api/v1/rapid-assessments?userId=me')
           
           if (result.success) {
-            setAssessments(result.data || [])
+            setAssessments(extractArray(result.data))
           }
         }
       } catch (error) {
@@ -59,7 +59,7 @@ export default function AssessorDashboard() {
               const result = await apiGet('/api/v1/rapid-assessments?userId=me')
               
               if (result.success) {
-                setAssessments(result.data || [])
+                setAssessments(extractArray(result.data))
               }
             }
           } catch (error) {

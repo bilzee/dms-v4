@@ -23,7 +23,7 @@ import { Package, Truck, Search, Filter, AlertTriangle, Clock, CheckCircle, Arro
 import { useAuthStore } from '@/stores/auth.store'
 
 // API utilities
-import { apiGet } from '@/lib/api'
+import { apiGet, extractArray } from '@/lib/api'
 
 function DonorResponsesPageContent() {
   const router = useRouter()
@@ -54,10 +54,11 @@ function DonorResponsesPageContent() {
       throw new Error(commitmentsResult.error || 'Failed to fetch commitment responses')
     }
     
-    const result = commitmentsResult.data
+    const commitmentsRaw = commitmentsResult.data?.data || commitmentsResult.data
+    const commitments = extractArray(commitmentsRaw)
     
     // Extract responses from commitments
-    const responses = (result.data || []).reduce((acc: any[], commitment: any) => {
+    const responses = commitments.reduce((acc: any[], commitment: any) => {
       if (commitment.responses && commitment.responses.length > 0) {
         return acc.concat(commitment.responses.map((resp: any) => ({
           ...resp,

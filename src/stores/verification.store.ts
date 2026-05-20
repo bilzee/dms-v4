@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { shallow } from 'zustand/shallow';
-import { apiGet } from '@/lib/api';
+import { apiGet, extractArray } from '@/lib/api';
 
 export interface QueueMetrics {
   averageWaitTime: number;
@@ -315,10 +315,10 @@ export const useVerificationStore = create<VerificationQueueState>()(
 
         const body = result.data as any;
         set({
-          assessments: body?.data || [],
-          assessmentPagination: body?.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 },
-          assessmentQueueDepth: body?.queueDepth || { total: 0, critical: 0, high: 0, medium: 0, low: 0 },
-          assessmentMetrics: body?.metrics || { averageWaitTime: 0, verificationRate: 0, oldestPending: null },
+          assessments: extractArray(body),
+          assessmentPagination: body?.pagination || result.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 },
+          assessmentQueueDepth: body?.queueDepth || result.queueDepth || { total: 0, critical: 0, high: 0, medium: 0, low: 0 },
+          assessmentMetrics: body?.metrics || result.metrics || { averageWaitTime: 0, verificationRate: 0, oldestPending: null },
           lastUpdate: new Date().toISOString()
         });
       } catch (error) {
@@ -365,10 +365,10 @@ export const useVerificationStore = create<VerificationQueueState>()(
 
         const body = result.data as any;
         set({
-          deliveries: body?.data || [],
-          deliveryPagination: body?.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 },
-          deliveryQueueDepth: body?.queueDepth || { total: 0, critical: 0, high: 0, medium: 0, low: 0 },
-          deliveryMetrics: body?.metrics || { averageWaitTime: 0, verificationRate: 0, oldestPending: null },
+          deliveries: extractArray(body),
+          deliveryPagination: body?.pagination || result.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 },
+          deliveryQueueDepth: body?.queueDepth || result.queueDepth || { total: 0, critical: 0, high: 0, medium: 0, low: 0 },
+          deliveryMetrics: body?.metrics || result.metrics || { averageWaitTime: 0, verificationRate: 0, oldestPending: null },
           lastUpdate: new Date().toISOString()
         });
       } catch (error) {

@@ -473,6 +473,8 @@ export const Navigation = () => {
   };
 
   const isAccessible = (href: string) => {
+    if (href.startsWith('#')) return true;
+    if (href === '/dashboard' || href === '/profile' || href === '/help') return true;
     return canAccessPath(href);
   };
 
@@ -480,9 +482,8 @@ export const Navigation = () => {
     const hasChildren = item.children && item.children.length > 0;
     const isItemActive = isActive(item.href);
     const isExpanded = expandedItems.has(item.href);
-    const isItemAccessible = isAccessible(item.href);
 
-    if (!isItemAccessible) {
+    if (!isAccessible(item.href)) {
       return null;
     }
 

@@ -13,6 +13,15 @@ export interface ApiResponse<T = any> {
 
 export { getAuthToken, getAuthHeaders }
 
+export function extractArray<T = any>(data: any): T[] {
+  if (Array.isArray(data)) return data
+  if (data && typeof data === 'object') {
+    if (Array.isArray(data.items)) return data.items
+    if (Array.isArray(data.data)) return data.data
+  }
+  return []
+}
+
 /**
  * Make an authenticated GET request
  */

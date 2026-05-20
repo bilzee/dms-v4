@@ -78,15 +78,18 @@ function CoordinatorEntitiesPageContent() {
       ]);
 
       if (entitiesResult.success) {
-        setEntities(entitiesResult.data?.data || entitiesResult.data || []);
+        const entityData = entitiesResult.data?.data || entitiesResult.data;
+        setEntities(Array.isArray(entityData) ? entityData : (entityData?.items || []));
       }
 
       if (usersResult.success) {
-        setUsers(usersResult.data?.data || usersResult.data || []);
+        const userData = usersResult.data?.data || usersResult.data;
+        setUsers(Array.isArray(userData) ? userData : []);
       }
 
       if (assignmentsResult.success) {
-        setAssignments(assignmentsResult.data?.data || assignmentsResult.data || []);
+        const assignmentData = assignmentsResult.data?.data || assignmentsResult.data;
+        setAssignments(Array.isArray(assignmentData) ? assignmentData : []);
       }
     } catch (error) {
       console.error('Error fetching data:', error);

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { Incident } from '@prisma/client'
 import { CreateIncidentRequest, IncidentData } from '@/types/incidents'
-import { apiGet, apiPost, apiPut } from '@/lib/api'
+import { apiGet, apiPost, apiPut, extractArray } from '@/lib/api'
 
 interface IncidentState {
   // Current incidents
@@ -124,7 +124,7 @@ export const useIncidentStore = create<IncidentState>()(
             throw new Error(result.error || 'Failed to load incidents')
           }
 
-          const incidents = result.data
+          const incidents = extractArray<Incident>(result.data)
           
           set({ 
             incidents,

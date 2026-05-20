@@ -33,7 +33,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiPut, apiDelete, extractArray } from '@/lib/api';
 import Link from 'next/link';
 
 interface Entity {
@@ -89,7 +89,7 @@ export default function EntityManagementPage() {
 
   // Fetch entities
   const { data: entitiesData, isLoading, error, refetch } = useQuery<{
-    data: Entity[];
+    items: Entity[];
     pagination: any;
   }>({
     queryKey: ['entities', searchTerm, typeFilter, activeFilter],
@@ -101,9 +101,13 @@ export default function EntityManagementPage() {
       
       const result = await apiGet(`/api/v1/entities?${params}`);
       if (!result.success) throw new Error(result.error || 'Failed to fetch entities');
-      return result.data;
+      const inner = result.data?.data || result.data;
+      return {
+        items: extractArray<Entity>(inner),
+        pagination: inner?.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 }
+      };
     },
-    refetchInterval: 30000 // Refresh every 30 seconds
+    refetchInterval: 30000
   });
 
   // Create entity mutation
@@ -159,7 +163,7 @@ export default function EntityManagementPage() {
     }
   };
 
-  const filteredEntities = entitiesData?.data || [];
+  const filteredEntities = entitiesData?.items || [];
 
   return (
     <RoleBasedRoute requiredRole="COORDINATOR">
@@ -225,7 +229,7 @@ export default function EntityManagementPage() {
                 <Building2 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{entitiesData.data.length}</div>
+                <div className="text-2xl font-bold">{entitiesData.items.length}</div>
                 <p className="text-xs text-muted-foreground">
                   Across all types
                 </p>
@@ -239,7 +243,7 @@ export default function EntityManagementPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  {entitiesData.data.filter(e => e.isActive).length}
+                  {entitiesData.items.filter(e => e.isActive).length}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Currently operational
@@ -254,7 +258,7 @@ export default function EntityManagementPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
-                  {entitiesData.data.filter(e => e.autoApproveEnabled).length}
+                  {entitiesData.items.filter(e => e.autoApproveEnabled).length}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   With auto-approval settings
@@ -269,7 +273,7 @@ export default function EntityManagementPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">
-                  {entitiesData.data.filter(e => e.coordinates).length}
+                  {entitiesData.items.filter(e => e.coordinates).length}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Geo-located entities

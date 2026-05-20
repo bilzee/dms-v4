@@ -3,7 +3,7 @@
 
 import { offlineDB } from '@/lib/db/offline';
 import { useSyncStore } from '@/stores/sync.store';
-import { apiGet } from '@/lib/api'
+import { apiGet, extractArray } from '@/lib/api'
 import { getAuthToken } from '@/lib/auth/token-utils'
 
 export interface BootstrapProgress {
@@ -208,7 +208,7 @@ export class OfflineBootstrapService {
           throw new Error(`Failed to fetch entities: ${result.error}`)
         }
 
-        const entities = result.data as any[]
+        const entities = extractArray(result.data)
 
         // Store in offline DB
         await offlineDB.transaction('rw', offlineDB.entities, async () => {
@@ -263,7 +263,7 @@ export class OfflineBootstrapService {
         const result = await apiGet('/api/v1/incidents?status=ACTIVE&limit=100')
 
         if (result.success) {
-          const incidents = result.data as any[]
+          const incidents = extractArray(result.data)
 
           // Store in localStorage for now (until incident offline DB is ready)
           localStorage.setItem('drms_offline_incidents', JSON.stringify({

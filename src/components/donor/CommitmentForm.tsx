@@ -25,7 +25,7 @@ import { Plus, Trash2, Package, MapPin, AlertTriangle, DollarSign, CheckCircle2,
 
 // Types and validation
 import { CreateCommitmentInput, CommitmentItemInput } from '@/lib/validation/commitment'
-import { apiGet, apiPost } from '@/lib/api'
+import { apiGet, apiPost, extractArray } from '@/lib/api'
 
 // Form validation schema
 const CommitmentFormSchema = z.object({
@@ -103,7 +103,7 @@ export function CommitmentForm({ donorId, onSuccess, onCancel, initialData, preS
       if (!selectedEntityId) return []
       const result = await apiGet(`/api/v1/incidents?entityId=${selectedEntityId}`)
       if (!result.success) throw new Error(result.error || 'Failed to fetch incidents')
-      return result.data || []
+      return extractArray(result.data)
     },
     enabled: !!selectedEntityId
   })
