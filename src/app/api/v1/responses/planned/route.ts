@@ -4,6 +4,7 @@ import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { ResponseService } from '@/lib/services/response.service'
 import { CreatePlannedResponseResponse } from '@/types/response'
 import { CreatePlannedResponseSchema } from '@/lib/validation/response'
+import { handleApiError } from '@/lib/api/response'
 
 export const GET = withAuth(async (request: NextRequest, context: AuthContext) => {
   const { user, roles } = context;
@@ -29,18 +30,7 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       }
     });
   } catch (error) {
-    console.error('Get planned responses error:', error);
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -137,17 +127,6 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
         )
       }
     }
-    
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

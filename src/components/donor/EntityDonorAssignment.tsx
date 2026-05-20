@@ -383,7 +383,7 @@ export function EntityDonorAssignment({ className }: EntityDonorAssignmentProps)
                       ))}
                       
                       {formData.items.length === 0 && (
-                        <p className="text-muted-foreground text-sm">No items added. Click "Add Item" to begin.</p>
+                        <p className="text-muted-foreground text-sm">No items added. Click &quot;Add Item&quot; to begin.</p>
                       )}
                     </div>
                   </div>

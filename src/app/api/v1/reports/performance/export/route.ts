@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/api/response'
 
 const ExportRequestSchema = z.object({
   donorIds: z.array(z.string()).optional(),
@@ -67,7 +68,7 @@ export const POST = withAuth(async (request: NextRequest, context) => {
       // If specific donors requested, check permissions
       if (!canExportAll) {
         // For donor role, verify they can only access their own data
-        const userDonorRecord = await db.donor.findFirst({
+        const userDonorRecord = await prisma.donor.findFirst({
           where: { 
             OR: [
               { contactEmail: userId },
@@ -89,7 +90,7 @@ export const POST = withAuth(async (request: NextRequest, context) => {
       }
     } else if (!canExportAll) {
       // For donor role without specific IDs, get their own data
-      const userDonorRecord = await db.donor.findFirst({
+      const userDonorRecord = await prisma.donor.findFirst({
         where: { contactEmail: userId },
         select: { id: true }
       });
@@ -104,7 +105,7 @@ export const POST = withAuth(async (request: NextRequest, context) => {
     }
 
     // Fetch comprehensive donor performance data
-    const donorsData = await db.donor.findMany({
+    const donorsData = await prisma.donor.findMany({
       where: donorFilter,
       select: {
         id: true,
@@ -288,9 +289,6 @@ export const POST = withAuth(async (request: NextRequest, context) => {
 
   } catch (error) {
     console.error('Export performance report error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

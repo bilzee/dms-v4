@@ -5,10 +5,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { createApiResponse } from '@/types/api';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { handleApiError } from '@/lib/api/response'
 
 /**
  * GET /api/v1/reports/executions/[id]
@@ -23,7 +24,7 @@ export const GET = withAuth(async (
     const executionId = params.id;
 
     // Get execution with related configuration and template
-    const execution = await db.reportExecution.findFirst({
+    const execution = await prisma.reportExecution.findFirst({
       where: { id: executionId },
       include: {
         configuration: {
@@ -109,11 +110,7 @@ export const GET = withAuth(async (
     );
 
   } catch (error) {
-    console.error('Error getting report execution:', error);
-    return NextResponse.json(
-      createApiResponse(false, null, 'Failed to retrieve report execution'),
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -130,7 +127,7 @@ export const POST = withAuth(async (
     const executionId = params.id;
 
     // Get execution to verify access
-    const execution = await db.reportExecution.findFirst({
+    const execution = await prisma.reportExecution.findFirst({
       where: { id: executionId },
       include: {
         configuration: true
@@ -182,7 +179,7 @@ export const POST = withAuth(async (
     }
 
     // Update execution status
-    const updatedExecution = await db.reportExecution.update({
+    const updatedExecution = await prisma.reportExecution.update({
       where: { id: executionId },
       data: {
         status: 'FAILED',
@@ -210,11 +207,7 @@ export const POST = withAuth(async (
     );
 
   } catch (error) {
-    console.error('Error cancelling report execution:', error);
-    return NextResponse.json(
-      createApiResponse(false, null, 'Failed to cancel report execution'),
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -231,7 +224,7 @@ export const DELETE = withAuth(async (
     const executionId = params.id;
 
     // Get execution to verify access
-    const execution = await db.reportExecution.findFirst({
+    const execution = await prisma.reportExecution.findFirst({
       where: { id: executionId },
       include: {
         configuration: true
@@ -269,7 +262,7 @@ export const DELETE = withAuth(async (
     }
 
     // Delete execution from database
-    await db.reportExecution.delete({
+    await prisma.reportExecution.delete({
       where: { id: executionId }
     });
 
@@ -279,11 +272,7 @@ export const DELETE = withAuth(async (
     );
 
   } catch (error) {
-    console.error('Error deleting report execution:', error);
-    return NextResponse.json(
-      createApiResponse(false, null, 'Failed to delete report execution'),
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 

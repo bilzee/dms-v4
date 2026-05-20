@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { MultiUserAssignmentService } from '@/lib/assignment/multi-user-service';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/api/response'
 
 const suggestionQuerySchema = z.object({
   entityId: z.string().cuid(),
@@ -72,10 +73,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     }
 
     console.error('Error getting assignment suggestions:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });
 
@@ -123,9 +121,6 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
 
   } catch (error) {
     console.error('Error checking assignment conflicts:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/api/response'
 
 const ScheduleReportRequestSchema = z.object({
   reportType: z.enum([
@@ -93,7 +94,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
     }
 
     // Create scheduled report
-    const scheduledReportId = `schedule_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const scheduledReportId = `schedule_${Date.now()}_${crypto.randomUUID().split('-')[0]}`;
     
     const scheduledReport: ScheduledReport = {
       id: scheduledReportId,
@@ -129,11 +130,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
       },
     });
   } catch (error) {
-    console.error('Schedule report error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to schedule report' },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -185,11 +182,7 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       });
     }
   } catch (error) {
-    console.error('Get scheduled reports error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to get scheduled reports' },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -265,11 +258,7 @@ export const PUT = withAuth(async (request: NextRequest, context: AuthContext) =
       data: updatedReport,
     });
   } catch (error) {
-    console.error('Update scheduled report error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to update scheduled report' },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -316,11 +305,7 @@ export const DELETE = withAuth(async (request: NextRequest, context: AuthContext
       data: { message: 'Scheduled report deleted successfully' },
     });
   } catch (error) {
-    console.error('Delete scheduled report error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to delete scheduled report' },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 

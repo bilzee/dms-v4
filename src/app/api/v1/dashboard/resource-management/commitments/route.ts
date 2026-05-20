@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { auditLog } from '@/lib/services/audit.service';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api/response';
@@ -43,9 +43,9 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       ];
     }
 
-    const total = await db.donorCommitment.count({ where: whereClause });
+    const total = await prisma.donorCommitment.count({ where: whereClause });
 
-    const commitments = await db.donorCommitment.findMany({
+    const commitments = await prisma.donorCommitment.findMany({
       where: whereClause,
       include: {
         donor: {

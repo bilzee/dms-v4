@@ -1,5 +1,3 @@
-import { z } from 'zod'
-
 // Incident form data
 export interface IncidentData {
   id?: string
@@ -45,8 +43,8 @@ export interface Incident extends IncidentData {
 
 // Query filters
 export interface IncidentFilters {
-  status?: string[]
-  severity?: string[]
+  status?: ('ACTIVE' | 'CONTAINED' | 'RESOLVED')[]
+  severity?: ('CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW')[]
   type?: string[]
   dateRange?: {
     start: Date
@@ -54,6 +52,7 @@ export interface IncidentFilters {
   }
   location?: string
   hasAssessments?: boolean
+  entityId?: string
   page?: number
   limit?: number
 }
@@ -77,6 +76,8 @@ export interface CreateIncidentData {
 }
 
 export interface UpdateIncidentData {
+  type?: string
+  subType?: string
   status?: 'ACTIVE' | 'CONTAINED' | 'RESOLVED'
   severity?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
   description?: string

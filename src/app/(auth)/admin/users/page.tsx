@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -35,30 +36,27 @@ export default function UsersPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
   const [isHydrated, setIsHydrated] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [roleFilter, setRoleFilter] = useState<string>('all')
   const { hasPermission } = useAuth()
 
-  // Fetch users from backend
-  const fetchUsers = async () => {
-    try {
-      setLoading(true)
+  const canManageUsers = hasPermission('MANAGE_USERS')
+
+  // Fetch users from backend via TanStack Query
+  const { data: users = [], isLoading: loading, refetch: fetchUsers } = useQuery<User[]>({
+    queryKey: ['admin-users'],
+    queryFn: async () => {
       const result = await apiGet('/api/v1/users')
       if (!result.success) {
-        console.error('Failed to fetch users:', result.error)
-      } else {
-        setUsers(result.data?.users || [])
+        throw new Error(result.error || 'Failed to fetch users')
       }
-    } catch (error) {
-      console.error('Error fetching users:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+      return result.data?.users || []
+    },
+    enabled: canManageUsers,
+    staleTime: 60000,
+  })
 
   const handleCreateSuccess = () => {
     setCreateDialogOpen(false)
@@ -119,13 +117,6 @@ export default function UsersPage() {
   useEffect(() => {
     setIsHydrated(true)
   }, [])
-
-  // Fetch users on component mount
-  useEffect(() => {
-    if (hasPermission('MANAGE_USERS')) {
-      fetchUsers()
-    }
-  }, [hasPermission])
 
   // Main render - all hooks called before any conditional logic
   return (

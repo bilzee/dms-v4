@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { prisma } from '@/lib/db/client'
+import { handleApiError } from '@/lib/api/response'
 
 function getDateRangeFilter(dateRange: string): { start: Date; end: Date } {
   const end = new Date()
@@ -167,10 +168,6 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
       }
     })
   } catch (error) {
-    console.error('Report generation error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

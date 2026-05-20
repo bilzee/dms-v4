@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/client';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
+import { handleApiError } from '@/lib/api/response'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -63,10 +64,7 @@ export const DELETE = withAuth(
 
   } catch (error) {
     console.error('Error deleting entity assignment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
     }
 )
@@ -121,9 +119,6 @@ export const GET = withAuth(async (request: NextRequest, context: any) => {
 
   } catch (error) {
     console.error('Error fetching entity assignment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

@@ -12,6 +12,7 @@ import { getEntityIncidents, calculateRelationshipStatistics } from '@/lib/servi
 import type { RelationshipQueryParams } from '@/types/assessment-relationships';
 import { Priority, AssessmentType, VerificationStatus } from '@prisma/client';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/api/response'
 
 // Request validation schema
 const QueryParamsSchema = z.object({
@@ -92,14 +93,6 @@ export const GET = withAuth(async (
     });
 
   } catch (error) {
-    console.error('Error fetching entity incidents:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to fetch incidents for entity',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });

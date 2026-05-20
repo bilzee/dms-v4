@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/client';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/api/response'
 
 const createAssignmentSchema = z.object({
   userId: z.string().min(1),
@@ -126,10 +127,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
     }
 
     console.error('Error creating entity assignment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
   }
 );
@@ -188,9 +186,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
 
   } catch (error) {
     console.error('Error fetching entity assignments:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

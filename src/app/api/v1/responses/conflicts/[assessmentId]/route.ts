@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { ResponseService } from '@/lib/services/response.service'
 import { prisma } from '@/lib/db/client'
+import { handleApiError } from '@/lib/api/response'
 
 interface RouteParams {
   params: { assessmentId: string }
@@ -51,19 +52,7 @@ export const GET = withAuth(
           }
         }, { status: 200 })
       } catch (error) {
-        console.error('Check assessment conflicts error:', error)
-        
-        return NextResponse.json(
-          {
-            error: error instanceof Error ? error.message : 'Internal server error',
-            meta: {
-              timestamp: new Date().toISOString(),
-              version: '1.0.0',
-              requestId: uuidv4()
-            }
-          },
-          { status: 500 }
-        )
+        return handleApiError(error)
       }
     }
 )

@@ -190,7 +190,7 @@ export function SafeDataLoader<T = any>({
         </div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">{emptyStateMessage}</h3>
         <p className="text-sm text-gray-500">
-          Try adjusting your search or filters to find what you're looking for.
+          Try adjusting your search or filters to find what you&apos;re looking for.
         </p>
         <Button variant="outline" onClick={retry} className="mt-4">
           <RefreshCw className="h-4 w-4 mr-2" />

@@ -649,25 +649,26 @@ async function main() {
     }
   ]
 
-  for (const assessment of sampleAssessments) {
+  for (let seedIdx = 0; seedIdx < sampleAssessments.length; seedIdx++) {
+    const assessment = sampleAssessments[seedIdx]
     const createdAssessment = await prisma.rapidAssessment.create({
       data: assessment as any
     })
 
-    // Create corresponding assessment detail records with gap-relevant fields
+    // Create corresponding assessment detail records with deterministic seed values based on index
     if (assessment.rapidAssessmentType === 'HEALTH') {
       await prisma.healthAssessment.create({
         data: {
           rapidAssessmentId: createdAssessment.id,
-          hasFunctionalClinic: Math.random() > 0.5, // Random gap-indicating values
-          hasEmergencyServices: Math.random() > 0.6,
-          numberHealthFacilities: Math.floor(Math.random() * 5) + 1,
+          hasFunctionalClinic: seedIdx % 2 === 0,
+          hasEmergencyServices: seedIdx % 3 !== 0,
+          numberHealthFacilities: seedIdx + 2,
           healthFacilityType: 'Primary Health Center',
-          qualifiedHealthWorkers: Math.floor(Math.random() * 10) + 1,
-          hasTrainedStaff: Math.random() > 0.4,
-          hasMedicineSupply: Math.random() > 0.3,
-          hasMedicalSupplies: Math.random() > 0.4,
-          hasMaternalChildServices: Math.random() > 0.5,
+          qualifiedHealthWorkers: seedIdx * 3 + 5,
+          hasTrainedStaff: seedIdx % 2 === 0,
+          hasMedicineSupply: seedIdx % 3 !== 0,
+          hasMedicalSupplies: seedIdx % 2 === 0,
+          hasMaternalChildServices: seedIdx % 2 === 0,
           commonHealthIssues: JSON.stringify(['Malaria', 'Diarrhea', 'Respiratory infections'])
         }
       })
@@ -675,13 +676,13 @@ async function main() {
       await prisma.foodAssessment.create({
         data: {
           rapidAssessmentId: createdAssessment.id,
-          isFoodSufficient: Math.random() > 0.6,
-          hasRegularMealAccess: Math.random() > 0.5,
-          hasInfantNutrition: Math.random() > 0.4,
+          isFoodSufficient: seedIdx % 3 !== 0,
+          hasRegularMealAccess: seedIdx % 2 === 0,
+          hasInfantNutrition: seedIdx % 2 === 0,
           foodSource: JSON.stringify(['Market', 'Food aid', 'Local farming']),
-          availableFoodDurationDays: Math.floor(Math.random() * 30) + 1,
-          additionalFoodRequiredPersons: Math.floor(Math.random() * 100) + 10,
-          additionalFoodRequiredHouseholds: Math.floor(Math.random() * 20) + 2
+          availableFoodDurationDays: seedIdx * 7 + 3,
+          additionalFoodRequiredPersons: seedIdx * 25 + 10,
+          additionalFoodRequiredHouseholds: seedIdx * 5 + 2
         }
       })
     } else if (assessment.rapidAssessmentType === 'WASH') {
@@ -689,37 +690,37 @@ async function main() {
         data: {
           rapidAssessmentId: createdAssessment.id,
           waterSource: JSON.stringify(['Well', 'Borehole', 'River']),
-          isWaterSufficient: Math.random() > 0.5,
-          hasCleanWaterAccess: Math.random() > 0.4,
-          functionalLatrinesAvailable: Math.floor(Math.random() * 10) + 1,
-          areLatrinesSufficient: Math.random() > 0.6,
-          hasHandwashingFacilities: Math.random() > 0.5,
-          hasOpenDefecationConcerns: Math.random() > 0.3
+          isWaterSufficient: seedIdx % 2 === 0,
+          hasCleanWaterAccess: seedIdx % 3 !== 0,
+          functionalLatrinesAvailable: seedIdx * 2 + 3,
+          areLatrinesSufficient: seedIdx % 3 !== 0,
+          hasHandwashingFacilities: seedIdx % 2 === 0,
+          hasOpenDefecationConcerns: seedIdx % 3 === 0
         }
       })
     } else if (assessment.rapidAssessmentType === 'SHELTER') {
       await prisma.shelterAssessment.create({
         data: {
           rapidAssessmentId: createdAssessment.id,
-          areSheltersSufficient: Math.random() > 0.6,
-          hasSafeStructures: Math.random() > 0.5,
+          areSheltersSufficient: seedIdx % 3 !== 0,
+          hasSafeStructures: seedIdx % 2 === 0,
           shelterTypes: JSON.stringify(['Tents', 'Temporary shelters', 'Public buildings']),
           requiredShelterType: JSON.stringify(['Tents', 'Emergency shelters']),
-          numberSheltersRequired: Math.floor(Math.random() * 50) + 5,
-          areOvercrowded: Math.random() > 0.4,
-          provideWeatherProtection: Math.random() > 0.6
+          numberSheltersRequired: seedIdx * 10 + 15,
+          areOvercrowded: seedIdx % 3 === 1,
+          provideWeatherProtection: seedIdx % 3 !== 0
         }
       })
     } else if (assessment.rapidAssessmentType === 'SECURITY') {
       await prisma.securityAssessment.create({
         data: {
           rapidAssessmentId: createdAssessment.id,
-          isSafeFromViolence: Math.random() > 0.7,
-          gbvCasesReported: Math.random() > 0.8,
-          hasSecurityPresence: Math.random() > 0.5,
-          hasProtectionReportingMechanism: Math.random() > 0.6,
-          vulnerableGroupsHaveAccess: Math.random() > 0.4,
-          hasLighting: Math.random() > 0.5
+          isSafeFromViolence: seedIdx % 4 !== 0,
+          gbvCasesReported: seedIdx % 5 === 0,
+          hasSecurityPresence: seedIdx % 2 === 0,
+          hasProtectionReportingMechanism: seedIdx % 3 !== 0,
+          vulnerableGroupsHaveAccess: seedIdx % 2 === 0,
+          hasLighting: seedIdx % 2 === 0
         }
       })
     }

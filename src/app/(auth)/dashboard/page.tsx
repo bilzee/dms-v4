@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
 import { useCommitmentStats } from '@/hooks/use-commitment-stats'
 import { apiGet } from '@/lib/api'
@@ -31,50 +32,48 @@ export default function DashboardPage() {
   const { user, hasPermission, hasRole, token } = useAuth()
   const { stats, recentCommitments, loading, error } = useCommitmentStats()
 
-  const [systemHealth, setSystemHealth] = useState<{
-    databaseSync: string
-    apiResponseTime: number
-    activeUsers: number
-    storageUsage: number
-    lastBackup: string
-  } | null>(null)
-  const [activeIncidents, setActiveIncidents] = useState(0)
-  const [pendingVerifications, setPendingVerifications] = useState(0)
+  // System health query with auto-refresh every 60s
+  const { data: systemHealth } = useQuery({
+    queryKey: ['system-health'],
+    queryFn: async () => {
+      const result = await apiGet('/api/v1/system/health')
+      if (result.success && result.data) return result.data
+      throw new Error(result.error || 'Failed to fetch system health')
+    },
+    enabled: !!token,
+    staleTime: 60000,
+    refetchInterval: 60000,
+  })
 
-  useEffect(() => {
-    if (!token) return
+  // Active incidents count query
+  const { data: activeIncidents = 0 } = useQuery({
+    queryKey: ['dashboard-active-incidents'],
+    queryFn: async () => {
+      const result = await apiGet('/api/v1/incidents?status=ACTIVE')
+      if (result.success) {
+        const incData = result.data
+        return incData?.incidents?.length || incData?.length || 0
+      }
+      throw new Error(result.error || 'Failed to fetch incidents')
+    },
+    enabled: !!token,
+    staleTime: 60000,
+  })
 
-    const fetchHealth = async () => {
-      try {
-        const result = await apiGet('/api/v1/system/health')
-        if (result.success && result.data) {
-          setSystemHealth(result.data)
-        }
-      } catch {}
-    }
-
-    const fetchDashboardCounts = async () => {
-      try {
-        const [incidentsResult, assessmentsResult] = await Promise.all([
-          apiGet('/api/v1/incidents?status=ACTIVE'),
-          apiGet('/api/v1/rapid-assessments?status=SUBMITTED&verificationStatus=DRAFT')
-        ])
-        if (incidentsResult.success) {
-          const incData = incidentsResult.data
-          setActiveIncidents(incData?.incidents?.length || incData?.length || 0)
-        }
-        if (assessmentsResult.success) {
-          const assData = assessmentsResult.data
-          setPendingVerifications(assData?.assessments?.length || assData?.length || 0)
-        }
-      } catch {}
-    }
-
-    fetchHealth()
-    fetchDashboardCounts()
-    const interval = setInterval(fetchHealth, 60000)
-    return () => clearInterval(interval)
-  }, [token])
+  // Pending verifications count query
+  const { data: pendingVerifications = 0 } = useQuery({
+    queryKey: ['dashboard-pending-verifications'],
+    queryFn: async () => {
+      const result = await apiGet('/api/v1/rapid-assessments?status=SUBMITTED&verificationStatus=DRAFT')
+      if (result.success) {
+        const assData = result.data
+        return assData?.assessments?.length || assData?.length || 0
+      }
+      throw new Error(result.error || 'Failed to fetch verifications')
+    },
+    enabled: !!token,
+    staleTime: 60000,
+  })
 
   if (!user) {
     return (
@@ -93,7 +92,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-3xl font-bold">Home</h1>
-            <p className="text-gray-600">Welcome back, {(user as any).name}</p>
+            <p className="text-gray-600">Welcome back, {user.name}</p>
           </div>
         </div>
         
@@ -243,27 +242,27 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* TODO: Replace with real activity data from an API (e.g. GET /api/v1/activity/recent) */}
             <div className="space-y-4">
-              <div className="flex items-center gap-3 text-sm">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>New incident reported in North Region</span>
-                <span className="text-muted-foreground ml-auto">2 min ago</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span>5 new assessments completed</span>
-                <span className="text-muted-foreground ml-auto">15 min ago</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <span>Donor commitment verified</span>
-                <span className="text-muted-foreground ml-auto">1 hour ago</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                <span>Resource allocation updated</span>
-                <span className="text-muted-foreground ml-auto">2 hours ago</span>
-              </div>
+              {(() => {
+                // Real activity data should come from an API; using empty array as default
+                const recentActivity: Array<{ message: string; color: string; time: string }> = []
+                if (recentActivity.length === 0) {
+                  return (
+                    <div className="text-center py-6">
+                      <Activity className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground">No recent activity to display</p>
+                    </div>
+                  )
+                }
+                return recentActivity.map((activity, index) => (
+                  <div key={index} className="flex items-center gap-3 text-sm">
+                    <div className={`w-2 h-2 ${activity.color} rounded-full`}></div>
+                    <span>{activity.message}</span>
+                    <span className="text-muted-foreground ml-auto">{activity.time}</span>
+                  </div>
+                ))
+              })()}
               <Link href="/coordinator/situation-dashboard">
                 <Button variant="outline" className="w-full mt-4" size="sm">
                   View All Activity

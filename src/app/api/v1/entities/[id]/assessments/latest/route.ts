@@ -7,9 +7,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { AssessmentType } from '@prisma/client';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/api/response'
 
 interface RouteParams {
   params: { id: string }
@@ -39,7 +40,7 @@ export const GET = withAuth(async (request: NextRequest, context, { params }: Ro
     }
 
     // Verify entity exists
-    const entity = await db.entity.findUnique({
+    const entity = await prisma.entity.findUnique({
       where: { id: entityId },
       select: {
         id: true,
@@ -58,7 +59,7 @@ export const GET = withAuth(async (request: NextRequest, context, { params }: Ro
     // Get latest assessment for each category
     const latestAssessments = await Promise.all(
       AssessmentTypeSchema.options.map(async (type) => {
-        const latestAssessment = await db.rapidAssessment.findFirst({
+        const latestAssessment = await prisma.rapidAssessment.findFirst({
           where: {
             entityId: entityId,
             rapidAssessmentType: type,
@@ -162,10 +163,7 @@ export const GET = withAuth(async (request: NextRequest, context, { params }: Ro
 
   } catch (error) {
     console.error('Latest assessments API error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { z } from 'zod';
 import { auditLog } from '@/lib/services/audit.service';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
@@ -55,9 +55,9 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       ];
     }
 
-    const total = await db.donorCommitment.count({ where: whereClause });
+    const total = await prisma.donorCommitment.count({ where: whereClause });
 
-    const commitments = await db.donorCommitment.findMany({
+    const commitments = await prisma.donorCommitment.findMany({
       where: whereClause,
       include: {
         donor: {
@@ -153,9 +153,9 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
     const validatedData = CreateCommitmentSchema.parse(body);
 
     const [donor, entity, incident] = await Promise.all([
-      db.donor.findUnique({ where: { id: validatedData.donorId } }),
-      db.entity.findUnique({ where: { id: validatedData.entityId } }),
-      db.incident.findUnique({ where: { id: validatedData.incidentId } })
+      prisma.donor.findUnique({ where: { id: validatedData.donorId } }),
+      prisma.entity.findUnique({ where: { id: validatedData.entityId } }),
+      prisma.incident.findUnique({ where: { id: validatedData.incidentId } })
     ]);
 
     if (!donor) {
@@ -175,7 +175,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
       sum + (item.estimatedValue || 0) * item.quantity, 0
     );
 
-    const commitment = await db.donorCommitment.create({
+    const commitment = await prisma.donorCommitment.create({
       data: {
         donorId: validatedData.donorId,
         entityId: validatedData.entityId,

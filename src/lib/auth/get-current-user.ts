@@ -1,14 +1,37 @@
 import { getAuthToken } from '@/lib/auth/token-utils'
 import { apiGet } from '@/lib/api'
 
-export interface AuthUser {
+/**
+ * Simplified user representation returned by getCurrentUser().
+ * Unlike the full AuthUser from @/types/auth (which includes Prisma role/permission objects),
+ * this interface contains a flattened roles array for lightweight client-side use.
+ */
+export interface SimpleAuthUser {
   id: string
   email: string
   name: string
   roles: string[]
 }
 
-export async function getCurrentUser(): Promise<AuthUser | null> {
+/** Shape of the /api/v1/auth/me response data (may be nested under 'data' or at top level) */
+interface AuthMeResponseData {
+  data?: {
+    user?: {
+      id: string
+      email: string
+      name: string
+      roles?: Array<{ role: { name: string } }>
+    }
+  }
+  user?: {
+    id: string
+    email: string
+    name: string
+    roles?: Array<{ role: { name: string } }>
+  }
+}
+
+export async function getCurrentUser(): Promise<SimpleAuthUser | null> {
   try {
     if (typeof window === 'undefined') {
       return null;
@@ -25,17 +48,17 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       return null;
     }
 
-    const data = result.data as any;
-    if (!data?.data?.user) {
+    const data = result.data as AuthMeResponseData | undefined;
+    const rawUser = data?.data?.user ?? data?.user;
+    if (!rawUser) {
       return null;
     }
 
-    const user = data.data.user;
     return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      roles: user.roles?.map((ur: { role: { name: string } }) => ur.role.name) || [],
+      id: rawUser.id,
+      email: rawUser.email,
+      name: rawUser.name,
+      roles: rawUser.roles?.map((ur) => ur.role.name) || [],
     };
   } catch {
     return null;

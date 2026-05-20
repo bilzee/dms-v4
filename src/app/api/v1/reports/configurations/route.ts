@@ -7,10 +7,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { z } from 'zod';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { DataAggregator, ReportFilters, AggregationConfig, FilterConfig, ReportFiltersSchema, AggregationConfigSchema } from '@/lib/reports/data-aggregator';
 import { ReportTemplateEngine, ReportTemplate } from '@/lib/reports/template-engine';
 import { createApiResponse } from '@/types/api';
+import { handleApiError } from '@/lib/api/response'
 
 // Validation schemas
 const CreateConfigurationSchema = z.object({
@@ -86,7 +87,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
     const validatedData = CreateConfigurationSchema.parse(body);
 
     // Validate template exists and user has access
-    const template = await db.reportTemplate.findFirst({
+    const template = await prisma.reportTemplate.findFirst({
       where: {
         id: validatedData.templateId,
         OR: [
@@ -153,7 +154,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
     }
 
     // Create report configuration
-    const configuration = await db.reportConfiguration.create({
+    const configuration = await prisma.reportConfiguration.create({
       data: {
         templateId: validatedData.templateId,
         name: validatedData.name,
@@ -188,7 +189,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
     });
 
     // Log configuration creation
-    await db.auditLog.create({
+    await prisma.auditLog.create({
       data: {
         userId: context.userId,
         action: 'CREATE_REPORT_CONFIGURATION',
@@ -217,11 +218,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
         { status: 400 }
       );
     }
-
-    return NextResponse.json(
-      createApiResponse(false, null, 'Failed to create report configuration'),
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -281,7 +278,7 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
 
     // Get configurations
     const [configurations, total] = await Promise.all([
-      db.reportConfiguration.findMany({
+      prisma.reportConfiguration.findMany({
         where,
         skip,
         take: params.limit,
@@ -322,7 +319,7 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
           }
         }
       }),
-      db.reportConfiguration.count({ where })
+      prisma.reportConfiguration.count({ where })
     ]);
 
     // Get most recent execution status for each configuration
@@ -358,10 +355,6 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
         { status: 400 }
       );
     }
-
-    return NextResponse.json(
-      createApiResponse(false, null, 'Failed to retrieve report configurations'),
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });

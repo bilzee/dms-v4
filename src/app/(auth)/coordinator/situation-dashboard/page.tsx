@@ -49,16 +49,29 @@ export default function SituationDashboardPage() {
     setDashboardMode(newMode);
   };
   
-  // Default incident if none selected
-  const defaultIncidentId = 'incident-flood-001';
-  const currentIncidentId = selectedIncidentId || defaultIncidentId;
-
-  // Set default incident on component mount
+  // Fetch the first active incident from the API instead of hardcoding
   useEffect(() => {
     if (!selectedIncidentId) {
-      setSelectedIncident(defaultIncidentId);
+      const fetchDefaultIncident = async () => {
+        try {
+          const result = await apiGet('/api/v1/incidents?status=ACTIVE&limit=1')
+          if (result.success && result.data) {
+            const incidents = result.data.incidents || result.data
+            const firstActive = Array.isArray(incidents) && incidents.length > 0 ? incidents[0] : null
+            const incidentId = firstActive?.id || firstActive?.incidentId || ''
+            if (incidentId) {
+              setSelectedIncident(incidentId)
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching default incident:', error)
+        }
+      }
+      fetchDefaultIncident()
     }
-  }, [selectedIncidentId, setSelectedIncident]);
+  }, [selectedIncidentId, setSelectedIncident])
+
+  const currentIncidentId = selectedIncidentId || '';
 
   return (
     <div className="w-full h-screen overflow-hidden pl-4"> {/* Use full screen height with left padding */}

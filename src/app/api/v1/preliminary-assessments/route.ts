@@ -7,6 +7,7 @@ import {
   QueryPreliminaryAssessmentSchema 
 } from '@/lib/validation/preliminary-assessment';
 import { PreliminaryAssessmentListResponse } from '@/types/preliminary-assessment';
+import { handleApiError } from '@/lib/api/response'
 
 export const GET = withAuth(async (request, context) => {
   try {
@@ -43,19 +44,7 @@ export const GET = withAuth(async (request, context) => {
 
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
-    console.error('Get preliminary assessments error:', error);
-    
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -87,18 +76,6 @@ export const POST = withAuth(async (request, context) => {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Create preliminary assessment error:', error);
-    
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });

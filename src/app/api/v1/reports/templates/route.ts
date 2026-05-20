@@ -7,9 +7,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { z } from 'zod';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { ReportTemplateEngine, DEFAULT_TEMPLATES } from '@/lib/reports/template-engine';
 import { createApiResponse } from '@/types/api';
+import { handleApiError } from '@/lib/api/response'
 
 // Validation schemas
 const CreateTemplateSchema = z.object({
@@ -80,9 +81,9 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       ];
     }
 
-    const total = await db.reportTemplate.count({ where });
+    const total = await prisma.reportTemplate.count({ where });
 
-    const templates = await db.reportTemplate.findMany({
+    const templates = await prisma.reportTemplate.findMany({
       where,
       skip,
       take: params.limit,
@@ -152,11 +153,7 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
         { status: 400 }
       );
     }
-
-    return NextResponse.json(
-      createApiResponse(false, null, 'Failed to retrieve report templates'),
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -187,7 +184,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
       );
     }
 
-    const template = await db.reportTemplate.create({
+    const template = await prisma.reportTemplate.create({
       data: {
         name: validatedData.name,
         description: validatedData.description,
@@ -221,10 +218,6 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
         { status: 400 }
       );
     }
-
-    return NextResponse.json(
-      createApiResponse(false, null, 'Failed to create report template'),
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });

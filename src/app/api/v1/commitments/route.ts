@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db/client';
 import { withAuth } from '@/lib/auth/middleware';
 import { CommitmentQuerySchema } from '@/lib/validation/commitment';
 import { EntityAssignmentServiceImpl } from '@/lib/services/entity-assignment.service';
+import { handleApiError } from '@/lib/api/response'
 
 export const GET = withAuth(async (request: NextRequest, context) => {
   const { user, roles } = context;
@@ -157,9 +158,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

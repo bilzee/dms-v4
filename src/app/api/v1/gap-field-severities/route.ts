@@ -15,6 +15,7 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 import { z } from 'zod'
 import { AssessmentType, Priority } from '@prisma/client'
+import { handleApiError } from '@/lib/api/response'
 
 // Validation schemas
 const getGapFieldsSchema = z.object({
@@ -79,16 +80,7 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
           }
         })
       } catch (error) {
-        console.error(`Error calculating field severity for ${filters.fieldName} in ${filters.assessmentType}:`, error)
-        return NextResponse.json({
-          success: false,
-          error: 'Failed to calculate field severity',
-          data: {
-            fieldName: filters.fieldName,
-            assessmentType: filters.assessmentType,
-            severity: 'MEDIUM' // fallback
-          }
-        }, { status: 500 })
+        return handleApiError(error)
       }
     }
 
@@ -118,14 +110,7 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
     })
 
   } catch (error) {
-    console.error('Error fetching gap field severities:', error)
-    return NextResponse.json(
-      { 
-        error: 'Failed to fetch gap field severities',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }, 
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })
 
@@ -195,13 +180,6 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
         { status: 400 }
       )
     }
-
-    return NextResponse.json(
-      { 
-        error: 'Failed to create gap field',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }, 
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

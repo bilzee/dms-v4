@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { v4 as uuidv4 } from 'uuid'
+import { handleApiError } from '@/lib/api/response'
 
 // Validation schema for updating donor
 const UpdateDonorSchema = z.object({
@@ -36,7 +37,7 @@ export const GET = withAuth(async (
           error: 'Insufficient permissions',
           meta: {
             timestamp: new Date().toISOString(),
-            version: '1.0',
+            version: '1.0.0',
             requestId: uuidv4()
           }
         },
@@ -53,7 +54,7 @@ export const GET = withAuth(async (
           error: 'Donor ID is required',
           meta: {
             timestamp: new Date().toISOString(),
-            version: '1.0',
+            version: '1.0.0',
             requestId: uuidv4()
           }
         },
@@ -81,7 +82,7 @@ export const GET = withAuth(async (
           error: 'Donor not found',
           meta: {
             timestamp: new Date().toISOString(),
-            version: '1.0',
+            version: '1.0.0',
             requestId: uuidv4()
           }
         },
@@ -99,7 +100,7 @@ export const GET = withAuth(async (
             error: 'Insufficient permissions',
             meta: {
               timestamp: new Date().toISOString(),
-              version: '1.0',
+              version: '1.0.0',
               requestId: uuidv4()
             }
           },
@@ -157,26 +158,13 @@ export const GET = withAuth(async (
       data: donorWithUser,
       meta: {
         timestamp: new Date().toISOString(),
-        version: '1.0',
+        version: '1.0.0',
         requestId: uuidv4()
       }
     })
 
   } catch (error) {
-    console.error('Get donor error:', error)
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch donor',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })
 
@@ -194,7 +182,7 @@ export const PUT = withAuth(async (
           error: 'Insufficient permissions',
           meta: {
             timestamp: new Date().toISOString(),
-            version: '1.0',
+            version: '1.0.0',
             requestId: uuidv4()
           }
         },
@@ -212,7 +200,7 @@ export const PUT = withAuth(async (
           error: 'Donor ID is required',
           meta: {
             timestamp: new Date().toISOString(),
-            version: '1.0',
+            version: '1.0.0',
             requestId: uuidv4()
           }
         },
@@ -230,7 +218,7 @@ export const PUT = withAuth(async (
           details: validation.error.errors,
           meta: {
             timestamp: new Date().toISOString(),
-            version: '1.0',
+            version: '1.0.0',
             requestId: uuidv4()
           }
         },
@@ -252,7 +240,7 @@ export const PUT = withAuth(async (
           error: 'Donor not found',
           meta: {
             timestamp: new Date().toISOString(),
-            version: '1.0',
+            version: '1.0.0',
             requestId: uuidv4()
           }
         },
@@ -290,7 +278,7 @@ export const PUT = withAuth(async (
             error: 'Organization with this name already exists',
             meta: {
               timestamp: new Date().toISOString(),
-              version: '1.0',
+              version: '1.0.0',
               requestId: uuidv4()
             }
           },
@@ -314,7 +302,7 @@ export const PUT = withAuth(async (
             error: 'Organization with this contact email already exists',
             meta: {
               timestamp: new Date().toISOString(),
-              version: '1.0',
+              version: '1.0.0',
               requestId: uuidv4()
             }
           },
@@ -340,7 +328,7 @@ export const PUT = withAuth(async (
               error: 'User with this email already exists',
               meta: {
                 timestamp: new Date().toISOString(),
-                version: '1.0',
+                version: '1.0.0',
                 requestId: uuidv4()
               }
             },
@@ -364,7 +352,7 @@ export const PUT = withAuth(async (
               error: 'User with this username already exists',
               meta: {
                 timestamp: new Date().toISOString(),
-                version: '1.0',
+                version: '1.0.0',
                 requestId: uuidv4()
               }
             },
@@ -506,25 +494,12 @@ export const PUT = withAuth(async (
       data: result,
       meta: {
         timestamp: new Date().toISOString(),
-        version: '1.0',
+        version: '1.0.0',
         requestId: uuidv4()
       }
     })
 
   } catch (error) {
-    console.error('Update donor error:', error)
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to update donor',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

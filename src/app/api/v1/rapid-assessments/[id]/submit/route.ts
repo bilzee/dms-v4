@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { RapidAssessmentService } from '@/lib/services/rapid-assessment.service'
 import { RapidAssessmentResponse, RapidAssessmentWithData } from '@/types/rapid-assessment'
+import { handleApiError } from '@/lib/api/response'
 
 interface RouteParams {
   params: { id: string }
@@ -74,18 +75,7 @@ export const POST = withAuth(
           { status: 403 }
         )
       }
-      
-      return NextResponse.json(
-        {
-          error: error instanceof Error ? error.message : 'Internal server error',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 500 }
-      )
+      return handleApiError(error)
     }
   }
 )

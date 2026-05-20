@@ -4,6 +4,7 @@ import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { RapidAssessmentService } from '@/lib/services/rapid-assessment.service'
 import { QueryRapidAssessmentSchema } from '@/lib/validation/rapid-assessment'
 import { RapidAssessmentListResponse, RapidAssessmentWithData } from '@/types/rapid-assessment'
+import { handleApiError } from '@/lib/api/response'
 
 interface RouteParams {
   params: { userId: string }
@@ -58,19 +59,7 @@ export const GET = withAuth(
 
       return NextResponse.json(response, { status: 200 })
     } catch (error) {
-      console.error('Get user rapid assessments error:', error)
-      
-      return NextResponse.json(
-        {
-          error: error instanceof Error ? error.message : 'Internal server error',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 500 }
-      )
+      return handleApiError(error)
     }
   }
 )

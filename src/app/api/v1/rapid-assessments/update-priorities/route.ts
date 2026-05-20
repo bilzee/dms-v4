@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth/middleware'
 import { RapidAssessmentService } from '@/lib/services/rapid-assessment.service'
+import { handleApiError } from '@/lib/api/response'
 
 /**
  * API endpoint to update all historical assessments with correct priorities
@@ -35,16 +36,7 @@ export const POST = withAuth(async (request, context) => {
     })
 
   } catch (error) {
-    console.error('Error updating historical assessment priorities:', error)
-    
-    return NextResponse.json(
-      {
-        error: 'Internal Server Error',
-        message: 'Failed to update historical assessment priorities',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })
 

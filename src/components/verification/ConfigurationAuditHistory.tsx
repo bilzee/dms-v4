@@ -673,7 +673,7 @@ export function ConfigurationAuditHistory({
                 <li>Date Range: {filters.dateRange}</li>
                 <li>Action: {filters.action === 'all' ? 'All actions' : filters.action}</li>
                 <li>Resource: {filters.resource === 'all' ? 'All resources' : filters.resource}</li>
-                {filters.search && <li>Search: "{filters.search}"</li>}
+                {filters.search && <li>Search: &quot;{filters.search}&quot;</li>}
               </ul>
             </div>
           </div>

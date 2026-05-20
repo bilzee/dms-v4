@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/api/response'
 
 const LeaderboardQuerySchema = z.object({
   limit: z.string().optional().transform(val => val ? parseInt(val) : 50),
@@ -63,7 +64,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     const entityFilter = {};
 
     // Fetch donors with comprehensive metrics data
-    const donorsWithMetrics = await db.donor.findMany({
+    const donorsWithMetrics = await prisma.donor.findMany({
       where: {
         isActive: true,
         ...entityFilter,
@@ -269,7 +270,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     // Update leaderboard ranks in database (async, don't wait)
     rankings.forEach(async (item) => {
       try {
-        await db.donor.update({
+        await prisma.donor.update({
           where: { id: item.donorId },
           data: { 
             leaderboardRank: item.rank,
@@ -300,9 +301,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
 
   } catch (error) {
     console.error('Leaderboard API error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

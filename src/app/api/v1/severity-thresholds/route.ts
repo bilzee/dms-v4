@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, AuthContext } from '@/lib/auth/middleware'
+import { handleApiError } from '@/lib/api/response'
 
 // Default severity thresholds
 const defaultThresholds = {
@@ -107,15 +108,7 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
     })
 
   } catch (error) {
-    console.error('Severity thresholds GET error:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Internal server error',
-        details: process.env.NODE_ENV === 'development' ? error : undefined
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })
 
@@ -166,14 +159,6 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
     }, { status: 201 })
 
   } catch (error) {
-    console.error('Severity thresholds POST error:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Internal server error',
-        details: process.env.NODE_ENV === 'development' ? error : undefined
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

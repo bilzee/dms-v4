@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, AuthContext } from '@/lib/auth/middleware'
+import { handleApiError } from '@/lib/api/response'
 
 // For demo purposes, store changes in memory
 // In production, this would be stored in a database
@@ -35,15 +36,7 @@ export const GET = withAuth(async (
     })
 
   } catch (error) {
-    console.error('Severity threshold GET error:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Internal server error',
-        details: process.env.NODE_ENV === 'development' ? error : undefined
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })
 
@@ -108,15 +101,7 @@ export const PUT = withAuth(async (
     })
 
   } catch (error) {
-    console.error('Severity threshold PUT error:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Internal server error',
-        details: process.env.NODE_ENV === 'development' ? error : undefined
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })
 
@@ -145,14 +130,6 @@ export const DELETE = withAuth(async (
     })
 
   } catch (error) {
-    console.error('Severity threshold DELETE error:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Internal server error',
-        details: process.env.NODE_ENV === 'development' ? error : undefined
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

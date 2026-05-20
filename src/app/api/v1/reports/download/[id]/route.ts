@@ -5,10 +5,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { createApiResponse } from '@/types/api';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { handleApiError } from '@/lib/api/response'
 
 /**
  * GET /api/v1/reports/download/[id]
@@ -23,7 +24,7 @@ export const GET = withAuth(async (
     const executionId = params.id;
 
     // Get execution with related configuration and template
-    const execution = await db.reportExecution.findFirst({
+    const execution = await prisma.reportExecution.findFirst({
       where: { id: executionId },
       include: {
         configuration: {
@@ -149,7 +150,7 @@ export const GET = withAuth(async (
     const downloadName = `${displayName}_${timestamp}.${execution.format.toLowerCase()}`;
 
     // Log download for audit
-    await db.auditLog.create({
+    await prisma.auditLog.create({
       data: {
         userId: context.userId,
         action: 'REPORT_DOWNLOADED',
@@ -167,7 +168,7 @@ export const GET = withAuth(async (
 
     // Increment download counter if it's a public template
     if (execution.configuration.template?.isPublic) {
-      await db.reportTemplate.update({
+      await prisma.reportTemplate.update({
         where: { id: execution.configuration.template.id },
         data: {
           updatedAt: new Date() // Touch to track last access
@@ -210,12 +211,7 @@ export const GET = withAuth(async (
     return response;
 
   } catch (error) {
-    console.error('Error downloading report:', error);
-    
-    return NextResponse.json(
-      createApiResponse(false, null, 'Failed to download report'),
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -232,7 +228,7 @@ async function GET_INFO(
     const executionId = params.id;
 
     // Get execution with related configuration and template
-    const execution = await db.reportExecution.findFirst({
+    const execution = await prisma.reportExecution.findFirst({
       where: { id: executionId },
       include: {
         configuration: {
@@ -322,7 +318,7 @@ async function GET_INFO(
       : null;
 
     // Get recent downloads for this report
-    const recentDownloads = await db.auditLog.findMany({
+    const recentDownloads = await prisma.auditLog.findMany({
       where: {
         action: 'REPORT_DOWNLOADED',
         resourceId: executionId,
@@ -376,12 +372,7 @@ async function GET_INFO(
     );
 
   } catch (error) {
-    console.error('Error getting download info:', error);
-    
-    return NextResponse.json(
-      createApiResponse(false, null, 'Failed to get download information'),
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 }
 

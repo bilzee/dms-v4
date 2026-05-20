@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
+import { handleApiError } from '@/lib/api/response'
 
 // GET - Enhanced real-time connection endpoint with SSE support
 export const GET = withAuth(async (request: NextRequest, context) => {
@@ -108,11 +109,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     });
 
   } catch (error) {
-    console.error('Real-time connection error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to establish real-time connection' },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -169,11 +166,7 @@ export const POST = withAuth(async (request: NextRequest, context) => {
     }
 
   } catch (error) {
-    console.error('Real-time message handling error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to handle message' },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 

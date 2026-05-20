@@ -20,7 +20,7 @@ export function AggregationInfoPopup({ isOpen, onClose }: AggregationInfoPopupPr
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Info className="h-5 w-5 text-blue-600" />
-              Understanding "All Entities" Aggregation
+              Understanding &quot;All Entities&quot; Aggregation
             </CardTitle>
             <Button
               variant="ghost"
@@ -41,7 +41,7 @@ export function AggregationInfoPopup({ isOpen, onClose }: AggregationInfoPopupPr
               What This View Shows
             </h3>
             <p className="text-gray-600 leading-relaxed">
-              When you select <span className="font-medium">"All Entities"</span>, the dashboard combines assessment data 
+              When you select <span className="font-medium">&quot;All Entities&quot;</span>, the dashboard combines assessment data 
               from all entities affected by the selected incident. This gives you a comprehensive overview of gaps 
               across the entire incident area, helping identify widespread issues and prioritize resources effectively.
             </p>
@@ -71,7 +71,7 @@ export function AggregationInfoPopup({ isOpen, onClose }: AggregationInfoPopupPr
                   </p>
                   <div className="flex items-center gap-2 mt-2 text-xs">
                     <div className="w-3 h-3 bg-red-600 rounded-full"></div>
-                    <span>"Functional Clinic" = CRITICAL (Critical infrastructure)</span>
+                    <span>&quot;Functional Clinic&quot; = CRITICAL (Critical infrastructure)</span>
                   </div>
                 </div>
 
@@ -82,11 +82,11 @@ export function AggregationInfoPopup({ isOpen, onClose }: AggregationInfoPopupPr
                     <span className="font-semibold text-purple-700">Entity Count Display</span>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Each field shows how many entities have gaps: <strong>[Severity] "X of Y"</strong>
+                    Each field shows how many entities have gaps: <strong>[Severity] &quot;X of Y&quot;</strong>
                   </p>
                   <div className="flex items-center gap-2 mt-2 text-xs">
                     <div className="bg-red-600 text-white px-2 py-1 rounded text-xs">CRITICAL</div>
-                    <span>2 of 4 entities have "Functional Clinic" gaps</span>
+                    <span>2 of 4 entities have &quot;Functional Clinic&quot; gaps</span>
                   </div>
                 </div>
 
@@ -120,7 +120,7 @@ export function AggregationInfoPopup({ isOpen, onClose }: AggregationInfoPopupPr
               
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
-                  <span>"Functional Clinic" field</span>
+                  <span>&quot;Functional Clinic&quot; field</span>
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">CRITICAL</span>
                     <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">2 of 4</span>
@@ -131,7 +131,7 @@ export function AggregationInfoPopup({ isOpen, onClose }: AggregationInfoPopupPr
                 </div>
                 
                 <div className="flex items-center justify-between mt-2">
-                  <span>"Clean Water Access" field</span>
+                  <span>&quot;Clean Water Access&quot; field</span>
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-semibold">HIGH</span>
                     <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">1 of 4</span>

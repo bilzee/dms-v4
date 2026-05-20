@@ -154,7 +154,7 @@ export default function SeverityThresholdsPage() {
                 <li><strong>Lives Lost:</strong> Number of confirmed fatalities</li>
                 <li><strong>Injured:</strong> Number of confirmed injured persons</li>
                 <li><strong>Source:</strong> Verified Population Assessment data</li>
-                <li><strong>Usage:</strong> "Casualty Impact" badge in dashboard</li>
+                <li><strong>Usage:</strong> &quot;Casualty Impact&quot; badge in dashboard</li>
               </ul>
             </div>
             <div>
@@ -164,7 +164,7 @@ export default function SeverityThresholdsPage() {
                 <li><strong>Injured:</strong> Estimated injured persons</li>
                 <li><strong>Displaced:</strong> Number of displaced persons</li>
                 <li><strong>Source:</strong> Preliminary Assessment estimates</li>
-                <li><strong>Usage:</strong> "Human Impact (Estimates)" badge</li>
+                <li><strong>Usage:</strong> &quot;Human Impact (Estimates)&quot; badge</li>
               </ul>
             </div>
           </div>

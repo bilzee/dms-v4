@@ -1185,7 +1185,7 @@ function DataConfiguration({
   if (!hasDataSource) {
     return (
       <div className="text-center py-8 text-gray-500">
-        <p>This element type doesn't require data source configuration</p>
+        <p>This element type doesn&apos;t require data source configuration</p>
       </div>
     );
   }

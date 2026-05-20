@@ -137,7 +137,7 @@ export interface DonorSearchFilters {
 }
 
 export interface DonorApiResponse<T = any> {
-  success: boolean
+  success?: true
   data: T
   meta: {
     timestamp: string

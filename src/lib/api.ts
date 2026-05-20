@@ -1,4 +1,4 @@
-import { getAuthToken } from '@/lib/auth/token-utils'
+import { getAuthToken, getAuthHeaders } from '@/lib/auth/token-utils'
 
 export interface ApiResponse<T = any> {
   success: boolean
@@ -11,20 +11,7 @@ export interface ApiResponse<T = any> {
   }
 }
 
-export { getAuthToken }
-
-export const getAuthHeaders = (): Record<string, string> => {
-  const token = getAuthToken()
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json'
-  }
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
-  }
-  
-  return headers
-}
+export { getAuthToken, getAuthHeaders }
 
 /**
  * Make an authenticated GET request

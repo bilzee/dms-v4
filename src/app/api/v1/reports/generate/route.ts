@@ -6,13 +6,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { z } from 'zod';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { DataAggregator, ReportFilters, ReportFiltersSchema } from '@/lib/reports/data-aggregator';
 import { ReportTemplateEngine } from '@/lib/reports/template-engine';
 import { createApiResponse } from '@/types/api';
 import { exec } from 'child_process';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { handleApiError } from '@/lib/api/response'
 
 // Validation schemas
 const GenerateReportSchema = z.object({
@@ -92,7 +93,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
     let configurationId = validatedData.configurationId;
 
     if (validatedData.configurationId) {
-      const configuration = await db.reportConfiguration.findFirst({
+      const configuration = await prisma.reportConfiguration.findFirst({
         where: {
           id: validatedData.configurationId,
           OR: [
@@ -135,7 +136,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
       template = templateResponse.data;
       filters = validatedData.filters || { filters: [], aggregations: [], limit: 100 };
       
-      const tempConfig = await db.reportConfiguration.create({
+      const tempConfig = await prisma.reportConfiguration.create({
         data: {
           templateId: validatedData.templateId,
           name: `Temp config ${Date.now()}`,
@@ -147,7 +148,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
       });
       configurationId = tempConfig.id;
     } else if (validatedData.template) {
-      const tempTemplate = await db.reportTemplate.create({
+      const tempTemplate = await prisma.reportTemplate.create({
         data: {
           name: `Temp template ${Date.now()}`,
           type: 'CUSTOM',
@@ -160,7 +161,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
       template = tempTemplate;
       filters = validatedData.filters || { filters: [], aggregations: [], limit: 100 };
       
-      const tempConfig = await db.reportConfiguration.create({
+      const tempConfig = await prisma.reportConfiguration.create({
         data: {
           templateId: tempTemplate.id,
           name: `Temp config ${Date.now()}`,
@@ -178,7 +179,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
       );
     }
 
-    const execution = await db.reportExecution.create({
+    const execution = await prisma.reportExecution.create({
       data: {
         configurationId: configurationId!,
         status: 'RUNNING',
@@ -200,7 +201,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
     }).catch(error => {
       console.error(`Background report generation failed for job ${jobId}:`, error);
       
-      db.reportExecution.update({
+      prisma.reportExecution.update({
         where: { id: execution.id },
         data: {
           status: 'FAILED',
@@ -231,11 +232,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
         { status: 400 }
       );
     }
-
-    return NextResponse.json(
-      createApiResponse(false, null, 'Failed to generate report'),
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -258,7 +255,7 @@ export const PUT = withAuth(async (request: NextRequest, context: AuthContext) =
     const body = await request.json();
     const validatedData = ScheduleReportSchema.parse(body);
 
-    const configuration = await db.reportConfiguration.findFirst({
+    const configuration = await prisma.reportConfiguration.findFirst({
       where: {
         id: validatedData.configurationId,
         OR: [
@@ -275,7 +272,7 @@ export const PUT = withAuth(async (request: NextRequest, context: AuthContext) =
       );
     }
 
-    const scheduledExecution = await db.reportExecution.create({
+    const scheduledExecution = await prisma.reportExecution.create({
       data: {
         configurationId: validatedData.configurationId,
         status: 'PENDING',
@@ -315,11 +312,7 @@ export const PUT = withAuth(async (request: NextRequest, context: AuthContext) =
         { status: 400 }
       );
     }
-
-    return NextResponse.json(
-      createApiResponse(false, null, 'Failed to schedule report'),
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -344,7 +337,7 @@ async function generateReportBackground({
   jobId: string;
 }) {
   try {
-    await db.reportExecution.update({
+    await prisma.reportExecution.update({
       where: { id: executionId },
       data: {
         status: 'RUNNING',
@@ -427,7 +420,7 @@ async function generateReportBackground({
 
     const fileStats = await fs.stat(finalPath);
 
-    await db.reportExecution.update({
+    await prisma.reportExecution.update({
       where: { id: executionId },
       data: {
         status: 'COMPLETED',
@@ -448,7 +441,7 @@ async function generateReportBackground({
   } catch (error) {
     console.error(`Report generation failed for job ${jobId}:`, error);
     
-    await db.reportExecution.update({
+    await prisma.reportExecution.update({
       where: { id: executionId },
       data: {
         status: 'FAILED',
@@ -815,7 +808,7 @@ async function sendReportNotifications(
   fileSize: number
 ): Promise<void> {
   try {
-    const execution = await db.reportExecution.findFirst({
+    const execution = await prisma.reportExecution.findFirst({
       where: { id: executionId },
       include: {
         configuration: {
@@ -838,7 +831,7 @@ async function sendReportNotifications(
       }
     }
 
-    await db.auditLog.create({
+    await prisma.auditLog.create({
       data: {
         userId: execution.configuration?.createdBy || 'system',
         action: 'REPORT_GENERATED',

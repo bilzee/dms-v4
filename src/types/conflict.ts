@@ -43,7 +43,7 @@ export interface ConflictSummary {
 }
 
 export interface PaginatedConflictResponse {
-  success: boolean;
+  success?: true;
   data: ConflictApiResponse[];
   pagination: {
     page: number;

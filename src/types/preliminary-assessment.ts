@@ -65,16 +65,6 @@ export interface UpdatePreliminaryAssessmentRequest {
   data: Partial<PreliminaryAssessmentData>
 }
 
-export interface ApiResponse<T = any> {
-  data?: T
-  error?: string
-  meta: {
-    timestamp: string
-    version: string
-    requestId: string
-  }
-}
-
 // Nigerian LGA and Ward data structure
 export interface LGAData {
   name: string

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth/middleware'
 import { z } from 'zod'
+import { handleApiError } from '@/lib/api/response'
 
 // Validation schema for query parameters
 const AssignedEntitiesQuerySchema = z.object({
@@ -48,19 +49,6 @@ export const GET = withAuth(async (request, context) => {
         { status: 400 }
       )
     }
-    
-    // Handle other errors
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error'
-    
-    return NextResponse.json(
-      {
-        error: errorMessage,
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0'
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

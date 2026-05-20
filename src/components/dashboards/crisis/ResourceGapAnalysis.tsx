@@ -564,7 +564,7 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
                 Select an entity to view donor recommendations
               </h3>
               <p className="text-muted-foreground">
-                Click "Find Donors" on any entity with resource gaps to see compatible donors.
+                Click &quot;Find Donors&quot; on any entity with resource gaps to see compatible donors.
               </p>
             </div>
           )}

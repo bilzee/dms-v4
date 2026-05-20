@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 import { withAuth } from '@/lib/auth/middleware'
+import { handleApiError } from '@/lib/api/response'
 
 export const POST = withAuth(async (request, context) => {
   try {
@@ -22,18 +23,6 @@ export const POST = withAuth(async (request, context) => {
       { status: 200 }
     )
   } catch (error) {
-    console.error('Logout error:', error)
-    
-    return NextResponse.json(
-      {
-        error: 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

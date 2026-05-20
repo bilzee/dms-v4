@@ -37,7 +37,7 @@ export const Header = ({ fullWidth = false }: HeaderProps) => {
               <div className="flex items-center gap-3">
                 <RoleSwitcher />
                 <span className="text-sm text-muted-foreground hidden sm:inline">
-                  {(user as any).name || (user as any).email}
+                  {user.name || user.email}
                 </span>
                 <button
                   onClick={handleLogout}

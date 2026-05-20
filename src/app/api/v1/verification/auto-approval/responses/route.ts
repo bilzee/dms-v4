@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { prisma } from '@/lib/db/client';
 import { createAuditLog } from '@/lib/utils/audit-logger';
+import { handleApiError } from '@/lib/api/response'
 
 export const POST = withAuth(async (request: NextRequest, context) => {
   try {
@@ -168,17 +169,14 @@ export const POST = withAuth(async (request: NextRequest, context) => {
       message: 'Response auto-approved successfully',
       meta: {
         timestamp: new Date().toISOString(),
-        version: '1.0',
+        version: '1.0.0',
         requestId: crypto.randomUUID()
       }
     });
 
   } catch (error) {
     console.error('Response auto-approval error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });
 
@@ -318,16 +316,13 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       data: eligibility,
       meta: {
         timestamp: new Date().toISOString(),
-        version: '1.0',
+        version: '1.0.0',
         requestId: crypto.randomUUID()
       }
     });
 
   } catch (error) {
     console.error('Auto-approval eligibility check error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

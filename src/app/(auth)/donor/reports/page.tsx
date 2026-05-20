@@ -27,6 +27,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { apiGet, getAuthHeaders } from '@/lib/api'
+import { useToast } from '@/components/ui/use-toast'
 
 interface EntityData {
   id: string
@@ -56,6 +57,7 @@ interface ReportConfig {
 
 export default function DonorReportsPage() {
   const { currentRole, user } = useAuth()
+  const { toast } = useToast()
   const [reportConfig, setReportConfig] = useState<ReportConfig>({
     format: 'pdf',
     includeCharts: true,
@@ -119,6 +121,7 @@ export default function DonorReportsPage() {
       URL.revokeObjectURL(url)
     } catch (error) {
       console.error('Failed to generate report:', error)
+      toast({ title: 'Error', description: 'Failed to generate report', variant: 'destructive' })
     } finally {
       setIsGenerating(false)
     }

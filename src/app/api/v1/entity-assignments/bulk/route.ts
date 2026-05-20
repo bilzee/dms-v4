@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/client';
 import { withAuth } from '@/lib/auth/middleware';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/api/response'
 
 const bulkAssignmentSchema = z.object({
   userIds: z.array(z.string().cuid()).min(1),
@@ -168,9 +169,6 @@ export const POST = withAuth(async (request: NextRequest, context) => {
     }
 
     console.error('Error creating bulk entity assignments:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

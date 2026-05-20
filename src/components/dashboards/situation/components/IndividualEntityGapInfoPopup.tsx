@@ -212,7 +212,7 @@ export function IndividualEntityGapInfoPopup({
             </h3>
             <p className="text-gray-600 leading-relaxed">
               Individual entity assessments evaluate gap indicators at a <span className="font-medium">specific location or facility</span>. 
-              Unlike aggregated "All Entities" view which shows patterns across many locations, this assessment focuses on 
+              Unlike aggregated &quot;All Entities&quot; view which shows patterns across many locations, this assessment focuses on 
               the actual conditions at <span className="font-medium">this specific entity</span>.
             </p>
           </div>
@@ -236,7 +236,7 @@ export function IndividualEntityGapInfoPopup({
                     <span className="font-semibold text-blue-700">Individual Field Severity</span>
                   </div>
                   <p className="text-sm text-gray-600 mb-2">
-                    Each gap field (e.g., "Functional Clinic", "Clean Water Access") is assigned a severity level in <strong>Gap Field Severity Management</strong>:
+                    Each gap field (e.g., &quot;Functional Clinic&quot;, &quot;Clean Water Access&quot;) is assigned a severity level in <strong>Gap Field Severity Management</strong>:
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                     <div className="flex items-center gap-1">
@@ -323,7 +323,7 @@ export function IndividualEntityGapInfoPopup({
                 <div className="flex items-center gap-3">
                   <div className="w-4 h-4 bg-red-600 rounded-full"></div>
                   <div>
-                    <span className="font-semibold">Gap Detected (❌)</span> - Field doesn't meet required standards
+                    <span className="font-semibold">Gap Detected (❌)</span> - Field doesn&apos;t meet required standards
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

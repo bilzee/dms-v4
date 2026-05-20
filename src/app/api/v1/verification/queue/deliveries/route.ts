@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 import { withAuth, AuthContext } from '@/lib/auth/middleware'
-import { db } from '@/lib/db/client'
+import { prisma } from '@/lib/db/client'
+import { handleApiError } from '@/lib/api/response'
 
 interface RouteParams {
   params: Promise<{}>
@@ -81,10 +82,10 @@ export const GET = withAuth(
       }
       
       // Get total count
-      const total = await db.rapidResponse.count({ where })
+      const total = await prisma.rapidResponse.count({ where })
       
       // Get paginated delivered responses for verification
-      const deliveries = await db.rapidResponse.findMany({
+      const deliveries = await prisma.rapidResponse.findMany({
         where,
         include: {
           entity: {
@@ -130,7 +131,7 @@ export const GET = withAuth(
       // Calculate queue depth indicators for deliveries
       const queueDepth = {
         total: total,
-        critical: await db.rapidResponse.count({
+        critical: await prisma.rapidResponse.count({
           where: { 
             status: 'DELIVERED',
             verificationStatus: { in: status as any },
@@ -139,7 +140,7 @@ export const GET = withAuth(
             ...(responderId && { responderId })
           }
         }),
-        high: await db.rapidResponse.count({
+        high: await prisma.rapidResponse.count({
           where: { 
             status: 'DELIVERED',
             verificationStatus: { in: status as any },
@@ -148,7 +149,7 @@ export const GET = withAuth(
             ...(responderId && { responderId })
           }
         }),
-        medium: await db.rapidResponse.count({
+        medium: await prisma.rapidResponse.count({
           where: { 
             status: 'DELIVERED',
             verificationStatus: { in: status as any },
@@ -157,7 +158,7 @@ export const GET = withAuth(
             ...(responderId && { responderId })
           }
         }),
-        low: await db.rapidResponse.count({
+        low: await prisma.rapidResponse.count({
           where: { 
             status: 'DELIVERED',
             verificationStatus: { in: status as any },
@@ -260,19 +261,7 @@ export const GET = withAuth(
         stack: error instanceof Error ? error.stack : 'No stack',
         userId: context.userId
       })
-      
-      return NextResponse.json(
-        {
-          success: false,
-          error: error instanceof Error ? error.message : 'Internal server error',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 500 }
-      )
+      return handleApiError(error)
     }
   }
 )
@@ -280,7 +269,7 @@ export const GET = withAuth(
 // Helper functions for delivery metrics calculation
 async function calculateDeliveryAverageWaitTime(whereClause: any): Promise<number> {
   try {
-    const pendingDeliveries = await db.rapidResponse.findMany({
+    const pendingDeliveries = await prisma.rapidResponse.findMany({
       where: {
         ...whereClause,
         verificationStatus: { in: ['SUBMITTED', 'DRAFT'] }
@@ -312,13 +301,13 @@ async function calculateDeliveryVerificationRate(): Promise<number> {
     const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
     
     const [submitted, verified] = await Promise.all([
-      db.rapidResponse.count({
+      prisma.rapidResponse.count({
         where: {
           status: 'DELIVERED',
           responseDate: { gte: last24Hours }
         }
       }),
-      db.rapidResponse.count({
+      prisma.rapidResponse.count({
         where: {
           status: 'DELIVERED',
           responseDate: { gte: last24Hours },
@@ -337,7 +326,7 @@ async function calculateDeliveryVerificationRate(): Promise<number> {
 
 async function getOldestPendingDelivery(whereClause: any): Promise<string | null> {
   try {
-    const oldest = await db.rapidResponse.findFirst({
+    const oldest = await prisma.rapidResponse.findFirst({
       where: {
         ...whereClause,
         verificationStatus: { in: ['SUBMITTED', 'DRAFT'] }

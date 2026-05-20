@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db/client';
 import { DonorProfileUpdateSchema } from '@/lib/validation/donor';
 import { v4 as uuidv4 } from 'uuid';
+import { handleApiError } from '@/lib/api/response'
 
 export const GET = withAuth(async (request: NextRequest, context) => {
   try {
@@ -175,17 +176,14 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       },
       meta: {
         timestamp: new Date().toISOString(),
-        version: '1.0',
+        version: '1.0.0',
         requestId: uuidv4()
       }
     });
 
   } catch (error) {
     console.error('Donor profile error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });
 
@@ -212,7 +210,7 @@ export const PATCH = withAuth(async (request: NextRequest, context) => {
           details: validation.error.errors,
           meta: {
             timestamp: new Date().toISOString(),
-            version: '1.0',
+            version: '1.0.0',
             requestId: uuidv4()
           }
         },
@@ -293,16 +291,13 @@ export const PATCH = withAuth(async (request: NextRequest, context) => {
       data: { donor: updatedDonor },
       meta: {
         timestamp: new Date().toISOString(),
-        version: '1.0',
+        version: '1.0.0',
         requestId: uuidv4()
       }
     });
 
   } catch (error) {
     console.error('Donor profile update error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { prisma } from '@/lib/db/client';
 import { AssessmentType } from '@prisma/client';
-import { 
-  LatestAssessmentsQuerySchema, 
+import {
+  LatestAssessmentsQuerySchema,
   LatestAssessmentsResponseSchema,
   AssessmentTypeSchema
 } from '@/lib/validation/entity-insights';
+import { handleApiError } from '@/lib/api/response'
 
 export const GET = withAuth(async (request: NextRequest, context, nextContext) => {
   try {
@@ -180,17 +181,14 @@ export const GET = withAuth(async (request: NextRequest, context, nextContext) =
       data: responseData,
       meta: {
         timestamp: new Date().toISOString(),
-        version: '1.0',
+        version: '1.0.0',
         requestId: crypto.randomUUID()
       }
     });
 
   } catch (error) {
     console.error('Latest assessments API error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });
 

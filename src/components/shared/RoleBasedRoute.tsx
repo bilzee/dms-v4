@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/stores/auth.store';
 import { RoleName } from '@/types/auth';
 import {
   ROLE_DASHBOARD_PATHS,
@@ -33,6 +34,8 @@ export const RoleBasedRoute = ({
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
+    if (!useAuthStore.persist?.hasHydrated()) return
+
     const checkAccess = async () => {
       if (!isAuthenticated) {
         router.push('/login');

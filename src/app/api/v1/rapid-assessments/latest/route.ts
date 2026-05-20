@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth/middleware'
 import { RapidAssessmentService } from '@/lib/services/rapid-assessment.service'
+import { handleApiError } from '@/lib/api/response'
 
 export const GET = withAuth(async (request, context) => {
   try {
@@ -66,13 +67,6 @@ export const GET = withAuth(async (request, context) => {
       { status: 200 }
     )
   } catch (error) {
-    console.error('Error fetching latest assessment:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Internal server error'
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

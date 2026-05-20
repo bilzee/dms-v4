@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/client';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
+import { handleApiError } from '@/lib/api/response'
 
 interface RouteParams {
   params: {
@@ -80,9 +81,6 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext, {
 
   } catch (error) {
     console.error('Error fetching user entity assignments:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

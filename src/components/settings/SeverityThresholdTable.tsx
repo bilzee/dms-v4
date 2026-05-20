@@ -353,7 +353,7 @@ export function SeverityThresholdTable({ impactType }: SeverityThresholdTablePro
                       <p>
                         Severity is determined by the <strong>highest threshold met</strong>. 
                         For example, if any condition for HIGH is met, the badge shows HIGH even if MEDIUM conditions are also met.
-                        Use "OR" logic: if <em>any</em> field exceeds its threshold, that severity applies.
+                        Use &quot;OR&quot; logic: if <em>any</em> field exceeds its threshold, that severity applies.
                       </p>
                     </div>
                   </div>

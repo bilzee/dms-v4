@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { Edit, Plus, Trash2, Shield, Key, Users } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { useToast } from '@/components/ui/use-toast'
 
 interface Role {
   id: string
@@ -50,7 +51,10 @@ export default function RolesPage() {
   const [permissions, setPermissions] = useState<Permission[]>([])
   const [loading, setLoading] = useState(true)
   const [isHydrated, setIsHydrated] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [roleToDelete, setRoleToDelete] = useState<Role | null>(null)
   const { hasPermission } = useAuth()
+  const { toast } = useToast()
 
   
   // Fetch roles and permissions from backend
@@ -261,17 +265,9 @@ export default function RolesPage() {
                                 Edit Role
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={async () => {
-                                  if (confirm('Are you sure you want to delete this role?')) {
-                                    try {
-                                      const res = await apiDelete(`/api/v1/roles/${role.id}`)
-                                      if (res.success) {
-                                        fetchRoles()
-                                      } else {
-                                        alert(res.error || 'Failed to delete role')
-                                      }
-                                    } catch { alert('Failed to delete role') }
-                                  }
+                                onClick={() => {
+                                  setRoleToDelete(role)
+                                  setDeleteConfirmOpen(true)
                                 }}
                                 className="text-red-600"
                               >
@@ -288,6 +284,43 @@ export default function RolesPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Delete Confirmation Dialog */}
+          <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete Role</DialogTitle>
+              </DialogHeader>
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete the role <strong>{roleToDelete?.name}</strong>? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={async () => {
+                    if (!roleToDelete) return
+                    try {
+                      const res = await apiDelete(`/api/v1/roles/${roleToDelete.id}`)
+                      if (res.success) {
+                        setDeleteConfirmOpen(false)
+                        setRoleToDelete(null)
+                        fetchRoles()
+                      } else {
+                        toast({ title: 'Error', description: res.error || 'Failed to delete role', variant: 'destructive' })
+                      }
+                    } catch {
+                      toast({ title: 'Error', description: 'Failed to delete role', variant: 'destructive' })
+                    }
+                  }}
+                >
+                  Delete
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Edit Role Dialog */}
           <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
@@ -325,6 +358,7 @@ function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
     role?.permissions?.map(rp => rp.permission.code) || []
   )
   const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
   // Fetch permissions for the form
   React.useEffect(() => {
     apiGet('/api/v1/permissions')
@@ -360,7 +394,7 @@ function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
       }
     } catch (error) {
       console.error('Error saving role:', error)
-      alert(error instanceof Error ? error.message : 'Failed to save role')
+      toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to save role', variant: 'destructive' })
     } finally {
       setIsLoading(false)
     }

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { auditLog } from '@/lib/services/audit.service';
+import { handleApiError } from '@/lib/api/response'
 
 export const GET = withAuth(async (
   request: NextRequest,
@@ -35,7 +36,7 @@ export const GET = withAuth(async (
     const entityId = params.id;
 
     // Verify entity exists
-    const entity = await db.entity.findUnique({
+    const entity = await prisma.entity.findUnique({
       where: { id: entityId },
       select: {
         id: true,
@@ -53,7 +54,7 @@ export const GET = withAuth(async (
     }
 
     // Get the latest verified assessment for the entity to identify gaps
-    const latestAssessment = await db.rapidAssessment.findFirst({
+    const latestAssessment = await prisma.rapidAssessment.findFirst({
       where: {
         entityId: entityId,
         verificationStatus: 'VERIFIED'
@@ -139,9 +140,6 @@ export const GET = withAuth(async (
       // Ignore audit log errors
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 })

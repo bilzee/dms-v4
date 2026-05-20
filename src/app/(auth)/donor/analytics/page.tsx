@@ -489,7 +489,7 @@ export default function DonorAnalyticsPage() {
                       <div className="p-4 border rounded-lg">
                         <h4 className="font-medium mb-2">Coverage Analysis</h4>
                         <p className="text-sm text-gray-600">
-                          You're serving approximately {entities.reduce((total, entity) => 
+                          You&apos;re serving approximately {entities.reduce((total, entity) => 
                             total + (entity.demographics?.population || 0), 0
                           ).toLocaleString()} people across {entities.length} entities.
                         </p>

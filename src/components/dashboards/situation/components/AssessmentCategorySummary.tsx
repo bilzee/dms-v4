@@ -408,7 +408,7 @@ export function AssessmentCategorySummary({
           <div className="text-center py-8 text-muted-foreground">
             <div className="text-2xl mb-2 opacity-50">📋</div>
             <p className="text-sm font-medium">Assessment Missing</p>
-            <p className="text-xs mt-1">This assessment hasn't been completed yet</p>
+            <p className="text-xs mt-1">This assessment hasn&apos;t been completed yet</p>
           </div>
         </CardContent>
       </Card>

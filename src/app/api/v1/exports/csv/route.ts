@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/api/response'
 
 const CSVExportRequestSchema = z.object({
   dataType: z.enum(['assessments', 'responses', 'entities', 'incidents', 'commitments']),
@@ -82,7 +83,7 @@ async function generateCSVData(request: z.infer<typeof CSVExportRequestSchema>, 
 }
 
 async function generateAssessmentsCSV(startDate?: string, endDate?: string, filters?: Record<any, any>): Promise<string> {
-  const assessments = await db.rapidAssessment.findMany({
+  const assessments = await prisma.rapidAssessment.findMany({
     where: {
       ...(startDate && { createdAt: { gte: new Date(startDate) } }),
       ...(endDate && { createdAt: { lte: new Date(endDate) } }),
@@ -132,7 +133,7 @@ async function generateAssessmentsCSV(startDate?: string, endDate?: string, filt
 }
 
 async function generateResponsesCSV(startDate?: string, endDate?: string, filters?: Record<any, any>): Promise<string> {
-  const responses = await db.rapidResponse.findMany({
+  const responses = await prisma.rapidResponse.findMany({
     where: {
       ...(startDate && { createdAt: { gte: new Date(startDate) } }),
       ...(endDate && { createdAt: { lte: new Date(endDate) } }),
@@ -200,7 +201,7 @@ async function generateResponsesCSV(startDate?: string, endDate?: string, filter
 }
 
 async function generateEntitiesCSV(startDate?: string, endDate?: string, filters?: Record<any, any>): Promise<string> {
-  const entities = await db.entity.findMany({
+  const entities = await prisma.entity.findMany({
     where: {
       ...(filters && {
         type: filters.type,
@@ -244,7 +245,7 @@ async function generateEntitiesCSV(startDate?: string, endDate?: string, filters
 }
 
 async function generateIncidentsCSV(startDate?: string, endDate?: string, filters?: Record<any, any>): Promise<string> {
-  const incidents = await db.incident.findMany({
+  const incidents = await prisma.incident.findMany({
     where: {
       ...(startDate && { createdAt: { gte: new Date(startDate) } }),
       ...(endDate && { createdAt: { lte: new Date(endDate) } }),
@@ -309,7 +310,7 @@ async function generateCommitmentsCSV(userRole: string, startDate?: string, endD
   //   whereClause.donorId = (context.user as any).organizationId;
   // }
 
-  const commitments = await db.donorCommitment.findMany({
+  const commitments = await prisma.donorCommitment.findMany({
     where: whereClause,
     include: {
       donor: {
@@ -389,10 +390,6 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       },
     });
   } catch (error) {
-    console.error('Get export types error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to get export options' },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });

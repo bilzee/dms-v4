@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/api/response'
 
 const PerformanceTrendsQuerySchema = z.object({
   timeframe: z.enum(['3m', '6m', '1y', '2y']).optional().default('1y'),
@@ -63,7 +64,7 @@ export const GET = withAuth(async (request: NextRequest, context, { params }) =>
     }
 
     // Verify donor exists and user has permission
-    const donor = await db.donor.findUnique({
+    const donor = await prisma.donor.findUnique({
       where: { id: donorId },
       select: {
         id: true,
@@ -82,7 +83,7 @@ export const GET = withAuth(async (request: NextRequest, context, { params }) =>
 
     // Get historical commitments and responses for trend calculation
     const [commitments, responses] = await Promise.all([
-      db.donorCommitment.findMany({
+      prisma.donorCommitment.findMany({
         where: {
           donorId,
           commitmentDate: {
@@ -104,7 +105,7 @@ export const GET = withAuth(async (request: NextRequest, context, { params }) =>
           commitmentDate: 'asc'
         }
       }),
-      db.rapidResponse.findMany({
+      prisma.rapidResponse.findMany({
         where: {
           donorId,
           createdAt: {
@@ -328,9 +329,6 @@ export const GET = withAuth(async (request: NextRequest, context, { params }) =>
 
   } catch (error) {
     console.error('Performance trends API error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

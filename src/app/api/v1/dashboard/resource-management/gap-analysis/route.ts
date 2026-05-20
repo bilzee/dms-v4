@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { auditLog } from '@/lib/services/audit.service';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api/response';

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth/middleware'
 import { prisma } from '@/lib/db/client'
+import { handleApiError } from '@/lib/api/response'
 
 export const POST = withAuth(async (request: NextRequest, context) => {
   try {
@@ -80,15 +81,11 @@ export const POST = withAuth(async (request: NextRequest, context) => {
       },
       meta: {
         timestamp: new Date().toISOString(),
-        version: '1.0',
+        version: '1.0.0',
         requestId: crypto.randomUUID()
       }
     })
   } catch (error) {
-    console.error('Audit rollback error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to rollback audit entry' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

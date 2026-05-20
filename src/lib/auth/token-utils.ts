@@ -10,33 +10,37 @@ export const getAuthToken = (): string | null => {
   return localStorage.getItem('auth_token') || localStorage.getItem('token')
 }
 
+const COOKIE_NAME = 'auth_token'
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 7
+
 export const setAuthToken = (token: string): void => {
   if (typeof window === 'undefined') return
   
-  // Set both keys for backward compatibility during transition
   localStorage.setItem('auth_token', token)
   localStorage.setItem('token', token)
+  document.cookie = `${COOKIE_NAME}=${encodeURIComponent(token)}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`
 }
 
 export const removeAuthToken = (): void => {
   if (typeof window === 'undefined') return
   
-  // Remove both keys
   localStorage.removeItem('auth_token')
   localStorage.removeItem('token')
+  document.cookie = `${COOKIE_NAME}=; path=/; max-age=0; SameSite=Lax`
 }
 
 export const getAuthHeaders = (): Record<string, string> => {
   const token = getAuthToken()
   
-  if (!token) {
-    throw new Error('No authentication token available')
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
   }
   
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
   }
+  
+  return headers
 }
 
 export const createAuthenticatedFetch = async (

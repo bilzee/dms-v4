@@ -51,7 +51,9 @@ export function VerificationAnalytics({ className }: VerificationAnalyticsProps)
         if (result.success) {
           setAnalyticsData(result.data as any)
         }
-      } catch {}
+      } catch (error) {
+        console.error('Error fetching verification analytics:', error)
+      }
     };
     fetchAnalytics();
   }, [token, timeRange]);
@@ -86,9 +88,9 @@ export function VerificationAnalytics({ className }: VerificationAnalyticsProps)
   // Performance metrics
   const performanceMetrics = useMemo(() => {
     return {
-      totalProcessed: analyticsData?.totalProcessed ?? (Math.floor(Math.random() * 100) + 50),
+      totalProcessed: analyticsData?.totalProcessed ?? 0,
       averageProcessingTime: metrics.averageWaitTime,
-      throughput: analyticsData?.throughput ?? (Math.floor(Math.random() * 10) + 5),
+      throughput: analyticsData?.throughput ?? 0,
       backlogTrend: calculateTrend(assessmentQueueDepth.total, assessmentQueueDepth.total + 5),
       systemLoad: analyticsData?.systemLoad || 'Unknown'
     };

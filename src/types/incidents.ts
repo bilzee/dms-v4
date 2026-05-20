@@ -1,70 +1,14 @@
 import { Incident } from '@prisma/client'
+import type { IncidentData, IncidentFilters, UpdateIncidentData } from './incident'
 
-export interface IncidentData {
-  type: string
-  subType?: string
-  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
-  status: 'ACTIVE' | 'CONTAINED' | 'RESOLVED'
-  description: string
-  location: string
-  coordinates?: { lat: number; lng: number }
-}
+export type { IncidentData, IncidentFilters, UpdateIncidentData }
 
 export interface CreateIncidentRequest {
   data: IncidentData
   preliminaryAssessmentId?: string
 }
 
-export interface IncidentResponse {
-  success?: true
-  data: Incident
-  meta: {
-    timestamp: string
-    version: string
-    requestId: string
-  }
-}
-
-export interface IncidentListResponse {
-  success?: true
-  data: Incident[]
-  pagination: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-  }
-  meta: {
-    timestamp: string
-    version: string
-    requestId: string
-  }
-}
-
 // Additional interfaces referenced in story
-export interface IncidentFilters {
-  status?: ('ACTIVE' | 'CONTAINED' | 'RESOLVED')[]
-  severity?: ('CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW')[]
-  type?: string[]
-  dateRange?: {
-    start: Date
-    end: Date
-  }
-  location?: string
-  hasAssessments?: boolean
-  entityId?: string
-}
-
-export interface UpdateIncidentData {
-  type?: string
-  subType?: string
-  severity?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
-  status?: 'ACTIVE' | 'CONTAINED' | 'RESOLVED'
-  description?: string
-  location?: string
-  coordinates?: { lat: number; lng: number }
-}
-
 export interface IncidentCreationFormProps {
   incident?: Incident // For edit mode
   onSubmit?: (data: IncidentData) => Promise<void>

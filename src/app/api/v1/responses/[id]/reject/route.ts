@@ -3,6 +3,7 @@ import { withAuth } from '@/lib/auth/middleware';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/client';
 import { createAuditLog } from '@/lib/utils/audit-logger';
+import { handleApiError } from '@/lib/api/response'
 
 // Validation schema for response rejection
 const RejectResponseSchema = z.object({
@@ -107,7 +108,7 @@ export const POST = withAuth(async (request: NextRequest, context, { params }) =
       message: 'Response rejected successfully',
       meta: {
         timestamp: new Date().toISOString(),
-        version: '1.0',
+        version: '1.0.0',
         requestId: crypto.randomUUID()
       }
     });
@@ -122,9 +123,6 @@ export const POST = withAuth(async (request: NextRequest, context, { params }) =
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

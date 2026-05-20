@@ -189,7 +189,7 @@ export interface ExportRequest {
 }
 
 export interface ExportResponse {
-  success: boolean
+  success?: true
   data: {
     downloadUrl: string
     expiresAt: Date
@@ -273,16 +273,6 @@ export const ENTITY_INSIGHTS_QUERY_KEYS = {
 } as const
 
 // Utility Types
-export interface ApiResponse<T> {
-  success: boolean
-  data: T
-  meta?: {
-    timestamp: string
-    version: string
-    requestId: string
-  }
-}
-
 export interface ApiError {
   success: false
   error: string

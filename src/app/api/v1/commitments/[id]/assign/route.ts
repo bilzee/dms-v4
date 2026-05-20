@@ -4,6 +4,7 @@ import { withAuth } from '@/lib/auth/middleware';
 import { EntityAssignmentSchema } from '@/lib/validation/commitment';
 import { AuditLogServiceImpl } from '@/lib/services/audit-log.service';
 import { EntityAssignmentServiceImpl } from '@/lib/services/entity-assignment.service';
+import { handleApiError } from '@/lib/api/response'
 
 interface RouteParams {
   params: { id: string }
@@ -169,10 +170,7 @@ export const POST = withAuth(async (request: NextRequest, context, { params }: R
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });
 
@@ -224,9 +222,6 @@ export const GET = withAuth(async (request: NextRequest, context, { params }: Ro
 
   } catch (error) {
     console.error('Error fetching commitment assignment history:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

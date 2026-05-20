@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '@/lib/api'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,33 +12,23 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 function SystemHealthContent() {
-  const [health, setHealth] = useState<{
-    databaseSync: string
-    apiResponseTime: number
-    activeUsers: number
-    storageUsage: number
-    lastBackup: string
-  } | null>(null)
-  const [loading, setLoading] = useState(true)
   const [lastChecked, setLastChecked] = useState<Date | null>(null)
 
-  const fetchHealth = async () => {
-    setLoading(true)
-    try {
+  const { data: health, isLoading: loading, refetch } = useQuery({
+    queryKey: ['system-health'],
+    queryFn: async () => {
       const result = await apiGet('/api/v1/system/health')
       if (result.success) {
-        setHealth(result.data)
         setLastChecked(new Date())
+        return result.data
       }
-    } catch {}
-    setLoading(false)
-  }
+      throw new Error(result.error || 'Failed to fetch system health')
+    },
+    staleTime: 30000,
+    refetchInterval: 60000,
+  })
 
-  useEffect(() => {
-    fetchHealth()
-    const interval = setInterval(fetchHealth, 60000)
-    return () => clearInterval(interval)
-  }, [])
+  const fetchHealth = () => { refetch() }
 
   const getStatusVariant = (status: string) => {
     if (status === 'Healthy') return 'default' as const
@@ -192,6 +183,8 @@ function SystemHealthContent() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
+            {/* TODO: Replace with real health check API data */}
+            {/* Placeholder service status data - statuses are hardcoded mock values */}
             {[
               { name: 'Web Server', status: 'Running', uptime: '99.9%' },
               { name: 'Database', status: health?.databaseSync || 'Checking...', uptime: '99.8%' },

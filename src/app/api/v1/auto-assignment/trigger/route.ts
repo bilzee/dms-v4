@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { triggerAutoAssignment } from '@/lib/assignment/middleware';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/api/response'
 
 const triggerAutoAssignmentSchema = z.object({
   type: z.enum(['assessment', 'response', 'entity']),
@@ -63,9 +64,6 @@ export const POST = withAuth(async (request: NextRequest, context) => {
     }
 
     console.error('Error triggering auto-assignment:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { prisma } from '@/lib/db/client';
 import { AssessmentType } from '@prisma/client';
+import { handleApiError } from '@/lib/api/response'
 
 export const GET = withAuth(async (request: NextRequest, context) => {
   try {
@@ -59,7 +60,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         },
         meta: {
           timestamp: new Date().toISOString(),
-          version: '1.0',
+          version: '1.0.0',
           requestId: crypto.randomUUID()
         }
       });
@@ -252,7 +253,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       data: responseData,
       meta: {
         timestamp: new Date().toISOString(),
-        version: '1.0',
+        version: '1.0.0',
         requestId: crypto.randomUUID(),
         query: {
           categories,
@@ -264,10 +265,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
 
   } catch (error) {
     console.error('Donor entities impact assessments API error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });
 

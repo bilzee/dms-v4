@@ -302,7 +302,7 @@ export default function EditDonorPage() {
                             Active Organization
                           </FormLabel>
                           <FormDescription>
-                            Enable or disable this organization's access to the platform
+                            Enable or disable this organization&apos;s access to the platform
                           </FormDescription>
                         </div>
                       </FormItem>
@@ -375,8 +375,8 @@ export default function EditDonorPage() {
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      Note: The user's password cannot be changed through this form. 
-                      Password changes must be done through the user's profile settings.
+                      Note: The user&apos;s password cannot be changed through this form. 
+                      Password changes must be done through the user&apos;s profile settings.
                     </AlertDescription>
                   </Alert>
                 </CardContent>

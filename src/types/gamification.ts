@@ -171,7 +171,7 @@ export interface ExportButtonProps {
 
 // API response interfaces
 export interface LeaderboardResponse {
-  success: boolean;
+  success?: true;
   data: {
     rankings: LeaderboardEntry[];
     metadata: LeaderboardMetadata;
@@ -180,13 +180,13 @@ export interface LeaderboardResponse {
 }
 
 export interface PerformanceTrendsResponse {
-  success: boolean;
+  success?: true;
   data: PerformanceTrends;
   error?: string;
 }
 
 export interface ExportResponse {
-  success: boolean;
+  success?: true;
   data?: {
     exportType: 'csv' | 'pdf';
     reportData?: Record<string, any>[];

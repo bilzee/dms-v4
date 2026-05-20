@@ -202,11 +202,11 @@ export function InstallPrompt({
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
-                      Select "Add to Home Screen"
+                      Select &quot;Add to Home Screen&quot;
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
-                      Confirm by tapping "Add"
+                      Confirm by tapping &quot;Add&quot;
                     </li>
                   </ol>
                 </div>

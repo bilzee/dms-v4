@@ -66,9 +66,63 @@ async function main() {
     console.log(`✅ Role created: ${role.name}`);
   }
 
-  // Assign admin role to admin user
+  // ========================================
+  // 2b. PERMISSIONS
+  // ========================================
+  console.log('Creating permissions...');
+
+  const permissions = [
+    { name: 'Create Assessment', code: 'CREATE_ASSESSMENT', category: 'assessment', description: 'Can create new assessments' },
+    { name: 'View Assessment', code: 'VIEW_ASSESSMENT', category: 'assessment', description: 'Can view assessments' },
+    { name: 'Edit Assessment', code: 'EDIT_ASSESSMENT', category: 'assessment', description: 'Can edit own assessments' },
+    { name: 'Verify Assessment', code: 'VERIFY_ASSESSMENT', category: 'assessment', description: 'Can verify assessments' },
+    { name: 'Publish Assessment', code: 'PUBLISH_ASSESSMENT', category: 'assessment', description: 'Can publish verified assessments' },
+    { name: 'Create Response', code: 'CREATE_RESPONSE', category: 'response', description: 'Can create response plans' },
+    { name: 'View Response', code: 'VIEW_RESPONSE', category: 'response', description: 'Can view response plans' },
+    { name: 'Edit Response', code: 'EDIT_RESPONSE', category: 'response', description: 'Can edit own responses' },
+    { name: 'Verify Response', code: 'VERIFY_RESPONSE', category: 'response', description: 'Can verify responses' },
+    { name: 'Execute Response', code: 'EXECUTE_RESPONSE', category: 'response', description: 'Can execute response activities' },
+    { name: 'View Entities', code: 'VIEW_ENTITIES', category: 'entity', description: 'Can view assigned entities' },
+    { name: 'Manage Entities', code: 'MANAGE_ENTITIES', category: 'entity', description: 'Can manage entity assignments' },
+    { name: 'View Crisis Dashboard', code: 'VIEW_CRISIS_DASHBOARD', category: 'dashboard', description: 'Can access crisis management dashboard' },
+    { name: 'View Situation Dashboard', code: 'VIEW_SITUATION_DASHBOARD', category: 'dashboard', description: 'Can access situation awareness dashboard' },
+    { name: 'View Donor Dashboard', code: 'VIEW_DONOR_DASHBOARD', category: 'dashboard', description: 'Can access donor dashboard' },
+    { name: 'Manage Users', code: 'MANAGE_USERS', category: 'user', description: 'Can create and manage users' },
+    { name: 'Assign Roles', code: 'ASSIGN_ROLES', category: 'user', description: 'Can assign roles to users' },
+    { name: 'View Audit Logs', code: 'VIEW_AUDIT_LOGS', category: 'audit', description: 'Can view system audit logs' },
+    { name: 'View Sync Conflicts', code: 'VIEW_SYNC_CONFLICTS', category: 'sync', description: 'Can view synchronization conflicts' },
+    { name: 'Resolve Sync Conflicts', code: 'RESOLVE_SYNC_CONFLICTS', category: 'sync', description: 'Can resolve sync conflicts' },
+  ];
+
+  for (const perm of permissions) {
+    await prisma.permission.upsert({
+      where: { code: perm.code },
+      update: {},
+      create: perm,
+    });
+  }
+  console.log(`✅ ${permissions.length} permissions created`);
+
+  // ========================================
+  // 2c. ASSIGN PERMISSIONS TO ADMIN ROLE
+  // ========================================
+  console.log('Assigning all permissions to ADMIN role...');
+
   const adminRole = await prisma.role.findUnique({ where: { name: RoleName.ADMIN } });
   if (adminRole) {
+    const allPermissions = await prisma.permission.findMany();
+    for (const permission of allPermissions) {
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: { roleId: adminRole.id, permissionId: permission.id },
+        },
+        update: {},
+        create: { roleId: adminRole.id, permissionId: permission.id },
+      });
+    }
+    console.log(`✅ ${allPermissions.length} permissions assigned to ADMIN role`);
+
+    // Assign admin role to admin user
     await prisma.userRole.upsert({
       where: {
         userId_roleId: {

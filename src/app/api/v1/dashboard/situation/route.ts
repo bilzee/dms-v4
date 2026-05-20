@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { z } from 'zod';
 import type { EntityType, AssessmentType } from '@prisma/client';
 import {
@@ -15,6 +15,7 @@ import {
   type ShelterGapAnalysis,
   type SecurityGapAnalysis
 } from '@/lib/services/gap-analysis.service';
+import { handleApiError } from '@/lib/api/response'
 
 // Rate limiting implementation
 class RateLimiter {
@@ -484,7 +485,7 @@ async function getPopulationImpact(incidentId: string): Promise<PopulationImpact
   }
 
   // First, get all entities that have population assessments for this incident
-  const entitiesWithPopulationAssessments = await db.entity.findMany({
+  const entitiesWithPopulationAssessments = await prisma.entity.findMany({
     where: {
       rapidAssessments: {
         some: {
@@ -505,7 +506,7 @@ async function getPopulationImpact(incidentId: string): Promise<PopulationImpact
   // Then fetch only the latest population assessment for each entity
   const latestPopulationAssessments = await Promise.all(
     entitiesWithPopulationAssessments.map(async (entity) => {
-      return db.populationAssessment.findFirst({
+      return prisma.populationAssessment.findFirst({
         where: {
           rapidAssessment: {
             entityId: entity.id,
@@ -593,7 +594,7 @@ async function getPopulationImpact(incidentId: string): Promise<PopulationImpact
   );
 
   // Use Prisma query to get preliminary assessment data
-  const preliminaryData = await db.preliminaryAssessment.findMany({
+  const preliminaryData = await prisma.preliminaryAssessment.findMany({
     where: {
       incidentId: incidentId,
     },
@@ -697,7 +698,7 @@ async function getPopulationImpact(incidentId: string): Promise<PopulationImpact
 
 async function getAggregateMetrics(incidentId: string): Promise<AggregateMetrics> {
   // Get affected entities count via rapid assessments
-  const affectedEntitiesCount = await db.entity.count({
+  const affectedEntitiesCount = await prisma.entity.count({
     where: {
       rapidAssessments: {
         some: {
@@ -709,13 +710,13 @@ async function getAggregateMetrics(incidentId: string): Promise<AggregateMetrics
   });
 
   // Get assessment counts
-  const totalAssessmentsCount = await db.rapidAssessment.count({
+  const totalAssessmentsCount = await prisma.rapidAssessment.count({
     where: {
       incidentId: incidentId,
     },
   });
 
-  const verifiedAssessmentsCount = await db.rapidAssessment.count({
+  const verifiedAssessmentsCount = await prisma.rapidAssessment.count({
     where: {
       incidentId: incidentId,
       verificationStatus: { in: ['VERIFIED', 'AUTO_VERIFIED'] },
@@ -723,7 +724,7 @@ async function getAggregateMetrics(incidentId: string): Promise<AggregateMetrics
   });
 
   // Get response counts
-  const responsesCount = await db.rapidResponse.count({
+  const responsesCount = await prisma.rapidResponse.count({
     where: {
       assessment: {
         incidentId: incidentId,
@@ -763,7 +764,7 @@ async function getEntityAssessments(incidentId: string, entityId?: string): Prom
   }
 
   const entitiesQuery = entityId && entityId !== 'all'
-    ? db.$queryRaw`
+    ? prisma.$queryRaw`
         SELECT 
           e.id,
           e.name,
@@ -783,7 +784,7 @@ async function getEntityAssessments(incidentId: string, entityId?: string): Prom
           AND e.id = ${entityId}
         ORDER BY ra."rapidAssessmentDate" DESC
       ` as unknown as any[]
-    : db.$queryRaw`
+    : prisma.$queryRaw`
         SELECT 
           e.id,
           e.name,
@@ -991,7 +992,7 @@ async function getAggregatedAssessments(incidentId: string): Promise<AggregatedA
 
 // Individual assessment fetchers
 async function getLatestHealthAssessment(entityId: string): Promise<(HealthAssessmentData & { gapAnalysis: HealthGapAnalysis }) | null> {
-  const assessment = await db.healthAssessment.findFirst({
+  const assessment = await prisma.healthAssessment.findFirst({
     where: {
       rapidAssessment: {
         entityId: entityId,
@@ -1049,7 +1050,7 @@ async function getLatestHealthAssessment(entityId: string): Promise<(HealthAsses
 }
 
 async function getLatestFoodAssessment(entityId: string): Promise<(FoodAssessmentData & { gapAnalysis: FoodGapAnalysis }) | null> {
-  const assessment = await db.foodAssessment.findFirst({
+  const assessment = await prisma.foodAssessment.findFirst({
     where: {
       rapidAssessment: {
         entityId: entityId,
@@ -1104,7 +1105,7 @@ async function getLatestFoodAssessment(entityId: string): Promise<(FoodAssessmen
 }
 
 async function getLatestWASHAssessment(entityId: string): Promise<(WASHAssessmentData & { gapAnalysis: WASHGapAnalysis }) | null> {
-  const assessment = await db.wASHAssessment.findFirst({
+  const assessment = await prisma.wASHAssessment.findFirst({
     where: {
       rapidAssessment: {
         entityId: entityId,
@@ -1159,7 +1160,7 @@ async function getLatestWASHAssessment(entityId: string): Promise<(WASHAssessmen
 }
 
 async function getLatestShelterAssessment(entityId: string): Promise<(ShelterAssessmentData & { gapAnalysis: ShelterGapAnalysis }) | null> {
-  const assessment = await db.shelterAssessment.findFirst({
+  const assessment = await prisma.shelterAssessment.findFirst({
     where: {
       rapidAssessment: {
         entityId: entityId,
@@ -1214,7 +1215,7 @@ async function getLatestShelterAssessment(entityId: string): Promise<(ShelterAss
 }
 
 async function getLatestSecurityAssessment(entityId: string): Promise<(SecurityAssessmentData & { gapAnalysis: SecurityGapAnalysis }) | null> {
-  const assessment = await db.securityAssessment.findFirst({
+  const assessment = await prisma.securityAssessment.findFirst({
     where: {
       rapidAssessment: {
         entityId: entityId,
@@ -1268,7 +1269,7 @@ async function getLatestSecurityAssessment(entityId: string): Promise<(SecurityA
 }
 
 async function getLatestPopulationAssessment(entityId: string): Promise<PopulationAssessmentData | null> {
-  const assessment = await db.populationAssessment.findFirst({
+  const assessment = await prisma.populationAssessment.findFirst({
     where: {
       rapidAssessment: {
         entityId: entityId,
@@ -1743,7 +1744,7 @@ async function getEntityLocations(
     const entitiesWithLocations = await (async () => {
       if (incidentId) {
         if (severityFilter && severityFilter !== 'ALL' && entityTypeFilter && entityTypeFilter !== 'ALL') {
-          return db.$queryRaw`
+          return prisma.$queryRaw`
             SELECT DISTINCT
               e.id,
               e.name,
@@ -1770,7 +1771,7 @@ async function getEntityLocations(
             affectedAt: Date;
           }>;
         } else if (severityFilter && severityFilter !== 'ALL') {
-          return db.$queryRaw`
+          return prisma.$queryRaw`
             SELECT DISTINCT
               e.id,
               e.name,
@@ -1796,7 +1797,7 @@ async function getEntityLocations(
             affectedAt: Date;
           }>;
         } else if (entityTypeFilter && entityTypeFilter !== 'ALL') {
-          return db.$queryRaw`
+          return prisma.$queryRaw`
             SELECT DISTINCT
               e.id,
               e.name,
@@ -1823,7 +1824,7 @@ async function getEntityLocations(
             affectedAt: Date;
           }>;
         } else {
-          return db.$queryRaw`
+          return prisma.$queryRaw`
             SELECT DISTINCT
               e.id,
               e.name,
@@ -1851,7 +1852,7 @@ async function getEntityLocations(
         }
       } else {
         // No incident filter - get all entities with assessments
-        return db.$queryRaw`
+        return prisma.$queryRaw`
           SELECT DISTINCT
             e.id,
             e.name,
@@ -1883,7 +1884,7 @@ async function getEntityLocations(
     
     for (const entity of entitiesWithLocations) {
       // Get gap analysis for this entity
-      const gapAnalysisQuery = await db.$queryRaw`
+      const gapAnalysisQuery = await prisma.$queryRaw`
         SELECT 
           ra."rapidAssessmentType",
           ra."gapAnalysis",
@@ -1941,7 +1942,7 @@ async function getEntityLocations(
       // Get donor assignments if requested
       let donorAssignments: EntityLocation['donorAssignments'] = [];
       if (includeDonorAssignments && incidentId) {
-        const donorData = await db.$queryRaw`
+        const donorData = await prisma.$queryRaw`
           SELECT 
             dc.id,
             d.name as "donorName",
@@ -2086,7 +2087,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     // Fetch real incidents from database
     const incidents = await (async (): Promise<IncidentSummary[]> => {
       const incidentQuery = queryParams.incidentId
-        ? db.incident.findMany({
+        ? prisma.incident.findMany({
             where: {
               id: queryParams.incidentId,
             },
@@ -2102,7 +2103,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
             orderBy: { createdAt: 'desc' },
             take: queryParams.limit,
           })
-        : db.incident.findMany({
+        : prisma.incident.findMany({
             where: {
               status: { in: ['ACTIVE', 'CONTAINED'] },
             },
@@ -2161,7 +2162,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       }
 
       // Get entities that have assessments for this incident
-      const entitiesQuery = await db.entity.findMany({
+      const entitiesQuery = await prisma.entity.findMany({
         where: {
           rapidAssessments: {
             some: {
@@ -2528,48 +2529,13 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     return addRateLimitHeaders(response);
 
   } catch (error) {
-    console.error('Dashboard API Error:', error);
-    
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to fetch dashboard data',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
 // Helper function
 function getGapIndicatorsByType(assessmentType: string) {
-  // Placeholder gap indicators by assessment type
-  const indicators = {
-    HEALTH: [
-      { category: 'Medical Supplies', hasGap: Math.random() > 0.7, description: 'Medical supplies insufficient' },
-      { category: 'Staff Availability', hasGap: Math.random() > 0.7, description: 'Medical staff unavailable' }
-    ],
-    WASH: [
-      { category: 'Water Access', hasGap: Math.random() > 0.7, description: 'Clean water access issues' },
-      { category: 'Sanitation', hasGap: Math.random() > 0.7, description: 'Sanitation facilities inadequate' }
-    ],
-    SHELTER: [
-      { category: 'Shelter Capacity', hasGap: Math.random() > 0.7, description: 'Shelter capacity exceeded' },
-      { category: 'Structural Safety', hasGap: Math.random() > 0.7, description: 'Structural safety concerns' }
-    ],
-    FOOD: [
-      { category: 'Food Supply', hasGap: Math.random() > 0.7, description: 'Food supply insufficient' },
-      { category: 'Distribution', hasGap: Math.random() > 0.7, description: 'Food distribution problems' }
-    ],
-    SECURITY: [
-      { category: 'Security Presence', hasGap: Math.random() > 0.7, description: 'Security personnel inadequate' },
-      { category: 'Violence Prevention', hasGap: Math.random() > 0.7, description: 'Violence prevention measures needed' }
-    ],
-    POPULATION: [
-      { category: 'Population Tracking', hasGap: Math.random() > 0.7, description: 'Population tracking incomplete' },
-      { category: 'Vulnerable Groups', hasGap: Math.random() > 0.7, description: 'Vulnerable groups not identified' }
-    ]
-  };
-
-  return indicators[assessmentType as keyof typeof indicators] || [];
+  // Fallback gap indicators by assessment type - returns empty indicators since
+  // real gap data comes from the actual assessment gapAnalysis, not random generation
+  return [];
 }

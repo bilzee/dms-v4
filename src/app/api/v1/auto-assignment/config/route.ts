@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { AutoAssignmentService, AutoAssignmentConfig } from '@/lib/assignment/auto-assignment';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/api/response'
 
 const autoAssignmentRuleSchema = z.object({
   entityType: z.enum(['COMMUNITY', 'WARD', 'LGA', 'STATE', 'FACILITY', 'CAMP']),
@@ -40,10 +41,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
 
   } catch (error) {
     console.error('Error fetching auto-assignment config:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });
 
@@ -79,10 +77,7 @@ export const PUT = withAuth(async (request: NextRequest, context) => {
     }
 
     console.error('Error updating auto-assignment config:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });
 
@@ -151,10 +146,7 @@ export const POST = withAuth(
 
     } catch (error) {
       console.error('Error resetting auto-assignment config:', error);
-      return NextResponse.json(
-        { error: 'Internal server error' },
-        { status: 500 }
-      );
+      return handleApiError(error);
     }
   }
 );

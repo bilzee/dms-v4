@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
+import { handleApiError } from '@/lib/api/response'
 
 const ROLE_PERMISSIONS = {
   assessor: ['read'],
@@ -90,11 +91,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
       },
     });
   } catch (error) {
-    console.error('Chart export error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Chart export failed' },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -481,10 +478,6 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       },
     });
   } catch (error) {
-    console.error('Get chart export options error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to get chart export options' },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 import { withAuth } from '@/lib/auth/middleware'
 import { prisma } from '@/lib/db/client'
+import { handleApiError } from '@/lib/api/response'
 
 interface RouteParams {
   params: { id: string }
@@ -83,10 +84,7 @@ export const PUT = withAuth(async (request: NextRequest, context, { params }: Ro
     );
   } catch (error) {
     console.error('Update role error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });
 
@@ -136,9 +134,6 @@ export const DELETE = withAuth(async (request: NextRequest, context, { params }:
     );
   } catch (error) {
     console.error('Delete role error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

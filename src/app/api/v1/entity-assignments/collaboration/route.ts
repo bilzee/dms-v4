@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { MultiUserAssignmentService } from '@/lib/assignment/multi-user-service';
+import { handleApiError } from '@/lib/api/response'
 
 export const GET = withAuth(async (request: NextRequest, context) => {
   try {
@@ -79,9 +80,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
 
   } catch (error) {
     console.error('Error fetching collaboration data:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

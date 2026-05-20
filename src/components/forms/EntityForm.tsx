@@ -186,7 +186,7 @@ export function EntityForm({ onSubmit, onCancel, initialData, isEditing = false 
                 placeholder="Enter location description"
               />
               <p className="text-xs text-gray-500">
-                Optional descriptive location (e.g., "Northern District", "Downtown Area")
+                Optional descriptive location (e.g., &quot;Northern District&quot;, &quot;Downtown Area&quot;)
               </p>
             </div>
 

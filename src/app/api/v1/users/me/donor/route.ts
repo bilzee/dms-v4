@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
+import { handleApiError } from '@/lib/api/response'
 
 export const GET = withAuth(async (request: NextRequest, context) => {
   try {
@@ -24,7 +25,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
 
     // Try to find donor record associated with this user
     // First check if there's a donor with matching email or identifier
-    const user = await db.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         email: true,
@@ -45,7 +46,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     let donor = null;
 
     // Strategy 1: Try exact email match (if donor has contactEmail)
-    donor = await db.donor.findFirst({
+    donor = await prisma.donor.findFirst({
       where: {
         contactEmail: user.email
       }
@@ -53,7 +54,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
 
     // Strategy 2: Try organization name match
     if (!donor && user.organization) {
-      donor = await db.donor.findFirst({
+      donor = await prisma.donor.findFirst({
         where: {
           organization: user.organization
         }
@@ -62,7 +63,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
 
     // Strategy 3: Try name match
     if (!donor && user.name) {
-      donor = await db.donor.findFirst({
+      donor = await prisma.donor.findFirst({
         where: {
           name: user.name
         }
@@ -71,7 +72,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
 
     // Strategy 4: Try username match
     if (!donor) {
-      donor = await db.donor.findFirst({
+      donor = await prisma.donor.findFirst({
         where: {
           name: user.username
         }
@@ -119,9 +120,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
 
   } catch (error) {
     console.error('Get user donor API error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

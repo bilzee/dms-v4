@@ -8,9 +8,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { z } from 'zod';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { ReportTemplateEngine } from '@/lib/reports/template-engine';
 import { createApiResponse } from '@/types/api';
+import { handleApiError } from '@/lib/api/response'
 
 // Validation schemas
 const UpdateTemplateSchema = z.object({
@@ -65,7 +66,7 @@ export const GET = withAuth(async (
       );
     }
 
-    const template = await db.reportTemplate.findFirst({
+    const template = await prisma.reportTemplate.findFirst({
       where: {
         id: templateId,
         OR: [
@@ -107,11 +108,7 @@ export const GET = withAuth(async (
     );
 
   } catch (error) {
-    console.error('Error getting report template:', error);
-    return NextResponse.json(
-      createApiResponse(false, null, 'Failed to retrieve report template'),
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -134,7 +131,7 @@ export const PATCH = withAuth(async (
       );
     }
 
-    const existingTemplate = await db.reportTemplate.findFirst({
+    const existingTemplate = await prisma.reportTemplate.findFirst({
       where: {
         id: templateId,
         createdById: context.userId
@@ -176,7 +173,7 @@ export const PATCH = withAuth(async (
       }
     }
 
-    const updatedTemplate = await db.reportTemplate.update({
+    const updatedTemplate = await prisma.reportTemplate.update({
       where: { id: templateId },
       data: validatedData,
       include: {
@@ -209,11 +206,7 @@ export const PATCH = withAuth(async (
         { status: 400 }
       );
     }
-
-    return NextResponse.json(
-      createApiResponse(false, null, 'Failed to update report template'),
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -236,7 +229,7 @@ export const DELETE = withAuth(async (
       );
     }
 
-    const existingTemplate = await db.reportTemplate.findFirst({
+    const existingTemplate = await prisma.reportTemplate.findFirst({
       where: {
         id: templateId,
         createdById: context.userId
@@ -260,7 +253,7 @@ export const DELETE = withAuth(async (
       );
     }
 
-    const configurationsCount = await db.reportConfiguration.count({
+    const configurationsCount = await prisma.reportConfiguration.count({
       where: { templateId }
     });
 
@@ -271,7 +264,7 @@ export const DELETE = withAuth(async (
       );
     }
 
-    await db.reportTemplate.delete({
+    await prisma.reportTemplate.delete({
       where: { id: templateId }
     });
 
@@ -281,10 +274,6 @@ export const DELETE = withAuth(async (
     );
 
   } catch (error) {
-    console.error('Error deleting report template:', error);
-    return NextResponse.json(
-      createApiResponse(false, null, 'Failed to delete report template'),
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });

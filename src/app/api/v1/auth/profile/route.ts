@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { withAuth } from '@/lib/auth/middleware'
 import { AuthService } from '@/lib/auth/service'
 import { prisma } from '@/lib/db/client'
+import { handleApiError } from '@/lib/api/response'
 
 const updateProfileSchema = z.object({
   email: z.string().email('Invalid email format').optional(),
@@ -161,19 +162,7 @@ export const PUT = withAuth(async (request, context) => {
       { status: 200 }
     )
   } catch (error) {
-    console.error('Update profile error:', error)
-    
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })
 
@@ -225,18 +214,6 @@ export const GET = withAuth(async (request, context) => {
       { status: 200 }
     )
   } catch (error) {
-    console.error('Get profile error:', error)
-    
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

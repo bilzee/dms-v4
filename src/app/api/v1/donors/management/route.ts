@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db/client';
 import { DonorRegistrationSchema } from '@/lib/validation/donor';
 import { v4 as uuidv4 } from 'uuid';
+import { handleApiError } from '@/lib/api/response'
 
 export const GET = withAuth(async (request: NextRequest, context) => {
   try {
@@ -121,26 +122,13 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       },
       meta: {
         timestamp: new Date().toISOString(),
-        version: '1.0',
+        version: '1.0.0',
         requestId: uuidv4()
       }
     });
 
   } catch (error) {
-    console.error('Donors management error:', error);
-    
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });
 
@@ -168,7 +156,7 @@ export const POST = withAuth(async (request: NextRequest, context) => {
           details: validation.error.errors,
           meta: {
             timestamp: new Date().toISOString(),
-            version: '1.0',
+            version: '1.0.0',
             requestId: uuidv4()
           }
         },
@@ -183,7 +171,7 @@ export const POST = withAuth(async (request: NextRequest, context) => {
         error: 'Donor creation should be done through the registration endpoint',
         meta: {
           timestamp: new Date().toISOString(),
-          version: '1.0',
+          version: '1.0.0',
           requestId: uuidv4()
         }
       },
@@ -191,19 +179,6 @@ export const POST = withAuth(async (request: NextRequest, context) => {
     );
 
   } catch (error) {
-    console.error('Donor creation error:', error);
-    
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });

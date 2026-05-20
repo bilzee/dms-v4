@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db/client';
 import { withAuth } from '@/lib/auth/middleware';
 import { EntityAssignmentServiceImpl } from '@/lib/services/entity-assignment.service';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/api/response'
 
 // Validation schema for commitment import request
 const CommitmentImportSchema = z.object({
@@ -221,9 +222,6 @@ export const POST = withAuth(async (request: NextRequest, context) => {
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

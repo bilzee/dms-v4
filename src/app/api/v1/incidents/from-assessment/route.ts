@@ -4,6 +4,7 @@ import { withAuth } from '@/lib/auth/middleware'
 import { IncidentService } from '@/lib/services/incident.service'
 import { IncidentSchema } from '@/lib/validation/incidents'
 import { z } from 'zod'
+import { handleApiError } from '@/lib/api/response'
 
 const CreateIncidentFromAssessmentSchema = z.object({
   assessmentId: z.string().min(1, 'Assessment ID is required'),
@@ -76,18 +77,7 @@ export const POST = withAuth(async (request: NextRequest, context) => {
           )
         }
       }
-      
-      return NextResponse.json(
-        {
-          error: 'Internal server error',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 500 }
-      )
+      return handleApiError(error)
     }
   }
 )

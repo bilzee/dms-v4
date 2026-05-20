@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/client';
+import { handleApiError } from '@/lib/api/response'
 
 const rejectAssessmentSchema = z.object({
   reason: z.enum([
@@ -122,7 +123,7 @@ export const POST = withAuth(async (
       message: 'Assessment rejected successfully',
       meta: {
         timestamp: new Date().toISOString(),
-        version: '1.0',
+        version: '1.0.0',
         requestId: crypto.randomUUID()
       }
     });
@@ -148,9 +149,6 @@ export const POST = withAuth(async (
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

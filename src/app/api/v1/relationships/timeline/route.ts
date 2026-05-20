@@ -11,6 +11,7 @@ import { withAuth } from '@/lib/auth/middleware';
 import { getAssessmentTimeline } from '@/lib/services/assessment-relationships.service';
 import type { RelationshipQueryParams } from '@/types/assessment-relationships';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/api/response'
 
 // Request validation schema - handles null from searchParams.get()
 const QueryParamsSchema = z.object({
@@ -136,14 +137,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     });
 
   } catch (error) {
-    console.error('Error fetching assessment timeline:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to fetch assessment timeline',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });

@@ -1,9 +1,9 @@
 export interface ApiResponse<T = unknown> {
-  success: boolean
+  success?: boolean
   data?: T
   error?: string
   details?: unknown
-  meta: {
+  meta?: {
     timestamp: string
     version: string
     requestId: string

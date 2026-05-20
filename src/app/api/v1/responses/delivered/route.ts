@@ -3,6 +3,7 @@ import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { v4 as uuidv4 } from 'uuid'
 import { ResponseService } from '@/lib/services/response.service'
 import { CreateDeliveredResponseInput } from '@/lib/validation/response'
+import { handleApiError } from '@/lib/api/response'
 
 export const POST = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
@@ -57,18 +58,6 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
         )
       }
     }
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

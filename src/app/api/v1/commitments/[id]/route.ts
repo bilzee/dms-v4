@@ -4,6 +4,7 @@ import { withAuth } from '@/lib/auth/middleware';
 import { UpdateCommitmentSchema, CommitmentStatusUpdateSchema, EntityAssignmentSchema } from '@/lib/validation/commitment';
 import { AuditLogServiceImpl } from '@/lib/services/audit-log.service';
 import { EntityAssignmentServiceImpl } from '@/lib/services/entity-assignment.service';
+import { handleApiError } from '@/lib/api/response'
 
 interface RouteParams {
   params: { id: string }
@@ -86,10 +87,7 @@ export const GET = withAuth(async (request: NextRequest, context, { params }: Ro
 
   } catch (error) {
     console.error('Error fetching commitment:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });
 
@@ -254,10 +252,7 @@ export const PATCH = withAuth(async (request: NextRequest, context, { params }: 
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });
 
@@ -359,9 +354,6 @@ export const DELETE = withAuth(async (request: NextRequest, context, { params }:
 
   } catch (error) {
     console.error('Error deleting commitment:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

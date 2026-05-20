@@ -1,8 +1,18 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { AuthUser, RoleName } from '@/types/auth';
-import { apiGet, apiPost } from '@/lib/api';
-import { getAuthToken, setAuthToken, removeAuthToken } from '@/lib/auth/token-utils';
+import { apiPost, ApiResponse } from '@/lib/api';
+import { setAuthToken, removeAuthToken } from '@/lib/auth/token-utils';
+
+/** Shape of login/refresh API response data (may be nested under 'data' or at top level) */
+interface AuthResponseData {
+  data?: {
+    user?: Omit<AuthUser, 'passwordHash'>;
+    token?: string;
+  };
+  user?: Omit<AuthUser, 'passwordHash'>;
+  token?: string;
+}
 
 interface RoleSessionState {
   [key: string]: {
@@ -48,32 +58,6 @@ interface AuthState {
   hasRole: (role: string) => boolean;
   hasAnyRole: (...roles: string[]) => boolean;
   getCurrentRolePermissions: () => string[];
-}
-
-// Initialize authentication state from localStorage
-const initializeAuthFromStorage = async () => {
-  if (typeof window !== 'undefined') {
-    // Check both token keys (consistent with token-utils.ts)
-    const token = getAuthToken()
-    if (token) {
-      try {
-        // Validate token with backend using the /me endpoint
-        const result = await apiGet<{ user: Omit<AuthUser, 'passwordHash'> }>('/api/v1/auth/me')
-        
-        if (result.success && result.data?.user) {
-          useAuthStore.getState().setUser(result.data.user, token)
-        } else {
-          // Token is invalid, clear both keys
-          removeAuthToken()
-          useAuthStore.getState().logout()
-        }
-      } catch (error) {
-        // Network error or invalid response, clear both keys
-        removeAuthToken()
-        useAuthStore.getState().logout()
-      }
-    }
-  }
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -145,8 +129,12 @@ export const useAuthStore = create<AuthState>()(
           if (!result.success) {
             throw new Error(result.error || 'Login failed')
           }
-          const d = result.data as any
-          get().setUser(d?.data?.user || d?.user, d?.data?.token || d?.token)
+          const d = result.data as AuthResponseData | undefined
+          const user = d?.data?.user || d?.user
+          const token = d?.data?.token || d?.token
+          if (user && token) {
+            get().setUser(user, token)
+          }
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -190,7 +178,7 @@ export const useAuthStore = create<AuthState>()(
           get().logout()
           throw new Error(result.error || 'Token refresh failed')
         }
-        const d = result.data as any
+        const d = result.data as AuthResponseData | undefined
         set({ token: d?.data?.token || d?.token })
       },
 
@@ -278,6 +266,3 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
-
-// Export the initialization function
-export { initializeAuthFromStorage };

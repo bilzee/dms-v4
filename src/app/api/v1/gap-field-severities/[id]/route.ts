@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { PrismaClient, Priority } from '@prisma/client'
 import { z } from 'zod'
+import { handleApiError } from '@/lib/api/response'
 
 const prisma = new PrismaClient()
 
@@ -66,14 +67,7 @@ export const GET = withAuth(async (
     })
 
   } catch (error) {
-    console.error('Error fetching gap field:', error)
-    return NextResponse.json(
-      { 
-        error: 'Failed to fetch gap field',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }, 
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })
 
@@ -165,14 +159,7 @@ export const PUT = withAuth(async (
         { status: 400 }
       )
     }
-
-    return NextResponse.json(
-      { 
-        error: 'Failed to update gap field',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }, 
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })
 
@@ -237,13 +224,6 @@ export const DELETE = withAuth(async (
     })
 
   } catch (error) {
-    console.error('Error deactivating gap field:', error)
-    return NextResponse.json(
-      { 
-        error: 'Failed to deactivate gap field',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }, 
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

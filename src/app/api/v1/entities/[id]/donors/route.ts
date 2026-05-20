@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { z } from 'zod'
 import { PrismaClient } from '@prisma/client'
+import { handleApiError } from '@/lib/api/response'
 
 const prisma = new PrismaClient()
 
@@ -97,20 +98,7 @@ export const GET = withAuth(async (
       { status: 200 }
     )
   } catch (error) {
-    console.error('Error fetching entity donors:', error)
-
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error'
-
-    return NextResponse.json(
-      {
-        error: errorMessage,
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0'
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   } finally {
     await prisma.$disconnect()
   }

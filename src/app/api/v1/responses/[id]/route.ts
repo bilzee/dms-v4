@@ -4,6 +4,7 @@ import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { ResponseService } from '@/lib/services/response.service'
 import { GetResponseResponse, UpdateResponseResponse } from '@/types/response'
 import { UpdatePlannedResponseSchema } from '@/lib/validation/response'
+import { handleApiError } from '@/lib/api/response'
 
 interface RouteParams {
   params: { id: string }
@@ -55,19 +56,7 @@ export const GET = withAuth(
 
         return NextResponse.json(responseData, { status: 200 })
       } catch (error) {
-        console.error('Get response error:', error)
-        
-        return NextResponse.json(
-          {
-            error: error instanceof Error ? error.message : 'Internal server error',
-            meta: {
-              timestamp: new Date().toISOString(),
-              version: '1.0.0',
-              requestId: uuidv4()
-            }
-          },
-          { status: 500 }
-        )
+        return handleApiError(error)
       }
   }
 )
@@ -181,18 +170,7 @@ export const PUT = withAuth(
             )
           }
         }
-        
-        return NextResponse.json(
-          {
-            error: error instanceof Error ? error.message : 'Internal server error',
-            meta: {
-              timestamp: new Date().toISOString(),
-              version: '1.0.0',
-              requestId: uuidv4()
-            }
-          },
-          { status: 500 }
-        )
+        return handleApiError(error)
       }
   }
 )

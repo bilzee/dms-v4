@@ -345,7 +345,7 @@ export function TemplateSelector({
             </Button>
           </div>
           <p className="text-sm text-blue-700">
-            Click "Continue" to configure your report settings
+            Click &quot;Continue&quot; to configure your report settings
           </p>
         </div>
       )}

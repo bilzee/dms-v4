@@ -6,6 +6,7 @@ import {
   ExportResponseSchema
 } from '@/lib/validation/entity-insights';
 import { generateEntityReport, Entity as ExportEntity } from '@/lib/services/assessment-export.service';
+import { handleApiError } from '@/lib/api/response'
 
 interface RouteParams {
   params: { id: string }
@@ -127,16 +128,13 @@ export const POST = withAuth(async (request: NextRequest, context, { params }: R
       data: responseData,
       meta: {
         timestamp: new Date().toISOString(),
-        version: '1.0',
+        version: '1.0.0',
         requestId: crypto.randomUUID()
       }
     });
 
   } catch (error) {
     console.error('Export API error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

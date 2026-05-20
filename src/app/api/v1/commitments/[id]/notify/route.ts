@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { auditLog } from '@/lib/services/audit.service';
+import { handleApiError } from '@/lib/api/response'
 
 export const POST = withAuth(async (
   request: NextRequest,
@@ -35,7 +36,7 @@ export const POST = withAuth(async (
     const commitmentId = params.id;
 
     // Fetch commitment details with donor information
-    const commitment = await db.donorCommitment.findUnique({
+    const commitment = await prisma.donorCommitment.findUnique({
       where: { id: commitmentId },
       include: {
         donor: {
@@ -110,7 +111,7 @@ export const POST = withAuth(async (
     }
 
     // Update commitment status to indicate notification sent
-    await db.donorCommitment.update({
+    await prisma.donorCommitment.update({
       where: { id: commitmentId },
       data: {
         lastUpdated: new Date()
@@ -165,10 +166,7 @@ export const POST = withAuth(async (
       // Ignore audit log errors
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 })
 

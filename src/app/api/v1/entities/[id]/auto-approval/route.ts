@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { prisma } from '@/lib/db/client';
+import { handleApiError } from '@/lib/api/response'
 
 const updateAutoApprovalSchema = z.object({
   enabled: z.boolean(),
@@ -76,17 +77,14 @@ export const GET = withAuth(async (
       data: config,
       meta: {
         timestamp: new Date().toISOString(),
-        version: '1.0',
+        version: '1.0.0',
         requestId: crypto.randomUUID()
       }
     });
 
   } catch (error) {
     console.error('Get auto-approval config error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });
 
@@ -174,7 +172,7 @@ export const PUT = withAuth(async (
       message: 'Auto-approval configuration updated successfully',
       meta: {
         timestamp: new Date().toISOString(),
-        version: '1.0',
+        version: '1.0.0',
         requestId: crypto.randomUUID()
       }
     });
@@ -200,9 +198,6 @@ export const PUT = withAuth(async (
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

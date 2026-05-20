@@ -22,8 +22,17 @@ export interface UserWithRoles extends User {
   }>
 }
 
+const _resolveJwtSecret = (): string => {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('[AUTH] WARNING: JWT_SECRET not set. Using ephemeral dev secret. Set JWT_SECRET for production!')
+    return 'dev-only-ephemeral-secret'
+  }
+  throw new Error('FATAL: JWT_SECRET environment variable is required in production')
+}
+
 export class AuthService {
-  private static readonly JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key'
+  private static readonly JWT_SECRET = _resolveJwtSecret()
   private static readonly JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h'
   private static readonly SALT_ROUNDS = 10
 

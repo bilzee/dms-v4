@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { z } from 'zod';
+import { handleApiError } from '@/lib/api/response'
 
 const ReportRequestSchema = z.object({
   reportType: z.enum([
@@ -62,7 +63,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
     }
 
     // Generate report job
-    const jobId = `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const jobId = `report_${Date.now()}_${crypto.randomUUID().split('-')[0]}`;
     
     // Start report generation asynchronously
     generatePDFReport(jobId, validatedData, context.user)
@@ -185,7 +186,7 @@ async function collectReportData(
 }
 
 async function collectIncidentOverviewData(startDate: string, endDate: string, filters?: Record<any, any>) {
-  const incidents = await db.incident.findMany({
+  const incidents = await prisma.incident.findMany({
     where: {
       createdAt: { gte: new Date(startDate), lte: new Date(endDate) },
       ...(filters && {
@@ -206,7 +207,7 @@ async function collectIncidentOverviewData(startDate: string, endDate: string, f
     orderBy: { createdAt: 'desc' },
   });
 
-  const incidentStats = await db.incident.groupBy({
+  const incidentStats = await prisma.incident.groupBy({
     by: ['type', 'severity', 'status'],
     where: {
       createdAt: { gte: new Date(startDate), lte: new Date(endDate) },
@@ -214,7 +215,7 @@ async function collectIncidentOverviewData(startDate: string, endDate: string, f
     _count: true,
   });
 
-  const timelineData = await db.incident.findMany({
+  const timelineData = await prisma.incident.findMany({
     where: {
       createdAt: { gte: new Date(startDate), lte: new Date(endDate) },
     },
@@ -243,7 +244,7 @@ async function collectIncidentOverviewData(startDate: string, endDate: string, f
 }
 
 async function collectAssessmentSummaryData(startDate: string, endDate: string, filters?: Record<any, any>) {
-  const assessments = await db.rapidAssessment.findMany({
+  const assessments = await prisma.rapidAssessment.findMany({
     where: {
       createdAt: { gte: new Date(startDate), lte: new Date(endDate) },
       ...(filters && {
@@ -260,7 +261,7 @@ async function collectAssessmentSummaryData(startDate: string, endDate: string, 
     orderBy: { createdAt: 'desc' },
   });
 
-  const assessmentStats = await db.rapidAssessment.groupBy({
+  const assessmentStats = await prisma.rapidAssessment.groupBy({
     by: ['rapidAssessmentType', 'verificationStatus', 'priority'],
     where: {
       createdAt: { gte: new Date(startDate), lte: new Date(endDate) },
@@ -309,7 +310,7 @@ async function collectResponseActivityData(startDate: string, endDate: string, f
     };
   }
 
-  const responses = await db.rapidResponse.findMany({
+  const responses = await prisma.rapidResponse.findMany({
     where: whereClause,
     include: {
       assessment: {
@@ -328,7 +329,7 @@ async function collectResponseActivityData(startDate: string, endDate: string, f
     orderBy: { createdAt: 'desc' },
   });
 
-  const responseStats = await db.rapidResponse.groupBy({
+  const responseStats = await prisma.rapidResponse.groupBy({
     by: ['status', 'priority'],
     where: {
       createdAt: { gte: new Date(startDate), lte: new Date(endDate) },
@@ -352,7 +353,7 @@ async function collectResponseActivityData(startDate: string, endDate: string, f
 }
 
 async function collectResourceAllocationData(startDate: string, endDate: string, filters?: Record<any, any>) {
-  const commitments = await db.donorCommitment.findMany({
+  const commitments = await prisma.donorCommitment.findMany({
     where: {
       commitmentDate: { gte: new Date(startDate), lte: new Date(endDate) },
       ...(filters && {
@@ -376,7 +377,7 @@ async function collectResourceAllocationData(startDate: string, endDate: string,
     orderBy: { commitmentDate: 'desc' },
   });
 
-  const resourceStats = await db.donorCommitment.groupBy({
+  const resourceStats = await prisma.donorCommitment.groupBy({
     by: ['status'],
     where: {
       commitmentDate: { gte: new Date(startDate), lte: new Date(endDate) },
@@ -402,7 +403,7 @@ async function collectResourceAllocationData(startDate: string, endDate: string,
 }
 
 async function collectEntityStatusData(startDate: string, endDate: string, filters?: Record<any, any>) {
-  const entities = await db.entity.findMany({
+  const entities = await prisma.entity.findMany({
     where: {
       ...(filters && {
         type: filters.type,
@@ -422,7 +423,7 @@ async function collectEntityStatusData(startDate: string, endDate: string, filte
     orderBy: { name: 'asc' },
   });
 
-  const entityStats = await db.entity.groupBy({
+  const entityStats = await prisma.entity.groupBy({
     by: ['type'],
     _count: true,
   });
@@ -919,10 +920,6 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       });
     }
   } catch (error) {
-    console.error('Get report status error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to get report status' },
-      { status: 500 }
-    );
+    return handleApiError(error)
   }
 });

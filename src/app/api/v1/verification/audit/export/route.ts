@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth/middleware'
 import { prisma } from '@/lib/db/client'
+import { handleApiError } from '@/lib/api/response'
 
 export const GET = withAuth(async (request: NextRequest, context) => {
   try {
@@ -83,10 +84,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       }
     })
   } catch (error) {
-    console.error('Audit export error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to export audit data' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

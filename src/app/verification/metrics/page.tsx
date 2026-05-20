@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -21,34 +21,23 @@ interface VerificationMetrics {
 
 export default function VerificationMetricsPage() {
   const { user, token } = useAuth()
-  const [metrics, setMetrics] = useState<VerificationMetrics | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        if (!token) {
-          throw new Error('No authentication token found')
-        }
-
-        const result = await apiGet('/api/v1/verification/metrics')
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to fetch metrics')
-        }
-        const d = result.data as any
-        setMetrics(d?.data || d)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load metrics')
-      } finally {
-        setLoading(false)
+  const { data: metrics, isLoading: loading, error: queryError } = useQuery<VerificationMetrics | null>({
+    queryKey: ['verification-metrics'],
+    queryFn: async () => {
+      const result = await apiGet('/api/v1/verification/metrics')
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch metrics')
       }
-    }
+      const d = result.data as { data?: VerificationMetrics } | VerificationMetrics | undefined
+      const unwrapped = (d && typeof d === 'object' && 'data' in d ? d.data : d) ?? null
+      return unwrapped as VerificationMetrics | null
+    },
+    enabled: !!user && !!token,
+    staleTime: 60000,
+  })
 
-    if (user && token) {
-      fetchMetrics()
-    }
-  }, [user, token])
+  const error = queryError ? queryError.message : null
 
   if (!user) {
     return (

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/db/client';
 import { auditLog } from '@/lib/services/audit.service';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api/response';
@@ -39,20 +39,20 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       totalQuantities,
       criticalGapsCount
     ] = await Promise.all([
-      db.donorCommitment.count({ where: whereClause }),
+      prisma.donorCommitment.count({ where: whereClause }),
 
-      db.donorCommitment.groupBy({
+      prisma.donorCommitment.groupBy({
         by: ['status'],
         where: whereClause,
         _count: true
       }),
 
-      db.donorCommitment.aggregate({
+      prisma.donorCommitment.aggregate({
         where: whereClause,
         _sum: { totalValueEstimated: true }
       }),
 
-      db.donorCommitment.aggregate({
+      prisma.donorCommitment.aggregate({
         where: whereClause,
         _sum: {
           totalCommittedQuantity: true,

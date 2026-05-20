@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 import { withAuth } from '@/lib/auth/middleware'
 import { prisma } from '@/lib/db/client'
+import { handleApiError } from '@/lib/api/response'
 
 // Get all permissions - requires MANAGE_USERS or ASSIGN_ROLES permission
 export const GET = withAuth(async (request: NextRequest, context) => {
@@ -40,18 +41,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       { status: 200 }
     )
   } catch (error) {
-    console.error('Get permissions error:', error)
-    
-    return NextResponse.json(
-      {
-        error: 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })
