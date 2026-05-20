@@ -10,6 +10,7 @@ import { ArrowLeft, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { AssessmentType } from '@/types/rapid-assessment'
 import { useAuth } from '@/hooks/useAuth'
+import { apiPost } from '@/lib/api'
 
 // Import assessment forms
 import { HealthAssessmentForm } from '@/components/forms/assessment/HealthAssessmentForm'
@@ -70,38 +71,12 @@ function NewRapidAssessmentContent() {
         rapidAssessmentDate: new Date().toISOString()
       }
 
-      const response = await fetch('/api/v1/rapid-assessments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(assessmentData)
-      })
-
-      if (!response.ok) {
-        let errorMessage = 'Failed to submit assessment'
-        try {
-          const responseText = await response.text()
-          if (responseText) {
-            const errorData = JSON.parse(responseText)
-            errorMessage = errorData.error || errorMessage
-          }
-        } catch (parseError) {
-          console.warn('Failed to parse error response:', parseError)
-        }
-        throw new Error(errorMessage)
+      const result = await apiPost('/api/v1/rapid-assessments', assessmentData)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to submit assessment')
       }
-
-      let result
-      try {
-        const responseText = await response.text()
-        result = responseText ? JSON.parse(responseText) : {}
-      } catch (parseError) {
-        console.error('Failed to parse success response:', parseError)
-        throw new Error('Invalid response from server')
-      }
-      const assessmentId = result.data?.id
+      const d = result.data as any
+      const assessmentId = d?.data?.id || d?.id
       
       setAssessmentId(assessmentId)
       setShowSuccess(true)

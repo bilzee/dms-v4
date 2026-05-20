@@ -34,6 +34,7 @@ export const POST = withAuth(
       )
 
       const response: RapidAssessmentResponse = {
+        success: true as const,
         data: assessment as unknown as RapidAssessmentWithData,
         meta: {
           timestamp: new Date().toISOString(),

@@ -41,6 +41,8 @@ import {
   Filter,
   X
 } from 'lucide-react';
+import { apiGet, apiPost } from '@/lib/api';
+import { createAuthenticatedFetch } from '@/lib/auth/token-utils';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -83,7 +85,7 @@ interface ConfigurationAuditHistoryProps {
 }
 
 // API functions
-async function fetchAuditHistory(token: string, filters: AuditFilters, entityId?: string): Promise<{
+async function fetchAuditHistory(filters: AuditFilters, entityId?: string): Promise<{
   data: AuditLogEntry[];
   pagination: {
     total: number;
@@ -99,11 +101,9 @@ async function fetchAuditHistory(token: string, filters: AuditFilters, entityId?
   };
 }> {
   const params = new URLSearchParams();
-  
-  // Date filtering
   const now = new Date();
   let startDate: string;
-  
+
   switch (filters.dateRange) {
     case 'today':
       startDate = new Date(now.setHours(0, 0, 0, 0)).toISOString();
@@ -124,92 +124,74 @@ async function fetchAuditHistory(token: string, filters: AuditFilters, entityId?
     default:
       startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
   }
-  
+
   params.append('startDate', startDate);
-  
+
   if (filters.dateRange === 'custom' && filters.customEndDate) {
     params.append('endDate', new Date(filters.customEndDate).toISOString());
   }
-  
+
   if (filters.action && filters.action !== 'all') {
     params.append('action', filters.action);
   }
-  
+
   if (filters.userId && filters.userId !== 'all') {
     params.append('userId', filters.userId);
   }
-  
+
   if (filters.resource && filters.resource !== 'all') {
     params.append('resource', filters.resource);
   }
-  
+
   if (filters.search) {
     params.append('search', filters.search);
   }
-  
+
   if (entityId) {
     params.append('resourceId', entityId);
   }
 
-  const response = await fetch(`/api/v1/verification/audit?${params.toString()}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to fetch audit history');
+  const result = await apiGet(`/api/v1/verification/audit?${params.toString()}`);
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to fetch audit history');
   }
-  
-  return response.json();
+  return result.data as {
+    data: AuditLogEntry[];
+    pagination: { total: number; page: number; pageSize: number; totalPages: number };
+    summary: { totalEntries: number; uniqueUsers: number; configurationChanges: number; bulkOperations: number };
+  };
 }
 
 async function rollbackConfiguration(
-  auditLogId: string, 
-  token: string
+  auditLogId: string
 ): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`/api/v1/verification/audit/${auditLogId}/rollback`, {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-  });
-  
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to rollback configuration');
+  const result = await apiPost(`/api/v1/verification/audit/${auditLogId}/rollback`, {});
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to rollback configuration');
   }
-  
-  return response.json();
+  return result.data as { success: boolean; message: string };
 }
 
 async function exportAuditLog(
   filters: AuditFilters,
-  format: 'csv' | 'json' | 'pdf',
-  token: string
+  format: 'csv' | 'json' | 'pdf'
 ): Promise<Blob> {
   const params = new URLSearchParams();
   params.append('format', format);
-  
-  // Add filter parameters
+
   Object.entries(filters).forEach(([key, value]) => {
     if (value && value !== 'all' && value !== '') {
       params.append(key, value.toString());
     }
   });
 
-  const response = await fetch(`/api/v1/verification/audit/export?${params.toString()}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  });
+  const authenticatedFetch = createAuthenticatedFetch;
+  const response = await authenticatedFetch(`/api/v1/verification/audit/export?${params.toString()}`);
 
   if (!response.ok) {
     throw new Error('Failed to export audit log');
   }
-  
+
   return response.blob();
 }
 
@@ -244,7 +226,7 @@ export function ConfigurationAuditHistory({
     queryKey: ['audit-history', filters, entityId],
     queryFn: () => {
       if (!token) throw new Error('No authentication token available');
-      return fetchAuditHistory(token, filters, entityId);
+      return fetchAuditHistory(filters, entityId);
     },
     staleTime: 30000,
     enabled: !!token,
@@ -253,7 +235,7 @@ export function ConfigurationAuditHistory({
   const rollbackMutation = useMutation({
     mutationFn: ({ auditLogId }: { auditLogId: string }) => {
       if (!token) throw new Error('No authentication token available');
-      return rollbackConfiguration(auditLogId, token);
+      return rollbackConfiguration(auditLogId);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['audit-history'] });
@@ -274,7 +256,7 @@ export function ConfigurationAuditHistory({
   const exportMutation = useMutation({
     mutationFn: ({ format }: { format: 'csv' | 'json' | 'pdf' }) => {
       if (!token) throw new Error('No authentication token available');
-      return exportAuditLog(filters, format, token);
+      return exportAuditLog(filters, format);
     },
     onSuccess: (blob, { format }) => {
       // Create download link

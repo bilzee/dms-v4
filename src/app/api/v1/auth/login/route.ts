@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { AuthService } from '@/lib/auth/service'
+import { successResponse, errorResponse, handleApiError } from '@/lib/api/response'
 import { LoginRequest, LoginResponse } from '@/types/auth'
-import { v4 as uuidv4 } from 'uuid'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email format'),
@@ -12,46 +12,22 @@ const loginSchema = z.object({
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json() as LoginRequest
-    
-    // Validate input
+
     const validation = loginSchema.safeParse(body)
     if (!validation.success) {
-      return NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: validation.error.errors,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 400 }
-      )
+      return errorResponse('Validation failed', 400, validation.error.errors)
     }
 
     const { email, password } = validation.data
 
-    // Authenticate user
     const authResult = await AuthService.authenticate(email, password)
-    
+
     if (!authResult) {
-      return NextResponse.json(
-        {
-          error: 'Invalid email or password',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 401 }
-      )
+      return errorResponse('Invalid email or password', 401)
     }
 
     const { user, token } = authResult
 
-    // Construct user object with proper role structure for auth store
     const userWithoutPassword = {
       id: user.id,
       email: user.email,
@@ -64,14 +40,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       lastLogin: user.lastLogin,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      // Reconstruct roles with proper nested structure
       roles: user.roles.map(ur => ({
         role: {
           id: ur.role.id,
           name: ur.role.name,
           description: ur.role.description,
           createdAt: ur.role.createdAt,
-          // Include permissions with proper nested structure
           permissions: ur.role.permissions.map(rp => ({
             permission: {
               id: rp.permission.id,
@@ -86,33 +60,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }))
     }
 
-    const response: LoginResponse = {
-      data: {
-        user: userWithoutPassword,
-        token,
-        roles: user.roles.map(ur => ur.role)
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        version: '1.0.0',
-        requestId: uuidv4()
-      }
-    }
-
-    return NextResponse.json(response, { status: 200 })
+    return successResponse({
+      user: userWithoutPassword,
+      token,
+      roles: user.roles.map(ur => ur.role)
+    })
   } catch (error) {
     console.error('Login error:', error)
-    
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }

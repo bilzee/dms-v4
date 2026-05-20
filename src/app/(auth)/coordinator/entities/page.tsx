@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { apiGet, apiPost, apiDelete } from '@/lib/api';
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,7 +56,7 @@ interface Assignment {
 }
 
 function CoordinatorEntitiesPageContent() {
-  const { currentRole, user, token } = useAuth();
+  const { currentRole, user } = useAuth();
   const [entities, setEntities] = useState<Entity[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -70,65 +71,50 @@ function CoordinatorEntitiesPageContent() {
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      if (!token) throw new Error('No authentication token available');
-      const headers = { 'Authorization': `Bearer ${token}` };
-
-      const [entitiesRes, usersRes, assignmentsRes] = await Promise.all([
-        fetch('/api/v1/entities', { headers }),
-        fetch('/api/v1/users/assignable', { headers }),
-        fetch('/api/v1/entity-assignments', { headers })
+      const [entitiesResult, usersResult, assignmentsResult] = await Promise.all([
+        apiGet('/api/v1/entities'),
+        apiGet('/api/v1/users/assignable'),
+        apiGet('/api/v1/entity-assignments')
       ]);
 
-      if (entitiesRes.ok) {
-        const entitiesData = await entitiesRes.json();
-        setEntities(entitiesData.data || []);
+      if (entitiesResult.success) {
+        setEntities(entitiesResult.data?.data || entitiesResult.data || []);
       }
 
-      if (usersRes.ok) {
-        const usersData = await usersRes.json();
-        setUsers(usersData.data || []);
+      if (usersResult.success) {
+        setUsers(usersResult.data?.data || usersResult.data || []);
       }
 
-      if (assignmentsRes.ok) {
-        const assignmentsData = await assignmentsRes.json();
-        setAssignments(assignmentsData.data || []);
+      if (assignmentsResult.success) {
+        setAssignments(assignmentsResult.data?.data || assignmentsResult.data || []);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
     }
     setIsLoading(false);
-  }, [token]);
+  }, []);
 
   const assignUsersToEntity = async () => {
     if (!selectedEntity || selectedUserIds.length === 0) return;
 
     setIsAssigning(true);
     try {
-      if (!token) throw new Error('No authentication token available');
-      
       // Create assignments for each selected user
       const assignmentPromises = selectedUserIds.map(userId =>
-        fetch('/api/v1/entity-assignments', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            userId,
-            entityId: selectedEntity,
-            assignedBy: (user as any)?.id
-          })
+        apiPost('/api/v1/entity-assignments', {
+          userId,
+          entityId: selectedEntity,
+          assignedBy: (user as any)?.id
         })
       );
 
-      const responses = await Promise.all(assignmentPromises);
-      const failedAssignments = responses.filter(res => !res.ok);
+      const results = await Promise.all(assignmentPromises);
+      const failedAssignments = results.filter(res => !res.success);
       
       if (failedAssignments.length === 0) {
         setSelectedUserIds([]);
         await fetchData(); // Refresh assignments
-        alert(`Successfully assigned ${responses.length} user(s) to entity`);
+        alert(`Successfully assigned ${results.length} user(s) to entity`);
       } else {
         alert(`${failedAssignments.length} assignment(s) failed. Check for existing assignments.`);
         await fetchData(); // Refresh to show current state
@@ -144,16 +130,12 @@ function CoordinatorEntitiesPageContent() {
     if (!confirm('Are you sure you want to remove this assignment?')) return;
 
     try {
-      if (!token) throw new Error('No authentication token available');
-      const response = await fetch(`/api/v1/entity-assignments/${assignmentId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const result = await apiDelete(`/api/v1/entity-assignments/${assignmentId}`);
 
-      if (response.ok) {
+      if (result.success) {
         await fetchData(); // Refresh assignments
       } else {
-        alert('Failed to delete assignment');
+        alert(result.error || 'Failed to delete assignment');
       }
     } catch (error) {
       console.error('Error deleting assignment:', error);

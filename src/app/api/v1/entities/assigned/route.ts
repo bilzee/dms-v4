@@ -22,6 +22,7 @@ export const GET = withAuth(async (request, context) => {
     const entities = await entityAssignmentService.getAssignedEntities(query.userId)
     
     return NextResponse.json({
+      success: true,
       data: entities,
       meta: {
         timestamp: new Date().toISOString(),

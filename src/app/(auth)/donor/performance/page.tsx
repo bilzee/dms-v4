@@ -12,8 +12,8 @@ import { User, AlertCircle } from 'lucide-react';
 import { SafeDataLoader } from '@/components/shared/SafeDataLoader';
 import { EmptyState } from '@/components/shared/EmptyState';
 
-// Token utilities
-import { getAuthToken } from '@/lib/auth/token-utils';
+// API utilities
+import { apiGet } from '@/lib/api';
 
 // Component to fetch and display performance data
 function PerformanceDashboardContent() {
@@ -23,20 +23,12 @@ function PerformanceDashboardContent() {
   const fetchDonorData = async () => {
     if (!user) throw new Error('User not authenticated')
     
-    const token = getAuthToken()
-    if (!token) throw new Error('No authentication token available')
-    
-    const response = await fetch('/api/v1/users/me/donor', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch donor information');
+    const result = await apiGet('/api/v1/users/me/donor');
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch donor information');
     }
     
-    return response.json();
+    return result;
   };
 
   if (!isAuthenticated) {

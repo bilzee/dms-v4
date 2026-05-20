@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft, AlertTriangle, CheckCircle, Save } from 'lucide-react'
-import { useAuth } from '@/hooks/useAuth'
+import { apiGet, apiPut } from '@/lib/api'
 import { RapidAssessmentService } from '@/lib/services/rapid-assessment.service'
 
 // Import assessment forms
@@ -63,7 +63,6 @@ const assessmentTypes = [
 function EditAssessmentContent() {
   const router = useRouter()
   const params = useParams()
-  const { token, user } = useAuth()
   const [assessment, setAssessment] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -74,14 +73,9 @@ function EditAssessmentContent() {
   useEffect(() => {
     const fetchAssessment = async () => {
       try {
-        const response = await fetch(`/api/v1/rapid-assessments/${assessmentId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
+        const result = await apiGet(`/api/v1/rapid-assessments/${assessmentId}`)
         
-        if (response.ok) {
-          const result = await response.json()
+        if (result.success) {
           const assessmentData = result.data
           
           // Check if assessment is rejected
@@ -104,10 +98,10 @@ function EditAssessmentContent() {
       }
     }
 
-    if (assessmentId && token) {
+    if (assessmentId) {
       fetchAssessment()
     }
-  }, [assessmentId, token])
+  }, [assessmentId])
 
   const handleGoBack = () => {
     router.push('/assessor/rapid-assessments')
@@ -142,30 +136,21 @@ function EditAssessmentContent() {
       }
 
       // Update the assessment
-      const response = await fetch(`/api/v1/rapid-assessments/${assessmentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          ...typeSpecificData,
-          status: 'SUBMITTED', // Reset to submitted for re-verification
-          verificationStatus: 'PENDING',
-          rejectionReason: null,
-          verificationComment: null,
-          verifiedAt: null,
-          verifiedBy: null
-        })
+      const result = await apiPut(`/api/v1/rapid-assessments/${assessmentId}`, {
+        ...typeSpecificData,
+        status: 'SUBMITTED', // Reset to submitted for re-verification
+        verificationStatus: 'PENDING',
+        rejectionReason: null,
+        verificationComment: null,
+        verifiedAt: null,
+        verifiedBy: null
       })
       
-      if (response.ok) {
-        const result = await response.json()
-        console.log('Assessment updated successfully:', result)
+      if (result.success) {
+        console.log('Assessment updated successfully:', result.data)
         router.push('/assessor/rapid-assessments')
       } else {
-        const errorData = await response.json()
-        setError(errorData.error || 'Failed to update assessment')
+        setError(result.error || 'Failed to update assessment')
       }
     } catch (err) {
       setError('Error updating assessment')

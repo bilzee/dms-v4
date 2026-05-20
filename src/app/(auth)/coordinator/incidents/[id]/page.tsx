@@ -10,7 +10,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { notFound } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useCoordinatorIncident, useIncidentAssessmentSummary } from '@/hooks/useCoordinatorIncident';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -64,32 +64,10 @@ export default function IncidentDetailPage({ params }: IncidentDetailPageProps) 
   const incidentId = params.id;
 
   // Fetch incident details
-  const { data: incident, isLoading, error } = useQuery({
-    queryKey: ['incident', incidentId],
-    queryFn: async () => {
-      const response = await fetch(`/api/v1/incidents/${incidentId}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Incident not found');
-        }
-        throw new Error('Failed to fetch incident');
-      }
-      return response.json();
-    }
-  });
+  const { data: incident, isLoading, error } = useCoordinatorIncident(incidentId);
 
   // Get assessment summary for this incident
-  const { data: assessmentSummary, isLoading: summaryLoading } = useQuery({
-    queryKey: ['incident-assessment-summary', incidentId],
-    queryFn: async () => {
-      const response = await fetch(`/api/v1/incidents/${incidentId}/assessment-summary`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch assessment summary');
-      }
-      return response.json();
-    },
-    enabled: !!incidentId
-  });
+  const { data: assessmentSummary, isLoading: summaryLoading } = useIncidentAssessmentSummary(incidentId);
 
   if (isLoading) {
     return <div>Loading incident details...</div>;

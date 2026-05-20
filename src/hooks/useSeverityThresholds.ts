@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '@/lib/api'
+import { getAuthToken } from '@/lib/auth/token-utils'
 
 interface SeverityThreshold {
   id: string
@@ -115,8 +116,9 @@ export function useSeverityThresholds(impactType: 'POPULATION' | 'PRELIMINARY') 
   const query = useQuery({
     queryKey: ['severityThresholds', impactType],
     queryFn: () => fetchSeverityThresholds(impactType),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    enabled: !!getAuthToken(),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   })
 
   // Calculate severity based on thresholds

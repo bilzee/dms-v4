@@ -18,6 +18,7 @@ import { FileText, Calendar, MapPin, User, AlertTriangle, CheckCircle, Clock } f
 import { responseOfflineService } from '@/lib/services/response-offline.service'
 import { ResponseService } from '@/lib/services/response.service'
 import { useAuthStore } from '@/stores/auth.store'
+import { apiGet } from '@/lib/api'
 
 interface AssessmentSelectorProps {
   entityId: string
@@ -65,18 +66,11 @@ export function AssessmentSelector({
         return []
       }
       
-      const response = await fetch(`/api/v1/assessments/verified?entityId=${entityId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch verified assessments')
+      const result = await apiGet(`/api/v1/assessments/verified?entityId=${entityId}`)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch verified assessments')
       }
-      
-      const result = await response.json()
-      const assessments = result.data || []
+      const assessments = (result.data as any)?.data || result.data || []
       
       // Check each assessment for existing responses
       const assessmentsWithConflicts = await Promise.all(

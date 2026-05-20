@@ -41,6 +41,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
 
     return NextResponse.json(
       {
+        success: true,
         data: {
           roles
         },
@@ -112,7 +113,7 @@ export const POST = withAuth(async (request: NextRequest, context) => {
     });
 
     return NextResponse.json(
-      { data: { role }, meta: { timestamp: new Date().toISOString(), version: '1.0.0', requestId: uuidv4() } },
+      { success: true, data: { role }, meta: { timestamp: new Date().toISOString(), version: '1.0.0', requestId: uuidv4() } },
       { status: 201 }
     );
   } catch (error) {
@@ -180,7 +181,7 @@ export const PUT = withAuth(async (request: NextRequest, context) => {
     });
 
     return NextResponse.json(
-      { data: { role }, meta: { timestamp: new Date().toISOString(), version: '1.0.0', requestId: uuidv4() } },
+      { success: true, data: { role }, meta: { timestamp: new Date().toISOString(), version: '1.0.0', requestId: uuidv4() } },
       { status: 200 }
     );
   } catch (error) {

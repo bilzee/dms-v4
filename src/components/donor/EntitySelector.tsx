@@ -31,8 +31,8 @@ import {
 import { useAuthStore } from '@/stores/auth.store'
 import { cn } from '@/lib/utils'
 
-// Token utilities
-import { getAuthToken } from '@/lib/auth/token-utils'
+// API utilities
+import { apiGet } from '@/lib/api'
 
 interface Entity {
   id: string
@@ -66,24 +66,14 @@ export function EntitySelector({ onEntitySelect, showStats = true }: EntitySelec
   const fetchEntities = async () => {
     if (!user) throw new Error('User not authenticated')
     
-    const token = getAuthToken()
-    if (!token) throw new Error('No authentication token available')
-    
     const params = new URLSearchParams()
     if (search) params.append('search', search)
     if (typeFilter && typeFilter !== 'all') params.append('type', typeFilter)
     
-    const response = await fetch(`/api/v1/donors/entities?${params}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch entities')
+    const result = await apiGet(`/api/v1/donors/entities?${params}`)
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch entities')
     }
-    
-    const result = await response.json()
     return result.data
   }
 

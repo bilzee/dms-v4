@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiGet } from '@/lib/api';
+import { createAuthenticatedFetch } from '@/lib/auth/token-utils';
 import { ConflictApiResponse, ConflictSummary, ConflictFilters, PaginatedConflictResponse } from '@/types/conflict';
 
 interface UseConflictsReturn {
@@ -84,8 +85,7 @@ export function useConflicts(): UseConflictsReturn {
       if (filters.dateFrom) queryParams.set('dateFrom', filters.dateFrom);
       if (filters.dateTo) queryParams.set('dateTo', filters.dateTo);
 
-      // Keep raw fetch for CSV file download (apiGet parses JSON)
-      const response = await fetch(`/api/v1/sync/conflicts/export?${queryParams.toString()}`);
+      const response = await createAuthenticatedFetch(`/api/v1/sync/conflicts/export?${queryParams.toString()}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

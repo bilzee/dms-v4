@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '@/lib/api'
+import { getAuthToken } from '@/lib/auth/token-utils'
 import { z } from 'zod'
 
 // Entity type definition based on the API response
@@ -36,8 +37,9 @@ export function useEntities() {
   return useQuery({
     queryKey: entityKeys.lists(),
     queryFn: fetchEntities,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    enabled: !!getAuthToken(),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     retry: 2,
   })
 }

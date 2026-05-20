@@ -19,6 +19,7 @@ import { Card, CardContent } from '@/components/ui/card'
 // Internal services and hooks
 import type { Entity } from '@/lib/services/entity-assignment.service'
 import { useAuthStore } from '@/stores/auth.store'
+import { apiGet } from '@/lib/api'
 
 interface MultipleEntitySelectorProps {
   value?: string[]
@@ -59,19 +60,12 @@ export function MultipleEntitySelector({
       }
 
       // Get entities available for assessment by this user via API
-      const response = await fetch(`/api/entities/available-for-assessment?userId=${(user as any).id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to fetch available entities')
+      const result = await apiGet(`/api/entities/available-for-assessment?userId=${(user as any).id}`)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch available entities')
       }
-      
-      const data = await response.json()
-      return data.entities || []
+      const d = result.data as any
+      return d?.entities || d?.data?.entities || []
     },
     enabled: !!user && !!token && isClient, // Only run query on client side after hydration
     staleTime: 5 * 60 * 1000, // 5 minutes

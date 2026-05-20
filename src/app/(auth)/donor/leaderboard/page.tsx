@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Info, RefreshCw } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { getAuthToken } from '@/lib/auth/token-utils';
+import { apiGet } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 
@@ -20,21 +20,11 @@ export default function LeaderboardPage() {
   } = useQuery({
     queryKey: ['leaderboard-criteria'],
     queryFn: async () => {
-      const token = getAuthToken();
-      if (!token) throw new Error('No authentication token available');
-      
-      const response = await fetch('/api/v1/leaderboard/criteria', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch ranking criteria');
+      const result = await apiGet('/api/v1/leaderboard/criteria');
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch ranking criteria');
       }
-      
-      const data = await response.json();
-      return data.success ? data.data : null;
+      return result.data || null;
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     refetchInterval: 15 * 60 * 1000 // Refresh every 15 minutes

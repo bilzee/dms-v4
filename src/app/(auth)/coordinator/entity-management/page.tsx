@@ -33,7 +33,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { apiPost, apiPut, apiDelete } from '@/lib/api';
+import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api';
 import Link from 'next/link';
 
 interface Entity {
@@ -78,7 +78,7 @@ const entityTypeConfig = {
 } as const;
 
 export default function EntityManagementPage() {
-  const { token } = useAuth();
+  useAuth();
   const queryClient = useQueryClient();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -99,14 +99,10 @@ export default function EntityManagementPage() {
       if (typeFilter !== 'all') params.append('type', typeFilter);
       if (activeFilter !== 'all') params.append('isActive', activeFilter);
       
-      const response = await fetch(`/api/v1/entities?${params}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (!response.ok) throw new Error('Failed to fetch entities');
-      return response.json();
+      const result = await apiGet(`/api/v1/entities?${params}`);
+      if (!result.success) throw new Error(result.error || 'Failed to fetch entities');
+      return result.data;
     },
-    enabled: !!token,
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 

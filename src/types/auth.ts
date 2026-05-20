@@ -18,6 +18,7 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
+  success?: true
   data: {
     user: Omit<AuthUser, 'passwordHash'>
     token: string
@@ -35,6 +36,7 @@ export interface RefreshTokenRequest {
 }
 
 export interface RefreshTokenResponse {
+  success?: true
   data: {
     token: string
   }
@@ -56,6 +58,7 @@ export interface CreateUserRequest {
 }
 
 export interface CreateUserResponse {
+  success?: true
   data: {
     user: Omit<AuthUser, 'passwordHash'>
   }
@@ -71,6 +74,7 @@ export interface AssignRolesRequest {
 }
 
 export interface UserMeResponse {
+  success?: true
   data: {
     user: Omit<AuthUser, 'passwordHash'>
     permissions: string[]

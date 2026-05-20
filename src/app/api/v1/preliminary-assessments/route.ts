@@ -26,6 +26,7 @@ export const GET = withAuth(async (request, context) => {
     const { assessments, total, totalPages } = await PreliminaryAssessmentService.findAll(query);
 
     const response: PreliminaryAssessmentListResponse = {
+      success: true as const,
       data: assessments,
       pagination: {
         page: query.page,
@@ -75,6 +76,7 @@ export const POST = withAuth(async (request, context) => {
 
     return NextResponse.json(
       {
+        success: true,
         data: assessment,
         meta: {
           timestamp: new Date().toISOString(),

@@ -4,6 +4,7 @@ import React from 'react'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
+import { apiGet } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -67,7 +68,6 @@ const TREND_ICONS = {
 }
 
 export function GapAnalysis({ entityId }: GapAnalysisProps) {
-  const { token } = useAuth()
   const [filters, setFilters] = useState({
     severity: 'all-severities',
     category: 'all-categories',
@@ -84,17 +84,13 @@ export function GapAnalysis({ entityId }: GapAnalysisProps) {
         ...(filters.category && filters.category !== 'all-categories' && { categories: filters.category })
       })
       
-      const response = await fetch(`/api/v1/donors/entities/${entityId}/gap-analysis?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      if (!response.ok) {
-        throw new Error('Failed to fetch gap analysis')
+      const result = await apiGet<{ success: boolean; data: GapAnalysisResponse }>(`/api/v1/donors/entities/${entityId}/gap-analysis?${params}`)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch gap analysis')
       }
-      return response.json() as Promise<{ success: boolean; data: GapAnalysisResponse }>
+      return result.data as { success: boolean; data: GapAnalysisResponse }
     },
-    enabled: !!entityId && !!token
+    enabled: !!entityId
   })
 
   const handleFilterChange = (key: string, value: string) => {

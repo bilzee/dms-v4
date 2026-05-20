@@ -62,6 +62,7 @@ export const GET = withAuth(async (request, context) => {
     }
 
     return NextResponse.json({
+      success: true,
       message: 'Historical assessment priority update endpoint',
       usage: {
         method: 'POST',

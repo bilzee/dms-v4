@@ -82,6 +82,7 @@ export const GET = withAuth(
         }
 
         return NextResponse.json({
+          success: true,
           data: collaborationData,
           meta: {
             timestamp: new Date().toISOString(),
@@ -213,6 +214,7 @@ export const POST = withAuth(
         }
 
         return NextResponse.json({
+          success: true,
           data: responseData,
           meta: {
             timestamp: new Date().toISOString(),

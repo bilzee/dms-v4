@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ArrowLeft, CheckCircle, Clock, Package, MapPin, AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { apiGet } from '@/lib/api'
 
 interface Response {
   id: string
@@ -67,7 +68,6 @@ interface Response {
 export default function ResponseDetailsPage() {
   const params = useParams()
   const router = useRouter()
-  const { token } = useAuth()
   const [response, setResponse] = useState<Response | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -75,18 +75,11 @@ export default function ResponseDetailsPage() {
   useEffect(() => {
     const fetchResponse = async () => {
       try {
-        if (token) {
-          const res = await fetch(`/api/v1/responses/${params.id}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          })
-          if (!res.ok) {
-            throw new Error('Response not found')
-          }
-          const data = await res.json()
-          setResponse(data.data)
+        const result = await apiGet(`/api/v1/responses/${params.id}`)
+        if (!result.success) {
+          throw new Error(result.error || 'Response not found')
         }
+        setResponse(result.data)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load response')
       } finally {
@@ -94,10 +87,10 @@ export default function ResponseDetailsPage() {
       }
     }
 
-    if (params.id && token) {
+    if (params.id) {
       fetchResponse()
     }
-  }, [params.id, token])
+  }, [params.id])
 
   const getStatusBadge = (status: string) => {
     switch (status) {

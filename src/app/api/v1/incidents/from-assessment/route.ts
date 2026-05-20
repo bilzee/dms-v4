@@ -31,6 +31,7 @@ export const POST = withAuth(async (request: NextRequest, context) => {
 
       return NextResponse.json(
         {
+          success: true,
           data: {
             incident: result.incident,
             assessment: result.updatedAssessment

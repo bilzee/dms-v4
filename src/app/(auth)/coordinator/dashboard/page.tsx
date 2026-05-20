@@ -11,7 +11,7 @@ import { VerificationQueueManagement } from '@/components/dashboards/crisis/Veri
 import { useVerificationStore } from '@/stores/verification.store';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getAuthToken } from '@/lib/auth/token-utils';
+import { apiGet } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CoordinatorDashboard() {
@@ -29,21 +29,13 @@ export default function CoordinatorDashboard() {
   } = useQuery({
     queryKey: ['coordinator-dashboard-stats'],
     queryFn: async () => {
-      const token = getAuthToken();
-      if (!token) throw new Error('No authentication token available');
+      const result = await apiGet('/api/v1/coordinator/dashboard/stats');
       
-      const response = await fetch('/api/v1/coordinator/dashboard/stats', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch dashboard statistics');
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch dashboard statistics');
       }
       
-      const data = await response.json();
-      return data.success ? data.data : null;
+      return result.data ?? null;
     },
     enabled: !!token && isClient,
     staleTime: 30000, // Cache for 30 seconds

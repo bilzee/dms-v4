@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
+import { useAdminDonorDetail } from '@/hooks/useAdminDonorDetail'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -56,39 +56,10 @@ interface DonorDetails {
 export default function DonorDetailsPage() {
   const params = useParams()
   const router = useRouter()
-  const [donor, setDonor] = useState<DonorDetails | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
   const donorId = params.id as string
 
-  useEffect(() => {
-    fetchDonorDetails()
-  }, [donorId])
-
-  const fetchDonorDetails = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch(`/api/v1/donors/${donorId}`)
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          setError('Donor not found')
-        } else {
-          setError('Failed to load donor details')
-        }
-        return
-      }
-
-      const data = await response.json()
-      setDonor(data.data)
-    } catch (err) {
-      setError('Failed to load donor details')
-      console.error('Error fetching donor details:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: donor, isLoading: loading, error: queryError } = useAdminDonorDetail(donorId)
+  const error = queryError ? queryError.message : null
 
   const getDonorTypeColor = (type: string) => {
     const colors = {

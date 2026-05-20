@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAdminDonorDetail, useUpdateDonor } from '@/hooks/useAdminDonorDetail'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -63,12 +64,11 @@ interface DonorDetails {
 export default function EditDonorPage() {
   const params = useParams()
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
+  const donorId = params.id as string
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [donor, setDonor] = useState<DonorDetails | null>(null)
-
-  const donorId = params.id as string
+  const { data: donor, isLoading: loading } = useAdminDonorDetail(donorId)
+  const updateDonorMutation = useUpdateDonor(donorId)
 
   const form = useForm<EditDonorFormData>({
     resolver: zodResolver(EditDonorFormSchema),
@@ -87,47 +87,21 @@ export default function EditDonorPage() {
   })
 
   useEffect(() => {
-    fetchDonorDetails()
-  }, [donorId])
-
-  const fetchDonorDetails = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch(`/api/v1/donors/${donorId}`)
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          setError('Donor not found')
-        } else {
-          setError('Failed to load donor details')
-        }
-        return
-      }
-
-      const data = await response.json()
-      const donorData = data.data
-      setDonor(donorData)
-
-      // Populate form with existing data
+    if (donor) {
       form.reset({
-        name: donorData.name || '',
-        organization: donorData.organization || '',
-        contactEmail: donorData.contactEmail || '',
-        contactPhone: donorData.contactPhone || '',
-        isActive: donorData.isActive,
+        name: donor.name || '',
+        organization: donor.organization || '',
+        contactEmail: donor.contactEmail || '',
+        contactPhone: donor.contactPhone || '',
+        isActive: donor.isActive,
         userCredentials: {
-          name: donorData.user.name || '',
-          email: donorData.user.email || '',
-          username: donorData.user.username || ''
+          name: donor.user?.name || '',
+          email: donor.user?.email || '',
+          username: donor.user?.username || ''
         }
       })
-    } catch (err) {
-      setError('Failed to load donor details')
-      console.error('Error fetching donor details:', err)
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [donor, form])
 
   const onSubmit = async (data: EditDonorFormData) => {
     try {
@@ -143,41 +117,21 @@ export default function EditDonorPage() {
         userCredentials: data.userCredentials
       }
 
-      const response = await fetch(`/api/v1/donors/${donorId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updateData)
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        if (response.status === 409) {
-          // Conflict error
-          let errorMsg = 'The information you provided conflicts with existing data.'
-          if (result.error.toLowerCase().includes('organization')) {
-            errorMsg = 'An organization with this name or contact email already exists.'
-          } else if (result.error.toLowerCase().includes('user')) {
-            errorMsg = 'A user with this email or username already exists.'
-          }
+      try {
+        await updateDonorMutation.mutateAsync(updateData)
+        toast.success('Donor updated successfully!')
+        router.push(`/admin/donors/${donorId}`)
+      } catch (err: any) {
+        const errorMsg = err?.message || 'Failed to update donor'
+        if (err?.message?.includes('conflict') || err?.message?.includes('409')) {
+          const conflictMsg = 'An organization with this name or contact email already exists.'
+          setError(conflictMsg)
+          toast.error(conflictMsg)
+        } else {
           setError(errorMsg)
           toast.error(errorMsg)
-        } else {
-          setError(result.error || 'Failed to update donor')
-          toast.error(result.error || 'Failed to update donor')
         }
-        return
       }
-
-      toast.success('Donor updated successfully!')
-      router.push(`/admin/donors/${donorId}`)
-    } catch (err) {
-      const errorMsg = 'Failed to update donor. Please try again.'
-      setError(errorMsg)
-      toast.error(errorMsg)
-      console.error('Error updating donor:', err)
     } finally {
       setSaving(false)
     }

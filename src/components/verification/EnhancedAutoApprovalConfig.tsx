@@ -41,6 +41,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { apiGet, apiPut, apiPost } from '@/lib/api';
 
 interface EnhancedAutoApprovalConfigProps {
   className?: string;
@@ -130,8 +131,7 @@ interface ConflictDetection {
   }[];
 }
 
-// API functions
-async function fetchAutoApprovalConfigs(token: string, filters?: Partial<ConfigurationFilters>): Promise<{
+async function fetchAutoApprovalConfigs(filters?: Partial<ConfigurationFilters>): Promise<{
   data: AutoApprovalConfigData[];
   summary: {
     totalEntities: number;
@@ -143,52 +143,26 @@ async function fetchAutoApprovalConfigs(token: string, filters?: Partial<Configu
   };
 }> {
   const params = new URLSearchParams();
-  
   if (filters?.entityType && filters.entityType !== 'all') {
     params.append('entityType', filters.entityType);
   }
-  
   if (filters?.enabledStatus === 'enabled') {
     params.append('enabledOnly', 'true');
   }
-
-  const response = await fetch(`/api/v1/verification/auto-approval?${params.toString()}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to fetch auto-approval configurations');
+  const qs = params.toString() ? `?${params.toString()}` : ''
+  const result = await apiGet(`/api/v1/verification/auto-approval${qs}`)
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to fetch auto-approval configurations')
   }
-  
-  return response.json();
+  return result.data as { data: AutoApprovalConfigData[]; summary: { totalEntities: number; enabledCount: number; disabledCount: number; totalAutoVerifiedAssessments: number; totalAutoVerifiedResponses: number; totalAutoVerified: number; } }
 }
 
-async function detectConfigurationConflicts(
-  entityIds: string[], 
-  config: BulkUpdateRequest,
-  token: string
-): Promise<ConflictDetection> {
-  const response = await fetch('/api/v1/verification/auto-approval/validate', {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      entityIds,
-      config
-    }),
-  });
-  
-  if (!response.ok) {
-    // If validation endpoint doesn't exist, return no conflicts
-    return { hasConflicts: false, conflicts: [] };
+async function detectConfigurationConflicts(entityIds: string[], config: BulkUpdateRequest): Promise<ConflictDetection> {
+  const result = await apiPost('/api/v1/verification/auto-approval/validate', { entityIds, config })
+  if (!result.success) {
+    return { hasConflicts: false, conflicts: [] }
   }
-  
-  return response.json();
+  return result.data as ConflictDetection
 }
 
 export function EnhancedAutoApprovalConfig({ 
@@ -238,7 +212,7 @@ export function EnhancedAutoApprovalConfig({
     queryKey: ['auto-approval-configs', filters],
     queryFn: () => {
       if (!token) throw new Error('No authentication token available');
-      return fetchAutoApprovalConfigs(token, filters);
+      return fetchAutoApprovalConfigs(filters);
     },
     staleTime: 60000,
     enabled: !!token,
@@ -247,23 +221,11 @@ export function EnhancedAutoApprovalConfig({
   const updateMutation = useMutation({
     mutationFn: async ({ entityId, config }: { entityId: string; config: EntityUpdateRequest }) => {
       if (!token) throw new Error('No authentication token available');
-      
-      const response = await fetch(`/api/v1/entities/${entityId}/auto-approval`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(config),
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update auto-approval configuration');
+      const result = await apiPut(`/api/v1/entities/${entityId}/auto-approval`, config)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update auto-approval configuration')
       }
-      
-      const result = await response.json();
-      return result.data;
+      return result.data
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['auto-approval-configs'] });
@@ -281,34 +243,16 @@ export function EnhancedAutoApprovalConfig({
   const bulkUpdateMutation = useMutation({
     mutationFn: async ({ entityIds, config }: { entityIds: string[]; config: BulkUpdateRequest }) => {
       if (!token) throw new Error('No authentication token available');
-      
-      // First, check for conflicts
-      const conflicts = await detectConfigurationConflicts(entityIds, config, token);
+      const conflicts = await detectConfigurationConflicts(entityIds, config);
       setConflictCheck(conflicts);
-      
       if (conflicts.hasConflicts) {
         throw new Error(`Configuration conflicts detected: ${conflicts.conflicts.map(c => c.description).join(', ')}`);
       }
-
-      const response = await fetch('/api/v1/verification/auto-approval', {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          ...config,
-          entityIds
-        }),
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to bulk update auto-approval configurations');
+      const result = await apiPut('/api/v1/verification/auto-approval', { ...config, entityIds })
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to bulk update auto-approval configurations')
       }
-      
-      const result = await response.json();
-      return result.data;
+      return result.data
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['auto-approval-configs'] });

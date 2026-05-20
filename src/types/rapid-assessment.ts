@@ -118,6 +118,7 @@ export interface SecurityAssessment {
 
 // API Response Types
 export interface RapidAssessmentResponse {
+  success?: true
   data: RapidAssessmentWithData
   meta: {
     timestamp: string
@@ -127,6 +128,7 @@ export interface RapidAssessmentResponse {
 }
 
 export interface RapidAssessmentListResponse {
+  success?: true
   data: RapidAssessmentWithData[]
   pagination: {
     page: number

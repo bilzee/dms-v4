@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { apiPost } from '@/lib/api';
 import { 
   LayoutDashboard,
   FileText,
@@ -532,7 +533,7 @@ export const Navigation = () => {
 
     const handleLogout = async () => {
       try {
-        await fetch('/api/v1/auth/logout', { method: 'POST' });
+        await apiPost('/api/v1/auth/logout');
       } catch {}
       router.push('/login');
     };

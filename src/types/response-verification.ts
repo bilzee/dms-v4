@@ -60,6 +60,7 @@ export interface ResponseVerificationFilters {
 }
 
 export interface ResponseVerificationQueueResponse {
+  success?: true;
   data: ResponseVerificationQueueItem[];
   pagination: {
     page: number;

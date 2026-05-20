@@ -31,6 +31,7 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { apiGet, apiPost } from '@/lib/api';
 import type { Donor, Entity, Incident, DonorCommitment } from '@prisma/client';
 
 interface EntityDonorAssignmentProps {
@@ -51,7 +52,7 @@ interface CommitmentFormData {
 }
 
 export function EntityDonorAssignment({ className }: EntityDonorAssignmentProps) {
-  const { token, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -74,8 +75,8 @@ export function EntityDonorAssignment({ className }: EntityDonorAssignmentProps)
     data: (DonorCommitment & { donor: Donor; entity: Entity; incident: Incident })[];
     pagination: any;
   }>({
-    queryKey: ['entity-donor-assignments', filters, searchTerm, token],
-    enabled: isAuthenticated && !!token && token.length > 10,
+    queryKey: ['entity-donor-assignments', filters, searchTerm],
+    enabled: isAuthenticated,
     queryFn: async () => {
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
@@ -83,82 +84,54 @@ export function EntityDonorAssignment({ className }: EntityDonorAssignmentProps)
       });
       if (searchTerm) params.append('search', searchTerm);
 
-      const response = await fetch(`/api/v1/entities/commitments?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch assignments');
-      const data = await response.json();
-      return data.success ? data.data : { data: [], pagination: {} };
+      const result = await apiGet(`/api/v1/entities/commitments?${params}`);
+      if (!result.success) throw new Error(result.error || 'Failed to fetch assignments');
+      return result.data || { data: [], pagination: {} };
     }
   });
 
   // Fetch entities for dropdown
   const { data: entities } = useQuery<Entity[]>({
-    queryKey: ['entities', token],
-    enabled: isAuthenticated && !!token && token.length > 10,
+    queryKey: ['entities'],
+    enabled: isAuthenticated,
     queryFn: async () => {
-      const response = await fetch('/api/v1/entities', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) return [];
-      const data = await response.json();
-      const result = data.success ? data.data : [];
-      return Array.isArray(result) ? result : [];
+      const result = await apiGet('/api/v1/entities');
+      if (!result.success) return [];
+      const data = result.data;
+      return Array.isArray(data) ? data : [];
     }
   });
 
   // Fetch donors for dropdown
   const { data: donors } = useQuery<Donor[]>({
-    queryKey: ['donors', token],
-    enabled: isAuthenticated && !!token && token.length > 10,
+    queryKey: ['donors'],
+    enabled: isAuthenticated,
     queryFn: async () => {
-      const response = await fetch('/api/v1/donors', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) return [];
-      const data = await response.json();
-      const result = data.success ? data.data : [];
-      return Array.isArray(result) ? result : [];
+      const result = await apiGet('/api/v1/donors');
+      if (!result.success) return [];
+      const data = result.data;
+      return Array.isArray(data) ? data : [];
     }
   });
 
   // Fetch incidents for dropdown
   const { data: incidents } = useQuery<Incident[]>({
-    queryKey: ['incidents', token],
-    enabled: isAuthenticated && !!token && token.length > 10,
+    queryKey: ['incidents'],
+    enabled: isAuthenticated,
     queryFn: async () => {
-      const response = await fetch('/api/v1/incidents', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) return [];
-      const data = await response.json();
-      const result = data.success ? data.data : [];
-      return Array.isArray(result) ? result : [];
+      const result = await apiGet('/api/v1/incidents');
+      if (!result.success) return [];
+      const data = result.data;
+      return Array.isArray(data) ? data : [];
     }
   });
 
   // Create commitment mutation
   const createCommitmentMutation = useMutation({
     mutationFn: async (data: CommitmentFormData) => {
-      const response = await fetch('/api/v1/commitments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(data)
-      });
-      if (!response.ok) throw new Error('Failed to create commitment');
-      const result = await response.json();
-      return result;
+      const result = await apiPost('/api/v1/commitments', data);
+      if (!result.success) throw new Error(result.error || 'Failed to create commitment');
+      return result.data;
     },
     onSuccess: () => {
       toast.success('Commitment created successfully!');
@@ -180,15 +153,9 @@ export function EntityDonorAssignment({ className }: EntityDonorAssignmentProps)
   // Send notification mutation
   const sendNotificationMutation = useMutation({
     mutationFn: async ({ commitmentId, donorId }: { commitmentId: string; donorId: string }) => {
-      const response = await fetch(`/api/v1/commitments/${commitmentId}/notify`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to send notification');
-      const result = await response.json();
-      return result;
+      const result = await apiPost(`/api/v1/commitments/${commitmentId}/notify`);
+      if (!result.success) throw new Error(result.error || 'Failed to send notification');
+      return result.data;
     },
     onSuccess: () => {
       toast.success('Notification sent to donor!');

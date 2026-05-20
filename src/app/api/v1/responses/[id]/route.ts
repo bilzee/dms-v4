@@ -44,6 +44,7 @@ export const GET = withAuth(
         }
 
         const responseData: GetResponseResponse = {
+          success: true,
           data: response as any,
           meta: {
             timestamp: new Date().toISOString(),
@@ -124,6 +125,7 @@ export const PUT = withAuth(
         }
 
         const responseData: UpdateResponseResponse = {
+          success: true,
           data: response as any,
           meta: {
             timestamp: new Date().toISOString(),

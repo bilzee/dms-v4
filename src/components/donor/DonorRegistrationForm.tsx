@@ -22,6 +22,10 @@ import { Separator } from '@/components/ui/separator'
 // Icons
 import { Building, User, Mail, Phone, Shield, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react'
 
+// API utilities
+import { apiPost } from '@/lib/api'
+import { setAuthToken } from '@/lib/auth/token-utils'
+
 // Types and validation
 import { DonorRegistrationInput } from '@/lib/validation/donor'
 
@@ -81,32 +85,24 @@ export function DonorRegistrationForm({ onSuccess, onCancel }: DonorRegistration
 
   const registrationMutation = useMutation({
     mutationFn: async (data: DonorRegistrationInput) => {
-      const response = await fetch('/api/v1/donors', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      })
+      const result = await apiPost('/api/v1/donors', data)
       
-      if (!response.ok) {
-        const error = await response.json()
-        const errorData = {
-          status: response.status,
-          message: error.error || 'Registration failed',
-          details: error.details || null
+      if (!result.success) {
+        throw {
+          status: 400,
+          message: result.error || 'Registration failed',
+          details: null
         }
-        throw errorData
       }
       
-      return response.json()
+      return result
     },
     onSuccess: (data) => {
       // Clear any previous errors
       setErrorMessage(null)
       
       // Store auth token
-      localStorage.setItem('auth_token', data.data.token)
+      setAuthToken(data.data.token)
       localStorage.setItem('user_data', JSON.stringify(data.data.user))
       
       toast.success('Registration successful! Welcome to the platform.')

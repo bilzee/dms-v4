@@ -42,6 +42,7 @@ export const GET = withAuth(
         }
 
         return NextResponse.json({
+          success: true,
           data: conflictData,
           meta: {
             timestamp: new Date().toISOString(),

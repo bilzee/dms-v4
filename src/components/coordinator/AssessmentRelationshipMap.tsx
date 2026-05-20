@@ -27,6 +27,9 @@ import type {
 } from '@/types/assessment-relationships';
 import type { Priority, AssessmentType } from '@prisma/client';
 import { useEntityActions } from '@/stores/dashboardLayout.store';
+import { useEntityAssessments, useRelationshipStatistics, useRelationships as useRelationshipsHook } from '@/hooks/useRelationships';
+import { apiGet } from '@/lib/api';
+import { getAuthToken } from '@/lib/auth/token-utils';
 
 // Fix Leaflet default markers
 import L from 'leaflet';
@@ -175,64 +178,29 @@ export function AssessmentRelationshipMap({
   }), [incidentId, entityId, selectedPriorities, dateRange]);
 
   // Fetch latest assessments for hovered entity (for details panel)
-  const { data: entityAssessments, isLoading: assessmentsLoading } = useQuery({
-    queryKey: ['entity-assessments', hoveredEntityId],
-    queryFn: async () => {
-      if (!hoveredEntityId) return null;
-      
-      const response = await fetch(`/api/v1/entities/${hoveredEntityId}/assessments/latest`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch entity assessments');
-      }
-      
-      return response.json();
-    },
-    enabled: !!hoveredEntityId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  const { data: entityAssessments, isLoading: assessmentsLoading } = useEntityAssessments(hoveredEntityId);
 
-  // Fetch relationship data
-  const { data: relationships, isLoading, error } = useQuery({
-    queryKey: ['assessment-relationships', queryParams],
-    queryFn: async () => {
-      const response = await fetch('/api/v1/relationships/statistics?' + new URLSearchParams({
-        ...(queryParams.incidentId && { incidentId: queryParams.incidentId }),
-        ...(queryParams.entityId && { entityId: queryParams.entityId }),
-        ...(queryParams.priorityFilter && { priorityFilter: queryParams.priorityFilter.join(',') }),
-        ...(queryParams.assessmentTypeFilter && { assessmentTypeFilter: queryParams.assessmentTypeFilter.join(',') }),
-        ...(queryParams.startDate && { startDate: queryParams.startDate.toISOString() }),
-        ...(queryParams.endDate && { endDate: queryParams.endDate.toISOString() }),
-      }));
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch relationship data');
-      }
-      
-      return response.json();
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  const relStatsParams: Record<string, string> = {};
+  if (queryParams.incidentId) relStatsParams.incidentId = queryParams.incidentId;
+  if (queryParams.entityId) relStatsParams.entityId = queryParams.entityId;
+  if (queryParams.priorityFilter) relStatsParams.priorityFilter = queryParams.priorityFilter.join(',');
+  if (queryParams.startDate) relStatsParams.startDate = queryParams.startDate.toISOString();
+  if (queryParams.endDate) relStatsParams.endDate = queryParams.endDate.toISOString();
+
+  const { data: relationships, isLoading, error } = useRelationshipStatistics(relStatsParams);
 
   // Fetch detailed relationship data for map markers (without server-side filtering)
   const { data: detailedRelationships } = useQuery({
     queryKey: ['detailed-relationships', incidentId],
     queryFn: async () => {
       if (incidentId) {
-        // Use the same API as EntitySelector to get all entities with calculated severity
-        const response = await fetch(`/api/v1/dashboard/situation?incidentId=${incidentId}&includeEntityAssessments=true`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch incident entities');
-        }
-        
-        const result = await response.json();
-        
+        const result = await apiGet(`/api/v1/dashboard/situation?incidentId=${incidentId}&includeEntityAssessments=true`)
+
         if (!result.success) {
-          throw new Error(result.error || 'Failed to fetch entities');
+          throw new Error(result.error || 'Failed to fetch entities')
         }
-        
-        console.log('Dashboard API response:', result);
+
+        console.log('Dashboard API response:', result.data);
         console.log('Number of entities received:', result.data?.entityAssessments?.length || 0);
         
         // Use entityAssessments from dashboard API (same as EntitySelector)
@@ -280,17 +248,14 @@ export function AssessmentRelationshipMap({
         }
       } else {
         // Get comprehensive relationships (no filters)
-        const response = await fetch('/api/v1/relationships');
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch relationship data');
+        const result = await apiGet('/api/v1/relationships')
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to fetch relationship data')
         }
-        
-        const result = await response.json();
-        return result.data as EntityIncidentRelationship[];
+        return result.data as EntityIncidentRelationship[]
       }
     },
-    enabled: !!incidentId,
+    enabled: !!getAuthToken() && !!incidentId,
   });
 
   // Client-side filtering of relationships based on selected filters

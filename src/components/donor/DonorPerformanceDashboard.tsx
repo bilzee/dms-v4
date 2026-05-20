@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
+import { apiGet } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -79,8 +80,6 @@ export function DonorPerformanceDashboard({
   compact = false,
   className
 }: DonorPerformanceDashboardProps) {
-  const { token } = useAuth();
-  
   // State for timeframe and granularity
   const [timeframe, setTimeframe] = useState<'3m' | '6m' | '1y' | '2y'>('1y');
   const [granularity, setGranularity] = useState<'week' | 'month' | 'quarter'>('month');
@@ -102,17 +101,12 @@ export function DonorPerformanceDashboard({
         granularity
       });
       
-      const response = await fetch(`/api/v1/donors/${donorId}/performance-trends?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch performance trends');
+      const result = await apiGet(`/api/v1/donors/${donorId}/performance-trends?${params}`);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch performance trends');
       }
-      return response.json();
+      return result.data;
     },
-    enabled: !!token,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     retry: 2
   });
@@ -121,19 +115,14 @@ export function DonorPerformanceDashboard({
   const { data: leaderboardData } = useQuery({
     queryKey: ['leaderboard-current', donorId],
     queryFn: async () => {
-      const response = await fetch('/api/v1/leaderboard?limit=100&sortBy=overall', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch leaderboard');
+      const result = await apiGet('/api/v1/leaderboard?limit=100&sortBy=overall');
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch leaderboard');
       }
-      const data = await response.json();
-      const userRanking = data.data.rankings.find((r: any) => r.donor.id === donorId);
+      const userRanking = result.data?.rankings?.find((r: any) => r.donor.id === donorId);
       return userRanking;
     },
-    enabled: showRanking && !!token,
+    enabled: showRanking,
     staleTime: 10 * 60 * 1000
   });
 

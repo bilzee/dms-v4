@@ -33,8 +33,8 @@ import type {
   BadgeType 
 } from '@/types/gamification';
 
-// Token utilities
-import { getAuthToken } from '@/lib/auth/token-utils';
+// API utilities
+import { apiGet } from '@/lib/api';
 
 interface LeaderboardDisplayProps {
   timeframe?: '7d' | '30d' | '90d' | '1y' | 'all';
@@ -76,9 +76,6 @@ export function LeaderboardDisplay({
   const fetchLeaderboardData = async () => {
     if (!user) throw new Error('User not authenticated')
     
-    const token = getAuthToken()
-    if (!token) throw new Error('No authentication token available')
-    
     const params = new URLSearchParams();
     Object.entries(queryParams).forEach(([key, value]) => {
       if (value !== undefined) {
@@ -86,15 +83,11 @@ export function LeaderboardDisplay({
       }
     });
     
-    const response = await fetch(`/api/v1/leaderboard?${params}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    if (!response.ok) {
-      throw new Error('Failed to fetch leaderboard data');
+    const result = await apiGet(`/api/v1/leaderboard?${params}`);
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch leaderboard data');
     }
-    return response.json();
+    return result.data;
   };
 
 

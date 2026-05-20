@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useVerificationStore } from '@/stores/verification.store';
 import { useAuth } from '@/hooks/useAuth';
+import { getAuthHeaders } from '@/lib/api';
 
 interface UseRealTimeVerificationOptions {
   enabled?: boolean;
@@ -55,9 +56,7 @@ export function useRealTimeVerification({
       const response = await fetch('/api/v1/verification/queue/assessments?page=1&limit=1', {
         method: 'HEAD',
         cache: 'no-store',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: getAuthHeaders()
       });
       
       // Check authentication status before doing full refresh

@@ -1,81 +1,43 @@
 import { CreatePlannedResponseInput, CreateDeliveredResponseInput, ResponseItem } from '@/lib/validation/response'
-import { getAuthToken } from '@/lib/auth/token-utils'
+import { apiGet, apiPost, apiPut } from '@/lib/api'
 
 export class ResponseService {
   private static readonly BASE_URL = '/api/v1/responses'
 
   static async createPlannedResponse(data: CreatePlannedResponseInput) {
-    const response = await fetch(`${this.BASE_URL}/planned`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.getAuthToken()}`
-      },
-      body: JSON.stringify(data)
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to create planned response')
+    const result = await apiPost(`${this.BASE_URL}/planned`, data)
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to create planned response')
     }
-
-    const result = await response.json()
-    return result.data
+    const d = result.data as any
+    return d?.data || d
   }
 
   static async createDeliveredResponse(data: CreateDeliveredResponseInput) {
-    const response = await fetch(`${this.BASE_URL}/delivered`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.getAuthToken()}`
-      },
-      body: JSON.stringify(data)
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to create delivered response')
+    const result = await apiPost(`${this.BASE_URL}/delivered`, data)
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to create delivered response')
     }
-
-    const result = await response.json()
-    return result.data
+    const d = result.data as any
+    return d?.data || d
   }
 
   static async getResponseById(id: string) {
-    const response = await fetch(`${this.BASE_URL}/${id}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${this.getAuthToken()}`
-      }
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to get response')
+    const result = await apiGet(`${this.BASE_URL}/${id}`)
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to get response')
     }
-
-    const result = await response.json()
-    return result.data
+    const d = result.data as any
+    return d?.data || d
   }
 
   static async updatePlannedResponse(id: string, data: Partial<CreatePlannedResponseInput>) {
-    const response = await fetch(`${this.BASE_URL}/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.getAuthToken()}`
-      },
-      body: JSON.stringify(data)
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to update response')
+    const result = await apiPut(`${this.BASE_URL}/${id}`, data)
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update response')
     }
-
-    const result = await response.json()
-    return result.data
+    const d = result.data as any
+    return d?.data || d
   }
 
   static async getPlannedResponsesForResponder(query: {
@@ -86,96 +48,50 @@ export class ResponseService {
     limit?: number
   } = {}) {
     const searchParams = new URLSearchParams()
-    
+
     if (query.assessmentId) searchParams.append('assessmentId', query.assessmentId)
     if (query.entityId) searchParams.append('entityId', query.entityId)
     if (query.type) searchParams.append('type', query.type)
     if (query.page) searchParams.append('page', query.page.toString())
     if (query.limit) searchParams.append('limit', query.limit.toString())
 
-    const response = await fetch(`${this.BASE_URL}/planned/assigned?${searchParams}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${this.getAuthToken()}`
-      }
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to get assigned responses')
+    const result = await apiGet(`${this.BASE_URL}/planned/assigned?${searchParams}`)
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to get assigned responses')
     }
-
-    const result = await response.json()
-    // Transform API response format to match client expectations
+    const d = result.data as any
     return {
-      responses: result.data,
-      total: result.meta?.total || 0
+      responses: d?.data || d || [],
+      total: d?.meta?.total || (result.meta as any)?.total || 0
     }
   }
 
   static async checkAssessmentConflicts(assessmentId: string) {
-    const response = await fetch(`${this.BASE_URL}/conflicts/${assessmentId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${this.getAuthToken()}`
-      }
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to check assessment conflicts')
+    const result = await apiGet(`${this.BASE_URL}/conflicts/${assessmentId}`)
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to check assessment conflicts')
     }
-
-    const result = await response.json()
-    return result.data
+    const d = result.data as any
+    return d?.data || d
   }
 
   static async getCollaborationStatus(responseId: string) {
-    const response = await fetch(`${this.BASE_URL}/${responseId}/collaboration`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${this.getAuthToken()}`
-      }
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to get collaboration status')
+    const result = await apiGet(`${this.BASE_URL}/${responseId}/collaboration`)
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to get collaboration status')
     }
-
-    const result = await response.json()
-    return result.data
+    const d = result.data as any
+    return d?.data || d
   }
 
   static async updateCollaboration(responseId: string, action: 'join' | 'leave' | 'start_editing' | 'stop_editing') {
-    const response = await fetch(`${this.BASE_URL}/${responseId}/collaboration`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.getAuthToken()}`
-      },
-      body: JSON.stringify({ action })
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to update collaboration')
+    const result = await apiPost(`${this.BASE_URL}/${responseId}/collaboration`, { action })
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update collaboration')
     }
-
-    const result = await response.json()
-    return result.data
-  }
-
-  private static getAuthToken(): string {
-    const token = getAuthToken()
-    
-    if (!token) {
-      throw new Error('User not authenticated - no token found')
-    }
-
-    return token
+    const d = result.data as any
+    return d?.data || d
   }
 }
 
-// Export singleton instance for client-side use
 export const responseService = new ResponseService()

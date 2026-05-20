@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/stores/auth.store'
-import { getAuthToken } from '@/lib/auth/token-utils'
+import { getAuthToken, removeAuthToken } from '@/lib/auth/token-utils'
 import { apiGet } from '@/lib/api'
 
 /**
@@ -31,14 +31,12 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
             console.log('✅ AuthInitializer: Auth state restored successfully')
           } else {
             console.log('❌ AuthInitializer: Token invalid, clearing storage')
-            localStorage.removeItem('auth_token')
-            localStorage.removeItem('token')
+            removeAuthToken()
             useAuthStore.getState().logout()
           }
         } catch (error) {
           console.log('❌ AuthInitializer: Error validating token:', error)
-          localStorage.removeItem('auth_token')
-          localStorage.removeItem('token')
+          removeAuthToken()
           useAuthStore.getState().logout()
         }
       } else if (!token && isAuthenticated) {

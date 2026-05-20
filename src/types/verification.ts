@@ -69,6 +69,7 @@ export interface VerificationQueueFilters {
 }
 
 export interface VerificationQueueResponse {
+  success?: true;
   data: VerificationQueueItem[];
   pagination: {
     page: number;

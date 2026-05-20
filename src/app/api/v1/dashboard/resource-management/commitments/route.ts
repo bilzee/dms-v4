@@ -1,40 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
 import { auditLog } from '@/lib/services/audit.service';
-import { verifyTokenWithRole } from '@/lib/auth/verify';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
+import { successResponse, errorResponse, handleApiError } from '@/lib/api/response';
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    // Authentication and authorization check - COORDINATOR role required
-    const authResult = await verifyTokenWithRole(request, 'COORDINATOR');
-    
-    if (!authResult.success || !authResult.user) {
-      if (authResult.error?.includes('role')) {
-        await auditLog({
-          userId: authResult.user?.id || 'unknown',
-          action: 'UNAUTHORIZED_ACCESS',
-          resource: 'RESOURCE_MANAGEMENT_COMMITMENTS',
-          oldValues: null,
-          newValues: null,
-          ipAddress: request.headers.get('x-forwarded-for') || undefined,
-          userAgent: request.headers.get('user-agent') || undefined
-        });
-        
-        return NextResponse.json(
-          { success: false, error: 'Forbidden - Coordinator access required' },
-          { status: 403 }
-        );
-      }
-      
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (!context.roles.includes('COORDINATOR')) {
+      await auditLog({
+        userId: context.userId,
+        action: 'UNAUTHORIZED_ACCESS',
+        resource: 'RESOURCE_MANAGEMENT_COMMITMENTS',
+        oldValues: null,
+        newValues: null,
+        ipAddress: request.headers.get('x-forwarded-for') || undefined,
+        userAgent: request.headers.get('user-agent') || undefined
+      });
+
+      return errorResponse('Forbidden - COORDINATOR access required', 403);
     }
 
-    const user = authResult.user;
-
-    // Parse query parameters
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const donorId = searchParams.get('donorId');
@@ -44,14 +29,12 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    // Build where clause
     const whereClause: any = {};
     if (status && status !== 'all') whereClause.status = status;
     if (donorId && donorId !== 'all') whereClause.donorId = donorId;
     if (entityId && entityId !== 'all') whereClause.entityId = entityId;
     if (incidentId && incidentId !== 'all') whereClause.incidentId = incidentId;
-    
-    // Add search functionality
+
     if (search) {
       whereClause.OR = [
         { donor: { name: { contains: search, mode: 'insensitive' } } },
@@ -60,10 +43,8 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Get total count for pagination
     const total = await db.donorCommitment.count({ where: whereClause });
 
-    // Fetch commitments with related data
     const commitments = await db.donorCommitment.findMany({
       where: whereClause,
       include: {
@@ -100,7 +81,6 @@ export async function GET(request: NextRequest) {
       take: limit
     });
 
-    // Calculate pagination info
     const totalPages = Math.ceil(total / limit);
     const pagination = {
       page,
@@ -111,13 +91,12 @@ export async function GET(request: NextRequest) {
       hasPrev: page > 1
     };
 
-    // Log successful access
     await auditLog({
-      userId: user.id,
+      userId: context.userId,
       action: 'ACCESS_RESOURCE_MANAGEMENT_COMMITMENTS',
       resource: 'RESOURCE_MANAGEMENT_COMMITMENTS',
       oldValues: null,
-      newValues: { 
+      newValues: {
         filters: { status, donorId, entityId, incidentId, search },
         pagination: { page, limit, total }
       },
@@ -125,38 +104,28 @@ export async function GET(request: NextRequest) {
       userAgent: request.headers.get('user-agent') || undefined
     });
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        data: commitments,
-        pagination
-      }
+    return successResponse({
+      data: commitments,
+      pagination
     });
 
   } catch (error) {
     console.error('Error fetching resource management commitments:', error);
-    
-    // Log error
+
     try {
-      const authResult = await verifyTokenWithRole(request, 'COORDINATOR');
-      if (authResult.success && authResult.user) {
-        await auditLog({
-          userId: authResult.user.id,
-          action: 'ERROR_ACCESS_COMMITMENTS',
-          resource: 'RESOURCE_MANAGEMENT_COMMITMENTS',
-          oldValues: null,
-          newValues: { error: error instanceof Error ? error.message : 'Unknown error' },
-          ipAddress: request.headers.get('x-forwarded-for') || undefined,
-          userAgent: request.headers.get('user-agent') || undefined
-        });
-      }
+      await auditLog({
+        userId: context.userId,
+        action: 'ERROR_ACCESS_COMMITMENTS',
+        resource: 'RESOURCE_MANAGEMENT_COMMITMENTS',
+        oldValues: null,
+        newValues: { error: error instanceof Error ? error.message : 'Unknown error' },
+        ipAddress: request.headers.get('x-forwarded-for') || undefined,
+        userAgent: request.headers.get('user-agent') || undefined
+      });
     } catch (auditError) {
       // Ignore audit log errors
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
-}
+});

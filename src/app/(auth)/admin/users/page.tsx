@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RegisterForm } from '@/components/auth/RegisterForm'
 import { EditUserForm } from '@/components/auth/EditUserForm'
 import { useAuth } from '@/hooks/useAuth'
+import { apiGet } from '@/lib/api'
 import { Edit, MoreHorizontal, Users, UserCheck, UserX, Plus, Search, Filter } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 
@@ -40,25 +41,17 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [roleFilter, setRoleFilter] = useState<string>('all')
-  const { hasPermission, token } = useAuth()
+  const { hasPermission } = useAuth()
 
   // Fetch users from backend
   const fetchUsers = async () => {
-    if (!token) return
-    
     try {
       setLoading(true)
-      const response = await fetch('/api/v1/users', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setUsers(data.data.users || [])
+      const result = await apiGet('/api/v1/users')
+      if (!result.success) {
+        console.error('Failed to fetch users:', result.error)
       } else {
-        console.error('Failed to fetch users, status:', response.status)
+        setUsers(result.data?.users || [])
       }
     } catch (error) {
       console.error('Error fetching users:', error)
@@ -129,10 +122,10 @@ export default function UsersPage() {
 
   // Fetch users on component mount
   useEffect(() => {
-    if (token && hasPermission('MANAGE_USERS')) {
+    if (hasPermission('MANAGE_USERS')) {
       fetchUsers()
     }
-  }, [token, hasPermission])
+  }, [hasPermission])
 
   // Main render - all hooks called before any conditional logic
   return (

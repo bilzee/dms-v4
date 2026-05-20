@@ -42,6 +42,7 @@ import { IncidentCreationForm } from '@/components/forms/incident/IncidentCreati
 
 // Token utilities
 import { getAuthToken } from '@/lib/auth/token-utils'
+import { apiGet, apiPut } from '@/lib/api'
 import { 
   AlertTriangle, 
   MapPin, 
@@ -138,33 +139,21 @@ export function IncidentManagement({
   // Fetch incidents
   const fetchIncidents = async () => {
     if (!user) throw new Error('User not authenticated')
-    
     const token = getAuthToken()
     if (!token) throw new Error('No authentication token available')
-    
     const params = new URLSearchParams()
-    
     if (initialFilters.page) params.set('page', initialFilters.page.toString())
     if (initialFilters.limit) params.set('limit', initialFilters.limit.toString())
     if (initialFilters.status?.length) params.set('status', initialFilters.status[0])
     if (initialFilters.severity?.length) params.set('severity', initialFilters.severity[0])
     if (initialFilters.type?.length) params.set('type', initialFilters.type[0])
     if (initialFilters.location) params.set('location', initialFilters.location)
-    
-    const response = await fetch(`/api/v1/incidents?${params.toString()}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch incidents')
-    }
-    
-    const result = await response.json()
+    const result = await apiGet(`/api/v1/incidents?${params.toString()}`)
+    if (!result.success) throw new Error('Failed to fetch incidents')
+    const raw = result.data as any
     return {
-      incidents: result.data,
-      pagination: result.pagination
+      incidents: raw?.data || raw,
+      pagination: raw?.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 }
     }
   }
 
@@ -173,31 +162,11 @@ export function IncidentManagement({
     try {
       const token = getAuthToken()
       if (!token) throw new Error('No authentication token available')
-      
-      const response = await fetch('/api/v1/incidents/types', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      if (!response.ok) {
-        throw new Error('Failed to fetch incident types')
-      }
-      const result = await response.json()
-      return result.data
+      const result = await apiGet('/api/v1/incidents/types')
+      if (!result.success) throw new Error('Failed to fetch incident types')
+      return (result.data as any)?.data || result.data || ['Flood', 'Fire', 'Earthquake', 'Landslide', 'Drought', 'Storm', 'Epidemic', 'Conflict', 'Industrial Accident', 'Other']
     } catch (error) {
-      // Fallback to default types on error
-      return [
-        'Flood',
-        'Fire', 
-        'Earthquake',
-        'Landslide',
-        'Drought',
-        'Storm',
-        'Epidemic',
-        'Conflict',
-        'Industrial Accident',
-        'Other'
-      ]
+      return ['Flood', 'Fire', 'Earthquake', 'Landslide', 'Drought', 'Storm', 'Epidemic', 'Conflict', 'Industrial Accident', 'Other']
     }
   }
 
@@ -206,23 +175,11 @@ export function IncidentManagement({
     mutationFn: async ({ incidentId, newStatus }: { incidentId: string; newStatus: string }) => {
       const token = getAuthToken()
       if (!token) throw new Error('No authentication token available')
-      
-      const response = await fetch(`/api/v1/incidents/${incidentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status: newStatus })
-      })
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Status update failed:', response.status, errorText)
-        throw new Error(`Failed to update incident status: ${response.status}`)
+      const result = await apiPut(`/api/v1/incidents/${incidentId}`, { status: newStatus })
+      if (!result.success) {
+        console.error('Status update failed:', result.error)
+        throw new Error(`Failed to update incident status`)
       }
-      
-      const result = await response.json()
       return result.data
     },
     onSuccess: (updatedIncident) => {
@@ -310,26 +267,17 @@ export function IncidentManagement({
       // Fetch all preliminary assessments
       const token = getAuthToken()
       if (token) {
-        const response = await fetch('/api/v1/preliminary-assessments?limit=100', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-        
-        if (response.ok) {
-          const result = await response.json()
-          const allAssessments = result.data || []
-          
-          // Separate linked and available assessments
-          const linkedAssessments = allAssessments.filter((assessment: any) => 
+        const assessResult = await apiGet('/api/v1/preliminary-assessments?limit=100')
+        if (assessResult.success) {
+          const allAssessments = (assessResult.data as any)?.data || assessResult.data || []
+          const linkedAssessments = allAssessments.filter((assessment: any) =>
             assessment.incidentId === incident.id
           )
-          const availableAssessments = allAssessments.filter((assessment: any) => 
+          const availableAssessments = allAssessments.filter((assessment: any) =>
             !assessment.incidentId || assessment.incidentId !== incident.id
           )
-          
-          setState(prev => ({ 
-            ...prev, 
+          setState(prev => ({
+            ...prev,
             linkedPreliminaryAssessments: linkedAssessments,
             availablePreliminaryAssessments: availableAssessments
           }))
@@ -373,17 +321,8 @@ export function IncidentManagement({
       if (token) {
         // Link each selected assessment to the incident
         const linkPromises = state.selectedAssessmentIds.map(assessmentId =>
-          fetch(`/api/v1/preliminary-assessments/${assessmentId}`, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              data: {
-                incidentId: state.incidentToLink.id
-              }
-            })
+          apiPut(`/api/v1/preliminary-assessments/${assessmentId}`, {
+            data: { incidentId: state.incidentToLink.id }
           })
         )
 
@@ -414,20 +353,11 @@ export function IncidentManagement({
       const token = getAuthToken()
       if (token) {
         // Unlink the assessment by setting incidentId to null
-        const response = await fetch(`/api/v1/preliminary-assessments/${assessmentId}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            data: {
-              incidentId: null
-            }
-          })
+        const unlinkResult = await apiPut(`/api/v1/preliminary-assessments/${assessmentId}`, {
+          data: { incidentId: null }
         })
 
-        if (response.ok) {
+        if (unlinkResult.success) {
           // Update state to move assessment from linked to available
           setState(prev => {
             // Find the unlinked assessment to move to available

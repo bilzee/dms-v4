@@ -16,6 +16,7 @@ export interface CreateIncidentRequest {
 }
 
 export interface IncidentResponse {
+  success?: true
   data: Incident
   meta: {
     timestamp: string
@@ -25,6 +26,7 @@ export interface IncidentResponse {
 }
 
 export interface IncidentListResponse {
+  success?: true
   data: Incident[]
   pagination: {
     page: number

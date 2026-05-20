@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, CheckCircle, AlertTriangle, FileText, MapPin, Calendar, User, Home, Users, School, Activity } from 'lucide-react'
-import { useAuth } from '@/hooks/useAuth'
+import { apiGet } from '@/lib/api'
 
 interface PreliminaryAssessment {
   id: string
@@ -50,7 +50,6 @@ interface PreliminaryAssessment {
 export default function PreliminaryAssessmentDetailsPage() {
   const params = useParams()
   const router = useRouter()
-  const { token } = useAuth()
   const [assessment, setAssessment] = useState<PreliminaryAssessment | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -58,18 +57,11 @@ export default function PreliminaryAssessmentDetailsPage() {
   useEffect(() => {
     const fetchAssessment = async () => {
       try {
-        if (token) {
-          const response = await fetch(`/api/v1/preliminary-assessments/${params.id}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          })
-          if (!response.ok) {
-            throw new Error('Assessment not found')
-          }
-          const data = await response.json()
-          setAssessment(data.data || null)
+        const result = await apiGet(`/api/v1/preliminary-assessments/${params.id}`)
+        if (!result.success) {
+          throw new Error(result.error || 'Assessment not found')
         }
+        setAssessment(result.data || null)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load assessment')
       } finally {
@@ -77,10 +69,10 @@ export default function PreliminaryAssessmentDetailsPage() {
       }
     }
 
-    if (params.id && token) {
+    if (params.id) {
       fetchAssessment()
     }
-  }, [params.id, token])
+  }, [params.id])
 
   const formatIncidentDisplay = (incident: any) => {
     if (!incident) return 'No Incident'

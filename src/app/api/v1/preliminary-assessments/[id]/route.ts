@@ -48,6 +48,7 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext, {
     }
 
     const response: PreliminaryAssessmentResponse = {
+      success: true as const,
       data: assessment,
       meta: {
         timestamp: new Date().toISOString(),
@@ -107,6 +108,7 @@ export const PUT = withAuth(async (request: NextRequest, context: AuthContext, {
     const assessment = await PreliminaryAssessmentService.update(id, input);
 
     const response: PreliminaryAssessmentListResponse = {
+      success: true as const,
       data: [assessment],
       pagination: {
         total: 1,
@@ -198,6 +200,7 @@ export const DELETE = withAuth(async (request: NextRequest, context: AuthContext
 
     return NextResponse.json(
       {
+        success: true,
         data: { message: 'Assessment deleted successfully' },
         meta: {
           timestamp: new Date().toISOString(),

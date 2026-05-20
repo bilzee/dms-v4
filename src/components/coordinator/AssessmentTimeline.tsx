@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useRelationshipTimeline } from '@/hooks/useRelationships';
 import type { Priority, AssessmentType, VerificationStatus } from '@prisma/client';
 
 interface AssessmentTimelineProps {
@@ -143,19 +144,7 @@ export function AssessmentTimeline({
   }), [entityId, incidentId, selectedAssessmentTypes, selectedPriorities, selectedVerificationStatus, dateRange, maxItems]);
 
   // Fetch timeline data
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['assessment-timeline', queryParams],
-    queryFn: async () => {
-      const response = await fetch('/api/v1/relationships/timeline?' + new URLSearchParams(queryParams));
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch timeline data');
-      }
-      
-      return response.json();
-    },
-    staleTime: 2 * 60 * 1000, // 2 minutes
-  });
+  const { data, isLoading, error } = useRelationshipTimeline(queryParams);
 
   // Filter handlers
   const handleAssessmentTypeToggle = (type: AssessmentType) => {

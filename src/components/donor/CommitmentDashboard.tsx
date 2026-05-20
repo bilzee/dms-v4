@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { apiGet } from '@/lib/api'
 
 // UI components
 import { Button } from '@/components/ui/button'
@@ -47,7 +48,6 @@ const STATUS_ICONS = {
 export function CommitmentDashboard({ donorId, preSelectedEntityId }: CommitmentDashboardProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const { token } = useAuth()
   
   console.log('CommitmentDashboard received donorId:', donorId)
 
@@ -84,54 +84,37 @@ export function CommitmentDashboard({ donorId, preSelectedEntityId }: Commitment
 
   // Fetch commitments
   const { data: commitmentsData, isLoading, error } = useQuery({
-    queryKey: ['donor-commitments', donorId, filters, token],
-    enabled: !!donorId && !!token,
+    queryKey: ['donor-commitments', donorId, filters],
+    enabled: !!donorId,
     queryFn: async () => {
       const params = new URLSearchParams()
       Object.entries(filters).forEach(([key, value]) => {
         if (value && value !== 'all') params.append(key, value)
       })
 
-      const response = await fetch(`/api/v1/donors/${donorId}/commitments?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      if (!response.ok) throw new Error('Failed to fetch commitments')
-      const data = await response.json()
-      return data
+      const result = await apiGet(`/api/v1/donors/${donorId}/commitments?${params}`)
+      if (!result.success) throw new Error(result.error || 'Failed to fetch commitments')
+      return result.data
     }
   })
 
   // Fetch available entities for filter
   const { data: entities } = useQuery({
     queryKey: ['entities'],
-    enabled: !!token,
     queryFn: async () => {
-      const response = await fetch('/api/v1/entities', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      if (!response.ok) return []
-      const data = await response.json()
-      return data.success ? data.data : []
+      const result = await apiGet('/api/v1/entities')
+      if (!result.success) return []
+      return result.data
     }
   })
 
   // Fetch available incidents for filter
   const { data: incidents } = useQuery({
     queryKey: ['incidents'],
-    enabled: !!token,
     queryFn: async () => {
-      const response = await fetch('/api/v1/incidents', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      if (!response.ok) return []
-      const data = await response.json()
-      return data.success ? data.data : []
+      const result = await apiGet('/api/v1/incidents')
+      if (!result.success) return []
+      return result.data
     }
   })
 

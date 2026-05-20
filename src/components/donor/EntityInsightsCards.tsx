@@ -4,6 +4,7 @@ import React from 'react'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
+import { apiGet } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -68,15 +69,10 @@ export function EntityInsightsCard({ entityId, compact = false }: EntityInsights
   const { data: entityData, isLoading, error } = useQuery({
     queryKey: ['entity-insights-summary', entityId],
     queryFn: async () => {
-      const response = await fetch(`/api/v1/donors/entities/${entityId}/demographics`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      if (!response.ok) {
-        throw new Error('Failed to fetch entity summary')
+      const result = await apiGet<EntitySummary>(`/api/v1/donors/entities/${entityId}/demographics`)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch entity summary')
       }
-      const result = await response.json()
       return result.data as EntitySummary
     },
     enabled: !!entityId && !!token
@@ -86,15 +82,10 @@ export function EntityInsightsCard({ entityId, compact = false }: EntityInsights
   const { data: latestAssessmentsData } = useQuery({
     queryKey: ['entity-latest-assessments', entityId],
     queryFn: async () => {
-      const response = await fetch(`/api/v1/donors/entities/${entityId}/assessments/latest`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      if (!response.ok) {
-        throw new Error('Failed to fetch latest assessments')
+      const result = await apiGet<{ latestAssessments: LatestAssessment[] }>(`/api/v1/donors/entities/${entityId}/assessments/latest`)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch latest assessments')
       }
-      const result = await response.json()
       return result.data as { latestAssessments: LatestAssessment[] }
     },
     enabled: !!entityId && !!token
@@ -104,15 +95,16 @@ export function EntityInsightsCard({ entityId, compact = false }: EntityInsights
   const { data: gapAnalysisData } = useQuery({
     queryKey: ['entity-gap-summary', entityId],
     queryFn: async () => {
-      const response = await fetch(`/api/v1/donors/entities/${entityId}/gap-analysis`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      const result = await apiGet<{
+        overallGapScore: number
+        summary: {
+          totalGaps: number
+          criticalGaps: number
         }
-      })
-      if (!response.ok) {
-        throw new Error('Failed to fetch gap analysis')
+      }>(`/api/v1/donors/entities/${entityId}/gap-analysis`)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch gap analysis')
       }
-      const result = await response.json()
       return result.data as {
         overallGapScore: number
         summary: {
@@ -310,15 +302,10 @@ export function EntityInsightsCards({ maxCards = 6, compact = false }: EntityIns
   const { data: entitiesData, isLoading } = useQuery({
     queryKey: ['donor-entities-cards'],
     queryFn: async () => {
-      const response = await fetch('/api/v1/donors/entities?limit=50', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      if (!response.ok) {
-        throw new Error('Failed to fetch entities')
+      const result = await apiGet('/api/v1/donors/entities?limit=50')
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch entities')
       }
-      const result = await response.json()
       return result.data
     },
     enabled: !!token

@@ -32,6 +32,7 @@ export interface CreatePreliminaryAssessmentRequest {
 }
 
 export interface PreliminaryAssessmentResponse {
+  success?: true
   data: PreliminaryAssessment & {
     incident?: Incident
   }
@@ -43,6 +44,7 @@ export interface PreliminaryAssessmentResponse {
 }
 
 export interface PreliminaryAssessmentListResponse {
+  success?: true
   data: (PreliminaryAssessment & {
     incident?: Incident
   })[]

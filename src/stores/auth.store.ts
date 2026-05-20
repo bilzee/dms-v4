@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { AuthUser, RoleName } from '@/types/auth';
-import { apiGet } from '@/lib/api';
+import { apiGet, apiPost } from '@/lib/api';
+import { getAuthToken, setAuthToken, removeAuthToken } from '@/lib/auth/token-utils';
 
 interface RoleSessionState {
   [key: string]: {
@@ -53,7 +54,7 @@ interface AuthState {
 const initializeAuthFromStorage = async () => {
   if (typeof window !== 'undefined') {
     // Check both token keys (consistent with token-utils.ts)
-    const token = localStorage.getItem('auth_token') || localStorage.getItem('token')
+    const token = getAuthToken()
     if (token) {
       try {
         // Validate token with backend using the /me endpoint
@@ -63,14 +64,12 @@ const initializeAuthFromStorage = async () => {
           useAuthStore.getState().setUser(result.data.user, token)
         } else {
           // Token is invalid, clear both keys
-          localStorage.removeItem('auth_token')
-          localStorage.removeItem('token')
+          removeAuthToken()
           useAuthStore.getState().logout()
         }
       } catch (error) {
         // Network error or invalid response, clear both keys
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('token')
+        removeAuthToken()
         useAuthStore.getState().logout()
       }
     }
@@ -134,7 +133,7 @@ export const useAuthStore = create<AuthState>()(
 
         // Save token to localStorage for API calls
         if (typeof window !== 'undefined') {
-          localStorage.setItem('auth_token', token)
+          setAuthToken(token)
         }
       },
 
@@ -142,21 +141,12 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         
         try {
-          const response = await fetch('/api/v1/auth/login', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, password }),
-          })
-
-          if (!response.ok) {
-            const error = await response.json()
-            throw new Error(error.error || 'Login failed')
+          const result = await apiPost('/api/v1/auth/login', { email, password })
+          if (!result.success) {
+            throw new Error(result.error || 'Login failed')
           }
-
-          const data = await response.json()
-          get().setUser(data.data.user, data.data.token)
+          const d = result.data as any
+          get().setUser(d?.data?.user || d?.user, d?.data?.token || d?.token)
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -167,14 +157,7 @@ export const useAuthStore = create<AuthState>()(
         // Make logout API call (optional for JWT)
         const token = get().token
         if (token) {
-          fetch('/api/v1/auth/logout', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          }).catch(() => {
-            // Ignore errors on logout
-          })
+          apiPost('/api/v1/auth/logout').catch(() => {})
         }
 
         set({
@@ -191,9 +174,7 @@ export const useAuthStore = create<AuthState>()(
 
         // Clear token from localStorage
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('auth_token')
-          localStorage.removeItem('token')
-          // Redirect to login page
+          removeAuthToken()
           window.location.href = '/login'
         }
       },
@@ -204,21 +185,13 @@ export const useAuthStore = create<AuthState>()(
           throw new Error('No token available')
         }
 
-        const response = await fetch('/api/v1/auth/refresh', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        })
-
-        if (!response.ok) {
-          // Logout on refresh failure
+        const result = await apiPost('/api/v1/auth/refresh')
+        if (!result.success) {
           get().logout()
-          throw new Error('Token refresh failed')
+          throw new Error(result.error || 'Token refresh failed')
         }
-
-        const data = await response.json()
-        set({ token: data.data.token })
+        const d = result.data as any
+        set({ token: d?.data?.token || d?.token })
       },
 
       hasPermission: (permission: string) => {

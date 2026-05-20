@@ -24,7 +24,7 @@ import { ResponsePlanningDashboard } from '@/components/response/ResponsePlannin
 
 // Hooks and utilities
 import { useAuthStore } from '@/stores/auth.store'
-import { getAuthToken } from '@/lib/auth/token-utils'
+import { apiGet } from '@/lib/api'
 
 function ResponderDashboardContent() {
   const { user, token } = useAuthStore()
@@ -42,23 +42,15 @@ function ResponderDashboardContent() {
   const getPlannedResponses = async () => {
     if (!user) throw new Error('User not authenticated')
     
-    const token = getAuthToken()
-    if (!token) throw new Error('No authentication token available')
+    const result = await apiGet('/api/v1/responses/planned/assigned?page=1&limit=50')
     
-    const response = await fetch(`/api/v1/responses/planned/assigned?page=1&limit=50`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch planned responses')
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch planned responses')
     }
     
-    const result = await response.json()
     return {
       responses: result.data || [],
-      total: result.meta?.total || 0
+      total: (result as any).meta?.total || 0
     }
   }
 
@@ -66,28 +58,21 @@ function ResponderDashboardContent() {
   const getEditingResponse = async () => {
     if (!editingResponse) return null
     
-    const token = getAuthToken()
-    if (!token) throw new Error('No authentication token available')
+    const result = await apiGet(`/api/v1/responses/${editingResponse}`)
     
-    const response = await fetch(`/api/v1/responses/${editingResponse}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    if (!response.ok) {
-      if (response.status === 401) {
+    if (!result.success) {
+      const errMsg = result.error || 'Failed to fetch response'
+      if (errMsg.includes('401')) {
         throw new Error('Authentication failed - please log in again')
-      } else if (response.status === 403) {
+      } else if (errMsg.includes('403')) {
         throw new Error('You do not have permission to access this response')
-      } else if (response.status === 404) {
+      } else if (errMsg.includes('404')) {
         throw new Error('Response not found')
       } else {
-        throw new Error('Failed to fetch response')
+        throw new Error(errMsg)
       }
     }
     
-    const result = await response.json()
     return result.data
   }
 

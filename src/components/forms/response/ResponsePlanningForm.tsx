@@ -38,6 +38,7 @@ import { responseOfflineService } from '@/lib/services/response-offline.service'
 import { ResponseService } from '@/lib/services/response-client.service'
 import { CreatePlannedResponseInput, CreateDeliveredResponseInput, ResponseItem } from '@/lib/validation/response'
 import { useAuthStore } from '@/stores/auth.store'
+import { apiGet } from '@/lib/api'
 
 const ResponseItemSchema = z.object({
   name: z.string().min(1, 'Item name is required'),
@@ -128,19 +129,9 @@ export function ResponsePlanningForm({
     queryKey: ['entities', 'assigned', (user as any)?.id],
     queryFn: async () => {
       if (!user || !token) throw new Error('User not authenticated')
-      
-      const response = await fetch(`/api/v1/entities/assigned?userId=${(user as any).id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch assigned entities')
-      }
-      
-      const result = await response.json()
-      return result.data || []
+      const result = await apiGet(`/api/v1/entities/assigned?userId=${(user as any).id}`)
+      if (!result.success) throw new Error('Failed to fetch assigned entities')
+      return (result.data as any)?.data || result.data || []
     },
     enabled: !!user && !!token
   })
@@ -151,19 +142,9 @@ export function ResponsePlanningForm({
     queryKey: ['assessments', 'verified', selectedEntityId],
     queryFn: async () => {
       if (!selectedEntityId || !token) return []
-      
-      const response = await fetch(`/api/v1/assessments/verified?entityId=${selectedEntityId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch verified assessments')
-      }
-      
-      const result = await response.json()
-      return result.data || []
+      const result = await apiGet(`/api/v1/assessments/verified?entityId=${selectedEntityId}`)
+      if (!result.success) throw new Error('Failed to fetch verified assessments')
+      return (result.data as any)?.data || result.data || []
     },
     enabled: !!selectedEntityId && !!token
   })
@@ -173,21 +154,12 @@ export function ResponsePlanningForm({
     queryKey: ['donors', 'assigned', selectedEntityId],
     queryFn: async () => {
       if (!selectedEntityId || !token) return []
-      
-      const response = await fetch(`/api/v1/entities/${selectedEntityId}/donors`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (!response.ok) {
-        // If endpoint doesn't exist or returns error, return empty array
-        console.warn('Failed to fetch entity donors:', response.statusText)
+      const result = await apiGet(`/api/v1/entities/${selectedEntityId}/donors`)
+      if (!result.success) {
+        console.warn('Failed to fetch entity donors:', result.error)
         return []
       }
-      
-      const result = await response.json()
-      return result.data || []
+      return (result.data as any)?.data || result.data || []
     },
     enabled: !!selectedEntityId && !!token
   })

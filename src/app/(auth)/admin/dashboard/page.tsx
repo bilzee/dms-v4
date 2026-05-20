@@ -36,8 +36,8 @@ import { cn } from '@/lib/utils'
 // Role-based access
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 
-// Token utilities
-import { getAuthToken } from '@/lib/auth/token-utils'
+// Authenticated API utilities
+import { apiGet } from '@/lib/api'
 
 function AdminDashboard() {
   const { user } = useAuth()
@@ -52,39 +52,24 @@ function AdminDashboard() {
   } | null>(null)
 
   React.useEffect(() => {
-    const token = getAuthToken()
-    if (!token) return
-    fetch('/api/v1/system/health', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-      .then(res => res.ok ? res.json() : null)
-      .then(data => { if (data?.data) setHealthData(data.data) })
+    apiGet('/api/v1/system/health')
+      .then(result => { if (result.success && result.data) setHealthData(result.data) })
       .catch(() => {})
   }, [user])
 
   // Data fetching functions
   const fetchSystemStats = async () => {
-    const token = getAuthToken()
-    if (!token) throw new Error('No authentication token available')
-    
-    const [usersResponse, entitiesResponse] = await Promise.all([
-      fetch('/api/v1/users', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      }),
-      fetch('/api/v1/entities', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+    const [usersResult, entitiesResult] = await Promise.all([
+      apiGet('/api/v1/users'),
+      apiGet('/api/v1/entities')
     ])
     
-    if (!usersResponse.ok || !entitiesResponse.ok) {
-      throw new Error('Failed to fetch system statistics')
+    if (!usersResult.success || !entitiesResult.success) {
+      throw new Error(usersResult.error || entitiesResult.error || 'Failed to fetch system statistics')
     }
     
-    const usersData = await usersResponse.json()
-    const entitiesData = await entitiesResponse.json()
-    
-    const users: User[] = usersData.data?.users || []
-    const entities = entitiesData.data?.entities || []
+    const users: User[] = usersResult.data?.users || []
+    const entities = entitiesResult.data?.entities || []
     
     return {
       totalUsers: users.length,
@@ -95,20 +80,12 @@ function AdminDashboard() {
   }
 
   const fetchUserStats = async () => {
-    const token = getAuthToken()
-    if (!token) throw new Error('No authentication token available')
+    const result = await apiGet('/api/v1/users')
     
-    const response = await fetch('/api/v1/users', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch user statistics')
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch user statistics')
     }
     
-    const result = await response.json()
     return result.data
   }
 

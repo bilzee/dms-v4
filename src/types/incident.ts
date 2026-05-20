@@ -60,7 +60,7 @@ export interface IncidentFilters {
 
 // API Response types
 export interface IncidentResponse {
-  success: boolean
+  success?: true
   data: Incident[]
   pagination: {
     page: number

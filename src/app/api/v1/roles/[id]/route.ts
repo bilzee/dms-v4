@@ -75,6 +75,7 @@ export const PUT = withAuth(async (request: NextRequest, context, { params }: Ro
 
     return NextResponse.json(
       {
+        success: true,
         data: { role },
         meta: { timestamp: new Date().toISOString(), version: '1.0.0', requestId: uuidv4() }
       },
@@ -130,7 +131,7 @@ export const DELETE = withAuth(async (request: NextRequest, context, { params }:
     await prisma.role.delete({ where: { id } });
 
     return NextResponse.json(
-      { data: { success: true }, meta: { timestamp: new Date().toISOString(), version: '1.0.0', requestId: uuidv4() } },
+      { success: true, data: { success: true }, meta: { timestamp: new Date().toISOString(), version: '1.0.0', requestId: uuidv4() } },
       { status: 200 }
     );
   } catch (error) {

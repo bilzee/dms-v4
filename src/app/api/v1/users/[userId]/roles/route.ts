@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { v4 as uuidv4 } from 'uuid'
 import { withAuth } from '@/lib/auth/middleware'
+import { successResponse, errorResponse, handleApiError } from '@/lib/api/response'
 import { AuthService } from '@/lib/auth/service'
 import { prisma } from '@/lib/db/client'
 import { AssignRolesRequest } from '@/types/auth'
@@ -16,14 +16,10 @@ interface RouteParams {
   }
 }
 
-// Assign roles to user - requires ASSIGN_ROLES permission  
 export const PUT = withAuth(async (request: NextRequest, context) => {
   const { permissions } = context;
   if (!permissions.includes('ASSIGN_ROLES')) {
-    return NextResponse.json(
-      { success: false, error: 'Insufficient permissions. Assign roles permission required.' },
-      { status: 403 }
-    );
+    return errorResponse('Insufficient permissions. Assign roles permission required.', 403);
   }
 
   const url = new URL(request.url)
@@ -31,105 +27,43 @@ export const PUT = withAuth(async (request: NextRequest, context) => {
   try {
     const { userId } = params
     const body = await request.json() as AssignRolesRequest
-    
-    // Validate input
+
     const validation = assignRolesSchema.safeParse(body)
     if (!validation.success) {
-      return NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: validation.error.errors,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 400 }
-      )
+      return errorResponse('Validation failed', 400, validation.error.errors)
     }
 
     const { roleIds } = validation.data
 
-    // Check if user exists
     const user = await prisma.user.findUnique({
       where: { id: userId }
     })
 
     if (!user) {
-      return NextResponse.json(
-        {
-          error: 'User not found',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 404 }
-      )
+      return errorResponse('User not found', 404)
     }
 
-    // Verify that all role IDs exist
     const roles = await prisma.role.findMany({
       where: { id: { in: roleIds } }
     })
 
     if (roles.length !== roleIds.length) {
-      return NextResponse.json(
-        {
-          error: 'One or more role IDs are invalid',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 400 }
-      )
+      return errorResponse('One or more role IDs are invalid', 400)
     }
 
-    // Assign roles
     await AuthService.assignRoles(userId, roleIds, context.userId)
 
-    return NextResponse.json(
-      {
-        data: {
-          message: 'Roles assigned successfully'
-        },
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 200 }
-    )
+    return successResponse({ message: 'Roles assigned successfully' })
   } catch (error) {
     console.error('Assign roles error:', error)
-    
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })
 
-// Get user roles - requires MANAGE_USERS permission
 export const GET = withAuth(async (request: NextRequest, context) => {
   const { permissions } = context;
   if (!permissions.includes('MANAGE_USERS')) {
-    return NextResponse.json(
-      { success: false, error: 'Insufficient permissions. Manage users permission required.' },
-      { status: 403 }
-    );
+    return errorResponse('Insufficient permissions. Manage users permission required.', 403);
   }
 
   const url = new URL(request.url)
@@ -140,47 +74,14 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     const user = await AuthService.getUserWithRoles(userId)
 
     if (!user) {
-      return NextResponse.json(
-        {
-          error: 'User not found',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 404 }
-      )
+      return errorResponse('User not found', 404)
     }
 
     const roles = user.roles.map(ur => ur.role)
 
-    return NextResponse.json(
-      {
-        data: {
-          roles
-        },
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 200 }
-    )
+    return successResponse({ roles })
   } catch (error) {
     console.error('Get user roles error:', error)
-    
-    return NextResponse.json(
-      {
-        error: 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/hooks/useAuth'
-import { getAuthToken } from '@/lib/auth/token-utils'
+import { apiGet, apiPut } from '@/lib/api'
 import { 
   Settings, 
   Globe, 
@@ -97,17 +97,10 @@ export default function SystemSettingsPage() {
 
   useEffect(() => {
     const loadSettings = async () => {
-      const token = getAuthToken()
-      if (!token) return
       try {
-        const response = await fetch('/api/v1/system/settings', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        if (response.ok) {
-          const data = await response.json()
-          if (data.data) {
-            setSettings(data.data)
-          }
+        const result = await apiGet('/api/v1/system/settings')
+        if (result.success && result.data) {
+          setSettings(result.data)
         }
       } catch (error) {
         console.error('Error loading settings:', error)
@@ -123,25 +116,15 @@ export default function SystemSettingsPage() {
     setSaveStatus('saving')
 
     try {
-      const token = getAuthToken()
-      if (!token) throw new Error('Not authenticated')
-
-      const response = await fetch('/api/v1/system/settings', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          section,
-          settings: settings[section]
-        })
+      const result = await apiPut('/api/v1/system/settings', {
+        section,
+        settings: settings[section]
       })
 
-      if (response.ok) {
+      if (result.success) {
         setSaveStatus('success')
       } else {
-        throw new Error('Failed to save settings')
+        throw new Error(result.error || 'Failed to save settings')
       }
 
       setTimeout(() => setSaveStatus('idle'), 3000)

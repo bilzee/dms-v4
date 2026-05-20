@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft, AlertTriangle, CheckCircle, Hospital, Users, Utensils, Droplets, Home, Shield } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth.store'
+import { apiGet, apiPost } from '@/lib/api'
 
 // Import assessment forms
 import { 
@@ -85,22 +86,13 @@ function NewAssessmentContent() {
   // Fetch latest assessment data when incident and entity are selected
   const fetchLatestAssessment = async (incidentId: string, entityId: string, assessmentType: string) => {
     try {
-      const response = await fetch(
-        `/api/v1/rapid-assessments/latest?incidentId=${incidentId}&entityId=${entityId}&type=${assessmentType}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
+      const result = await apiGet(
+        `/api/v1/rapid-assessments/latest?incidentId=${incidentId}&entityId=${entityId}&type=${assessmentType}`
       );
       
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Latest assessment API response:', result);
-        if (result.success && result.data) {
-          console.log('Setting latest assessment data:', result.data);
-          setLatestAssessmentData(result.data);
-        }
+      if (result.success && result.data) {
+        console.log('Setting latest assessment data:', result.data);
+        setLatestAssessmentData(result.data);
       }
     } catch (error) {
       console.error('Error fetching latest assessment:', error);
@@ -174,23 +166,14 @@ function NewAssessmentContent() {
         }
         
         // Submit to API
-        const response = await fetch('/api/v1/rapid-assessments', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(assessmentData)
-        });
+        const result = await apiPost('/api/v1/rapid-assessments', assessmentData);
         
-        if (response.ok) {
-          const result = await response.json();
-          console.log('Assessment submitted successfully:', result);
+        if (result.success) {
+          console.log('Assessment submitted successfully:', result.data);
           handleAssessmentComplete();
         } else {
-          const errorData = await response.json();
-          console.error('API Error:', errorData);
-          throw new Error(errorData.error || 'Failed to submit assessment');
+          console.error('API Error:', result.error);
+          throw new Error(result.error || 'Failed to submit assessment');
         }
       } catch (error) {
         console.error('Error submitting assessment:', error);

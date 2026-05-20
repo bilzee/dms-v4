@@ -77,6 +77,7 @@ export interface AssessmentData {
 }
 
 export interface EntityAssessmentsResponse {
+  success?: true
   entity: EntityDemographics
   assessments: AssessmentData[]
   pagination: {
@@ -99,6 +100,7 @@ export interface CategorySummary {
 }
 
 export interface LatestAssessmentsResponse {
+  success?: true
   entityId: string
   latestAssessments: LatestAssessment[]
   lastUpdated: Date
@@ -122,6 +124,7 @@ export interface AssessmentSummary {
 }
 
 export interface GapAnalysisResponse {
+  success?: true
   entityId: string
   analysisDate: Date
   overallGapScore: number
@@ -146,6 +149,7 @@ export interface GapSummary {
 }
 
 export interface AssessmentTrendsResponse {
+  success?: true
   entityId: string
   timeframe: {
     start: Date

@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { v4 as uuidv4 } from 'uuid'
+import { NextRequest } from 'next/server'
 import { withAuth } from '@/lib/auth/middleware'
+import { successResponse, errorResponse, handleApiError } from '@/lib/api/response'
 import { prisma } from '@/lib/db/client'
 
 const SETTINGS_DEFAULTS: Record<string, Record<string, any>> = {
@@ -45,10 +45,7 @@ function flattenSettings(section: string, values: Record<string, any>) {
 export const GET = withAuth(async (request: NextRequest, context) => {
   const { permissions } = context
   if (!permissions.includes('MANAGE_USERS')) {
-    return NextResponse.json(
-      { success: false, error: 'Insufficient permissions.' },
-      { status: 403 }
-    )
+    return errorResponse('Insufficient permissions.', 403)
   }
 
   try {
@@ -66,26 +63,17 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       }
     }
 
-    return NextResponse.json({
-      data: result,
-      meta: { timestamp: new Date().toISOString(), version: '1.0.0', requestId: uuidv4() }
-    })
+    return successResponse(result)
   } catch (error) {
     console.error('Get settings error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })
 
 export const PUT = withAuth(async (request: NextRequest, context) => {
   const { permissions, userId } = context
   if (!permissions.includes('MANAGE_USERS')) {
-    return NextResponse.json(
-      { success: false, error: 'Insufficient permissions.' },
-      { status: 403 }
-    )
+    return errorResponse('Insufficient permissions.', 403)
   }
 
   try {
@@ -93,10 +81,7 @@ export const PUT = withAuth(async (request: NextRequest, context) => {
     const { section, settings } = body
 
     if (!section || !settings) {
-      return NextResponse.json(
-        { success: false, error: 'Section and settings are required.' },
-        { status: 400 }
-      )
+      return errorResponse('Section and settings are required.', 400)
     }
 
     const flattened = flattenSettings(section, settings)
@@ -119,15 +104,9 @@ export const PUT = withAuth(async (request: NextRequest, context) => {
       })
     }
 
-    return NextResponse.json({
-      data: { success: true },
-      meta: { timestamp: new Date().toISOString(), version: '1.0.0', requestId: uuidv4() }
-    })
+    return successResponse({ success: true })
   } catch (error) {
     console.error('Update settings error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

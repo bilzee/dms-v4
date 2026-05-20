@@ -63,6 +63,7 @@ export const GET = withAuth(
       }
 
       const response: RapidAssessmentResponse = {
+        success: true as const,
         data: assessment as unknown as RapidAssessmentWithData,
         meta: {
           timestamp: new Date().toISOString(),
@@ -119,6 +120,7 @@ export const PUT = withAuth(
       )
 
       const response: RapidAssessmentResponse = {
+        success: true as const,
         data: assessment as unknown as RapidAssessmentWithData,
         meta: {
           timestamp: new Date().toISOString(),
@@ -198,6 +200,7 @@ export const DELETE = withAuth(
 
       return NextResponse.json(
         {
+          success: true,
           message: 'Assessment deleted successfully',
           meta: {
             timestamp: new Date().toISOString(),

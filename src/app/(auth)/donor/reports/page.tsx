@@ -26,7 +26,7 @@ import {
 
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { apiGet } from '@/lib/api'
+import { apiGet, getAuthHeaders } from '@/lib/api'
 
 interface EntityData {
   id: string
@@ -55,7 +55,7 @@ interface ReportConfig {
 }
 
 export default function DonorReportsPage() {
-  const { currentRole, user, token } = useAuth()
+  const { currentRole, user } = useAuth()
   const [reportConfig, setReportConfig] = useState<ReportConfig>({
     format: 'pdf',
     includeCharts: true,
@@ -89,12 +89,10 @@ export default function DonorReportsPage() {
   const handleGenerateReport = async () => {
     setIsGenerating(true)
     try {
+      // Note: Report generation returns a blob, so we keep raw fetch for the blob response
       const response = await fetch('/api/v1/donors/reports/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           format: reportConfig.format === 'excel' ? 'csv' : reportConfig.format,
           includeCharts: reportConfig.includeCharts,

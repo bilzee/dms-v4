@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+import { apiGet } from '@/lib/api'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 function SystemHealthContent() {
-  const { token } = useAuth()
   const [health, setHealth] = useState<{
     databaseSync: string
     apiResponseTime: number
@@ -25,12 +24,9 @@ function SystemHealthContent() {
   const fetchHealth = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/v1/system/health', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setHealth(data.data)
+      const result = await apiGet('/api/v1/system/health')
+      if (result.success) {
+        setHealth(result.data)
         setLastChecked(new Date())
       }
     } catch {}
@@ -41,7 +37,7 @@ function SystemHealthContent() {
     fetchHealth()
     const interval = setInterval(fetchHealth, 60000)
     return () => clearInterval(interval)
-  }, [token])
+  }, [])
 
   const getStatusVariant = (status: string) => {
     if (status === 'Healthy') return 'default' as const

@@ -20,6 +20,7 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
     const responses = await ResponseService.getPlannedResponsesForResponder(context.userId);
     
     return NextResponse.json({
+      success: true,
       data: responses,
       meta: {
         timestamp: new Date().toISOString(),
@@ -80,6 +81,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
     )
 
     const apiResponse: CreatePlannedResponseResponse = {
+      success: true,
       data: response as any,
       meta: {
         timestamp: new Date().toISOString(),

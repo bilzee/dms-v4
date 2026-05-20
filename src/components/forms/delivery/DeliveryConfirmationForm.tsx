@@ -47,6 +47,7 @@ import { useOffline } from '@/hooks/useOffline'
 
 // Services
 import { DeliveryOfflineService } from '@/lib/services/delivery-offline.service'
+import { apiGet, apiPost } from '@/lib/api'
 import { ResponseService } from '@/lib/services/response-client.service'
 
 // Components
@@ -110,15 +111,9 @@ export function DeliveryConfirmationForm({
     queryKey: ['response', responseId],
     queryFn: async () => {
       if (!token) throw new Error('User not authenticated')
-      
-      const res = await fetch(`/api/v1/responses/${responseId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      if (!res.ok) throw new Error('Failed to fetch response')
-      const result = await res.json()
-      return result.data as RapidResponse
+      const result = await apiGet(`/api/v1/responses/${responseId}`)
+      if (!result.success) throw new Error('Failed to fetch response')
+      return (result.data as any)?.data || result.data as RapidResponse
     },
     enabled: !!responseId && !!token
   })
@@ -174,21 +169,11 @@ export function DeliveryConfirmationForm({
       // Check if we're online and can sync immediately
       if (isOnline) {
         try {
-          const res = await fetch(`/api/v1/responses/${responseId}/deliver`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(payload)
-          })
-
-          if (!res.ok) {
-            const errorData = await res.json()
-            throw new Error(errorData.error || 'Failed to confirm delivery')
+          const res = await apiPost(`/api/v1/responses/${responseId}/deliver`, payload)
+          if (!res.success) {
+            throw new Error(res.error || 'Failed to confirm delivery')
           }
-
-          return res.json()
+          return res
         } catch (onlineError) {
           console.warn('Online delivery failed, falling back to offline mode:', onlineError)
           // Fall through to offline mode

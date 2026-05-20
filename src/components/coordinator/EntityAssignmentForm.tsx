@@ -3,6 +3,7 @@
 import React from 'react';
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { apiGet, apiPost, apiDelete } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -110,33 +111,27 @@ export default function CoordinatorEntitiesPage() {
     setIsLoading(true);
     try {
       if (!token) throw new Error('No authentication token available');
-      const headers = { 'Authorization': `Bearer ${token}` };
-
-      const [entitiesRes, usersRes, donorsRes, assignmentsRes] = await Promise.all([
-        fetch('/api/v1/entities', { headers }),
-        fetch('/api/v1/users/assignable', { headers }),
-        fetch('/api/v1/donors', { headers }),
-        fetch('/api/v1/entity-assignments', { headers })
+      const [entitiesResult, usersResult, donorsResult, assignmentsResult] = await Promise.all([
+        apiGet('/api/v1/entities'),
+        apiGet('/api/v1/users/assignable'),
+        apiGet('/api/v1/donors'),
+        apiGet('/api/v1/entity-assignments')
       ]);
-
-      if (entitiesRes.ok) {
-        const entitiesData = await entitiesRes.json();
-        setEntities(entitiesData.data || []);
+      if (entitiesResult.success) {
+        const d = entitiesResult.data as any;
+        setEntities(d?.data || d || []);
       }
-
-      if (usersRes.ok) {
-        const usersData = await usersRes.json();
-        setUsers(usersData.data || []);
+      if (usersResult.success) {
+        const d = usersResult.data as any;
+        setUsers(d?.data || d || []);
       }
-
-      if (donorsRes.ok) {
-        const donorsData = await donorsRes.json();
-        setDonors(donorsData.data || []);
+      if (donorsResult.success) {
+        const d = donorsResult.data as any;
+        setDonors(d?.data || d || []);
       }
-
-      if (assignmentsRes.ok) {
-        const assignmentsData = await assignmentsRes.json();
-        setAssignments(assignmentsData.data || []);
+      if (assignmentsResult.success) {
+        const d = assignmentsResult.data as any;
+        setAssignments(d?.data || d || []);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -155,36 +150,20 @@ export default function CoordinatorEntitiesPage() {
     try {
       if (!token) throw new Error('No authentication token available');
       
-      // Create assignments for selected users
       const userAssignments = selectedUserIds.map(userId =>
-        fetch('/api/v1/entity-assignments', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            userId,
-            entityId: selectedEntity,
-            assignedBy: user?.id || ''
-          })
+        apiPost('/api/v1/entity-assignments', {
+          userId,
+          entityId: selectedEntity,
+          assignedBy: user?.id || ''
         })
       );
 
-      // Create assignments for selected donor users
       const donorAssignments = selectedDonorIds.map(donorId => {
         const donor = donors.find(d => d.id === donorId);
-        return fetch('/api/v1/entity-assignments', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            userId: donor?.user.id,
-            entityId: selectedEntity,
-            assignedBy: user?.id || ''
-          })
+        return apiPost('/api/v1/entity-assignments', {
+          userId: donor?.user.id,
+          entityId: selectedEntity,
+          assignedBy: user?.id || ''
         });
       });
 
@@ -203,12 +182,7 @@ export default function CoordinatorEntitiesPage() {
   const removeAssignment = async (assignmentId: string) => {
     try {
       if (!token) throw new Error('No authentication token available');
-      
-      await fetch(`/api/v1/entity-assignments/${assignmentId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
+      await apiDelete(`/api/v1/entity-assignments/${assignmentId}`);
       fetchData();
     } catch (error) {
       console.error('Error removing assignment:', error);

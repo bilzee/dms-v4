@@ -12,6 +12,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { apiGet, apiPost } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -106,13 +107,12 @@ export function LivingDocumentationDashboard() {
 
   const loadLivingTestData = async () => {
     try {
-      const response = await fetch('/api/living-tests/status')
-      if (response.ok) {
-        const data = await response.json()
-        setStats(data.stats)
-        setFixes(data.fixes)
-        setPatterns(data.patterns)
-        setCoverage(data.coverage)
+      const result = await apiGet('/api/living-tests/status')
+      if (result.success && result.data) {
+        setStats(result.data.stats)
+        setFixes(result.data.fixes)
+        setPatterns(result.data.patterns)
+        setCoverage(result.data.coverage)
         setLastUpdate(new Date())
       }
     } catch (error) {
@@ -122,8 +122,8 @@ export function LivingDocumentationDashboard() {
 
   const startCaptureSession = async () => {
     try {
-      const response = await fetch('/api/living-tests/start', { method: 'POST' })
-      if (response.ok) {
+      const result = await apiPost('/api/living-tests/start')
+      if (result.success) {
         setIsLive(true)
         setStats(prev => ({ ...prev, activeSession: true }))
       }
@@ -134,8 +134,8 @@ export function LivingDocumentationDashboard() {
 
   const stopCaptureSession = async () => {
     try {
-      const response = await fetch('/api/living-tests/stop', { method: 'POST' })
-      if (response.ok) {
+      const result = await apiPost('/api/living-tests/stop')
+      if (result.success) {
         setIsLive(false)
         setStats(prev => ({ ...prev, activeSession: false }))
       }

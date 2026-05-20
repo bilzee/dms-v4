@@ -37,6 +37,7 @@ import {
   MapPin
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { apiGet, apiPut } from '@/lib/api';
 import type { AutoApprovalConfig } from '@/types/verification';
 
 interface AutoApprovalConfigProps {
@@ -64,8 +65,7 @@ interface AutoApprovalConfigData {
   };
 }
 
-// API functions
-async function fetchAutoApprovalConfigs(token: string): Promise<{
+async function fetchAutoApprovalConfigs(): Promise<{
   data: AutoApprovalConfigData[];
   summary: {
     totalEntities: number;
@@ -76,65 +76,43 @@ async function fetchAutoApprovalConfigs(token: string): Promise<{
     totalAutoVerified: number;
   };
 }> {
-  const response = await fetch('/api/v1/verification/auto-approval', {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  });
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to fetch auto-approval configurations');
+  const result = await apiGet('/api/v1/verification/auto-approval')
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to fetch auto-approval configurations')
   }
-  return response.json();
+  return result.data as {
+    data: AutoApprovalConfigData[];
+    summary: {
+      totalEntities: number;
+      enabledCount: number;
+      disabledCount: number;
+      totalAutoVerifiedAssessments: number;
+      totalAutoVerifiedResponses: number;
+      totalAutoVerified: number;
+    };
+  }
 }
 
 async function updateEntityAutoApproval(
-  entityId: string, 
-  config: { enabled: boolean; conditions?: any },
-  token: string
+  entityId: string,
+  config: { enabled: boolean; conditions?: any }
 ): Promise<AutoApprovalConfigData> {
-  const response = await fetch(`/api/v1/entities/${entityId}/auto-approval`, {
-    method: 'PUT',
-    headers: { 
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(config),
-  });
-  
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to update auto-approval configuration');
+  const result = await apiPut(`/api/v1/entities/${entityId}/auto-approval`, config)
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to update auto-approval configuration')
   }
-  
-  const result = await response.json();
-  return result.data;
+  return result.data as AutoApprovalConfigData
 }
 
 async function bulkUpdateAutoApproval(
-  entityIds: string[], 
-  config: { enabled: boolean; conditions?: any },
-  token: string
+  entityIds: string[],
+  config: { enabled: boolean; conditions?: any }
 ): Promise<AutoApprovalConfigData[]> {
-  const response = await fetch('/api/v1/verification/auto-approval', {
-    method: 'PUT',
-    headers: { 
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      entityIds,
-      ...config
-    }),
-  });
-  
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to bulk update auto-approval configurations');
+  const result = await apiPut('/api/v1/verification/auto-approval', { entityIds, ...config })
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to bulk update auto-approval configurations')
   }
-  
-  const result = await response.json();
-  return result.data;
+  return result.data as AutoApprovalConfigData[]
 }
 
 export function AutoApprovalConfig({ className }: AutoApprovalConfigProps) {
@@ -163,7 +141,7 @@ export function AutoApprovalConfig({ className }: AutoApprovalConfigProps) {
     queryKey: ['auto-approval-configs'],
     queryFn: () => {
       if (!token) throw new Error('No authentication token available');
-      return fetchAutoApprovalConfigs(token);
+      return fetchAutoApprovalConfigs();
     },
     staleTime: 60000, // 1 minute
     enabled: !!token, // Only run query if token exists
@@ -172,7 +150,7 @@ export function AutoApprovalConfig({ className }: AutoApprovalConfigProps) {
   const updateMutation = useMutation({
     mutationFn: ({ entityId, config }: { entityId: string; config: any }) => {
       if (!token) throw new Error('No authentication token available');
-      return updateEntityAutoApproval(entityId, config, token);
+      return updateEntityAutoApproval(entityId, config);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['auto-approval-configs'] });
@@ -190,7 +168,7 @@ export function AutoApprovalConfig({ className }: AutoApprovalConfigProps) {
   const bulkUpdateMutation = useMutation({
     mutationFn: ({ entityIds, config }: { entityIds: string[]; config: any }) => {
       if (!token) throw new Error('No authentication token available');
-      return bulkUpdateAutoApproval(entityIds, config, token);
+      return bulkUpdateAutoApproval(entityIds, config);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['auto-approval-configs'] });

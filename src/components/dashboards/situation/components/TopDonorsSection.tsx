@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Users
 } from 'lucide-react';
+import { apiGet } from '@/lib/api';
 
 interface TopDonorsProps {
   incidentId?: string;
@@ -30,22 +31,12 @@ interface TopDonor {
 
 // Fetch top performing donors with updated formula
 const fetchTopDonors = async (incidentId?: string): Promise<TopDonor[]> => {
-  // For now, we'll use the general donor metrics API
-  // In a real implementation, this would filter by incident
-  const response = await fetch('/api/v1/donors/metrics?dateRange=30d');
-  
-  if (!response.ok) {
-    throw new Error('Failed to fetch donor metrics');
+  const result = await apiGet('/api/v1/donors/metrics?dateRange=30d')
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to fetch donor metrics')
   }
-  
-  const data = await response.json();
-  
-  if (!data.success) {
-    throw new Error(data.error || 'Failed to fetch donor metrics');
-  }
-  
-  // Return top 3 performers with incident filtering (mock for now)
-  return data.data.overall.topPerformers.slice(0, 3);
+  const d = result.data as any
+  return d?.data?.overall?.topPerformers?.slice(0, 3) || d?.overall?.topPerformers?.slice(0, 3) || []
 };
 
 /**

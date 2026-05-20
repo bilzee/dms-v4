@@ -21,6 +21,7 @@ import { useIncident } from '@/hooks/useIncident'
 import { IncidentSchema } from '@/lib/validation/incidents'
 import { IncidentData } from '@/types/incidents'
 import { AlertTriangle, Plus, Zap, MapPin, Loader2 } from 'lucide-react'
+import { apiGet } from '@/lib/api'
 import { z } from 'zod'
 
 type FormData = z.infer<typeof IncidentSchema>
@@ -155,11 +156,10 @@ export function IncidentCreationForm({
   useEffect(() => {
     const fetchPreliminaryAssessments = async () => {
       try {
-        const response = await fetch('/api/v1/preliminary-assessments')
-        if (response.ok) {
-          const data = await response.json()
-          // Filter for assessments that don't have an incident linked (unlinked)
-          const unlinkedAssessments = (data.data || []).filter((assessment: any) => !assessment.incidentId)
+        const result = await apiGet('/api/v1/preliminary-assessments')
+        if (result.success) {
+          const data = (result.data as any)?.data || result.data || []
+          const unlinkedAssessments = data.filter((assessment: any) => !assessment.incidentId)
           setPreliminaryAssessments(unlinkedAssessments)
         }
       } catch (error) {

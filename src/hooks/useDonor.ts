@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { DonorProfileUpdateInput } from '@/lib/validation/donor'
 import { apiGet, apiPatch, apiPost } from '@/lib/api'
+import { getAuthToken, setAuthToken } from '@/lib/auth/token-utils'
 
 export interface DonorProfile {
   id: string
@@ -83,7 +84,7 @@ export function useDonorProfile() {
       }
       return result.data!
     },
-    enabled: (() => { try { return !!localStorage.getItem('auth_token') } catch { return false } })()
+    enabled: !!getAuthToken()
   })
 
   const updateProfileMutation = useMutation({
@@ -136,7 +137,7 @@ export function useDonorEntities(filters?: {
       }
       return result.data!
     },
-    enabled: (() => { try { return !!localStorage.getItem('auth_token') } catch { return false } })()
+    enabled: !!getAuthToken()
   })
 
   return {
@@ -174,7 +175,7 @@ export function useDonorRegistration() {
     onSuccess: (data) => {
       // Store auth token
       try {
-        localStorage.setItem('auth_token', data.data.token)
+        setAuthToken(data.data.token)
         localStorage.setItem('user_data', JSON.stringify(data.data.user))
       } catch (error) {
         console.error('Failed to store auth data in localStorage:', error)

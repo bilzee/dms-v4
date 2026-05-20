@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { BarChart3, CheckCircle, XCircle, Clock, Users, FileText } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { apiGet } from '@/lib/api'
 
 interface VerificationMetrics {
   totalPending: number
@@ -31,18 +32,12 @@ export default function VerificationMetricsPage() {
           throw new Error('No authentication token found')
         }
 
-        const response = await fetch('/api/v1/verification/metrics', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch metrics: ${response.statusText}`)
+        const result = await apiGet('/api/v1/verification/metrics')
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to fetch metrics')
         }
-
-        const data = await response.json()
-        setMetrics(data.data)
+        const d = result.data as any
+        setMetrics(d?.data || d)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load metrics')
       } finally {

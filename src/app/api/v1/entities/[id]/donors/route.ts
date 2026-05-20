@@ -85,6 +85,7 @@ export const GET = withAuth(async (
 
     return NextResponse.json(
       {
+        success: true,
         data: entityDonors,
         meta: {
           timestamp: new Date().toISOString(),

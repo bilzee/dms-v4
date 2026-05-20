@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft, AlertTriangle } from 'lucide-react'
-import { getAuthToken } from '@/lib/auth/token-utils'
+import { apiGet } from '@/lib/api'
 import { ResponsePlanningForm } from '@/components/forms/response'
 
 interface Response {
@@ -50,18 +50,11 @@ export default function EditRejectedResponsePage() {
       if (!user || !id) return
 
       try {
-        const token = getAuthToken()
-        const apiResponse = await fetch(`/api/v1/responses/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-
-        if (!apiResponse.ok) {
-          throw new Error('Failed to fetch response')
+        const result = await apiGet(`/api/v1/responses/${id}`)
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to fetch response')
         }
 
-        const result = await apiResponse.json()
         const responseData = result.data
 
         // Only allow editing if verification status is REJECTED

@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { v4 as uuidv4 } from 'uuid'
 import { withAuth } from '@/lib/auth/middleware'
+import { successResponse, errorResponse, handleApiError } from '@/lib/api/response'
 import { AuthService } from '@/lib/auth/service'
 import { prisma } from '@/lib/db/client'
 
@@ -20,55 +20,28 @@ interface RouteParams {
   params: { userId: string }
 }
 
-// Update user - requires MANAGE_USERS permission
 export const PUT = withAuth(async (request: NextRequest, context, { params }: RouteParams) => {
   const { permissions } = context;
   if (!permissions.includes('MANAGE_USERS')) {
-    return NextResponse.json(
-      { success: false, error: 'Insufficient permissions. Manage users permission required.' },
-      { status: 403 }
-    );
+    return errorResponse('Insufficient permissions. Manage users permission required.', 403);
   }
 
   try {
     const { userId } = params
-    
+
     if (!userId) {
-      return NextResponse.json(
-        {
-          error: 'User ID is required',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 400 }
-      )
+      return errorResponse('User ID is required', 400)
     }
 
     const body = await request.json()
-    
-    // Validate input
+
     const validation = updateUserSchema.safeParse(body)
     if (!validation.success) {
-      return NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: validation.error.errors,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 400 }
-      )
+      return errorResponse('Validation failed', 400, validation.error.errors)
     }
 
     const validatedData = validation.data
 
-    // Check if user exists
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -81,85 +54,41 @@ export const PUT = withAuth(async (request: NextRequest, context, { params }: Ro
     })
 
     if (!existingUser) {
-      return NextResponse.json(
-        {
-          error: 'User not found',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 404 }
-      )
+      return errorResponse('User not found', 404)
     }
 
-    // Check for email uniqueness if email is being updated
     if (validatedData.email && validatedData.email !== existingUser.email) {
       const emailExists = await prisma.user.findUnique({
         where: { email: validatedData.email }
       })
-      
+
       if (emailExists) {
-        return NextResponse.json(
-          {
-            error: 'Email already exists',
-            meta: {
-              timestamp: new Date().toISOString(),
-              version: '1.0.0',
-              requestId: uuidv4()
-            }
-          },
-          { status: 409 }
-        )
+        return errorResponse('Email already exists', 409)
       }
     }
 
-    // Check for username uniqueness if username is being updated
     if (validatedData.username && validatedData.username !== existingUser.username) {
       const usernameExists = await prisma.user.findUnique({
         where: { username: validatedData.username }
       })
-      
+
       if (usernameExists) {
-        return NextResponse.json(
-          {
-            error: 'Username already exists',
-            meta: {
-              timestamp: new Date().toISOString(),
-              version: '1.0.0',
-              requestId: uuidv4()
-            }
-          },
-          { status: 409 }
-        )
+        return errorResponse('Username already exists', 409)
       }
     }
 
-    // If roleIds are provided, verify they exist
     if (validatedData.roleIds) {
       const roles = await prisma.role.findMany({
         where: { id: { in: validatedData.roleIds } }
       })
 
       if (roles.length !== validatedData.roleIds.length) {
-        return NextResponse.json(
-          {
-            error: 'One or more role IDs are invalid',
-            meta: {
-              timestamp: new Date().toISOString(),
-              version: '1.0.0',
-              requestId: uuidv4()
-            }
-          },
-          { status: 400 }
-        )
+        return errorResponse('One or more role IDs are invalid', 400)
       }
     }
 
-    // Prepare update data
     const updateData: any = {}
-    
+
     if (validatedData.email !== undefined) updateData.email = validatedData.email
     if (validatedData.username !== undefined) updateData.username = validatedData.username
     if (validatedData.name !== undefined) updateData.name = validatedData.name
@@ -167,28 +96,22 @@ export const PUT = withAuth(async (request: NextRequest, context, { params }: Ro
     if (validatedData.organization !== undefined) updateData.organization = validatedData.organization
     if (validatedData.isActive !== undefined) updateData.isActive = validatedData.isActive
 
-    // Handle password reset
     if (validatedData.resetPassword) {
       const hashedPassword = await AuthService.hashPassword('defaultpass123!')
       updateData.passwordHash = hashedPassword
     }
 
-    // Update user with transaction to handle role updates
     const updatedUser = await prisma.$transaction(async (tx: any) => {
-      // Update user basic info
       const user = await tx.user.update({
         where: { id: userId },
         data: updateData
       })
 
-      // Update roles if provided
       if (validatedData.roleIds) {
-        // Remove existing roles
         await tx.userRole.deleteMany({
           where: { userId: userId }
         })
 
-        // Add new roles
         await tx.userRole.createMany({
           data: validatedData.roleIds.map(roleId => ({
             userId: userId,
@@ -199,7 +122,6 @@ export const PUT = withAuth(async (request: NextRequest, context, { params }: Ro
         })
       }
 
-      // Return updated user with roles
       return await tx.user.findUnique({
         where: { id: userId },
         include: {
@@ -212,64 +134,26 @@ export const PUT = withAuth(async (request: NextRequest, context, { params }: Ro
       })
     })
 
-    // Remove password hash from response
     const { passwordHash, ...userWithoutPassword } = updatedUser!
 
-    return NextResponse.json(
-      {
-        data: {
-          user: userWithoutPassword
-        },
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 200 }
-    )
+    return successResponse({ user: userWithoutPassword })
   } catch (error) {
     console.error('Update user error:', error)
-    
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })
 
-// Get single user - requires MANAGE_USERS permission
 export const GET = withAuth(async (request: NextRequest, context, { params }: RouteParams) => {
   const { permissions } = context;
   if (!permissions.includes('MANAGE_USERS')) {
-    return NextResponse.json(
-      { success: false, error: 'Insufficient permissions. Manage users permission required.' },
-      { status: 403 }
-    );
+    return errorResponse('Insufficient permissions. Manage users permission required.', 403);
   }
 
   try {
     const { userId } = params
-    
+
     if (!userId) {
-      return NextResponse.json(
-        {
-          error: 'User ID is required',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 400 }
-      )
+      return errorResponse('User ID is required', 400)
     }
 
     const user = await prisma.user.findUnique({
@@ -284,48 +168,14 @@ export const GET = withAuth(async (request: NextRequest, context, { params }: Ro
     })
 
     if (!user) {
-      return NextResponse.json(
-        {
-          error: 'User not found',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 404 }
-      )
+      return errorResponse('User not found', 404)
     }
 
-    // Remove password hash from response
     const { passwordHash, ...userWithoutPassword } = user
 
-    return NextResponse.json(
-      {
-        data: {
-          user: userWithoutPassword
-        },
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 200 }
-    )
+    return successResponse({ user: userWithoutPassword })
   } catch (error) {
     console.error('Get user error:', error)
-    
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

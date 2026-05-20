@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     return NextResponse.json({
+      success: true,
       status: 'ok',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),

@@ -4,7 +4,7 @@ import React from 'react'
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import { getAuthToken } from '@/lib/auth/token-utils'
+import { apiGet } from '@/lib/api'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -85,15 +85,10 @@ export default function EntityInsightsPage() {
   const { data: demographics, isLoading: demographicsLoading, error: demographicsError } = useQuery({
     queryKey: ['entity-demographics', id],
     queryFn: async () => {
-      const token = getAuthToken()
-      if (!token) throw new Error('Not authenticated')
-      const response = await fetch(`/api/v1/donors/entities/${id}/demographics`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (!response.ok) {
-        throw new Error('Failed to fetch entity demographics')
+      const result = await apiGet(`/api/v1/donors/entities/${id}/demographics`)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch entity demographics')
       }
-      const result = await response.json()
       return result.data as EntityDemographics
     },
     enabled: !!id
@@ -103,15 +98,10 @@ export default function EntityInsightsPage() {
   const { data: latestAssessments, isLoading: assessmentsLoading, error: assessmentsError } = useQuery({
     queryKey: ['latest-assessments', id],
     queryFn: async () => {
-      const token = getAuthToken()
-      if (!token) throw new Error('Not authenticated')
-      const response = await fetch(`/api/v1/donors/entities/${id}/assessments/latest`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (!response.ok) {
-        throw new Error('Failed to fetch latest assessments')
+      const result = await apiGet(`/api/v1/donors/entities/${id}/assessments/latest`)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch latest assessments')
       }
-      const result = await response.json()
       return result.data as LatestAssessmentsResponse
     },
     enabled: !!id

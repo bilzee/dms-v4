@@ -22,8 +22,8 @@ import { Package, Truck, Search, Filter, AlertTriangle, Clock, CheckCircle, Arro
 // Services and hooks
 import { useAuthStore } from '@/stores/auth.store'
 
-// Token utilities
-import { getAuthToken } from '@/lib/auth/token-utils'
+// API utilities
+import { apiGet } from '@/lib/api'
 
 function DonorResponsesPageContent() {
   const router = useRouter()
@@ -36,21 +36,12 @@ function DonorResponsesPageContent() {
   const fetchDonorResponses = async () => {
     if (!user) throw new Error('User not authenticated')
     
-    const token = getAuthToken()
-    if (!token) throw new Error('No authentication token available')
-    
     // First get the donor profile to find the donor ID
-    const profileResponse = await fetch('/api/v1/donors/profile', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    if (!profileResponse.ok) {
-      throw new Error('Failed to fetch donor profile')
+    const profileResult = await apiGet('/api/v1/donors/profile')
+    if (!profileResult.success) {
+      throw new Error(profileResult.error || 'Failed to fetch donor profile')
     }
     
-    const profileResult = await profileResponse.json()
     const donor = profileResult.data?.donor
     
     if (!donor) {
@@ -58,17 +49,12 @@ function DonorResponsesPageContent() {
     }
     
     // Now use the donor ID to get commitments with responses
-    const response = await fetch(`/api/v1/donors/${donor.id}/commitments?includeResponses=true`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch commitment responses')
+    const commitmentsResult = await apiGet(`/api/v1/donors/${donor.id}/commitments?includeResponses=true`)
+    if (!commitmentsResult.success) {
+      throw new Error(commitmentsResult.error || 'Failed to fetch commitment responses')
     }
     
-    const result = await response.json()
+    const result = commitmentsResult.data
     
     // Extract responses from commitments
     const responses = (result.data || []).reduce((acc: any[], commitment: any) => {

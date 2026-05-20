@@ -22,8 +22,8 @@ import { EmptyResponses, EmptySearchResults } from '@/components/shared/EmptySta
 // Icons
 import { Package, Truck, Search, Filter, Clock, CheckCircle, ArrowLeft, Plus, AlertTriangle, User, X, Edit, Info, Shield } from 'lucide-react'
 
-// Token utilities
-import { getAuthToken } from '@/lib/auth/token-utils'
+// API utilities
+import { apiGet } from '@/lib/api'
 
 function ResponderResponsesPageContent() {
   const router = useRouter()
@@ -72,23 +72,14 @@ function ResponderResponsesPageContent() {
       queryFn={async () => {
         if (!user) throw new Error('User not authenticated')
         
-        const token = getAuthToken()
-        if (!token) throw new Error('No authentication token available')
-        
-        const response = await fetch(`/api/v1/responses/assigned?page=1&limit=100`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch responses')
+        const result = await apiGet('/api/v1/responses/assigned?page=1&limit=100')
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to fetch responses')
         }
         
-        const result = await response.json()
         return {
           responses: result.data || [],
-          total: result.meta?.total || 0
+          total: (result.data as any)?.pagination?.total || (result.data as any)?.total || 0
         }
       }}
       enabled={!!user}

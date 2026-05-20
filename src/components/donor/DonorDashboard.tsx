@@ -50,8 +50,8 @@ import { cn } from '@/lib/utils'
 // Role-based access
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 
-// Token utilities
-import { getAuthToken } from '@/lib/auth/token-utils'
+// API utilities
+import { apiGet } from '@/lib/api'
 
 export function DonorDashboard() {
   const { user } = useAuth()
@@ -70,89 +70,39 @@ export function DonorDashboard() {
   const fetchDonorProfile = async () => {
     if (!user) throw new Error('User not authenticated')
     
-    const token = getAuthToken()
-    if (!token) throw new Error('No authentication token available')
-    
-    const response = await fetch('/api/v1/donors/profile', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch donor profile')
-    }
-    
-    const result = await response.json()
+    const result = await apiGet('/api/v1/donors/profile')
+    if (!result.success) throw new Error(result.error || 'Failed to fetch donor profile')
     return result.data
   }
 
   const fetchEntities = async () => {
-    const token = getAuthToken()
-    if (!token) throw new Error('No authentication token available')
-    
-    const response = await fetch('/api/v1/donors/entities', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch entities')
-    }
-    
-    const result = await response.json()
+    const result = await apiGet('/api/v1/donors/entities')
+    if (!result.success) throw new Error(result.error || 'Failed to fetch entities')
     return result.data
   }
 
   const fetchGamificationMetrics = async () => {
-    const token = getAuthToken()
-    if (!token) throw new Error('No authentication token available')
-    
-    const response = await fetch('/api/v1/donors/metrics?timeframe=30d', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch gamification metrics')
-    }
-    
-    const result = await response.json()
+    const result = await apiGet('/api/v1/donors/metrics?timeframe=30d')
+    if (!result.success) throw new Error(result.error || 'Failed to fetch gamification metrics')
     return result.data
   }
 
   const fetchLeaderboardPosition = async () => {
     // First get the donor profile to find the donor ID
-    const token = getAuthToken()
-    if (!token) return null
+    const profileResult = await apiGet('/api/v1/donors/profile')
+    if (!profileResult.success) return null
     
-    const profileResponse = await fetch('/api/v1/donors/profile', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    if (!profileResponse.ok) return null
-    
-    const profileResult = await profileResponse.json()
     const donorId = profileResult.data?.donor?.id
     
     if (!donorId) return null
     
-    const response = await fetch('/api/v1/leaderboard?limit=100&sortBy=overall', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    if (!response.ok) {
-      throw new Error('Failed to fetch leaderboard')
+    const leaderboardResult = await apiGet('/api/v1/leaderboard?limit=100&sortBy=overall')
+    if (!leaderboardResult.success) {
+      throw new Error(leaderboardResult.error || 'Failed to fetch leaderboard')
     }
-    const result = await response.json()
     
     // Find position by donor ID, not user ID
-    const rankings = result.data?.rankings || []
+    const rankings = leaderboardResult.data?.rankings || []
     const userPosition = rankings.find((r: any) => r.donor.id === donorId)
     
     if (userPosition) {

@@ -13,6 +13,7 @@ import { PlusCircle, Activity, FileText, Clock, CheckCircle, AlertTriangle, Filt
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { apiGet } from '@/lib/api'
 import { RapidAssessment, Entity, Incident } from '@prisma/client'
 
 // Type for assessment with entity and incident relations
@@ -99,14 +100,9 @@ export default function AssessorRapidAssessmentsPage() {
     try {
       if (token) {
         const queryParams = buildQueryParams()
-        const response = await fetch(`/api/v1/rapid-assessments?${queryParams}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
+        const result = await apiGet(`/api/v1/rapid-assessments?${queryParams}`)
         
-        if (response.ok) {
-          const result = await response.json()
+        if (result.success) {
           const allAssessments: RapidAssessmentWithEntity[] = result.data || []
           setAssessments(allAssessments)
           
@@ -159,14 +155,9 @@ export default function AssessorRapidAssessmentsPage() {
         const fetchAssessments = async () => {
           try {
             if (token) {
-              const response = await fetch(`/api/v1/rapid-assessments?userId=me`, {
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                }
-              })
+              const result = await apiGet(`/api/v1/rapid-assessments?userId=me`)
               
-              if (response.ok) {
-                const result = await response.json()
+              if (result.success) {
                 setAssessments(result.data || [])
               }
             }
@@ -192,18 +183,13 @@ export default function AssessorRapidAssessmentsPage() {
   const handleShowReason = async (assessment: any) => {
     try {
       // Fetch the detailed assessment to get the rejection reason
-      const response = await fetch(`/api/v1/rapid-assessments/${assessment.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const result = await apiGet(`/api/v1/rapid-assessments/${assessment.id}`)
       
-      if (response.ok) {
-        const result = await response.json()
+      if (result.success) {
         setSelectedAssessmentForReason(result.data)
         setShowReasonDialog(true)
       } else {
-        console.error('Failed to fetch assessment details')
+        console.error('Failed to fetch assessment details:', result.error)
       }
     } catch (error) {
       console.error('Error fetching assessment details:', error)

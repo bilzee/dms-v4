@@ -27,6 +27,7 @@ import { AssessmentSelector } from '@/components/response/AssessmentSelector'
 
 // Services and types
 import { useAuthStore } from '@/stores/auth.store'
+import { apiGet, apiPost } from '@/lib/api'
 import { CommitmentService, type CommitmentItem } from '@/lib/services/commitment.service'
 import { ResponseService } from '@/lib/services/response.service'
 import { CreateDeliveredResponseInput } from '@/lib/validation/response'
@@ -60,7 +61,7 @@ export function DonorCommitmentImportForm({
   entityId: preselectedEntityId,
   incidentId: preselectedIncidentId
 }: DonorCommitmentImportFormProps) {
-  const { user, token } = useAuthStore()
+  const { user } = useAuthStore()
   const queryClient = useQueryClient()
   const [selectedCommitment, setSelectedCommitment] = useState<any>(null)
   const [selectedItems, setSelectedItems] = useState<CommitmentItem[]>([])
@@ -92,46 +93,22 @@ export function DonorCommitmentImportForm({
       if (filters.entityId && filters.entityId !== 'all') params.append('entityId', filters.entityId)
       if (filters.incidentId && filters.incidentId !== 'all') params.append('incidentId', filters.incidentId)
       if (filters.status) params.append('status', filters.status)
-
-      const response = await fetch(`/api/v1/commitments/available?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch commitments')
-      }
-
-      return response.json()
+      const result = await apiGet(`/api/v1/commitments/available?${params}`)
+      if (!result.success) throw new Error('Failed to fetch commitments')
+      return result.data
     },
-    enabled: !!token
   })
 
   // Query assigned entities for filtering
   const { data: entitiesData } = useQuery({
     queryKey: ['assigned-entities', user?.id],
     queryFn: async () => {
-      if (!user?.id) {
-        throw new Error('User ID not available')
-      }
-
-      const params = new URLSearchParams()
-      params.append('userId', user.id)
-
-      const response = await fetch(`/api/v1/entities/assigned?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch entities')
-      }
-
-      return response.json()
+      if (!user?.id) throw new Error('User ID not available')
+      const result = await apiGet(`/api/v1/entities/assigned?userId=${user.id}`)
+      if (!result.success) throw new Error('Failed to fetch entities')
+      return result.data
     },
-    enabled: !!token && !!user?.id
+    enabled: !!user?.id
   })
 
   // Query verified assessments for the selected entity
@@ -139,46 +116,26 @@ export function DonorCommitmentImportForm({
     queryKey: ['verified-assessments', filters.entityId],
     queryFn: async () => {
       if (!filters.entityId || filters.entityId === 'all') return []
-      
-      const response = await fetch(`/api/v1/assessments/verified?entityId=${filters.entityId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch verified assessments')
-      }
-      
-      const result = await response.json()
-      return result.data || []
+      const result = await apiGet(`/api/v1/assessments/verified?entityId=${filters.entityId}`)
+      if (!result.success) throw new Error('Failed to fetch verified assessments')
+      return (result.data as any)?.data || result.data || []
     },
-    enabled: !!token && !!filters.entityId && filters.entityId !== 'all'
+    enabled: !!filters.entityId && filters.entityId !== 'all'
   })
 
   // Import commitment mutation
   const importMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const response = await fetch('/api/v1/responses/from-commitment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(data)
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to import commitment')
+      const result = await apiPost('/api/v1/responses/from-commitment', data)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to import commitment')
       }
-
-      return response.json()
+      return result.data
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['available-commitments'] })
       queryClient.invalidateQueries({ queryKey: ['planned-responses'] })
-      onSuccess?.(data.data)
+      onSuccess?.(data)
     }
   })
 

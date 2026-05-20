@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { v4 as uuidv4 } from 'uuid'
 import { withAuth } from '@/lib/auth/middleware'
+import { successResponse, errorResponse, createdResponse, handleApiError } from '@/lib/api/response'
+import { paginatedResponse } from '@/lib/api/response'
 import { AuthService } from '@/lib/auth/service'
 import { prisma } from '@/lib/db/client'
 import { CreateUserRequest, CreateUserResponse } from '@/types/auth'
@@ -16,96 +17,46 @@ const createUserSchema = z.object({
   roleIds: z.array(z.string()).min(1, 'At least one role is required')
 })
 
-// Create user - requires MANAGE_USERS permission
 export const POST = withAuth(async (request: NextRequest, context) => {
   const { permissions } = context;
   if (!permissions.includes('MANAGE_USERS')) {
-    return NextResponse.json(
-      { success: false, error: 'Insufficient permissions. Manage users permission required.' },
-      { status: 403 }
-    );
+    return errorResponse('Insufficient permissions. Manage users permission required.', 403);
   }
 
   try {
     const body = await request.json() as CreateUserRequest
-    
-    // Validate input
+
     const validation = createUserSchema.safeParse(body)
     if (!validation.success) {
-      return NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: validation.error.errors,
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 400 }
-      )
+      return errorResponse('Validation failed', 400, validation.error.errors)
     }
 
     const validatedData = validation.data
 
-    // Check if user with email already exists
     const existingUser = await prisma.user.findUnique({
       where: { email: validatedData.email }
     })
 
     if (existingUser) {
-      return NextResponse.json(
-        {
-          error: 'User with this email already exists',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 409 }
-      )
+      return errorResponse('User with this email already exists', 409)
     }
 
-    // Check if user with username already exists
     const existingUsername = await prisma.user.findUnique({
       where: { username: validatedData.username }
     })
 
     if (existingUsername) {
-      return NextResponse.json(
-        {
-          error: 'User with this username already exists',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 409 }
-      )
+      return errorResponse('User with this username already exists', 409)
     }
 
-    // Verify that all role IDs exist
     const roles = await prisma.role.findMany({
       where: { id: { in: validatedData.roleIds } }
     })
 
     if (roles.length !== validatedData.roleIds.length) {
-      return NextResponse.json(
-        {
-          error: 'One or more role IDs are invalid',
-          meta: {
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            requestId: uuidv4()
-          }
-        },
-        { status: 400 }
-      )
+      return errorResponse('One or more role IDs are invalid', 400)
     }
 
-    // Create user
     const user = await AuthService.createUser({
       email: validatedData.email,
       username: validatedData.username,
@@ -117,46 +68,19 @@ export const POST = withAuth(async (request: NextRequest, context) => {
       assignedBy: context.userId
     })
 
-    // Remove password hash from response
     const { passwordHash, ...userWithoutPassword } = user as any
 
-    const response: CreateUserResponse = {
-      data: {
-        user: userWithoutPassword
-      },
-      meta: {
-        timestamp: new Date().toISOString(),
-        version: '1.0.0',
-        requestId: uuidv4()
-      }
-    }
-
-    return NextResponse.json(response, { status: 201 })
+    return createdResponse({ user: userWithoutPassword })
   } catch (error) {
     console.error('Create user error:', error)
-    
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })
 
-// List users - requires MANAGE_USERS permission
 export const GET = withAuth(async (request: NextRequest, context) => {
   const { permissions } = context;
   if (!permissions.includes('MANAGE_USERS')) {
-    return NextResponse.json(
-      { success: false, error: 'Insufficient permissions. Manage users permission required.' },
-      { status: 403 }
-    );
+    return errorResponse('Insufficient permissions. Manage users permission required.', 403);
   }
 
   try {
@@ -167,7 +91,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
 
     const skip = (page - 1) * limit
 
-    // Build search condition
     const searchCondition = search ? {
       OR: [
         { name: { contains: search, mode: 'insensitive' } },
@@ -176,7 +99,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       ]
     } : {}
 
-    // Get users with pagination
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where: searchCondition as any,
@@ -196,41 +118,11 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       })
     ])
 
-    // Remove password hashes
     const usersWithoutPasswords = users.map(({ passwordHash, ...user }: any) => user)
 
-    return NextResponse.json(
-      {
-        data: {
-          users: usersWithoutPasswords,
-          pagination: {
-            page,
-            limit,
-            total,
-            pages: Math.ceil(total / limit)
-          }
-        },
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 200 }
-    )
+    return paginatedResponse(usersWithoutPasswords, page, limit, total)
   } catch (error) {
     console.error('List users error:', error)
-    
-    return NextResponse.json(
-      {
-        error: 'Internal server error',
-        meta: {
-          timestamp: new Date().toISOString(),
-          version: '1.0.0',
-          requestId: uuidv4()
-        }
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

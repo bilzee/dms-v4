@@ -7,6 +7,7 @@ import {
 } from '@/types/preliminary-assessment'
 import { offlineDB } from '@/lib/db/offline'
 import { apiGet, apiPost, apiPut } from '@/lib/api'
+import { useAuthStore } from '@/stores/auth.store'
 import { useOfflineStore } from '@/stores/offline.store'
 
 interface PreliminaryAssessmentDraft {
@@ -112,7 +113,7 @@ export const usePreliminaryAssessmentStore = create<PreliminaryAssessmentState>(
           // Create offline assessment record
           await offlineDB.addAssessment({
             uuid: assessmentUuid,
-            assessorId: localStorage.getItem('userId') || 'unknown',
+            assessorId: useAuthStore.getState().user?.id || 'unknown',
             entityId: 'preliminary', // Preliminary assessments aren't tied to specific entities
             assessmentType: 'preliminary',
             data: data,

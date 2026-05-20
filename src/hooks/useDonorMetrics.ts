@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
+import { getAuthToken } from '@/lib/auth/token-utils';
 
 export interface DonorMetrics {
   donorId: string;
@@ -86,8 +87,9 @@ export function useDonorMetrics(params?: {
       
       return result.data!;
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    refetchInterval: 5 * 60 * 1000, // 5 minutes
+    enabled: !!getAuthToken(),
+    staleTime: 2 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   });
 }
 

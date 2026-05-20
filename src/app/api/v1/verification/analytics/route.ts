@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { v4 as uuidv4 } from 'uuid'
+import { NextRequest } from 'next/server'
 import { withAuth } from '@/lib/auth/middleware'
+import { successResponse, handleApiError } from '@/lib/api/response'
 import { prisma } from '@/lib/db/client'
 
 function getTimeRangeFilter(timeRange: string): Date {
@@ -91,15 +91,9 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       timeSeries
     }
 
-    return NextResponse.json({
-      data: analyticsData,
-      meta: { timestamp: new Date().toISOString(), version: '1.0.0', requestId: uuidv4() }
-    })
+    return successResponse(analyticsData)
   } catch (error) {
     console.error('Verification analytics error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 })

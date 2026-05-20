@@ -8,6 +8,7 @@ export const GET = withAuth(async (request, context) => {
     
     return NextResponse.json(
       {
+        success: true,
         data: incidentTypes,
         meta: {
           timestamp: new Date().toISOString(),
@@ -35,6 +36,7 @@ export const GET = withAuth(async (request, context) => {
     
     return NextResponse.json(
       {
+        success: true,
         data: defaultTypes,
         meta: {
           timestamp: new Date().toISOString(),

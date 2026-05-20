@@ -32,6 +32,7 @@ import {
   Edit
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { apiGet } from '@/lib/api';
 import { ResourceGapAnalysis } from './ResourceGapAnalysis';
 import { DonorCommitment, Donor, Entity, Incident } from '@/types/commitment';
 
@@ -84,14 +85,9 @@ export function ResourceManagement({ className }: ResourceManagementProps) {
         if (value && value !== 'all') params.append(key, value);
       });
 
-      const response = await fetch(`/api/v1/dashboard/resource-management/stats?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch resource management stats');
-      const data = await response.json();
-      return data.success ? data.data : {};
+      const result = await apiGet(`/api/v1/dashboard/resource-management/stats?${params}`)
+      if (!result.success) throw new Error(result.error || 'Failed to fetch resource management stats')
+      return (result.data as any)?.data || result.data || {};
     },
     refetchInterval: 30000 // Auto-refresh every 30 seconds
   });
@@ -110,14 +106,9 @@ export function ResourceManagement({ className }: ResourceManagementProps) {
       });
       if (searchTerm) params.append('search', searchTerm);
 
-      const response = await fetch(`/api/v1/dashboard/resource-management/commitments?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch commitments');
-      const data = await response.json();
-      return data.success ? data.data : { data: [], pagination: {} };
+      const result = await apiGet(`/api/v1/dashboard/resource-management/commitments?${params}`)
+      if (!result.success) throw new Error(result.error || 'Failed to fetch commitments')
+      return (result.data as any)?.data || result.data || { data: [], pagination: {} };
     },
     refetchInterval: 30000
   });
@@ -134,14 +125,9 @@ export function ResourceManagement({ className }: ResourceManagementProps) {
     queryKey: ['critical-gaps', token],
     enabled: isAuthenticated && !!token && token.length > 10, // More robust token validation
     queryFn: async () => {
-      const response = await fetch('/api/v1/dashboard/resource-management/critical-gaps', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch critical gaps');
-      const data = await response.json();
-      return data.success ? data.data : { criticalGaps: [] };
+      const result = await apiGet('/api/v1/dashboard/resource-management/critical-gaps')
+      if (!result.success) throw new Error(result.error || 'Failed to fetch critical gaps')
+      return (result.data as any)?.data || result.data || { criticalGaps: [] };
     },
     refetchInterval: 60000 // Check gaps every minute
   });

@@ -9,6 +9,7 @@ import { PlusCircle, Activity, FileText, Clock, CheckCircle, AlertTriangle } fro
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { apiGet } from '@/lib/api'
 
 const assessmentTypes = [
   { value: 'HEALTH', label: 'Health Assessment' },
@@ -31,14 +32,9 @@ export default function AssessorDashboard() {
     const fetchAssessments = async () => {
       try {
         if (token) {
-          const response = await fetch(`/api/v1/rapid-assessments?userId=me`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          })
+          const result = await apiGet('/api/v1/rapid-assessments?userId=me')
           
-          if (response.ok) {
-            const result = await response.json()
+          if (result.success) {
             setAssessments(result.data || [])
           }
         }
@@ -60,14 +56,9 @@ export default function AssessorDashboard() {
         const fetchAssessments = async () => {
           try {
             if (token) {
-              const response = await fetch(`/api/v1/rapid-assessments?userId=me`, {
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                }
-              })
+              const result = await apiGet('/api/v1/rapid-assessments?userId=me')
               
-              if (response.ok) {
-                const result = await response.json()
+              if (result.success) {
                 setAssessments(result.data || [])
               }
             }

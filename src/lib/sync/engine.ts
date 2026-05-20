@@ -1,5 +1,5 @@
 import { offlineDB, SyncQueueItem } from '../db/offline';
-import { getAuthToken } from '../auth/token-utils';
+import { apiPost } from '@/lib/api';
 
 export interface SyncChange {
   type: 'assessment' | 'response' | 'entity';
@@ -243,27 +243,13 @@ export class SyncEngine {
     };
 
     try {
-      // Get auth token
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('No authentication token available for sync');
+      const apiResult = await apiPost('/api/v1/sync/batch', { changes })
+
+      if (!apiResult.success) {
+        throw new Error(apiResult.error || 'Sync API error')
       }
 
-      // Send batch to server
-      const response = await fetch('/api/v1/sync/batch', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ changes }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Sync API error: ${response.status} ${response.statusText}`);
-      }
-
-      const syncResults: SyncResult[] = await response.json();
+      const syncResults: SyncResult[] = (apiResult.data as any)?.data || apiResult.data || []
 
       // Process results and update queue
       for (let i = 0; i < syncResults.length; i++) {

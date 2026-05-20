@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db/client';
 import { withAuth } from '@/lib/auth/middleware';
+import { successResponse, createdResponse, errorResponse, handleApiError, paginatedResponse } from '@/lib/api/response';
 import { EntityAssignmentServiceImpl } from '@/lib/services/entity-assignment.service';
 import { CreateCommitmentSchema, CommitmentQuerySchema } from '@/lib/validation/commitment';
 import { AuditLogServiceImpl } from '@/lib/services/audit-log.service';
@@ -12,21 +13,16 @@ interface RouteParams {
 export const GET = withAuth(async (request: NextRequest, context, { params }: RouteParams) => {
   const { user, roles } = context;
   const { id: donorId } = params;
-  
+
   try {
-    // Validate donor exists
     const donor = await prisma.donor.findUnique({
       where: { id: donorId, isActive: true }
     });
 
     if (!donor) {
-      return NextResponse.json(
-        { success: false, error: 'Donor not found' },
-        { status: 404 }
-      );
+      return errorResponse('Donor not found', 404);
     }
 
-    // Get query parameters for filtering
     const url = new URL(request.url);
     const entityId = url.searchParams.get('entityId');
     const incidentId = url.searchParams.get('incidentId');
@@ -36,7 +32,6 @@ export const GET = withAuth(async (request: NextRequest, context, { params }: Ro
     const limit = parseInt(url.searchParams.get('limit') || '50');
     const skip = (page - 1) * limit;
 
-    // Build where clause
     const whereClause: any = {
       donorId,
       donor: {
@@ -48,40 +43,29 @@ export const GET = withAuth(async (request: NextRequest, context, { params }: Ro
     if (incidentId) whereClause.incidentId = incidentId;
     if (status) whereClause.status = status;
 
-    // Check authorization for responders
     if (roles.includes('RESPONDER')) {
-      // Responders can only see commitments for their assigned entities
       const entityAssignmentService = new EntityAssignmentServiceImpl();
-      
+
       if (entityId) {
         const isAssigned = await entityAssignmentService.isUserAssigned(user.id, entityId);
         if (!isAssigned) {
-          return NextResponse.json(
-            { success: false, error: 'Access denied. Entity not assigned to responder.' },
-            { status: 403 }
-          );
+          return errorResponse('Access denied. Entity not assigned to responder.', 403);
         }
       } else {
-        // If no specific entity, get all assigned entities for the responder
         const assignedEntities = await entityAssignmentService.getUserAssignedEntities(user.id);
         const assignedEntityIds = assignedEntities.map(e => e.id);
         whereClause.entityId = { in: assignedEntityIds };
       }
     } else if (!roles.includes('COORDINATOR') && !roles.includes('ADMIN') && !roles.includes('DONOR')) {
-      return NextResponse.json(
-        { success: false, error: 'Insufficient permissions' },
-        { status: 403 }
-      );
+      return errorResponse('Insufficient permissions', 403);
     }
-    
-    // For donors, ensure they can only access their own commitments
+
     if (roles.includes('DONOR') && !roles.includes('COORDINATOR') && !roles.includes('ADMIN')) {
-      // Need to verify the donor ID matches a donor record linked to this user's organization
       const currentUser = await prisma.user.findUnique({
         where: { id: user.id },
         select: { organization: true }
       });
-      
+
       const userDonor = await prisma.donor.findFirst({
         where: {
           OR: [
@@ -91,16 +75,12 @@ export const GET = withAuth(async (request: NextRequest, context, { params }: Ro
           isActive: true
         }
       });
-      
+
       if (!userDonor || userDonor.id !== donorId) {
-        return NextResponse.json(
-          { success: false, error: 'Access denied. Can only view own commitments.' },
-          { status: 403 }
-        );
+        return errorResponse('Access denied. Can only view own commitments.', 403);
       }
     }
 
-    // Get commitments with related data
     const [commitments, total] = await Promise.all([
       prisma.donorCommitment.findMany({
         where: whereClause,
@@ -170,65 +150,42 @@ export const GET = withAuth(async (request: NextRequest, context, { params }: Ro
       prisma.donorCommitment.count({ where: whereClause })
     ]);
 
-    return NextResponse.json({
-      success: true,
-      data: commitments,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      }
-    });
+    return paginatedResponse(commitments, page, limit, total);
 
   } catch (error) {
     console.error('Error fetching donor commitments:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });
 
 export const POST = withAuth(async (request: NextRequest, context, { params }: RouteParams) => {
   const { user, roles } = context;
   const { id: donorId } = params;
-  
+
   try {
-    // Validate donor exists and is active
     const donor = await prisma.donor.findUnique({
       where: { id: donorId, isActive: true }
     });
 
     if (!donor) {
-      return NextResponse.json(
-        { success: false, error: 'Donor not found or inactive' },
-        { status: 404 }
-      );
+      return errorResponse('Donor not found or inactive', 404);
     }
 
-    // Check authorization - only the donor themselves, coordinators, or admins can create commitments
     if (roles.includes('DONOR') && !roles.includes('COORDINATOR') && !roles.includes('ADMIN')) {
-      // For donor-only users, verify they can only create commitments for their own organization
       const currentUser = await prisma.user.findUnique({
         where: { id: user.id },
         select: { organization: true }
       });
-      
-      if (!currentUser?.organization || 
+
+      if (!currentUser?.organization ||
           (donor.name !== currentUser.organization && donor.organization !== currentUser.organization)) {
-        return NextResponse.json(
-          { success: false, error: 'Access denied. Can only create commitments for your own organization.' },
-          { status: 403 }
-        );
+        return errorResponse('Access denied. Can only create commitments for your own organization.', 403);
       }
     }
 
-    // Parse and validate request body
     const body = await request.json();
     const validatedData = CreateCommitmentSchema.parse(body);
 
-    // Validate that entity exists and is part of the incident
     const [entity, incident] = await Promise.all([
       prisma.entity.findUnique({
         where: { id: validatedData.entityId },
@@ -241,26 +198,18 @@ export const POST = withAuth(async (request: NextRequest, context, { params }: R
     ]);
 
     if (!entity) {
-      return NextResponse.json(
-        { success: false, error: 'Entity not found' },
-        { status: 404 }
-      );
+      return errorResponse('Entity not found', 404);
     }
 
     if (!incident) {
-      return NextResponse.json(
-        { success: false, error: 'Incident not found' },
-        { status: 404 }
-      );
+      return errorResponse('Incident not found', 404);
     }
 
-    // Calculate total committed quantity
     const totalCommittedQuantity = validatedData.items.reduce(
-      (sum, item) => sum + item.quantity, 
+      (sum, item) => sum + item.quantity,
       0
     );
 
-    // Create commitment
     const commitment = await prisma.donorCommitment.create({
       data: {
         donorId,
@@ -306,7 +255,6 @@ export const POST = withAuth(async (request: NextRequest, context, { params }: R
       }
     });
 
-    // Log audit trail
     const auditLogService = new AuditLogServiceImpl();
     await auditLogService.logAction({
       userId: user.id,
@@ -326,29 +274,10 @@ export const POST = withAuth(async (request: NextRequest, context, { params }: R
       userAgent: request.headers.get('user-agent') || 'unknown'
     });
 
-    return NextResponse.json({
-      success: true,
-      data: commitment,
-      message: 'Commitment created successfully'
-    }, { status: 201 });
+    return createdResponse(commitment);
 
   } catch (error) {
     console.error('Error creating commitment:', error);
-    
-    if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Validation failed', 
-          details: error.message 
-        },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

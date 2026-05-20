@@ -1,25 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db/client';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
+import { successResponse, errorResponse, handleApiError } from '@/lib/api/response';
 
 export const GET = withAuth(async (request: NextRequest, context: AuthContext) => {
   const { user, roles } = context;
-  
+
   if (!roles.includes('COORDINATOR') && !roles.includes('ADMIN')) {
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Insufficient permissions. Coordinator or Admin role required.' 
-      }, 
-      { status: 403 }
-    );
+    return errorResponse('Insufficient permissions. Coordinator or Admin role required.', 403);
   }
 
   try {
     const url = new URL(request.url);
-    const roleFilter = url.searchParams.get('role'); // Optional role filter (ASSESSOR, RESPONDER, DONOR)
+    const roleFilter = url.searchParams.get('role');
 
-    // Build where clause for role filtering
     let roleWhere = {};
     if (roleFilter && ['ASSESSOR', 'RESPONDER', 'DONOR'].includes(roleFilter)) {
       roleWhere = {
@@ -32,7 +26,6 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
         }
       };
     } else {
-      // Default: get users with ASSESSOR, RESPONDER, or DONOR roles (all assignable roles)
       roleWhere = {
         roles: {
           some: {
@@ -46,7 +39,6 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       };
     }
 
-    // Get assignable users (ASSESSOR, RESPONDER, and DONOR roles)
     const users = await prisma.user.findMany({
       where: {
         isActive: true,
@@ -74,17 +66,10 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       }
     });
 
-    return NextResponse.json({
-      success: true,
-      data: users,
-      count: users.length
-    });
+    return successResponse(users);
 
   } catch (error) {
     console.error('Error fetching assignable users:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 });

@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/hooks/useAuth'
+import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { Edit, Plus, Trash2, Shield, Key, Users } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 
@@ -49,25 +50,21 @@ export default function RolesPage() {
   const [permissions, setPermissions] = useState<Permission[]>([])
   const [loading, setLoading] = useState(true)
   const [isHydrated, setIsHydrated] = useState(false)
-  const { hasPermission, token } = useAuth()
+  const { hasPermission } = useAuth()
 
   
   // Fetch roles and permissions from backend
   const fetchRoles = async () => {
-    if (!token) return
-    
     try {
       setLoading(true)
-      const response = await fetch('/api/v1/roles', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setRoles(data.data.roles || [])
-        setPermissions(data.data.permissions || [])
+      const result = await apiGet('/api/v1/roles')
+      if (result.success) {
+        setRoles(result.data?.roles || [])
+        setPermissions(result.data?.permissions || [])
+      } else {
+        console.error('Error fetching roles:', result.error)
+        setRoles([])
+        setPermissions([])
       }
     } catch (error) {
       console.error('Error fetching roles:', error)
@@ -104,10 +101,10 @@ export default function RolesPage() {
 
   // Fetch roles on component mount
   React.useEffect(() => {
-    if (token && hasPermission('MANAGE_USERS')) {
+    if (hasPermission('MANAGE_USERS')) {
       fetchRoles()
     }
-  }, [token, hasPermission])
+  }, [hasPermission])
 
   return (
     <div className="container mx-auto py-8 space-y-6">
@@ -267,15 +264,11 @@ export default function RolesPage() {
                                 onClick={async () => {
                                   if (confirm('Are you sure you want to delete this role?')) {
                                     try {
-                                      const res = await fetch(`/api/v1/roles/${role.id}`, {
-                                        method: 'DELETE',
-                                        headers: { 'Authorization': `Bearer ${token}` }
-                                      })
-                                      if (res.ok) {
+                                      const res = await apiDelete(`/api/v1/roles/${role.id}`)
+                                      if (res.success) {
                                         fetchRoles()
                                       } else {
-                                        const data = await res.json()
-                                        alert(data.error || 'Failed to delete role')
+                                        alert(res.error || 'Failed to delete role')
                                       }
                                     } catch { alert('Failed to delete role') }
                                   }
@@ -332,51 +325,38 @@ function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
     role?.permissions?.map(rp => rp.permission.code) || []
   )
   const [isLoading, setIsLoading] = useState(false)
-  const { token } = useAuth()
-
   // Fetch permissions for the form
   React.useEffect(() => {
-    if (token) {
-      fetch('/api/v1/permissions', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.data?.permissions) {
-          setPermissions(data.data.permissions)
+    apiGet('/api/v1/permissions')
+      .then(result => {
+        if (result.success && result.data?.permissions) {
+          setPermissions(result.data.permissions)
         }
       })
       .catch(error => {
         console.error('Error fetching permissions:', error)
       })
-    }
-  }, [token])
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/v1/roles' + (role ? `/${role.id}` : ''), {
-        method: role ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: name.toUpperCase(),
-          description,
-          permissions: selectedPermissions
-        })
-      })
+      const payload = {
+        name: name.toUpperCase(),
+        description,
+        permissions: selectedPermissions
+      }
 
-      if (response.ok) {
+      const result = role
+        ? await apiPut(`/api/v1/roles/${role.id}`, payload)
+        : await apiPost('/api/v1/roles', payload)
+
+      if (result.success) {
         onSuccess()
       } else {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to save role')
+        throw new Error(result.error || 'Failed to save role')
       }
     } catch (error) {
       console.error('Error saving role:', error)

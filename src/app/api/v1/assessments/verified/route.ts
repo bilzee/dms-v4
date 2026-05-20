@@ -30,6 +30,7 @@ export const GET = withAuth(async (request, context) => {
     const assessments = await entityAssignmentService.getVerifiedAssessments(query.entityId)
     
     return NextResponse.json({
+      success: true,
       data: assessments,
       meta: {
         timestamp: new Date().toISOString(),

@@ -9,6 +9,7 @@ export const POST = withAuth(async (request, context) => {
     
     return NextResponse.json(
       {
+        success: true,
         data: {
           message: 'Logout successful'
         },

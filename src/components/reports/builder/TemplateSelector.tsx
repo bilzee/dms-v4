@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
+import { useReportTemplates } from '@/hooks/useReportManagement';
 import { 
   Dialog,
   DialogContent,
@@ -60,26 +61,12 @@ export function TemplateSelector({
     return () => clearTimeout(timer);
   }, [filters.search]);
 
-  // Fetch templates
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['report-templates', filters.type, debouncedSearch, filters.public, page],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '20'
-      });
+  const templateParams: Record<string, string> = { page: page.toString(), limit: '20' };
+  if (filters.type !== 'all') templateParams.type = filters.type;
+  if (debouncedSearch) templateParams.search = debouncedSearch;
+  if (filters.public !== 'all') templateParams.public = filters.public.toString();
 
-      if (filters.type !== 'all') params.append('type', filters.type);
-      if (debouncedSearch) params.append('search', debouncedSearch);
-      if (filters.public !== 'all') params.append('public', filters.public.toString());
-
-      const response = await fetch(`/api/v1/reports/templates?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch templates');
-      return response.json();
-    },
-    placeholderData: (previousData) => previousData,
-    enabled: !disabled
-  });
+  const { data, isLoading, error } = useReportTemplates(templateParams);
 
   const selectTemplate = (template: ReportTemplate) => {
     onTemplateSelect(template);

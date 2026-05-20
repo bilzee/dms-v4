@@ -4,6 +4,7 @@ import React from 'react'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
+import { apiGet } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -82,7 +83,6 @@ const TREND_ICONS = {
 }
 
 export function AssessmentTrends({ entityId }: AssessmentTrendsProps) {
-  const { token } = useAuth()
   const [filters, setFilters] = useState({
     timeframe: '1y',
     granularity: 'monthly',
@@ -99,17 +99,13 @@ export function AssessmentTrends({ entityId }: AssessmentTrendsProps) {
         ...(filters.categories && { categories: filters.categories })
       })
       
-      const response = await fetch(`/api/v1/donors/entities/${entityId}/assessments/trends?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      if (!response.ok) {
-        throw new Error('Failed to fetch assessment trends')
+      const result = await apiGet<{ success: boolean; data: AssessmentTrendsResponse }>(`/api/v1/donors/entities/${entityId}/assessments/trends?${params}`)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch assessment trends')
       }
-      return response.json() as Promise<{ success: boolean; data: AssessmentTrendsResponse }>
+      return result.data as { success: boolean; data: AssessmentTrendsResponse }
     },
-    enabled: !!entityId && !!token
+    enabled: !!entityId
   })
 
   const handleFilterChange = (key: string, value: string) => {

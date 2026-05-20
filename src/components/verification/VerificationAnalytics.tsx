@@ -24,6 +24,7 @@ import { useVerificationMetrics } from '@/hooks/useRealTimeVerification';
 import { useAuth } from '@/hooks/useAuth';
 import { useVerificationStore } from '@/stores/verification.store';
 import { cn } from '@/lib/utils';
+import { apiGet } from '@/lib/api';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 
 interface VerificationAnalyticsProps {
@@ -46,12 +47,9 @@ export function VerificationAnalytics({ className }: VerificationAnalyticsProps)
     const fetchAnalytics = async () => {
       if (!token) return;
       try {
-        const res = await fetch(`/api/v1/verification/analytics?timeRange=${timeRange}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setAnalyticsData(data.data);
+        const result = await apiGet(`/api/v1/verification/analytics?timeRange=${timeRange}`)
+        if (result.success) {
+          setAnalyticsData(result.data as any)
         }
       } catch {}
     };

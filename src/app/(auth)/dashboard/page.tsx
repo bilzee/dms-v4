@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useCommitmentStats } from '@/hooks/use-commitment-stats'
+import { apiGet } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -42,31 +43,29 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!token) return
-    const headers = { 'Authorization': `Bearer ${token}` }
 
     const fetchHealth = async () => {
       try {
-        const res = await fetch('/api/v1/system/health', { headers })
-        if (res.ok) {
-          const data = await res.json()
-          setSystemHealth(data.data)
+        const result = await apiGet('/api/v1/system/health')
+        if (result.success && result.data) {
+          setSystemHealth(result.data)
         }
       } catch {}
     }
 
     const fetchDashboardCounts = async () => {
       try {
-        const [incidentsRes, assessmentsRes] = await Promise.all([
-          fetch('/api/v1/incidents?status=ACTIVE', { headers }),
-          fetch('/api/v1/rapid-assessments?status=SUBMITTED&verificationStatus=DRAFT', { headers })
+        const [incidentsResult, assessmentsResult] = await Promise.all([
+          apiGet('/api/v1/incidents?status=ACTIVE'),
+          apiGet('/api/v1/rapid-assessments?status=SUBMITTED&verificationStatus=DRAFT')
         ])
-        if (incidentsRes.ok) {
-          const incData = await incidentsRes.json()
-          setActiveIncidents(incData.data?.incidents?.length || incData.data?.length || 0)
+        if (incidentsResult.success) {
+          const incData = incidentsResult.data
+          setActiveIncidents(incData?.incidents?.length || incData?.length || 0)
         }
-        if (assessmentsRes.ok) {
-          const assData = await assessmentsRes.json()
-          setPendingVerifications(assData.data?.assessments?.length || assData.data?.length || 0)
+        if (assessmentsResult.success) {
+          const assData = assessmentsResult.data
+          setPendingVerifications(assData?.assessments?.length || assData?.length || 0)
         }
       } catch {}
     }

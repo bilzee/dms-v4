@@ -28,6 +28,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { apiGet } from '@/lib/api';
 
 interface ConfigurationAnalyticsProps {
   className?: string;
@@ -78,20 +79,12 @@ interface AnalyticsData {
   }[];
 }
 
-// API function
-async function fetchAnalytics(token: string, timeRange: string): Promise<AnalyticsData> {
-  const response = await fetch(`/api/v1/verification/analytics?timeRange=${timeRange}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to fetch analytics data');
+async function fetchAnalytics(timeRange: string): Promise<AnalyticsData> {
+  const result = await apiGet(`/api/v1/verification/analytics?timeRange=${timeRange}`)
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to fetch analytics data')
   }
-  
-  return response.json();
+  return result.data as AnalyticsData
 }
 
 export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange = '30d' }: ConfigurationAnalyticsProps) {
@@ -108,7 +101,7 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
     queryKey: ['configuration-analytics', timeRange],
     queryFn: () => {
       if (!token) throw new Error('No authentication token available');
-      return fetchAnalytics(token, timeRange);
+      return fetchAnalytics(timeRange);
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!token,

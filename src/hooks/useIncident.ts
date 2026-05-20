@@ -1,5 +1,6 @@
 import { useIncidentStore } from '@/stores/incident.store'
 import { useAuth } from '@/hooks/useAuth'
+import { setAuthToken } from '@/lib/auth/token-utils'
 
 export const useIncident = () => {
   const store = useIncidentStore()
@@ -7,7 +8,7 @@ export const useIncident = () => {
 
   // Update localStorage token for store methods
   if (token && typeof window !== 'undefined') {
-    localStorage.setItem('token', token)
+    setAuthToken(token)
   }
 
   return {

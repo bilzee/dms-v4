@@ -62,6 +62,7 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext, {
       const { assessments, total, totalPages } = await PreliminaryAssessmentService.findByUserId(userId, query)
 
       const response: PreliminaryAssessmentListResponse = {
+        success: true as const,
         data: assessments,
         pagination: {
           page: query.page,

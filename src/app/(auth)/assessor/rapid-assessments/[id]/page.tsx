@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, CheckCircle, AlertTriangle, Clock, FileText, MapPin } from 'lucide-react'
-import { useAuth } from '@/hooks/useAuth'
+import { apiGet } from '@/lib/api'
 
 interface Assessment {
   id: string
@@ -110,7 +110,6 @@ interface Assessment {
 export default function AssessmentDetailsPage() {
   const params = useParams()
   const router = useRouter()
-  const { token } = useAuth()
   const [assessment, setAssessment] = useState<Assessment | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -118,18 +117,11 @@ export default function AssessmentDetailsPage() {
   useEffect(() => {
     const fetchAssessment = async () => {
       try {
-        if (token) {
-          const response = await fetch(`/api/v1/rapid-assessments/${params.id}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          })
-          if (!response.ok) {
-            throw new Error('Assessment not found')
-          }
-          const data = await response.json()
-          setAssessment(data.data)
+        const result = await apiGet(`/api/v1/rapid-assessments/${params.id}`)
+        if (!result.success) {
+          throw new Error(result.error || 'Assessment not found')
         }
+        setAssessment(result.data)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load assessment')
       } finally {
@@ -137,10 +129,10 @@ export default function AssessmentDetailsPage() {
       }
     }
 
-    if (params.id && token) {
+    if (params.id) {
       fetchAssessment()
     }
-  }, [params.id, token])
+  }, [params.id])
 
   const getStatusBadge = (assessment: Assessment) => {
     const displayStatus = assessment.status === 'SUBMITTED' ? assessment.verificationStatus : assessment.status;

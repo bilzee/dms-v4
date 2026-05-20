@@ -4,6 +4,7 @@ import React from 'react'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
+import { apiGet } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -86,7 +87,6 @@ const STATUS_COLORS = {
 }
 
 export function AssessmentViewer({ entityId }: AssessmentViewerProps) {
-  const { token } = useAuth()
   const [filters, setFilters] = useState({
     category: '',
     status: '',
@@ -108,17 +108,13 @@ export function AssessmentViewer({ entityId }: AssessmentViewerProps) {
         ...(filters.status && filters.status !== 'all-statuses' && { status: filters.status })
       })
       
-      const response = await fetch(`/api/v1/donors/entities/${entityId}/assessments?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      if (!response.ok) {
-        throw new Error('Failed to fetch assessments')
+      const result = await apiGet<{ success: boolean; data: AssessmentsResponse }>(`/api/v1/donors/entities/${entityId}/assessments?${params}`)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch assessments')
       }
-      return response.json() as Promise<{ success: boolean; data: AssessmentsResponse }>
+      return result.data as { success: boolean; data: AssessmentsResponse }
     },
-    enabled: !!entityId && !!token
+    enabled: !!entityId
   })
 
   const handleFilterChange = (key: string, value: string) => {

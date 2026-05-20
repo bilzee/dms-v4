@@ -3,6 +3,7 @@
 import React from 'react'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { createAuthenticatedFetch } from '@/lib/auth/token-utils'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -52,7 +53,6 @@ const TIMEFRAME_OPTIONS = [
 ]
 
 export function AssessmentExport({ entityId, entityName, latestAssessments, expanded = false }: AssessmentExportProps) {
-  const { token } = useAuth()
   const [exportRequest, setExportRequest] = useState<ExportRequest>({
     format: 'pdf',
     categories: [],
@@ -93,12 +93,8 @@ export function AssessmentExport({ entityId, entityName, latestAssessments, expa
     setExportStatus({ status: 'generating', message: 'Generating report...' })
 
     try {
-      const response = await fetch(`/api/v1/donors/entities/${entityId}/reports/export`, {
+      const response = await createAuthenticatedFetch(`/api/v1/donors/entities/${entityId}/reports/export`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify(exportRequest),
       })
 

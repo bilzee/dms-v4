@@ -78,6 +78,7 @@ export type RapidResponseList = z.infer<typeof RapidResponseListSchema>
 
 // API Response Types
 export interface CreatePlannedResponseResponse {
+  success: true
   data: RapidResponse
   meta: {
     timestamp: string
@@ -87,6 +88,7 @@ export interface CreatePlannedResponseResponse {
 }
 
 export interface GetResponseResponse {
+  success: true
   data: RapidResponse
   meta: {
     timestamp: string
@@ -96,6 +98,7 @@ export interface GetResponseResponse {
 }
 
 export interface GetResponsesResponse {
+  success?: true
   data: RapidResponse[]
   meta: {
     total: number
@@ -108,6 +111,7 @@ export interface GetResponsesResponse {
 }
 
 export interface UpdateResponseResponse {
+  success: true
   data: RapidResponse
   meta: {
     timestamp: string

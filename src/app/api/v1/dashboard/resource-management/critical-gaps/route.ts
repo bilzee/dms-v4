@@ -1,43 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
 import { auditLog } from '@/lib/services/audit.service';
-import { verifyTokenWithRole } from '@/lib/auth/verify';
+import { withAuth, AuthContext } from '@/lib/auth/middleware';
+import { successResponse, errorResponse, handleApiError } from '@/lib/api/response';
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    // Authentication and authorization check - COORDINATOR role required
-    const authResult = await verifyTokenWithRole(request, 'COORDINATOR');
-    
-    if (!authResult.success || !authResult.user) {
-      if (authResult.error?.includes('role')) {
-        await auditLog({
-          userId: authResult.user?.id || 'unknown',
-          action: 'UNAUTHORIZED_ACCESS',
-          resource: 'CRITICAL_GAPS',
-          oldValues: null,
-          newValues: null,
-          ipAddress: request.headers.get('x-forwarded-for') || undefined,
-          userAgent: request.headers.get('user-agent') || undefined
-        });
-        
-        return NextResponse.json(
-          { success: false, error: 'Forbidden - Coordinator access required' },
-          { status: 403 }
-        );
-      }
-      
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (!context.roles.includes('COORDINATOR')) {
+      await auditLog({
+        userId: context.userId,
+        action: 'UNAUTHORIZED_ACCESS',
+        resource: 'CRITICAL_GAPS',
+        oldValues: null,
+        newValues: null,
+        ipAddress: request.headers.get('x-forwarded-for') || undefined,
+        userAgent: request.headers.get('user-agent') || undefined
+      });
+
+      return errorResponse('Forbidden - COORDINATOR access required', 403);
     }
 
-    const user = authResult.user;
-
-    // NOTE: The current schema doesn't have a resources field with gaps
-    // This is a mock implementation until proper gap analysis is implemented
-    // TODO: Implement proper gap analysis based on assessment types (food, health, etc.)
-    
     const mockCriticalGaps = [
       {
         entity: { id: '1', name: 'Affected Community A', type: 'COMMUNITY', location: 'Lagos State' },
@@ -63,9 +45,8 @@ export async function GET(request: NextRequest) {
 
     const sortedGaps = mockCriticalGaps;
 
-    // Log successful access
     await auditLog({
-      userId: user.id,
+      userId: context.userId,
       action: 'ACCESS_CRITICAL_GAPS',
       resource: 'CRITICAL_GAPS',
       oldValues: null,
@@ -74,37 +55,27 @@ export async function GET(request: NextRequest) {
       userAgent: request.headers.get('user-agent') || undefined
     });
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        criticalGaps: sortedGaps
-      }
+    return successResponse({
+      criticalGaps: sortedGaps
     });
 
   } catch (error) {
     console.error('Error fetching critical gaps:', error);
-    
-    // Log error
+
     try {
-      const authResult = await verifyTokenWithRole(request, 'COORDINATOR');
-      if (authResult.success && authResult.user) {
-        await auditLog({
-          userId: authResult.user.id,
-          action: 'ERROR_ACCESS_CRITICAL_GAPS',
-          resource: 'CRITICAL_GAPS',
-          oldValues: null,
-          newValues: { error: error instanceof Error ? error.message : 'Unknown error' },
-          ipAddress: request.headers.get('x-forwarded-for') || undefined,
-          userAgent: request.headers.get('user-agent') || undefined
-        });
-      }
+      await auditLog({
+        userId: context.userId,
+        action: 'ERROR_ACCESS_CRITICAL_GAPS',
+        resource: 'CRITICAL_GAPS',
+        oldValues: null,
+        newValues: { error: error instanceof Error ? error.message : 'Unknown error' },
+        ipAddress: request.headers.get('x-forwarded-for') || undefined,
+        userAgent: request.headers.get('user-agent') || undefined
+      });
     } catch (auditError) {
       // Ignore audit log errors
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
-}
+});

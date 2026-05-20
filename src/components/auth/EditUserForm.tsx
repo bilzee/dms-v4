@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useAuth } from '@/hooks/useAuth'
+import { apiGet, apiPut } from '@/lib/api'
 
 interface User {
   id: string
@@ -170,17 +171,12 @@ export function EditUserForm({ user, isAdmin, onSuccess, onCancel }: EditUserFor
       const fetchRoles = async () => {
         try {
           setLoadingRoles(true)
-          const response = await fetch('/api/v1/roles', {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          })
-          
-          if (response.ok) {
-            const data = await response.json()
-            setAvailableRoles(data.data.roles || [])
+          const result = await apiGet('/api/v1/roles')
+
+          if (result.success) {
+            setAvailableRoles((result.data as any)?.data?.roles || result.data?.roles || [])
           } else {
-            console.error('Failed to fetch roles')
+            console.error('Failed to fetch roles:', result.error)
           }
         } catch (err) {
           console.error('Error fetching roles:', err)
@@ -234,18 +230,10 @@ export function EditUserForm({ user, isAdmin, onSuccess, onCancel }: EditUserFor
       }
 
       const endpoint = isAdmin ? `/api/v1/users/${user.id}` : '/api/v1/auth/profile'
-      const response = await fetch(endpoint, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(requestBody),
-      })
+      const result = await apiPut(endpoint, requestBody)
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Update failed')
+      if (!result.success) {
+        throw new Error(result.error || 'Update failed')
       }
 
       setSuccess('User updated successfully!')

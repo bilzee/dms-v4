@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '@/lib/api'
+import { getAuthToken } from '@/lib/auth/token-utils'
 
 export interface Incident {
   id: string
@@ -45,7 +46,7 @@ export function useIncidents(options: UseIncidentsOptions = {}) {
       }
       return result.data?.incidents || []
     },
-    enabled: !!localStorage.getItem('auth_token'),
+    enabled: !!getAuthToken(),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
   })

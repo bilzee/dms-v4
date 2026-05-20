@@ -41,6 +41,7 @@ export const GET = withAuth(
       )
 
       const response: RapidAssessmentListResponse = {
+        success: true as const,
         data: assessments as unknown as RapidAssessmentWithData[],
         pagination: {
           page: query.page,

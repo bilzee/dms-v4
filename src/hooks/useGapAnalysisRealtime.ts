@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect } from 'react';
 import { apiGet } from '@/lib/api';
+import { getAuthToken } from '@/lib/auth/token-utils';
 
 interface GapAnalysisSummaryData {
   totalEntities: number;
@@ -97,7 +98,7 @@ export function useGapAnalysisRealtime({
 
       return result.data.gapAnalysisSummary;
     },
-    enabled: enabled && !!incidentId,
+    enabled: !!getAuthToken() && enabled && !!incidentId,
     refetchInterval,
     staleTime,
     retry: (failureCount, error) => {

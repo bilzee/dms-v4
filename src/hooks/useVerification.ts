@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { apiGet, apiPost } from '@/lib/api';
+import { getAuthToken } from '@/lib/auth/token-utils';
 import type { 
   VerificationQueueResponse, 
   VerificationQueueFilters,
@@ -33,7 +34,7 @@ export function useVerificationQueue(
     },
     staleTime: 30000, // 30 seconds - refresh frequently for real-time updates
     refetchInterval: 60000, // Auto-refresh every minute
-    enabled: (() => { try { return !!localStorage.getItem('auth_token'); } catch { return false; } })(), // Only run query if token exists
+    enabled: !!getAuthToken(),
   });
 }
 
@@ -109,7 +110,7 @@ export function useVerificationMetrics() {
     },
     staleTime: 300000, // 5 minutes
     refetchInterval: 300000, // Auto-refresh every 5 minutes
-    enabled: (() => { try { return !!localStorage.getItem('auth_token'); } catch { return false; } })(), // Only run query if token exists
+    enabled: !!getAuthToken(),
   });
 }
 

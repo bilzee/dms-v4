@@ -28,6 +28,7 @@ import {
   Eye
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { apiGet } from '@/lib/api';
 import { Entity, Incident, Donor } from '@/types/commitment';
 
 interface ResourceGapAnalysisProps {
@@ -94,14 +95,9 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
         if (value && value !== 'all') params.append(key, value);
       });
 
-      const response = await fetch(`/api/v1/dashboard/resource-management/gap-analysis?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch gap analysis');
-      const data = await response.json();
-      return data.success ? data.data : { data: [], summary: {} };
+      const result = await apiGet(`/api/v1/dashboard/resource-management/gap-analysis?${params}`)
+      if (!result.success) throw new Error(result.error || 'Failed to fetch gap analysis')
+      return (result.data as any)?.data || result.data || { data: [], summary: {} };
     },
     refetchInterval: 60000 // Refresh every minute
   });
@@ -113,14 +109,9 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
     queryKey: ['donor-recommendations', selectedEntity, token],
     enabled: !!selectedEntity && isAuthenticated && !!token && token.length > 10,
     queryFn: async () => {
-      const response = await fetch(`/api/v1/entities/${selectedEntity}/donor-recommendations`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch donor recommendations');
-      const data = await response.json();
-      return data.success ? data.data : { data: [] };
+      const result = await apiGet(`/api/v1/entities/${selectedEntity}/donor-recommendations`)
+      if (!result.success) throw new Error(result.error || 'Failed to fetch donor recommendations')
+      return (result.data as any)?.data || result.data || { data: [] };
     }
   });
 
@@ -129,14 +120,10 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
     queryKey: ['entities', token],
     enabled: isAuthenticated && !!token && token.length > 10,
     queryFn: async () => {
-      const response = await fetch('/api/v1/entities', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) return [];
-      const data = await response.json();
-      return data.success ? data.data : [];
+      const result = await apiGet('/api/v1/entities')
+      if (!result.success) return []
+      const d = result.data as any
+      return d?.data || d || [];
     }
   });
 
@@ -145,14 +132,10 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
     queryKey: ['incidents', token],
     enabled: isAuthenticated && !!token && token.length > 10,
     queryFn: async () => {
-      const response = await fetch('/api/v1/incidents', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) return [];
-      const data = await response.json();
-      return data.success ? data.data : [];
+      const result = await apiGet('/api/v1/incidents')
+      if (!result.success) return []
+      const d = result.data as any
+      return d?.data || d || [];
     }
   });
 

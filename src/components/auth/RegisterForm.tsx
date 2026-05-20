@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
-import { useAuth } from '@/hooks/useAuth'
+import { apiGet, apiPost } from '@/lib/api'
 
 const registerSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -47,8 +47,6 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [success, setSuccess] = useState<string | null>(null)
   const [availableRoles, setAvailableRoles] = useState<Role[]>([])
   const [loadingRoles, setLoadingRoles] = useState(true)
-  const { token } = useAuth()
-
   const {
     register,
     handleSubmit,
@@ -66,26 +64,14 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
 
   useEffect(() => {
     const fetchRoles = async () => {
-      if (!token) {
-        setLoadingRoles(false)
-        return
-      }
-      
       try {
         setLoadingRoles(true)
-        const response = await fetch('/api/v1/roles', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-        
-        if (response.ok) {
-          const data = await response.json()
-          setAvailableRoles(data.data.roles || [])
+        const result = await apiGet('/api/v1/roles')
+
+        if (result.success) {
+          setAvailableRoles((result.data as any)?.data?.roles || result.data?.roles || [])
         } else {
-          console.error('Failed to fetch roles:', response.status, response.statusText)
-          const errorData = await response.json().catch(() => ({}))
-          console.error('Role fetch error details:', errorData)
+          console.error('Failed to fetch roles:', result.error)
         }
       } catch (err) {
         console.error('Error fetching roles:', err)
@@ -95,7 +81,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     }
 
     fetchRoles()
-  }, [token])
+  }, [])
 
   const handleRoleChange = (roleId: string, checked: boolean) => {
     const currentRoles = watchedRoles || []
@@ -115,18 +101,10 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       const roleIds = data.roles || []
       const requestData = { ...data, roleIds }
 
-      const response = await fetch('/api/v1/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
-        },
-        body: JSON.stringify(requestData),
-      })
+      const result = await apiPost('/api/v1/users', requestData)
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'User creation failed')
+      if (!result.success) {
+        throw new Error(result.error || 'User creation failed')
       }
 
       setSuccess('User created successfully!')

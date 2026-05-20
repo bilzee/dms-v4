@@ -148,6 +148,7 @@ export const PUT = withAuth(async (request, context) => {
 
     return NextResponse.json(
       {
+        success: true,
         data: {
           user: userWithoutPassword
         },
@@ -211,6 +212,7 @@ export const GET = withAuth(async (request, context) => {
 
     return NextResponse.json(
       {
+        success: true,
         data: {
           user: userWithoutPassword
         },

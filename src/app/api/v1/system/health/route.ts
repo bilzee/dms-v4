@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { v4 as uuidv4 } from 'uuid'
+import { NextRequest } from 'next/server'
 import { withAuth } from '@/lib/auth/middleware'
+import { successResponse, handleApiError } from '@/lib/api/response'
 import { prisma } from '@/lib/db/client'
 
 let cachedHealth: any = null
@@ -10,10 +10,7 @@ const CACHE_TTL = 30000
 export const GET = withAuth(async (request: NextRequest, context) => {
   const now = Date.now()
   if (cachedHealth && (now - cacheTimestamp) < CACHE_TTL) {
-    return NextResponse.json({
-      data: cachedHealth,
-      meta: { timestamp: new Date().toISOString(), version: '1.0.0', requestId: uuidv4() }
-    })
+    return successResponse(cachedHealth)
   }
 
   try {
@@ -43,21 +40,15 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     cachedHealth = healthData
     cacheTimestamp = now
 
-    return NextResponse.json({
-      data: healthData,
-      meta: { timestamp: new Date().toISOString(), version: '1.0.0', requestId: uuidv4() }
-    })
+    return successResponse(healthData)
   } catch (error) {
     console.error('Health check error:', error)
-    return NextResponse.json({
-      data: {
-        databaseSync: 'Down',
-        apiResponseTime: 0,
-        activeUsers: 0,
-        storageUsage: 0,
-        lastBackup: 'Unknown'
-      },
-      meta: { timestamp: new Date().toISOString(), version: '1.0.0', requestId: uuidv4() }
+    return successResponse({
+      databaseSync: 'Down',
+      apiResponseTime: 0,
+      activeUsers: 0,
+      storageUsage: 0,
+      lastBackup: 'Unknown'
     })
   }
 })

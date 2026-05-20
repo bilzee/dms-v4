@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost } from '@/lib/api';
+import { getAuthToken } from '@/lib/auth/token-utils';
 import type { 
   ResponseVerificationQueueResponse, 
   ResponseVerificationFilters,
@@ -38,7 +39,7 @@ export function useResponseVerificationQueue(params: UseResponseVerificationQueu
       }
       return result.data!;
     },
-    enabled: !!localStorage.getItem('auth_token'),
+    enabled: !!getAuthToken(),
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
   });
