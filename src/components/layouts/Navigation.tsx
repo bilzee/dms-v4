@@ -92,17 +92,16 @@ const getNavigationItems = (role: string | null): NavItem[] => {
     ],
     COORDINATOR: [
       {
-        name: 'Overview & Analytics',
+        name: 'Crisis Dashboard',
         href: '/coordinator/dashboard',
         icon: LayoutDashboard,
-        children: [
-          { 
-            name: 'Situation Awareness', 
-            href: '/coordinator/situation-dashboard', 
-            icon: Monitor,
-            description: 'Comprehensive situation monitoring' 
-          }
-        ]
+        description: 'Crisis coordination dashboard'
+      },
+      {
+        name: 'Situation Awareness',
+        href: '/coordinator/situation-dashboard',
+        icon: Monitor,
+        description: 'Comprehensive situation monitoring'
       },
       {
         name: 'Operations Management',

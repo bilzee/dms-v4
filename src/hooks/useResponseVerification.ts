@@ -37,7 +37,8 @@ export function useResponseVerificationQueue(params: UseResponseVerificationQueu
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch response verification queue');
       }
-      return result.data!;
+      const { success, ...response } = result as any;
+      return response as unknown as ResponseVerificationQueueResponse;
     },
     enabled: !!getAuthToken(),
     staleTime: 30 * 1000, // 30 seconds

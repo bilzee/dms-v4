@@ -313,12 +313,13 @@ export const useVerificationStore = create<VerificationQueueState>()(
           throw new Error(result.error || 'Failed to fetch assessments');
         }
 
+        const raw = result as any;
         const body = result.data as any;
         set({
           assessments: extractArray(body),
-          assessmentPagination: body?.pagination || result.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 },
-          assessmentQueueDepth: body?.queueDepth || result.queueDepth || { total: 0, critical: 0, high: 0, medium: 0, low: 0 },
-          assessmentMetrics: body?.metrics || result.metrics || { averageWaitTime: 0, verificationRate: 0, oldestPending: null },
+          assessmentPagination: body?.pagination || raw?.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 },
+          assessmentQueueDepth: body?.queueDepth || raw?.queueDepth || { total: 0, critical: 0, high: 0, medium: 0, low: 0 },
+          assessmentMetrics: body?.metrics || raw?.metrics || { averageWaitTime: 0, verificationRate: 0, oldestPending: null },
           lastUpdate: new Date().toISOString()
         });
       } catch (error) {
@@ -363,12 +364,13 @@ export const useVerificationStore = create<VerificationQueueState>()(
           throw new Error(result.error || 'Failed to fetch deliveries');
         }
 
+        const raw = result as any;
         const body = result.data as any;
         set({
           deliveries: extractArray(body),
-          deliveryPagination: body?.pagination || result.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 },
-          deliveryQueueDepth: body?.queueDepth || result.queueDepth || { total: 0, critical: 0, high: 0, medium: 0, low: 0 },
-          deliveryMetrics: body?.metrics || result.metrics || { averageWaitTime: 0, verificationRate: 0, oldestPending: null },
+          deliveryPagination: body?.pagination || raw?.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 },
+          deliveryQueueDepth: body?.queueDepth || raw?.queueDepth || { total: 0, critical: 0, high: 0, medium: 0, low: 0 },
+          deliveryMetrics: body?.metrics || raw?.metrics || { averageWaitTime: 0, verificationRate: 0, oldestPending: null },
           lastUpdate: new Date().toISOString()
         });
       } catch (error) {

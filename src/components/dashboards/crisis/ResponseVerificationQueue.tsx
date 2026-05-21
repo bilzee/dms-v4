@@ -168,7 +168,7 @@ export function ResponseVerificationQueue({
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between" data-testid="verification-filters">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">Response Verification Queue</h2>
-          {queueData && (
+          {queueData?.pagination && (
             <Badge variant="secondary">
               {queueData.pagination.total} items
             </Badge>
@@ -324,7 +324,7 @@ export function ResponseVerificationQueue({
                 </div>
               </div>
               <div data-testid="average-processing-time" className="text-center p-2 bg-gray-50 rounded mb-4">
-                <div className="text-lg font-bold">2.3h</div>
+                <div className="text-lg font-bold">{(queueData?.statistics as any)?.avgProcessingTime ? `${(queueData?.statistics as any)?.avgProcessingTime}h` : 'N/A'}</div>
                 <div className="text-sm text-gray-600">Avg Processing Time</div>
               </div>
               <div data-testid="response-breakdown-by-type" className="mb-4">
@@ -366,10 +366,10 @@ export function ResponseVerificationQueue({
       </div>
 
       {/* Pagination */}
-      {queueData && queueData.pagination.totalPages > 1 && (
+      {queueData?.pagination && queueData.pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-600">
-            Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, queueData.pagination.total)} of {queueData.pagination.total} results
+            Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, queueData?.pagination?.total ?? 0)} of {queueData?.pagination?.total ?? 0} results
           </p>
           
           <div className="flex items-center gap-2">
@@ -383,14 +383,14 @@ export function ResponseVerificationQueue({
             </Button>
             
             <span className="text-sm">
-              Page {currentPage} of {queueData.pagination.totalPages}
+              Page {currentPage} of {queueData?.pagination?.totalPages ?? 1}
             </span>
             
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(p => Math.min(queueData.pagination.totalPages, p + 1))}
-              disabled={currentPage === queueData.pagination.totalPages}
+              onClick={() => setCurrentPage(p => Math.min(queueData?.pagination?.totalPages ?? 1, p + 1))}
+              disabled={currentPage === (queueData?.pagination?.totalPages ?? 1)}
             >
               Next
             </Button>

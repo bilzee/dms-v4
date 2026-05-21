@@ -30,7 +30,8 @@ export function useVerificationQueue(
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch verification queue');
       }
-      return result.data!;
+      const { success, ...response } = result as any;
+      return response as unknown as VerificationQueueResponse;
     },
     staleTime: 30000, // 30 seconds - refresh frequently for real-time updates
     refetchInterval: 60000, // Auto-refresh every minute
