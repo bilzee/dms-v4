@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { apiGet } from '@/lib/api'
+import { apiGet, extractArray } from '@/lib/api'
 import { getAuthToken } from '@/lib/auth/token-utils'
 
 export interface Incident {
@@ -40,11 +40,11 @@ export function useIncidents(options: UseIncidentsOptions = {}) {
   return useQuery({
     queryKey: ['incidents', options],
     queryFn: async () => {
-      const result = await apiGet<{ incidents: Incident[] }>(`/api/v1/incidents?${params.toString()}`)
+      const result = await apiGet(`/api/v1/incidents?${params.toString()}`)
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch incidents')
       }
-      return result.data?.incidents || []
+      return extractArray<Incident>(result.data)
     },
     enabled: !!getAuthToken(),
     staleTime: 5 * 60 * 1000, // 5 minutes
