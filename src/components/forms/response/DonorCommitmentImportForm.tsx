@@ -26,7 +26,7 @@ import { Package, AlertTriangle, Search, Filter, Users, MapPin, Calendar, CheckC
 import { AssessmentSelector } from '@/components/response/AssessmentSelector'
 
 // Services and types
-import { useAuthStore } from '@/stores/auth.store'
+import { useAuth } from '@/hooks/useAuth'
 import { apiGet, apiPost, extractArray } from '@/lib/api'
 import { CommitmentService, type CommitmentItem } from '@/lib/services/commitment.service'
 import { ResponseService } from '@/lib/services/response.service'
@@ -61,7 +61,7 @@ export function DonorCommitmentImportForm({
   entityId: preselectedEntityId,
   incidentId: preselectedIncidentId
 }: DonorCommitmentImportFormProps) {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
   const queryClient = useQueryClient()
   const [selectedCommitment, setSelectedCommitment] = useState<any>(null)
   const [selectedItems, setSelectedItems] = useState<CommitmentItem[]>([])

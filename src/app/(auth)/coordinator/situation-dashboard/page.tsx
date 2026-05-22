@@ -74,7 +74,7 @@ export default function SituationDashboardPage() {
   const currentIncidentId = selectedIncidentId || '';
 
   return (
-    <div className="w-full h-screen overflow-hidden pl-4"> {/* Use full screen height with left padding */}
+    <div className="w-full h-screen overflow-hidden">
         {/* Enhanced header with mode toggle */}
         <div className="mb-2 px-1 py-2 bg-white border-b border-gray-100">
           <div className="flex items-center justify-between mb-2">

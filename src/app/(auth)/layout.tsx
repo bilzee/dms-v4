@@ -17,8 +17,8 @@ export default function AuthLayout({
   const [isOnline, setIsOnline] = useState(true);
   
   // Detect dashboard pages that should have full width
-  const isDashboardPage = pathname.includes('dashboard') || 
-                          pathname.includes('situation-dashboard');
+  const isFullscreen = pathname.includes('situation-dashboard');
+  const isDashboardPage = !isFullscreen && pathname.includes('dashboard');
 
   useEffect(() => {
     // Network status monitoring
@@ -62,7 +62,7 @@ export default function AuthLayout({
         </div>
       )}
 
-      <AppShell isDashboard={isDashboardPage}>
+      <AppShell isDashboard={isDashboardPage} isFullscreen={isFullscreen}>
         {children}
       </AppShell>
 

@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 
 // Internal services and hooks
 import type { Entity } from '@/lib/services/entity-assignment.service'
-import { useAuthStore } from '@/stores/auth.store'
+import { useAuth } from '@/hooks/useAuth'
 import { apiGet, extractArray } from '@/lib/api'
 import { useFilteredEntities } from '@/hooks/useEntities'
 import { EntitySelectorSkeleton } from './EntitySelectorSkeleton'
@@ -39,7 +39,7 @@ export function EntitySelector({
   showAssignmentInfo = true,
   className 
 }: EntitySelectorProps) {
-  const { user, token } = useAuthStore()
+  const { user, token } = useAuth()
   const [selectedEntity, setSelectedEntity] = useState<EntityWithAssignment | null>(null)
   const [isClient, setIsClient] = useState(false)
   

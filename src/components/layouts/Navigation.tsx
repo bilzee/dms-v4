@@ -72,6 +72,12 @@ const getNavigationItems = (role: string | null): NavItem[] => {
   const roleItems: Record<string, NavItem[]> = {
     ASSESSOR: [
       {
+        name: 'Dashboard',
+        href: '/assessor/dashboard',
+        icon: LayoutDashboard,
+        description: 'Assessor overview and recent assessments'
+      },
+      {
         name: 'Rapid Assessments',
         href: '/assessor/rapid-assessments',
         icon: FileText,
@@ -163,12 +169,6 @@ const getNavigationItems = (role: string | null): NavItem[] => {
             icon: BarChart3,
             description: 'Donor performance analytics'
           },
-          {
-            name: 'Resource & Donation Management',
-            href: '/coordinator/resource-management',
-            icon: Package,
-            description: 'Coordinate resource allocation and donations'
-          }
         ]
       },
       {
@@ -212,6 +212,12 @@ const getNavigationItems = (role: string | null): NavItem[] => {
     ],
     RESPONDER: [
       {
+        name: 'Dashboard',
+        href: '/responder/dashboard',
+        icon: LayoutDashboard,
+        description: 'Response overview and active assignments'
+      },
+      {
         name: 'Response Planning',
         href: '/responder/planning',
         icon: Package,
@@ -220,16 +226,6 @@ const getNavigationItems = (role: string | null): NavItem[] => {
           { name: 'Response Deliveries', href: '/responder/responses', icon: Package },
           { name: 'Response Plans', href: '/responder/planning/', icon: Package }
         ]
-      },
-      {
-        name: 'My Tasks',
-        href: '#tasks',
-        icon: FileText
-      },
-      {
-        name: 'Team Status',
-        href: '#team',
-        icon: Users
       }
     ],
     DONOR: [
@@ -261,12 +257,6 @@ const getNavigationItems = (role: string | null): NavItem[] => {
             icon: FileText,
             description: 'Track delivery status' 
           },
-          { 
-            name: 'Donation Management', 
-            href: '/donor/responses',
-            icon: Package,
-            description: 'Manage donation details' 
-          }
         ]
       },
       {
@@ -286,12 +276,6 @@ const getNavigationItems = (role: string | null): NavItem[] => {
             icon: BarChart3,
             description: 'Track entity impact metrics' 
           },
-          { 
-            name: 'Entity Impact', 
-            href: '/donor/entities/performance',
-            icon: TrendingUp,
-            description: 'Measure positive impact' 
-          }
         ]
       },
       {
@@ -325,12 +309,6 @@ const getNavigationItems = (role: string | null): NavItem[] => {
           }
         ]
       },
-      {
-        name: 'My Profile',
-        href: '/donor/profile',
-        icon: User,
-        description: 'Manage your organization profile'
-      }
     ],
     ADMIN: [
       { 
@@ -493,6 +471,8 @@ export const Navigation = () => {
         <div className="space-y-1">
           <Button
             variant="ghost"
+            aria-expanded={isExpanded}
+            aria-controls={`nav-section-${item.href.replace('#', '')}`}
             className={cn(
               "w-full justify-between font-normal transition-colors",
               depth > 0 && "ml-4",
@@ -521,7 +501,11 @@ export const Navigation = () => {
           </Button>
           
           {isExpanded && (
-            <div className="ml-4 space-y-1">
+            <div
+              id={`nav-section-${item.href.replace('#', '')}`}
+              role="region"
+              className="ml-4 space-y-1"
+            >
               {item.children!.map((child) => (
                 <NavItemComponent key={child.href} item={child} depth={depth + 1} />
               ))}
@@ -531,12 +515,12 @@ export const Navigation = () => {
       );
     }
 
-    const handleLogout = async () => {
+    const handleLogout = React.useCallback(async () => {
       try {
         await apiPost('/api/v1/auth/logout');
       } catch {}
       router.push('/login');
-    };
+    }, [router]);
 
     if (item.href === '#logout') {
       return (
@@ -568,14 +552,14 @@ export const Navigation = () => {
           className={cn(
             "w-full justify-start font-normal transition-colors",
             depth > 0 && "ml-4",
-            isItemActive && "bg-teal-600 hover:bg-teal-700 text-white",
+            isItemActive && "bg-primary text-primary-foreground hover:bg-primary/90",
             !isItemActive && "hover:bg-accent hover:text-accent-foreground"
           )}
         >
           <div className="flex items-center gap-3">
             <item.icon className={cn(
               "h-4 w-4 transition-colors",
-              isItemActive && "text-white"
+              isItemActive && "text-primary-foreground"
             )} />
             <span>{item.name}</span>
             {item.badge && (

@@ -84,25 +84,7 @@ export const useAuthStore = create<AuthState>()(
           )
         )
 
-        // Set current role based on role switching priority
-        // For donor users, prioritize DONOR role over other roles
-        const getHighestPriorityRole = (roleList: RoleName[]): RoleName | null => {
-          if (roleList.length === 0) return null;
-          
-          // Priority order for role selection
-          const rolePriority = ['DONOR', 'ASSESSOR', 'COORDINATOR', 'RESPONDER', 'ADMIN'];
-          
-          return roleList.reduce((highest: RoleName | null, role: RoleName) => {
-            if (!highest) return role;
-            return rolePriority.indexOf(role) < rolePriority.indexOf(highest) ? role : highest;
-          }, null);
-        };
-
-        // Always set the highest priority role, especially for single-role users
-        // This ensures donor-only users always get DONOR role even if currentRole was previously set to something else
-        const currentRole = roles.length === 1 
-          ? roles[0] 
-          : (get().currentRole && roles.includes(get().currentRole!) ? get().currentRole! : getHighestPriorityRole(roles) || roles[0]);
+        const rolePriority: RoleName[] = ['ADMIN', 'COORDINATOR', 'RESPONDER', 'ASSESSOR', 'DONOR'];
 
         set({
           user,
@@ -111,11 +93,17 @@ export const useAuthStore = create<AuthState>()(
           roles,
           availableRoles: roles,
           permissions,
-          currentRole,
           isLoading: false
         })
 
-        // Save token to localStorage for API calls
+        const existingRole = get().currentRole
+        if (!existingRole || !roles.includes(existingRole)) {
+          const highestPriorityRole = [...roles].sort((a, b) =>
+            rolePriority.indexOf(a) - rolePriority.indexOf(b)
+          )[0]
+          set({ currentRole: highestPriorityRole || roles[0] })
+        }
+
         if (typeof window !== 'undefined') {
           setAuthToken(token)
         }
@@ -173,13 +161,24 @@ export const useAuthStore = create<AuthState>()(
           throw new Error('No token available')
         }
 
-        const result = await apiPost('/api/v1/auth/refresh')
-        if (!result.success) {
+        try {
+          const result = await apiPost('/api/v1/auth/me')
+          if (result.success && result.data) {
+            const userData = (result.data as any)?.user || result.data
+            const newToken = (result.data as any)?.token || token
+            const existingRole = get().currentRole
+            get().setUser(userData, newToken)
+            if (existingRole && get().availableRoles.includes(existingRole)) {
+              set({ currentRole: existingRole })
+            }
+          } else {
+            get().logout()
+            throw new Error('Session refresh failed')
+          }
+        } catch (error) {
           get().logout()
-          throw new Error(result.error || 'Token refresh failed')
+          throw error
         }
-        const d = result.data as AuthResponseData | undefined
-        set({ token: d?.data?.token || d?.token })
       },
 
       hasPermission: (permission: string) => {

@@ -34,7 +34,7 @@ export default function LeaderboardPage() {
   const stats = criteriaData?.statistics;
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="py-8 space-y-6">
       {/* Page Header */}
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-2">
@@ -65,15 +65,6 @@ export default function LeaderboardPage() {
               <Info className="w-5 h-5" />
               How Rankings Work
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetchCriteria()}
-              disabled={criteriaLoading}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${criteriaLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">

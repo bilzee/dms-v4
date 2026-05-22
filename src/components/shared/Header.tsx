@@ -1,11 +1,23 @@
 'use client';
 
+import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { RoleSwitcher } from '@/components/layouts/RoleSwitcher';
 import { SyncIndicator } from './SyncIndicator';
 import { OfflineIndicator } from './OfflineIndicator';
 import { ThemeToggle } from './ThemeToggle';
 import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface HeaderProps {
   fullWidth?: boolean;
@@ -13,11 +25,11 @@ interface HeaderProps {
 
 export const Header = ({ fullWidth = false }: HeaderProps) => {
   const { isAuthenticated, user, logout } = useAuth();
+  const [logoutOpen, setLogoutOpen] = useState(false);
 
-  const handleLogout = async () => {
-    if (confirm('Are you sure you want to logout?')) {
-      await logout();
-    }
+  const handleLogoutConfirm = async () => {
+    setLogoutOpen(false);
+    await logout();
   };
 
   return (
@@ -30,8 +42,12 @@ export const Header = ({ fullWidth = false }: HeaderProps) => {
             </Link>
           </div>
           <div className="flex items-center gap-4">
-            <SyncIndicator />
-            <OfflineIndicator />
+            {isAuthenticated && (
+              <>
+                <SyncIndicator />
+                <OfflineIndicator />
+              </>
+            )}
             <ThemeToggle />
             {isAuthenticated && user && (
               <div className="flex items-center gap-3">
@@ -39,12 +55,29 @@ export const Header = ({ fullWidth = false }: HeaderProps) => {
                 <span className="text-sm text-muted-foreground hidden sm:inline">
                   {user.name || user.email}
                 </span>
-                <button
-                  onClick={handleLogout}
-                  className="px-3 py-1 text-sm text-destructive hover:text-destructive-foreground hover:bg-destructive/10 rounded transition-colors"
-                >
-                  Logout
-                </button>
+                <AlertDialog open={logoutOpen} onOpenChange={setLogoutOpen}>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      className="px-3 py-1 text-sm text-destructive hover:text-destructive-foreground hover:bg-destructive/10 rounded transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Sign Out</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to sign out of your account?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleLogoutConfirm}>
+                        Sign Out
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             )}
           </div>

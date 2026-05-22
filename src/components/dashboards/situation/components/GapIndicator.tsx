@@ -108,7 +108,7 @@ export function GapIndicator({
         <div className={cn(
           "rounded-full bg-green-600 border-2 border-green-300 shadow-sm",
           sizeClasses.dot
-        )} />
+        )} aria-hidden="true" />
         <IconComponent className={cn(
           "text-green-600 flex-shrink-0",
           sizeClasses.icon
@@ -135,7 +135,7 @@ export function GapIndicator({
         config.color,
         config.animation,
         sizeClasses.dot
-      )} />
+      )} aria-hidden="true" />
       
       <IconComponent className={cn(
         "flex-shrink-0",

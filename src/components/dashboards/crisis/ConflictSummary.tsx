@@ -123,7 +123,7 @@ export const ConflictSummary = ({
               {summary.recentConflicts.slice(0, 2).map((conflict) => (
                 <div key={conflict.id} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-1">
-                    <div className={`w-1.5 h-1.5 rounded-full ${conflict.isResolved ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <div className={`w-1.5 h-1.5 rounded-full ${conflict.isResolved ? 'bg-green-500' : 'bg-red-500'}`} aria-hidden="true"></div>
                     <span className="text-gray-600">{conflict.entityType}</span>
                   </div>
                   <span className="text-gray-500">

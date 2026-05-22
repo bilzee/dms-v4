@@ -28,7 +28,7 @@ import {
   Package
 } from 'lucide-react'
 
-import { useAuthStore } from '@/stores/auth.store'
+import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 
 // API utilities
@@ -56,7 +56,7 @@ interface EntitySelectorProps {
 }
 
 export function EntitySelector({ onEntitySelect, showStats = true }: EntitySelectorProps) {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('')

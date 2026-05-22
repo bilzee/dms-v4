@@ -37,7 +37,7 @@ import { useSync } from '@/hooks/useSync'
 import { responseOfflineService } from '@/lib/services/response-offline.service'
 import { ResponseService } from '@/lib/services/response-client.service'
 import { CreatePlannedResponseInput, CreateDeliveredResponseInput, ResponseItem } from '@/lib/validation/response'
-import { useAuthStore } from '@/stores/auth.store'
+import { useAuth } from '@/hooks/useAuth'
 import { apiGet, extractArray } from '@/lib/api'
 
 const ResponseItemSchema = z.object({
@@ -77,7 +77,7 @@ export function ResponsePlanningForm({
   entityId: preselectedEntityId,
   assessmentId: preselectedAssessmentId
 }: ResponsePlanningFormProps) {
-  const { user, token } = useAuthStore()
+  const { user, token } = useAuth()
   const queryClient = useQueryClient()
   const [isDirty, setIsDirty] = useState(false)
   const [editingResponseId, setEditingResponseId] = useState<string | null>(

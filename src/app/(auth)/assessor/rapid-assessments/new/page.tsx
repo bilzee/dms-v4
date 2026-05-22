@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft, AlertTriangle, CheckCircle, Hospital, Users, Utensils, Droplets, Home, Shield } from 'lucide-react'
-import { useAuthStore } from '@/stores/auth.store'
+import { useAuth } from '@/hooks/useAuth'
 import { apiGet, apiPost } from '@/lib/api'
 
 // Import assessment forms
@@ -70,7 +70,7 @@ const assessmentTypes = [
 function NewAssessmentContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { token, user } = useAuthStore()
+  const { token, user } = useAuth()
   const [selectedType, setSelectedType] = useState<string>('')
   const [showForm, setShowForm] = useState(false)
   const [latestAssessmentData, setLatestAssessmentData] = useState<any>(null)

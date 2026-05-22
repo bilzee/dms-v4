@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { ResponseService } from '@/lib/services/response-client.service'
-import { useAuthStore } from '@/stores/auth.store'
+import { useAuth } from '@/hooks/useAuth'
 
 interface CollaborationState {
   isActive: boolean
@@ -19,7 +19,7 @@ interface CollaborationState {
 }
 
 export function useCollaboration(responseId: string | null) {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
   const [localState, setLocalState] = useState<CollaborationState>({
     isActive: false,
     collaborators: [],

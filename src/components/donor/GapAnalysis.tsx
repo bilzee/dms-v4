@@ -368,7 +368,7 @@ export function GapAnalysis({ entityId }: GapAnalysisProps) {
               return (
                 <div key={category} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-blue-500" aria-hidden="true"></div>
                     <span className="font-medium">{category}</span>
                   </div>
                   

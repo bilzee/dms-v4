@@ -16,7 +16,7 @@ import { Package, Edit, Search, Filter, Plus, AlertTriangle, Clock, CheckCircle,
 
 // Components and services
 import { ResponseService } from '@/lib/services/response-client.service'
-import { useAuthStore } from '@/stores/auth.store'
+import { useAuth } from '@/hooks/useAuth'
 
 interface ResponsePlanningDashboardProps {
   onCreateResponse: () => void
@@ -27,7 +27,7 @@ export function ResponsePlanningDashboard({
   onCreateResponse, 
   onEditResponse 
 }: ResponsePlanningDashboardProps) {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<string>('all')
   const [filterPriority, setFilterPriority] = useState<string>('all')

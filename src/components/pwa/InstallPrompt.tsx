@@ -217,15 +217,15 @@ export function InstallPrompt({
                   </p>
                   <ul className="text-sm space-y-1 text-gray-700">
                     <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500" aria-hidden="true"></span>
                       Work offline in disaster areas
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500" aria-hidden="true"></span>
                       Faster loading and better performance
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500" aria-hidden="true"></span>
                       Home screen access like a native app
                     </li>
                   </ul>

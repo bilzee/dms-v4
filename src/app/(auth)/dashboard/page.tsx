@@ -29,7 +29,7 @@ import {
 } from 'lucide-react'
 
 export default function DashboardPage() {
-  const { user, hasPermission, hasRole, token } = useAuth()
+  const { user, hasPermission, hasRole, currentRole, token } = useAuth()
   const { stats, recentCommitments, loading, error } = useCommitmentStats()
 
   // System health query with auto-refresh every 60s
@@ -101,7 +101,7 @@ export default function DashboardPage() {
           {hasRole('COORDINATOR') && (
             <>
               <Link href="/coordinator/situation-dashboard">
-                <Button size="sm" className="bg-teal-600 hover:bg-teal-700">
+                <Button size="sm" className="bg-primary hover:bg-primary/90">
                   <Monitor className="h-4 w-4 mr-2" />
                   Situation Dashboard
                 </Button>
@@ -117,7 +117,7 @@ export default function DashboardPage() {
           {hasRole('ASSESSOR') && (
             <>
               <Link href="/assessor/preliminary-assessment">
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                <Button size="sm" className="bg-primary hover:bg-primary/90">
                   <ClipboardList className="h-4 w-4 mr-2" />
                   New Assessment
                 </Button>
@@ -133,7 +133,7 @@ export default function DashboardPage() {
           {hasRole('RESPONDER') && (
             <>
               <Link href="/responder/planning/new">
-                <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                <Button size="sm" className="bg-primary hover:bg-primary/90">
                   <Package className="h-4 w-4 mr-2" />
                   Plan Response
                 </Button>
@@ -149,7 +149,7 @@ export default function DashboardPage() {
           {hasPermission('VIEW_DONOR_DASHBOARD') && (
             <>
               <Link href="/donor/dashboard?action=new-commitment">
-                <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                <Button size="sm" className="bg-primary hover:bg-primary/90">
                   <HandHeart className="h-4 w-4 mr-2" />
                   New Commitment
                 </Button>
@@ -170,12 +170,12 @@ export default function DashboardPage() {
       {/* At-a-Glance Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {/* System Status */}
-        <Card className="border-green-200 bg-green-50/30">
+        <Card className="border-green-200/50 bg-green-50/30 dark:bg-green-950/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">System Status</p>
-                <p className={`text-2xl font-bold ${systemHealth?.databaseSync !== 'Down' ? 'text-green-600' : 'text-red-600'}`}>{systemHealth?.databaseSync !== 'Down' ? 'Online' : 'Offline'}</p>
+                <p className={`text-2xl font-bold ${systemHealth?.databaseSync !== 'Down' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{systemHealth?.databaseSync !== 'Down' ? 'Online' : 'Offline'}</p>
               </div>
               <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
             </div>
@@ -184,14 +184,14 @@ export default function DashboardPage() {
 
         {/* Active Incidents */}
         {hasRole('COORDINATOR') && (
-          <Card className="border-orange-200 bg-orange-50/30">
+          <Card className="border-orange-200/50 bg-orange-50/30 dark:bg-orange-950/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Active Incidents</p>
-                  <p className="text-2xl font-bold text-orange-600">{activeIncidents}</p>
+                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{activeIncidents}</p>
                 </div>
-                <AlertTriangle className="h-8 w-8 text-orange-600 opacity-50" />
+                <AlertTriangle className="h-8 w-8 text-orange-600 dark:text-orange-400 opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -199,16 +199,16 @@ export default function DashboardPage() {
 
         {/* Available Commitments */}
         {hasRole('RESPONDER') && (
-          <Card className="border-blue-200 bg-blue-50/30">
+          <Card className="border-blue-200/50 bg-blue-50/30 dark:bg-blue-950/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Available Commitments</p>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     {stats?.availableCommitments || 0}
                   </p>
                 </div>
-                <HandHeart className="h-8 w-8 text-blue-600 opacity-50" />
+                <HandHeart className="h-8 w-8 text-blue-600 dark:text-blue-400 opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -216,14 +216,14 @@ export default function DashboardPage() {
 
         {/* Pending Verifications */}
         {hasPermission('VERIFY_ASSESSMENTS') && (
-          <Card className="border-purple-200 bg-purple-50/30">
+          <Card className="border-purple-200/50 bg-purple-50/30 dark:bg-purple-950/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Pending Verifications</p>
-                  <p className="text-2xl font-bold text-purple-600">{pendingVerifications}</p>
+                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{pendingVerifications}</p>
                 </div>
-                <CheckCircle className="h-8 w-8 text-purple-600 opacity-50" />
+                <CheckCircle className="h-8 w-8 text-purple-600 dark:text-purple-400 opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -242,7 +242,6 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {/* TODO: Replace with real activity data from an API (e.g. GET /api/v1/activity/recent) */}
             <div className="space-y-4">
               {(() => {
                 // Real activity data should come from an API; using empty array as default
@@ -263,7 +262,7 @@ export default function DashboardPage() {
                   </div>
                 ))
               })()}
-              <Link href="/coordinator/situation-dashboard">
+              <Link href={currentRole === 'COORDINATOR' ? '/coordinator/situation-dashboard' : currentRole === 'DONOR' ? '/donor/analytics' : '/dashboard'}>
                 <Button variant="outline" className="w-full mt-4" size="sm">
                   View All Activity
                 </Button>
@@ -286,7 +285,7 @@ export default function DashboardPage() {
                 <span className="text-sm">Database Sync</span>
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 ${systemHealth?.databaseSync === 'Healthy' ? 'bg-green-500' : systemHealth?.databaseSync === 'Down' ? 'bg-red-500' : 'bg-yellow-500'} rounded-full`}></div>
-                  <span className={`text-sm ${systemHealth?.databaseSync === 'Healthy' ? 'text-green-600' : systemHealth?.databaseSync === 'Down' ? 'text-red-600' : 'text-yellow-600'}`}>{systemHealth?.databaseSync || '...'}</span>
+                  <span className={`text-sm ${systemHealth?.databaseSync === 'Healthy' ? 'text-green-600 dark:text-green-400' : systemHealth?.databaseSync === 'Down' ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'}`}>{systemHealth?.databaseSync || '...'}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
@@ -318,10 +317,10 @@ export default function DashboardPage() {
       {/* Role-Specific Essential Features */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {hasRole('COORDINATOR') && (
-          <Card className="border-teal-200 bg-teal-50/30">
+          <Card className="border-primary/20 bg-primary/5 dark:bg-primary/10">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Monitor className="h-5 w-5 text-teal-600" />
+                <Monitor className="h-5 w-5 text-primary" />
                 Situation Awareness
               </CardTitle>
               <CardDescription>
@@ -330,14 +329,14 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="bg-white/60 rounded-lg p-4 border border-teal-100">
+                <div className="bg-background/60 rounded-lg p-4 border border-primary/10">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Live Incidents</span>
-                    <span className="font-bold text-teal-600">{activeIncidents} Active</span>
+                    <span className="font-bold text-primary">{activeIncidents} Active</span>
                   </div>
                 </div>
                 <Link href="/coordinator/situation-dashboard">
-                  <Button className="w-full bg-teal-600 hover:bg-teal-700">
+                  <Button className="w-full">
                     Open Situation Dashboard
                   </Button>
                 </Link>
@@ -347,10 +346,10 @@ export default function DashboardPage() {
         )}
 
         {hasRole('ASSESSOR') && (
-          <Card className="border-blue-200 bg-blue-50/30">
+          <Card className="border-blue-200/50 bg-blue-50/30 dark:bg-blue-950/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ClipboardList className="h-5 w-5 text-blue-600" />
+                <ClipboardList className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 Field Assessments
               </CardTitle>
               <CardDescription>
@@ -359,14 +358,14 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="bg-white/60 rounded-lg p-4 border border-blue-100">
+                <div className="bg-background/60 rounded-lg p-4 border border-blue-200/50">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Pending Assessments</span>
-                    <span className="font-bold text-blue-600">2</span>
+                    <span className="font-bold text-blue-600 dark:text-blue-400">{pendingVerifications}</span>
                   </div>
                 </div>
                 <Link href="/assessor/preliminary-assessment">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                  <Button className="w-full">
                     Create New Assessment
                   </Button>
                 </Link>
@@ -376,10 +375,10 @@ export default function DashboardPage() {
         )}
 
         {hasRole('RESPONDER') && (
-          <Card className="border-green-200 bg-green-50/30">
+          <Card className="border-green-200/50 bg-green-50/30 dark:bg-green-950/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-green-600" />
+                <Package className="h-5 w-5 text-green-600 dark:text-green-400" />
                 Response Planning
               </CardTitle>
               <CardDescription>
@@ -388,16 +387,16 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="bg-white/60 rounded-lg p-4 border border-green-100">
+                <div className="bg-background/60 rounded-lg p-4 border border-green-200/50">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Available Commitments</span>
-                    <span className="font-bold text-green-600">
+                    <span className="font-bold text-green-600 dark:text-green-400">
                       {stats?.availableCommitments || 0}
                     </span>
                   </div>
                 </div>
                 <Link href="/responder/planning/new">
-                  <Button className="w-full bg-green-600 hover:bg-green-700">
+                  <Button className="w-full">
                     Plan New Response
                   </Button>
                 </Link>
@@ -407,10 +406,10 @@ export default function DashboardPage() {
         )}
 
         {hasPermission('VIEW_DONOR_DASHBOARD') && (
-          <Card className="border-purple-200 bg-purple-50/30">
+          <Card className="border-purple-200/50 bg-purple-50/30 dark:bg-purple-950/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <HandHeart className="h-5 w-5 text-purple-600" />
+                <HandHeart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 Donor Commitments
               </CardTitle>
               <CardDescription>
@@ -419,16 +418,16 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="bg-white/60 rounded-lg p-4 border border-purple-100">
+                <div className="bg-background/60 rounded-lg p-4 border border-purple-200/50">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Active Commitments</span>
-                    <span className="font-bold text-purple-600">
+                    <span className="font-bold text-purple-600 dark:text-purple-400">
                       {stats?.totalCommitments || 0}
                     </span>
                   </div>
                 </div>
                 <Link href="/donor/dashboard?action=new-commitment">
-                  <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                  <Button className="w-full">
                     Register New Commitment
                   </Button>
                 </Link>
@@ -438,10 +437,10 @@ export default function DashboardPage() {
         )}
 
         {hasPermission('VERIFY_ASSESSMENTS') && (
-          <Card className="border-orange-200 bg-orange-50/30">
+          <Card className="border-orange-200/50 bg-orange-50/30 dark:bg-orange-950/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-orange-600" />
+                <CheckCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                 Verification Queue
               </CardTitle>
               <CardDescription>
@@ -450,14 +449,14 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="bg-white/60 rounded-lg p-4 border border-orange-100">
+                <div className="bg-background/60 rounded-lg p-4 border border-orange-200/50">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Pending Items</span>
-                    <span className="font-bold text-orange-600">{pendingVerifications}</span>
+                    <span className="font-bold text-orange-600 dark:text-orange-400">{pendingVerifications}</span>
                   </div>
                 </div>
                 <Link href="/coordinator/verification">
-                  <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                  <Button className="w-full">
                     Review Queue
                   </Button>
                 </Link>
@@ -467,10 +466,10 @@ export default function DashboardPage() {
         )}
 
         {hasPermission('MANAGE_USERS') && (
-          <Card className="border-red-200 bg-red-50/30">
+          <Card className="border-red-200/50 bg-red-50/30 dark:bg-red-950/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <UserCog className="h-5 w-5 text-red-600" />
+                <UserCog className="h-5 w-5 text-red-600 dark:text-red-400" />
                 User Management
               </CardTitle>
               <CardDescription>
@@ -479,14 +478,14 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="bg-white/60 rounded-lg p-4 border border-red-100">
+                <div className="bg-background/60 rounded-lg p-4 border border-red-200/50">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Active Users</span>
-                    <span className="font-bold text-red-600">{systemHealth?.activeUsers || '...'}</span>
+                    <span className="font-bold text-red-600 dark:text-red-400">{systemHealth?.activeUsers || '...'}</span>
                   </div>
                 </div>
                 <Link href="/admin/users">
-                  <Button className="w-full bg-red-600 hover:bg-red-700">
+                  <Button className="w-full">
                     Add New User
                   </Button>
                 </Link>

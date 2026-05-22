@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Header } from '@/components/shared/Header';
 import { Navigation } from '@/components/layouts/Navigation';
@@ -8,24 +8,43 @@ import { SyncIndicator } from '@/components/shared/SyncIndicator';
 import { OfflineIndicator } from '@/components/shared/OfflineIndicator';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface AppShellProps {
   children: React.ReactNode;
   showNavigation?: boolean;
   isDashboard?: boolean;
+  isFullscreen?: boolean;
   showBreadcrumbs?: boolean;
 }
 
 export const AppShell = ({ 
   children, 
   showNavigation = true, 
-  isDashboard = false, 
+  isDashboard = false,
+  isFullscreen = false,
   showBreadcrumbs = true 
 }: AppShellProps) => {
   const { isAuthenticated } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (sidebarOpen) {
+      const firstButton = sidebarRef.current?.querySelector('button');
+      firstButton?.focus();
+    }
+  }, [sidebarOpen]);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && sidebarOpen) setSidebarOpen(false);
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [sidebarOpen]);
 
   if (!isAuthenticated) {
     return (
@@ -51,10 +70,16 @@ export const AppShell = ({
       )}
 
       {/* Mobile sidebar */}
-      <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:hidden
+      <div
+        ref={sidebarRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation menu"
+        className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-background shadow-lg transform transition-transform duration-300 ease-in-out lg:hidden
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+      `}
+      >
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold">Navigation</h2>
           <Button
@@ -69,10 +94,14 @@ export const AppShell = ({
       </div>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-64 lg:overflow-y-auto lg:bg-white lg:border-r lg:border-gray-200">
+      <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-64 lg:overflow-y-auto lg:bg-background lg:border-r lg:border-border">
         <div className="flex h-full flex-col">
           {/* Role information */}
-          <div className="flex h-16 items-center justify-center px-4 border-b">
+          <div className="flex h-16 items-center px-4 border-b">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <Shield className="h-6 w-6 text-primary" />
+              <span className="font-semibold text-foreground">DMS Borno</span>
+            </Link>
           </div>
           
           {/* Navigation */}
@@ -114,8 +143,7 @@ export const AppShell = ({
         </div>
 
         {/* Main content */}
-        <main className={cn(
-          // Remove all padding for dashboard pages to maximize viewport usage
+        <main id="main-content" className={cn(
           isDashboard ? 'py-0' : 'py-6'
         )}>
           {/* Breadcrumbs - shown on all pages except dashboard root */}
@@ -126,10 +154,11 @@ export const AppShell = ({
           )}
           
           <div className={cn(
-            // Small left padding for visual separation on dashboard pages
-            isDashboard 
-              ? 'pl-4 pr-0 w-full' 
-              : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'
+            isFullscreen
+              ? 'w-full h-full'
+              : isDashboard
+                ? 'px-4 sm:px-6 w-full'
+                : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'
           )}>
             {children}
           </div>

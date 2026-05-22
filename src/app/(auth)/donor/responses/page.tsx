@@ -20,14 +20,14 @@ import { EmptyState, EmptyResponses, EmptySearchResults } from '@/components/sha
 import { Package, Truck, Search, Filter, AlertTriangle, Clock, CheckCircle, ArrowLeft, Eye } from 'lucide-react'
 
 // Services and hooks
-import { useAuthStore } from '@/stores/auth.store'
+import { useAuth } from '@/hooks/useAuth'
 
 // API utilities
 import { apiGet, extractArray } from '@/lib/api'
 
 function DonorResponsesPageContent() {
   const router = useRouter()
-  const { user } = useAuthStore()
+  const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterType, setFilterType] = useState<string>('all')

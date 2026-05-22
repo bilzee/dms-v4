@@ -39,7 +39,7 @@ import {
 // Types and validation
 import { ConfirmDeliverySchema, ResponseItem } from '@/lib/validation/response'
 import { RapidResponse } from '@/types/response'
-import { useAuthStore } from '@/stores/auth.store'
+import { useAuth } from '@/hooks/useAuth'
 
 // Hooks
 import { useGPS, GPSLocation } from '@/hooks/useGPS'
@@ -77,7 +77,7 @@ export function DeliveryConfirmationForm({
   const [locationCaptureTime, setLocationCaptureTime] = useState<Date | null>(null)
   const [mediaAttachments, setMediaAttachments] = useState<any[]>([])
   
-  const { user, token } = useAuthStore()
+  const { user, token } = useAuth()
   const { isOnline } = useOffline()
   const { 
     location: gpsLocation, 

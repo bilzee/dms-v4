@@ -26,6 +26,7 @@ import {
   HeartHandshake
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getPrioritySolidColor, getVerificationStatusColor, verificationPrioritySolidColors, verificationStatusBadgeColors } from '@/lib/utils/priority-colors';
 import { useVerificationQueue, useVerificationFilters } from '@/hooks/useVerification';
 import { useRealTimeVerification, useConnectionStatus, useVerificationMetrics } from '@/hooks/useRealTimeVerification';
 import { ConnectionStatusIndicator } from '@/components/verification/ConnectionStatusIndicator';
@@ -112,36 +113,6 @@ export function VerificationQueueManagement({ className }: VerificationQueueMana
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'SUBMITTED':
-        return 'bg-amber-100 text-amber-800 border-amber-300';
-      case 'VERIFIED':
-        return 'bg-green-100 text-green-800 border-green-300';
-      case 'REJECTED':
-        return 'bg-red-100 text-red-800 border-red-300';
-      case 'AUTO_VERIFIED':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'CRITICAL':
-        return 'bg-red-500 text-white';
-      case 'HIGH':
-        return 'bg-orange-500 text-white';
-      case 'MEDIUM':
-        return 'bg-yellow-500 text-white';
-      case 'LOW':
-        return 'bg-green-500 text-white';
-      default:
-        return 'bg-gray-500 text-white';
-    }
   };
 
   const formatWaitTime = (minutes: number) => {
@@ -290,17 +261,6 @@ export function VerificationQueueManagement({ className }: VerificationQueueMana
             >
               <Filter className="h-4 w-4" />
               Filters
-              {/* Filter count badges temporarily disabled - filters use verification store */}
-              {false && activeTab === 'assessments' && (
-                <Badge variant="secondary" className="ml-1">
-                  0
-                </Badge>
-              )}
-              {false && activeTab === 'responses' && (
-                <Badge variant="secondary" className="ml-1">
-                  0
-                </Badge>
-              )}
             </Button>
           </div>
         </div>
@@ -540,25 +500,6 @@ function AssessmentQueueItem({
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'CRITICAL': return 'bg-red-500 text-white';
-      case 'HIGH': return 'bg-orange-500 text-white';
-      case 'MEDIUM': return 'bg-yellow-500 text-white';
-      case 'LOW': return 'bg-green-500 text-white';
-      default: return 'bg-gray-500 text-white';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'SUBMITTED': return 'bg-amber-100 text-amber-800 border-amber-300';
-      case 'VERIFIED': return 'bg-green-100 text-green-800 border-green-300';
-      case 'REJECTED': return 'bg-red-100 text-red-800 border-red-300';
-      default: return 'bg-gray-100 text-gray-800 border-gray-300';
-    }
-  };
-
   return (
     <div
       className={cn(
@@ -570,10 +511,10 @@ function AssessmentQueueItem({
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <Badge className={getPriorityColor(assessment.priority)}>
+            <Badge className={getPrioritySolidColor(assessment.priority)}>
               {assessment.priority}
             </Badge>
-            <Badge className={getStatusColor(assessment.verificationStatus)}>
+            <Badge className={getVerificationStatusColor(assessment.verificationStatus)}>
               {assessment.verificationStatus}
             </Badge>
             <span className="text-sm text-muted-foreground">
@@ -618,25 +559,6 @@ function DeliveryQueueItem({
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'CRITICAL': return 'bg-red-500 text-white';
-      case 'HIGH': return 'bg-orange-500 text-white';
-      case 'MEDIUM': return 'bg-yellow-500 text-white';
-      case 'LOW': return 'bg-green-500 text-white';
-      default: return 'bg-gray-500 text-white';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'SUBMITTED': return 'bg-amber-100 text-amber-800 border-amber-300';
-      case 'VERIFIED': return 'bg-green-100 text-green-800 border-green-300';
-      case 'REJECTED': return 'bg-red-100 text-red-800 border-red-300';
-      default: return 'bg-gray-100 text-gray-800 border-gray-300';
-    }
-  };
-
   return (
     <div
       className={cn(
@@ -648,10 +570,10 @@ function DeliveryQueueItem({
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <Badge className={getPriorityColor(delivery.priority)}>
+            <Badge className={getPrioritySolidColor(delivery.priority)}>
               {delivery.priority}
             </Badge>
-            <Badge className={getStatusColor(delivery.verificationStatus)}>
+            <Badge className={getVerificationStatusColor(delivery.verificationStatus)}>
               {delivery.verificationStatus}
             </Badge>
             <span className="text-sm text-muted-foreground">
@@ -708,11 +630,7 @@ function AssessmentDetailsPanel({
         <div className="space-y-3">
           <div>
             <label className="text-sm font-medium text-gray-600">Status</label>
-            <Badge className={cn(
-              assessment.verificationStatus === 'SUBMITTED' && 'bg-amber-100 text-amber-800',
-              assessment.verificationStatus === 'VERIFIED' && 'bg-green-100 text-green-800',
-              assessment.verificationStatus === 'REJECTED' && 'bg-red-100 text-red-800'
-            )}>
+            <Badge className={verificationStatusBadgeColors[assessment.verificationStatus] ?? ''}>
               {assessment.verificationStatus}
             </Badge>
           </div>
@@ -720,12 +638,7 @@ function AssessmentDetailsPanel({
           <div>
             <label className="text-sm font-medium text-gray-600">Priority</label>
             <div className="mt-1">
-              <Badge className={cn(
-                assessment.priority === 'CRITICAL' && 'bg-red-500 text-white',
-                assessment.priority === 'HIGH' && 'bg-orange-500 text-white',
-                assessment.priority === 'MEDIUM' && 'bg-yellow-500 text-white',
-                assessment.priority === 'LOW' && 'bg-green-500 text-white'
-              )}>
+              <Badge className={verificationPrioritySolidColors[assessment.priority as keyof typeof verificationPrioritySolidColors] ?? 'bg-gray-500 text-white'}>
                 {assessment.priority}
               </Badge>
             </div>
@@ -803,11 +716,7 @@ function DeliveryDetailsPanel({
         <div className="space-y-3">
           <div>
             <label className="text-sm font-medium text-gray-600">Status</label>
-            <Badge className={cn(
-              delivery.verificationStatus === 'SUBMITTED' && 'bg-amber-100 text-amber-800',
-              delivery.verificationStatus === 'VERIFIED' && 'bg-green-100 text-green-800',
-              delivery.verificationStatus === 'REJECTED' && 'bg-red-100 text-red-800'
-            )}>
+            <Badge className={verificationStatusBadgeColors[delivery.verificationStatus] ?? ''}>
               {delivery.verificationStatus}
             </Badge>
           </div>
@@ -815,12 +724,7 @@ function DeliveryDetailsPanel({
           <div>
             <label className="text-sm font-medium text-gray-600">Priority</label>
             <div className="mt-1">
-              <Badge className={cn(
-                delivery.priority === 'CRITICAL' && 'bg-red-500 text-white',
-                delivery.priority === 'HIGH' && 'bg-orange-500 text-white',
-                delivery.priority === 'MEDIUM' && 'bg-yellow-500 text-white',
-                delivery.priority === 'LOW' && 'bg-green-500 text-white'
-              )}>
+              <Badge className={verificationPrioritySolidColors[delivery.priority as keyof typeof verificationPrioritySolidColors] ?? 'bg-gray-500 text-white'}>
                 {delivery.priority}
               </Badge>
             </div>

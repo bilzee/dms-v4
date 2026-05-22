@@ -28,6 +28,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { apiGet, getAuthHeaders } from '@/lib/api'
 import { useToast } from '@/components/ui/use-toast'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
 
 interface EntityData {
   id: string
@@ -96,7 +98,7 @@ export default function DonorReportsPage() {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
-          format: reportConfig.format === 'excel' ? 'csv' : reportConfig.format,
+          format: reportConfig.format === 'excel' ? 'xlsx' : reportConfig.format,
           includeCharts: reportConfig.includeCharts,
           includeTrends: reportConfig.includeTrends,
           includeGapAnalysis: reportConfig.includeGapAnalysis,
@@ -113,7 +115,7 @@ export default function DonorReportsPage() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      const fileExt = reportConfig.format === 'excel' ? 'csv' : reportConfig.format
+      const fileExt = reportConfig.format === 'excel' ? 'xlsx' : reportConfig.format
       a.download = `donor-report-${new Date().toISOString().split('T')[0]}.${fileExt}`
       document.body.appendChild(a)
       a.click()
@@ -146,7 +148,7 @@ export default function DonorReportsPage() {
   if (entitiesLoading) {
     return (
       <RoleBasedRoute requiredRole="DONOR">
-        <div className="container mx-auto py-6">
+        <div className="py-6">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
             <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
@@ -163,7 +165,7 @@ export default function DonorReportsPage() {
 
   return (
     <RoleBasedRoute requiredRole="DONOR">
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="py-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -283,54 +285,55 @@ export default function DonorReportsPage() {
               {/* Date Range */}
               <div>
                 <label className="text-sm font-medium mb-2 block">Date Range</label>
-                <select
+                <Select
                   value={reportConfig.dateRange}
-                  onChange={(e) => setReportConfig(prev => ({ 
+                  onValueChange={(value) => setReportConfig(prev => ({ 
                     ...prev, 
-                    dateRange: e.target.value as ReportConfig['dateRange'] 
+                    dateRange: value as ReportConfig['dateRange'] 
                   }))}
-                  className="w-full p-2 border rounded-md"
                 >
-                  <option value="7d">Last 7 days</option>
-                  <option value="30d">Last 30 days</option>
-                  <option value="90d">Last 90 days</option>
-                  <option value="1y">Last year</option>
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select date range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7d">Last 7 days</SelectItem>
+                    <SelectItem value="30d">Last 30 days</SelectItem>
+                    <SelectItem value="90d">Last 90 days</SelectItem>
+                    <SelectItem value="1y">Last year</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Report Content */}
               <div>
                 <label className="text-sm font-medium mb-2 block">Report Content</label>
                 <div className="space-y-2">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
                       checked={reportConfig.includeCharts}
-                      onChange={(e) => setReportConfig(prev => ({ 
+                      onCheckedChange={(checked) => setReportConfig(prev => ({ 
                         ...prev, 
-                        includeCharts: e.target.checked 
+                        includeCharts: checked as boolean 
                       }))}
                     />
                     <span className="text-sm">Include Charts</span>
                   </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
                       checked={reportConfig.includeTrends}
-                      onChange={(e) => setReportConfig(prev => ({ 
+                      onCheckedChange={(checked) => setReportConfig(prev => ({ 
                         ...prev, 
-                        includeTrends: e.target.checked 
+                        includeTrends: checked as boolean 
                       }))}
                     />
                     <span className="text-sm">Include Trends Analysis</span>
                   </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
                       checked={reportConfig.includeGapAnalysis}
-                      onChange={(e) => setReportConfig(prev => ({ 
+                      onCheckedChange={(checked) => setReportConfig(prev => ({ 
                         ...prev, 
-                        includeGapAnalysis: e.target.checked 
+                        includeGapAnalysis: checked as boolean 
                       }))}
                     />
                     <span className="text-sm">Include Gap Analysis</span>
@@ -382,9 +385,10 @@ export default function DonorReportsPage() {
               {entities.length > 0 ? (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {entities.map((entity) => (
-                    <div
+                    <button
+                      type="button"
                       key={entity.id}
-                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      className={`text-left w-full p-4 border rounded-lg cursor-pointer transition-colors ${
                         reportConfig.entities.includes(entity.id)
                           ? 'border-blue-500 bg-blue-50'
                           : 'hover:bg-gray-50'
@@ -393,10 +397,9 @@ export default function DonorReportsPage() {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3">
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={reportConfig.entities.includes(entity.id)}
-                            onChange={() => handleEntityToggle(entity.id)}
+                            onCheckedChange={() => handleEntityToggle(entity.id)}
                             className="mt-1"
                           />
                           <div>
@@ -429,7 +432,7 @@ export default function DonorReportsPage() {
                           <Badge variant="default">Selected</Badge>
                         )}
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               ) : (

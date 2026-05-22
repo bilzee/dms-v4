@@ -13,7 +13,7 @@ export default function DonorDashboardPage() {
 
   return (
     <RoleBasedRoute requiredRole="DONOR">
-      <div className="container mx-auto py-6">
+      <div className="py-6">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between">

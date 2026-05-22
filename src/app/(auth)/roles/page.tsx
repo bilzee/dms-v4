@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { Edit, Plus, Trash2, Shield, Key, Users } from 'lucide-react'
@@ -111,7 +112,7 @@ export default function RolesPage() {
   }, [hasPermission])
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="py-8 space-y-6">
       {!hasPermission('MANAGE_USERS') ? (
         <Alert variant="destructive">
           <AlertDescription>
@@ -452,12 +453,10 @@ function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
               <div className="grid grid-cols-1 gap-2">
                 {modulePermissions.map((permission) => (
                   <div key={permission.id} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       id={permission.code}
                       checked={selectedPermissions.includes(permission.code)}
-                      onChange={() => togglePermission(permission.code)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      onCheckedChange={() => togglePermission(permission.code)}
                     />
                     <label htmlFor={permission.code} className="text-sm">
                       <span className="font-medium">{permission.name}</span>

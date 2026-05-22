@@ -23,15 +23,26 @@ import { ResponsePlanningForm } from '@/components/forms/response'
 import { ResponsePlanningDashboard } from '@/components/response/ResponsePlanningDashboard'
 
 // Hooks and utilities
-import { useAuthStore } from '@/stores/auth.store'
 import { apiGet, extractArray } from '@/lib/api'
 
 function ResponderDashboardContent() {
-  const { user, token } = useAuthStore()
+  const { user, token, currentRole, switchRole } = useAuth()
   const router = useRouter()
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingResponse, setEditingResponse] = useState<string | null>(null)
   const [isClient, setIsClient] = useState(false)
+
+  if (currentRole !== 'RESPONDER') {
+    return (
+      <div className="p-6 text-center">
+        <AlertTriangle className="h-8 w-8 mx-auto text-yellow-500 mb-2" />
+        <p>Session role mismatch. Expected RESPONDER, got {currentRole}.</p>
+        <Button onClick={() => switchRole('RESPONDER')} className="mt-4">
+          Switch to Responder Role
+        </Button>
+      </div>
+    )
+  }
 
   // Prevent hydration mismatch
   useEffect(() => {

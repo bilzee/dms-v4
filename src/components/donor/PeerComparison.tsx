@@ -326,7 +326,7 @@ export function PeerComparison({
           <CardTitle>Performance Comparison</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-80">
+          <div role="img" aria-label={`Performance comparison chart: ${radarData ? radarData.map(d => `${d.metric}: You ${d['You'].toFixed(0)}%, Top 25% ${d['Top 25%'].toFixed(0)}%, Average ${d['Average'].toFixed(0)}%`).join(', ') : 'No data'}`} className="h-80">
             {currentChartType === 'radar' && radarData && (
               <Radar
                 data={{
@@ -397,6 +397,33 @@ export function PeerComparison({
               />
             )}
           </div>
+          <details className="mt-2">
+            <summary className="sr-only">View chart data as table</summary>
+            <table className="sr-only">
+              <caption>Performance comparison data</caption>
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>Your Score</th>
+                  <th>Top 25%</th>
+                  <th>Average</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(radarData || []).map((d, i) => {
+                  const m = metrics[i];
+                  return (
+                    <tr key={d.metric}>
+                      <td>{d.metric}</td>
+                      <td>{m?.user.toFixed(1)}</td>
+                      <td>{m?.top25.toFixed(1)}</td>
+                      <td>{m?.average.toFixed(1)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </details>
         </CardContent>
       </Card>
 
@@ -415,7 +442,7 @@ export function PeerComparison({
                     metric.trend === 'above' ? "bg-green-100 text-green-600" :
                     metric.trend === 'below' ? "bg-red-100 text-red-600" :
                     "bg-gray-100 text-gray-600"
-                  )}>
+                  )} aria-label={metric.trend === 'above' ? 'Above average' : metric.trend === 'below' ? 'Below average' : 'Average'}>
                     {metric.trend === 'above' && <TrendingUp className="w-5 h-5" />}
                     {metric.trend === 'below' && <TrendingDown className="w-5 h-5" />}
                     {metric.trend === 'average' && <Equal className="w-5 h-5" />}

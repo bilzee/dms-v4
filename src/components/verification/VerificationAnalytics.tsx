@@ -24,6 +24,7 @@ import { useVerificationMetrics } from '@/hooks/useRealTimeVerification';
 import { useAuth } from '@/hooks/useAuth';
 import { useVerificationStore } from '@/stores/verification.store';
 import { cn } from '@/lib/utils';
+import { priorityDotColors, statusBadgeColors } from '@/lib/utils/priority-colors';
 import { apiGet } from '@/lib/api';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 
@@ -91,7 +92,7 @@ export function VerificationAnalytics({ className }: VerificationAnalyticsProps)
       totalProcessed: analyticsData?.totalProcessed ?? 0,
       averageProcessingTime: metrics.averageWaitTime,
       throughput: analyticsData?.throughput ?? 0,
-      backlogTrend: calculateTrend(assessmentQueueDepth.total, assessmentQueueDepth.total + 5),
+      backlogTrend: calculateTrend(assessmentQueueDepth.total, assessmentQueueDepth.total),
       systemLoad: analyticsData?.systemLoad || 'Unknown'
     };
   }, [metrics, assessmentQueueDepth, analyticsData]);
@@ -377,13 +378,13 @@ function KpiCard({ title, value, icon: Icon, trend, format, unit }: KpiCardProps
         {trend && trend.trend !== 'neutral' && (
           <div className="flex items-center gap-1 mt-2">
             {trend.trend === 'up' ? (
-              <TrendingUp className="h-4 w-4 text-green-500" />
+              <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
             ) : (
-              <TrendingDown className="h-4 w-4 text-red-500" />
+              <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
             )}
             <span className={cn(
               'text-sm',
-              trend.trend === 'up' ? 'text-green-600' : 'text-red-600'
+              trend.trend === 'up' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
             )}>
               {trend.value.toFixed(1)}% from previous period
             </span>
@@ -417,8 +418,8 @@ function QueueStatusCard({ title, data, color }: QueueStatusCardProps) {
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-medium">{title}</h3>
         <Badge variant="outline" className={cn(
-          color === 'blue' && 'border-blue-500 text-blue-700',
-          color === 'green' && 'border-green-500 text-green-700'
+          color === 'blue' && 'border-blue-500/50 text-blue-700 dark:text-blue-400',
+          color === 'green' && 'border-green-500/50 text-green-700 dark:text-green-400'
         )}>
           {total} items
         </Badge>
@@ -427,7 +428,7 @@ function QueueStatusCard({ title, data, color }: QueueStatusCardProps) {
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+            <div className="w-3 h-3 bg-red-500 rounded-full" aria-hidden="true"></div>
             Critical
           </span>
           <span className="font-medium">{data.critical} ({criticalPercent.toFixed(1)}%)</span>
@@ -435,7 +436,7 @@ function QueueStatusCard({ title, data, color }: QueueStatusCardProps) {
         
         <div className="flex justify-between text-sm">
           <span className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+            <div className="w-3 h-3 bg-orange-500 rounded-full" aria-hidden="true"></div>
             High
           </span>
           <span className="font-medium">{data.high} ({highPercent.toFixed(1)}%)</span>
@@ -443,7 +444,7 @@ function QueueStatusCard({ title, data, color }: QueueStatusCardProps) {
         
         <div className="flex justify-between text-sm">
           <span className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+            <div className="w-3 h-3 bg-yellow-500 rounded-full" aria-hidden="true"></div>
             Medium/Low
           </span>
           <span className="font-medium">{data.medium + data.low}</span>
@@ -456,22 +457,22 @@ function QueueStatusCard({ title, data, color }: QueueStatusCardProps) {
 // Processing Metrics Chart Component
 function ProcessingMetricsChart({ data }: { data: any[] }) {
   return (
-    <div className="space-y-4">
+    <div role="img" aria-label="Processing metrics chart showing verification throughput" className="space-y-4">
       {data.slice(-8).map((item, index) => (
         <div key={index} className="flex items-center gap-4">
           <div className="w-12 text-sm text-muted-foreground">{item.time}</div>
           <div className="flex-1 flex gap-2">
-            <div className="flex-1 bg-blue-100 rounded" style={{ 
-              width: `${(item.assessments / Math.max(...data.map(d => d.assessments))) * 100}%` 
+            <div className="flex-1 bg-blue-100 dark:bg-blue-900/30 rounded" style={{ 
+              width: `${(item.assessments / Math.max(...data.map(d => d.assessments), 1)) * 100}%` 
             }}>
-              <div className="h-6 flex items-center justify-center text-xs font-medium text-blue-700">
+              <div className="h-6 flex items-center justify-center text-xs font-medium text-blue-700 dark:text-blue-300">
                 {item.assessments}
               </div>
             </div>
-            <div className="flex-1 bg-green-100 rounded" style={{ 
-              width: `${(item.deliveries / Math.max(...data.map(d => d.deliveries))) * 100}%` 
+            <div className="flex-1 bg-green-100 dark:bg-green-900/30 rounded" style={{ 
+              width: `${(item.deliveries / Math.max(...data.map(d => d.deliveries), 1)) * 100}%` 
             }}>
-              <div className="h-6 flex items-center justify-center text-xs font-medium text-green-700">
+              <div className="h-6 flex items-center justify-center text-xs font-medium text-green-700 dark:text-green-300">
                 {item.deliveries}
               </div>
             </div>
@@ -483,11 +484,11 @@ function ProcessingMetricsChart({ data }: { data: any[] }) {
         <div className="w-12"></div>
         <div className="flex-1 flex gap-2">
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-blue-500 rounded"></div>
+            <div className="w-3 h-3 bg-blue-500 rounded" aria-hidden="true"></div>
             Assessments
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-green-500 rounded"></div>
+            <div className="w-3 h-3 bg-green-500 rounded" aria-hidden="true"></div>
             Deliveries
           </div>
         </div>
@@ -530,10 +531,10 @@ function PriorityBreakdown({ data }: { data: any }) {
   return (
     <div className="space-y-2">
       {[
-        { priority: 'Critical', value: data.critical, color: 'bg-red-500' },
-        { priority: 'High', value: data.high, color: 'bg-orange-500' },
-        { priority: 'Medium', value: data.medium, color: 'bg-yellow-500' },
-        { priority: 'Low', value: data.low, color: 'bg-green-500' }
+        { priority: 'Critical', value: data.critical, color: priorityDotColors.critical },
+        { priority: 'High', value: data.high, color: priorityDotColors.high },
+        { priority: 'Medium', value: data.medium, color: priorityDotColors.medium },
+        { priority: 'Low', value: data.low, color: priorityDotColors.low }
       ].map(({ priority, value, color }) => {
         const percentage = total > 0 ? (value / total) * 100 : 0;
         
@@ -543,10 +544,11 @@ function PriorityBreakdown({ data }: { data: any }) {
               <span>{priority}</span>
               <span>{value} ({percentage.toFixed(1)}%)</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-muted rounded-full h-2">
               <div 
                 className={cn('h-2 rounded-full', color)}
                 style={{ width: `${percentage}%` }}
+                aria-hidden="true"
               ></div>
             </div>
           </div>
@@ -560,21 +562,21 @@ function PriorityBreakdown({ data }: { data: any }) {
 function TrendsChart({ data }: { data: any[] }) {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-4 text-sm">
+      <div role="img" aria-label="Verification trends over time" className="grid grid-cols-3 gap-4 text-sm">
         <div className="text-center">
-          <div className="text-2xl font-bold text-blue-600">
+          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
             {data.reduce((sum, item) => sum + item.assessments, 0)}
           </div>
           <div className="text-muted-foreground">Total Assessments</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-green-600">
+          <div className="text-2xl font-bold text-green-600 dark:text-green-400">
             {data.reduce((sum, item) => sum + item.deliveries, 0)}
           </div>
           <div className="text-muted-foreground">Total Deliveries</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-purple-600">
+          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
             {data.reduce((sum, item) => sum + item.verified, 0)}
           </div>
           <div className="text-muted-foreground">Total Verified</div>
@@ -620,13 +622,13 @@ function PerformanceAnalysis({ metrics, systemLoad }: { metrics: any; systemLoad
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span>Backlog Trend</span>
-              <Badge className={
+              <Badge className={cn(
                 metrics.backlogTrend.trend === 'down' 
-                  ? 'bg-green-100 text-green-800' 
+                  ? statusBadgeColors.success 
                   : metrics.backlogTrend.trend === 'up'
-                  ? 'bg-red-100 text-red-800'
-                  : 'bg-gray-100 text-gray-800'
-              }>
+                  ? statusBadgeColors.error
+                  : statusBadgeColors.neutral
+              )}>
                 {metrics.backlogTrend.trend === 'down' ? 'Improving' : 
                  metrics.backlogTrend.trend === 'up' ? 'Worsening' : 'Stable'}
               </Badge>
@@ -634,9 +636,9 @@ function PerformanceAnalysis({ metrics, systemLoad }: { metrics: any; systemLoad
             <div className="flex justify-between items-center">
               <span>System Load</span>
               <Badge className={cn(
-                systemLoad === 'Low' ? 'bg-green-100 text-green-800' :
-                systemLoad === 'High' ? 'bg-red-100 text-red-800' :
-                'bg-yellow-100 text-yellow-800'
+                systemLoad === 'Low' ? statusBadgeColors.success :
+                systemLoad === 'High' ? statusBadgeColors.error :
+                statusBadgeColors.warning
               )}>{systemLoad || 'Unknown'}</Badge>
             </div>
           </div>

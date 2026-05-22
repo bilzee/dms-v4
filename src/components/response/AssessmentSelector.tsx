@@ -17,7 +17,7 @@ import { FileText, Calendar, MapPin, User, AlertTriangle, CheckCircle, Clock } f
 // Services and types
 import { responseOfflineService } from '@/lib/services/response-offline.service'
 import { ResponseService } from '@/lib/services/response.service'
-import { useAuthStore } from '@/stores/auth.store'
+import { useAuth } from '@/hooks/useAuth'
 import { apiGet, extractArray } from '@/lib/api'
 
 interface AssessmentSelectorProps {
@@ -56,7 +56,7 @@ export function AssessmentSelector({
   selectedAssessment
 }: AssessmentSelectorProps) {
   const [isCheckingConflicts, setIsCheckingConflicts] = useState(false)
-  const { token } = useAuthStore()
+  const { token } = useAuth()
 
   // Get verified assessments for the entity
   const { data: assessments = [], isLoading, error } = useQuery({

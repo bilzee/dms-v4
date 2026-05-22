@@ -26,7 +26,7 @@ import { User, Building, Mail, Phone, Edit2, Save, X, Upload, CheckCircle, Alert
 
 // Types
 import { DonorProfileUpdateInput } from '@/lib/validation/donor'
-import { useAuthStore } from '@/stores/auth.store'
+import { useAuth } from '@/hooks/useAuth'
 import { apiGet, apiPatch } from '@/lib/api'
 
 // Validation schema
@@ -44,7 +44,7 @@ interface DonorProfileProps {
 }
 
 export function DonorProfile({ donorId }: DonorProfileProps) {
-  const { user } = useAuthStore()
+  const { user } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const queryClient = useQueryClient()
 
@@ -116,14 +116,21 @@ export function DonorProfile({ donorId }: DonorProfileProps) {
   const calculateProfileCompletion = () => {
     if (!donorData?.donor) return 0
     
+    const placeholderPatterns = ['+234-800', 'N/A', 'undefined', 'null']
+    const isValid = (value: unknown) => {
+      if (!value || typeof value !== 'string') return false
+      if (value.trim() === '') return false
+      return !placeholderPatterns.some(p => value.includes(p))
+    }
+    
     const requiredFields = ['name']
     const optionalFields = ['contactEmail', 'contactPhone', 'organization']
     
-    const completedRequired = requiredFields.filter(field => donorData.donor[field]).length
-    const completedOptional = optionalFields.filter(field => donorData.donor[field]).length
+    const completedRequired = requiredFields.filter(field => isValid(donorData.donor[field])).length
+    const completedOptional = optionalFields.filter(field => isValid(donorData.donor[field])).length
     
-    const requiredWeight = 0.6 // 60% weight for required fields
-    const optionalWeight = 0.4 // 40% weight for optional fields
+    const requiredWeight = 0.6
+    const optionalWeight = 0.4
     
     const requiredScore = (completedRequired / requiredFields.length) * requiredWeight * 100
     const optionalScore = (completedOptional / optionalFields.length) * optionalWeight * 100

@@ -118,32 +118,21 @@ export function LoginForm() {
       setError(null)
       await login(data.email, data.password)
       
-      // Get auth state to determine role-based redirect
-      // Use a timeout to allow auth state to update
       setTimeout(() => {
-        const { currentRole, availableRoles } = useAuthStore.getState()
-        const roles = availableRoles || []
-        
-        // Priority order for role-based redirects (matches auth store priority)
-        if (roles.includes('DONOR')) {
-          router.push('/donor/dashboard')
-          return
+        const roleRedirectMap: Record<string, string> = {
+          ADMIN: '/admin/dashboard',
+          COORDINATOR: '/coordinator/dashboard',
+          RESPONDER: '/responder/dashboard',
+          ASSESSOR: '/assessor/dashboard',
+          DONOR: '/donor/dashboard',
         }
-        if (roles.includes('ASSESSOR')) {
-          router.push('/assessor/rapid-assessments') 
-          return
-        }
-        if (roles.includes('COORDINATOR')) {
-          router.push('/coordinator/dashboard')
-          return
-        }
-        if (roles.includes('RESPONDER')) {
-          router.push('/responder/planning')
-          return
-        }
-        
-        // Fallback to general dashboard
-        router.push('/dashboard')
+
+        const currentRole = useAuthStore.getState().currentRole
+        const redirectPath = currentRole
+          ? roleRedirectMap[currentRole]
+          : '/dashboard'
+
+        router.push(redirectPath)
       }, 100)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')

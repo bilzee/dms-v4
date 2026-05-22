@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { verificationPriorityBadgeColors } from '@/lib/utils/priority-colors';
 import { useVerificationQueue, useVerificationFilters } from '@/hooks/useVerification';
 import { StatusIndicator } from './StatusIndicator';
 import { Button } from '@/components/ui/button';
@@ -76,13 +77,6 @@ export function VerificationQueue({
     assessment.assessor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     assessment.rapidAssessmentType.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
-
-  const priorityColors = {
-    CRITICAL: 'bg-red-100 text-red-800 border-red-300',
-    HIGH: 'bg-orange-100 text-orange-800 border-orange-300',
-    MEDIUM: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    LOW: 'bg-green-100 text-green-800 border-green-300'
-  };
 
   if (error) {
     return (
@@ -266,13 +260,6 @@ function AssessmentQueueItem({
   onToggleExpanded,
   onSelect
 }: AssessmentQueueItemProps) {
-  const priorityColors = {
-    CRITICAL: 'bg-red-100 text-red-800 border-red-300',
-    HIGH: 'bg-orange-100 text-orange-800 border-orange-300',
-    MEDIUM: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    LOW: 'bg-green-100 text-green-800 border-green-300'
-  };
-
   return (
     <Card 
       className={cn(
@@ -306,7 +293,7 @@ function AssessmentQueueItem({
             <Badge 
               className={cn(
                 'font-medium',
-                priorityColors[assessment.priority as keyof typeof priorityColors]
+                verificationPriorityBadgeColors[assessment.priority as keyof typeof verificationPriorityBadgeColors]
               )}
             >
               {assessment.priority}

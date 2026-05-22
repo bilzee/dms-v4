@@ -18,7 +18,7 @@ import { Card, CardContent } from '@/components/ui/card'
 
 // Internal services and hooks
 import type { Entity } from '@/lib/services/entity-assignment.service'
-import { useAuthStore } from '@/stores/auth.store'
+import { useAuth } from '@/hooks/useAuth'
 import { apiGet, extractArray } from '@/lib/api'
 
 interface MultipleEntitySelectorProps {
@@ -43,7 +43,7 @@ export function MultipleEntitySelector({
   className,
   placeholder = "Select affected entities"
 }: MultipleEntitySelectorProps) {
-  const { user, token } = useAuthStore()
+  const { user, token } = useAuth()
   const [isClient, setIsClient] = useState(false)
   
   // Prevent hydration mismatch

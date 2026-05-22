@@ -269,7 +269,7 @@ export default function AssessorDashboard() {
                         </Badge>
                       )}
                       {getStatusBadge(assessment)}
-                      <Link href={`/rapid-assessments/${assessment.id}`}>
+                      <Link href={`/assessor/rapid-assessments/${assessment.id}`}>
                         <Button variant="outline" size="sm">
                           View Details
                         </Button>

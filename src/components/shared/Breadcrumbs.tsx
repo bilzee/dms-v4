@@ -152,6 +152,79 @@ const breadcrumbStructure: Record<string, BreadcrumbItem[]> = {
   '/profile': [
     { name: 'Dashboard', href: '/dashboard' },
     { name: 'Profile', href: '/profile' }
+  ],
+  '/coordinator/verification': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Verification Queue', href: '/coordinator/verification' }
+  ],
+  '/coordinator/auto-approval': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Auto-Approval Management', href: '/coordinator/auto-approval' }
+  ],
+  '/coordinator/entity-management': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Entity Management', href: '/coordinator/entity-management' }
+  ],
+  '/coordinator/donors': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Donor Management', href: '/coordinator/donors' }
+  ],
+  '/coordinator/donors/metrics': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Donor Management', href: '/coordinator/donors' },
+    { name: 'Metrics', href: '/coordinator/donors/metrics' }
+  ],
+  '/coordinator/entity-incident-map': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Entity-Incident Map', href: '/coordinator/entity-incident-map' }
+  ],
+  '/coordinator/settings/gap-field-management': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Configuration', href: '/coordinator/settings/gap-field-management' },
+    { name: 'Gap Field Management', href: '/coordinator/settings/gap-field-management' }
+  ],
+  '/coordinator/settings/severity-thresholds': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Configuration', href: '/coordinator/settings/gap-field-management' },
+    { name: 'Severity Thresholds', href: '/coordinator/settings/severity-thresholds' }
+  ],
+  '/coordinator/reports': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Reports', href: '/coordinator/reports' }
+  ],
+  '/donor/analytics': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Donor Dashboard', href: '/donor/dashboard' },
+    { name: 'Analytics', href: '/donor/analytics' }
+  ],
+  '/donor/profile': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Donor Dashboard', href: '/donor/dashboard' },
+    { name: 'My Profile', href: '/donor/profile' }
+  ],
+  '/donor/entities/performance': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Entities', href: '/donor/entities' },
+    { name: 'Performance', href: '/donor/entities/performance' }
+  ],
+  '/donor/reports': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Donor Dashboard', href: '/donor/dashboard' },
+    { name: 'Reports', href: '/donor/reports' }
+  ],
+  '/admin/dashboard': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Admin Dashboard', href: '/admin/dashboard' }
+  ],
+  '/system/health': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'System', href: '/system/settings' },
+    { name: 'Health', href: '/system/health' }
+  ],
+  '/donor/rapid-assessments': [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Donor Dashboard', href: '/donor/dashboard' },
+    { name: 'Rapid Assessments', href: '/donor/rapid-assessments' }
   ]
 };
 

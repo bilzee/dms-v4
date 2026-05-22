@@ -95,14 +95,14 @@ export default function CoordinatorDashboard() {
       <div className="space-y-6">
         {/* Error Display */}
         {dashboardError && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4">
             <div className="flex">
               <div className="flex-shrink-0">
-                <AlertTriangle className="h-5 w-5 text-red-400" />
+                <AlertTriangle className="h-5 w-5 text-destructive" />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Dashboard Error</h3>
-                <div className="mt-2 text-sm text-red-700">
+                <h3 className="text-sm font-medium text-destructive">Dashboard Error</h3>
+                <div className="mt-2 text-sm text-destructive/80">
                   {dashboardError}
                 </div>
               </div>
@@ -127,10 +127,6 @@ export default function CoordinatorDashboard() {
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${statsLoading ? 'animate-spin' : ''}`} />
               Refresh
-            </Button>
-            <Button>
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              New Response
             </Button>
           </div>
         </div>

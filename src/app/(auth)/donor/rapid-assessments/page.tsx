@@ -21,6 +21,7 @@ import {
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { apiGet, extractArray } from '@/lib/api'
+import { getVerificationStatusColor, getPriorityBadgeColor } from '@/lib/utils/priority-colors'
 
 export default function DonorAssessmentsPage() {
   const { user } = useAuth()
@@ -35,29 +36,10 @@ export default function DonorAssessmentsPage() {
   const assessments = Array.isArray(assessmentsData) ? assessmentsData : []
   const error = queryError?.message || null
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'VERIFIED': return 'bg-green-100 text-green-800'
-      case 'PUBLISHED': return 'bg-blue-100 text-blue-800'
-      case 'SUBMITTED': return 'bg-yellow-100 text-yellow-800'
-      case 'DRAFT': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'CRITICAL': return 'bg-red-100 text-red-800'
-      case 'HIGH': return 'bg-orange-100 text-orange-800'
-      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800'
-      case 'LOW': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
-  }
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8">
+      <div className="py-8">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
@@ -70,7 +52,7 @@ export default function DonorAssessmentsPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto py-8">
+      <div className="py-8">
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
@@ -83,7 +65,7 @@ export default function DonorAssessmentsPage() {
 
   return (
     <RoleBasedRoute requiredRole="DONOR">
-      <div className="container mx-auto py-8 space-y-6">
+      <div className="py-8 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -186,10 +168,10 @@ export default function DonorAssessmentsPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <h3 className="font-semibold text-lg">{assessment.rapidAssessmentType} Assessment</h3>
-                          <Badge className={getStatusColor(assessment.verificationStatus || assessment.status)}>
+                          <Badge className={getVerificationStatusColor(assessment.verificationStatus || assessment.status)}>
                             {assessment.verificationStatus || assessment.status}
                           </Badge>
-                          <Badge className={getPriorityColor(assessment.priority)}>
+                          <Badge className={getPriorityBadgeColor(assessment.priority)}>
                             {assessment.priority}
                           </Badge>
                         </div>
@@ -213,7 +195,7 @@ export default function DonorAssessmentsPage() {
 
                     <div className="flex items-center justify-between pt-3 border-t">
                       <p className="text-sm text-gray-600">
-                        Assessment ID: {assessment.id}
+                        Assessment ID: {assessment.id.slice(0, 8)}...
                       </p>
                       <Button variant="outline" size="sm">
                         <Eye className="h-4 w-4 mr-2" />

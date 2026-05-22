@@ -48,6 +48,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { ReportTemplate, ReportLayout, DEFAULT_TEMPLATES } from '@/lib/reports/template-engine';
@@ -373,8 +375,15 @@ export function ReportBuilder({
   );
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
-    // For now, drag-and-drop reordering of elements is not implemented
-    // Elements can be repositioned via the properties panel
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setElements(prev => {
+      const oldIndex = prev.findIndex(el => el.id === active.id);
+      const newIndex = prev.findIndex(el => el.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      return arrayMove(prev, oldIndex, newIndex);
+    });
   }, []);
 
   // Add element from sidebar
@@ -707,58 +716,16 @@ export function ReportBuilder({
                 />
               )}
 
-              {/* Elements */}
-              {elements.map(element => {
-                return (
-                  <div
-                    key={element.id}
-                    className={cn(
-                      "absolute border-2 rounded-md bg-white shadow-sm transition-all",
-                      element.locked && "border-gray-400 cursor-not-allowed",
-                      selectedElement?.id === element.id && "border-blue-500 ring-2 ring-blue-200",
-                      ""
-                    )}
-                    style={{
-                      left: `${element.position.x * 100 + (element.position.x + 1) * GRID_MARGIN}px`,
-                      top: `${element.position.y * GRID_ROW_HEIGHT + (element.position.y + 1) * GRID_MARGIN}px`,
-                      width: `${element.position.width * 100 + (element.position.width - 1) * GRID_MARGIN}px`,
-                      height: `${element.position.height * GRID_ROW_HEIGHT + (element.position.height - 1) * GRID_MARGIN}px`,
-                      cursor: element.locked ? 'not-allowed' : 'move',
-                      zIndex: selectedElement?.id === element.id ? 10 : 1
-                    }}
-                    onClick={() => !element.locked && setSelectedElement(element)}
-                  >
-                    {/* Element content preview */}
-                    <div className="p-2 h-full flex flex-col">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium truncate flex-1">
-                          {element.title || element.type}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          {element.locked && (
-                            <div className="w-3 h-3 bg-gray-400 rounded-full" title="Locked" />
-                          )}
-                          <div className="w-3 h-3 border border-gray-400 rounded-full" title="Resizable" />
-                        </div>
-                      </div>
-                      
-                      <div className="flex-1 text-xs text-gray-500 overflow-hidden">
-                        {getElementPreview(element)}
-                      </div>
-                    </div>
-
-                    {/* Resize handles */}
-                    {!element.locked && selectedElement?.id === element.id && (
-                      <>
-                        <div className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 border border-blue-600 cursor-nw-resize" />
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 border border-blue-600 cursor-ne-resize" />
-                        <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-500 border border-blue-600 cursor-sw-resize" />
-                        <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 border border-blue-600 cursor-se-resize" />
-                      </>
-                    )}
-                  </div>
-                );
-              })}
+              <SortableContext items={elements.map(el => el.id)} strategy={verticalListSortingStrategy}>
+              {elements.map(element => (
+                <SortableCanvasElement
+                  key={element.id}
+                  element={element}
+                  isSelected={selectedElement?.id === element.id}
+                  onSelect={() => !element.locked && setSelectedElement(element)}
+                />
+              ))}
+              </SortableContext>
 
               {/* Canvas empty state */}
               {elements.length === 0 && (
@@ -934,6 +901,70 @@ export function ReportBuilder({
   );
 }
 
+function SortableCanvasElement({ element, isSelected, onSelect }: {
+  element: ReportElement;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: element.id,
+  });
+
+  const style: React.CSSProperties = {
+    position: 'absolute',
+    left: `${element.position.x * 100 + (element.position.x + 1) * GRID_MARGIN}px`,
+    top: `${element.position.y * GRID_ROW_HEIGHT + (element.position.y + 1) * GRID_MARGIN}px`,
+    width: `${element.position.width * 100 + (element.position.width - 1) * GRID_MARGIN}px`,
+    height: `${element.position.height * GRID_ROW_HEIGHT + (element.position.height - 1) * GRID_MARGIN}px`,
+    cursor: element.locked ? 'not-allowed' : 'move',
+    zIndex: isSelected ? 10 : isDragging ? 20 : 1,
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "border-2 rounded-md bg-white dark:bg-gray-900 shadow-sm transition-colors",
+        element.locked && "border-gray-400 cursor-not-allowed",
+        isSelected && !isDragging && "border-primary ring-2 ring-primary/20",
+        isDragging && "border-primary/50 shadow-lg"
+      )}
+      onClick={onSelect}
+      {...attributes}
+      {...listeners}
+    >
+      <div className="p-2 h-full flex flex-col">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-medium truncate flex-1">
+            {element.title || element.type}
+          </span>
+          <div className="flex items-center gap-1">
+            {element.locked && (
+              <div className="w-3 h-3 bg-gray-400 rounded-full" title="Locked" />
+            )}
+            <div className="w-3 h-3 border border-gray-400 rounded-full" title="Resizable" />
+          </div>
+        </div>
+        <div className="flex-1 text-xs text-muted-foreground overflow-hidden">
+          {getElementPreview(element)}
+        </div>
+      </div>
+      {!element.locked && isSelected && (
+        <>
+          <div className="absolute -top-1 -left-1 w-3 h-3 bg-primary border border-primary/80 cursor-nw-resize" />
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary border border-primary/80 cursor-ne-resize" />
+          <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-primary border border-primary/80 cursor-sw-resize" />
+          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary border border-primary/80 cursor-se-resize" />
+        </>
+      )}
+    </div>
+  );
+}
+
 // Helper function to check position overlap
 function doPositionsOverlap(pos1: any, pos2: any): boolean {
   return !(
@@ -1008,11 +1039,10 @@ function ElementConfiguration({
             <div className="space-y-2">
               <Label>Show Legend</Label>
               <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={element.config.legend !== false}
-                  onChange={(e) => onChange({
-                    config: { ...element.config, legend: e.target.checked }
+                  onCheckedChange={(checked) => onChange({
+                    config: { ...element.config, legend: checked as boolean }
                   })}
                 />
                 <span className="text-sm">Display legend</span>
@@ -1022,11 +1052,10 @@ function ElementConfiguration({
             <div className="space-y-2">
               <Label>Show Grid</Label>
               <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={element.config.grid !== false}
-                  onChange={(e) => onChange({
-                    config: { ...element.config, grid: e.target.checked }
+                  onCheckedChange={(checked) => onChange({
+                    config: { ...element.config, grid: checked as boolean }
                   })}
                 />
                 <span className="text-sm">Display grid lines</span>
@@ -1063,31 +1092,28 @@ function ElementConfiguration({
               <Label>Options</Label>
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={element.config.pagination !== false}
-                    onChange={(e) => onChange({
-                      config: { ...element.config, pagination: e.target.checked }
+                    onCheckedChange={(checked) => onChange({
+                      config: { ...element.config, pagination: checked as boolean }
                     })}
                   />
                   <span className="text-sm">Enable pagination</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={element.config.sortable !== false}
-                    onChange={(e) => onChange({
-                      config: { ...element.config, sortable: e.target.checked }
+                    onCheckedChange={(checked) => onChange({
+                      config: { ...element.config, sortable: checked as boolean }
                     })}
                   />
                   <span className="text-sm">Sortable columns</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={element.config.striped}
-                    onChange={(e) => onChange({
-                      config: { ...element.config, striped: e.target.checked }
+                    onCheckedChange={(checked) => onChange({
+                      config: { ...element.config, striped: checked as boolean }
                     })}
                   />
                   <span className="text-sm">Striped rows</span>
@@ -1338,11 +1364,10 @@ function AdvancedConfiguration({
 
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
+            <Checkbox
               id="element-locked"
               checked={element.locked || false}
-              onChange={(e) => onChange({ locked: e.target.checked })}
+              onCheckedChange={(checked) => onChange({ locked: checked as boolean })}
             />
             <Label htmlFor="element-locked">Lock element position</Label>
           </div>
@@ -1361,8 +1386,8 @@ function AdvancedConfiguration({
 
         <div className="space-y-2">
           <Label>Custom CSS</Label>
-          <textarea
-            className="w-full h-20 p-2 border rounded-md text-sm font-mono"
+          <Textarea
+            className="w-full h-20 text-sm font-mono"
             value={element.style?.customCss || ''}
             onChange={(e) => onChange({
               style: { ...element.style, customCss: e.target.value }

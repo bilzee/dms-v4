@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { verificationPriorityBadgeColors, responseStatusBadgeColors } from '@/lib/utils/priority-colors';
 import { useResponseVerificationQueue, useResponseVerificationFilters, useVerifyResponse, useRejectResponse } from '@/hooks/useResponseVerification';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -127,20 +128,6 @@ export function ResponseVerificationQueue({
     response.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (response.donor?.name && response.donor.name.toLowerCase().includes(searchTerm.toLowerCase()))
   ) || [];
-
-  const priorityColors = {
-    CRITICAL: 'bg-red-100 text-red-800 border-red-300',
-    HIGH: 'bg-orange-100 text-orange-800 border-orange-300',
-    MEDIUM: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    LOW: 'bg-green-100 text-green-800 border-green-300'
-  };
-
-  const statusColors = {
-    PLANNED: 'bg-blue-100 text-blue-800 border-blue-300',
-    IN_PROGRESS: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    COMPLETED: 'bg-green-100 text-green-800 border-green-300',
-    CANCELLED: 'bg-gray-100 text-gray-800 border-gray-300',
-  };
 
   if (error) {
     return (
@@ -476,20 +463,6 @@ function ResponseQueueItem({
   isRejecting,
   testId
 }: ResponseQueueItemProps) {
-  const priorityColors = {
-    CRITICAL: 'bg-red-100 text-red-800 border-red-300',
-    HIGH: 'bg-orange-100 text-orange-800 border-orange-300',
-    MEDIUM: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    LOW: 'bg-green-100 text-green-800 border-green-300'
-  };
-
-  const statusColors = {
-    PLANNED: 'bg-blue-100 text-blue-800 border-blue-300',
-    IN_PROGRESS: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    COMPLETED: 'bg-green-100 text-green-800 border-green-300',
-    CANCELLED: 'bg-gray-100 text-gray-800 border-gray-300',
-  };
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'VERIFIED':
@@ -552,7 +525,7 @@ function ResponseQueueItem({
             <Badge 
               className={cn(
                 'font-medium',
-                priorityColors[response.priority as keyof typeof priorityColors]
+                verificationPriorityBadgeColors[response.priority as keyof typeof verificationPriorityBadgeColors]
               )}
             >
               {response.priority}
@@ -561,7 +534,7 @@ function ResponseQueueItem({
             <Badge 
               className={cn(
                 'font-medium flex items-center gap-1',
-                statusColors[response.status as keyof typeof statusColors]
+                responseStatusBadgeColors[response.status as keyof typeof responseStatusBadgeColors]
               )}
             >
               {getStatusIcon(response.verificationStatus)}

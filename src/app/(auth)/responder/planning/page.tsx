@@ -23,11 +23,10 @@ import { ResponsePlanningForm } from '@/components/forms/response'
 import { ResponsePlanningDashboard } from '@/components/response/ResponsePlanningDashboard'
 
 // Hooks and utilities
-import { useAuthStore } from '@/stores/auth.store'
 import { apiGet, extractArray } from '@/lib/api'
 
 function ResponsePlanningPageContent() {
-  const { user, token } = useAuthStore()
+  const { user, token } = useAuth()
   const router = useRouter()
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingResponse, setEditingResponse] = useState<string | null>(null)
