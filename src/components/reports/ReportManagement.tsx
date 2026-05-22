@@ -6,6 +6,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -97,6 +98,7 @@ const getStatusIcon = (status: ReportExecutionStatus) => {
 };
 
 export function ReportManagement({ className }: ReportManagementProps) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   
   // State management
@@ -378,7 +380,7 @@ export function ReportManagement({ className }: ReportManagementProps) {
         <TabsContent value="configurations" className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Report Configurations</h3>
-            <Button onClick={() => window.location.href = '/reports/builder'}>
+            <Button onClick={() => router.push('/reports/builder')}>
               <FileText className="h-4 w-4 mr-2" />
               Create New
             </Button>
@@ -406,7 +408,7 @@ export function ReportManagement({ className }: ReportManagementProps) {
                 <p className="text-gray-600 mb-4">
                   Create your first report configuration to get started
                 </p>
-                <Button onClick={() => window.location.href = '/reports/builder'}>
+                <Button onClick={() => router.push('/reports/builder')}>
                   <FileText className="h-4 w-4 mr-2" />
                   Create Configuration
                 </Button>
@@ -492,7 +494,7 @@ export function ReportManagement({ className }: ReportManagementProps) {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => window.location.href = `/reports/builder?id=${config.id}`}
+                          onClick={() => router.push(`/reports/builder?id=${config.id}`)}
                         >
                           <Edit className="h-4 w-4 mr-1" />
                           Edit

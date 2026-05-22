@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -62,6 +63,7 @@ interface DonorMetrics {
 
 export default function DonorAnalyticsPage() {
   const { currentRole, user } = useAuth()
+  const router = useRouter()
   const [activeTab, setActiveTab] = React.useState('overview')
 
   // Fetch all entities assigned to donor
@@ -181,7 +183,7 @@ export default function DonorAnalyticsPage() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Overview
@@ -315,7 +317,7 @@ export default function DonorAnalyticsPage() {
                   <Button 
                     variant="outline" 
                     className="h-20 flex-col"
-                    onClick={() => window.location.href = '/donor/entities'}
+                    onClick={() => router.push('/donor/entities')}
                   >
                     <Building className="h-6 w-6 mb-2" />
                     View All Entities
@@ -323,7 +325,7 @@ export default function DonorAnalyticsPage() {
                   <Button 
                     variant="outline" 
                     className="h-20 flex-col"
-                    onClick={() => window.location.href = '/donor/reports'}
+                    onClick={() => router.push('/donor/reports')}
                   >
                     <Download className="h-6 w-6 mb-2" />
                     Generate Reports
@@ -331,7 +333,7 @@ export default function DonorAnalyticsPage() {
                   <Button 
                     variant="outline" 
                     className="h-20 flex-col"
-                    onClick={() => window.location.href = '/donor/performance'}
+                    onClick={() => router.push('/donor/performance')}
                   >
                     <TrendingUp className="h-6 w-6 mb-2" />
                     Performance Metrics
@@ -480,7 +482,7 @@ export default function DonorAnalyticsPage() {
                       <p className="text-gray-600 mb-4">
                         Start by getting entities assigned to your organization to see insights here.
                       </p>
-                      <Button onClick={() => window.location.href = '/donor/entities'}>
+                      <Button onClick={() => router.push('/donor/entities')}>
                         View Entities
                       </Button>
                     </div>

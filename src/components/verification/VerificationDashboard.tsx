@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useVerificationMetrics } from '@/hooks/useVerification';
 import { VerificationQueue } from './VerificationQueue';
 import { VerificationActions } from './VerificationActions';
@@ -27,6 +28,7 @@ import { cn } from '@/lib/utils';
 import type { VerificationQueueItem } from '@/types/verification';
 
 export function VerificationDashboard() {
+  const router = useRouter();
   const [selectedAssessment, setSelectedAssessment] = useState<VerificationQueueItem | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -207,7 +209,7 @@ export function VerificationDashboard() {
                 <Button 
                   variant="outline" 
                   className="w-full justify-start"
-                  onClick={() => window.location.href = '/coordinator/verification/auto-approval'}
+                  onClick={() => router.push('/coordinator/verification/auto-approval')}
                 >
                   <Shield className="h-4 w-4 mr-2" />
                   Auto-Approval Settings

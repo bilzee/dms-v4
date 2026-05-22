@@ -266,7 +266,7 @@ export function DonorDashboard() {
 
                               {/* Main Content Tabs */}
                               <Tabs value={activeTab} onValueChange={setActiveTab} data-testid="dashboard-tabs">
-                                <TabsList className="grid w-full grid-cols-6">
+                                <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6">
                                   <TabsTrigger value="overview" data-testid="dashboard-overview-tab">Overview</TabsTrigger>
                                   <TabsTrigger value="entities" data-testid="dashboard-entities-tab">Entities</TabsTrigger>
                                   <TabsTrigger value="commitments" data-testid="dashboard-commitments-tab">Commitments</TabsTrigger>

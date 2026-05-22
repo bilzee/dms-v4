@@ -1567,13 +1567,19 @@ After all phases are complete:
 | 6.1 | Consolidate verification UIs (shared priority-colors.ts, 4 files refactored) | Done |
 | 6.2 | Standardize auth hook usage (13 component/page files migrated from useAuthStore to useAuth) | Done |
 
-### Tasks Deferred (not in scope of this implementation round)
+### Tasks 6.3-6.5 — Completed (deferred round)
 
-| Task | Description | Reason |
+| Task | Description | Status |
 |------|-------------|--------|
-| 6.3 | Standardize navigation methods (window.location.href → router.push) | Lower priority, can be addressed incrementally |
-| 6.4 | Add responsive tab bars | Lower priority, can be addressed incrementally |
-| 6.5 | Create domain glossary | Documentation task, not blocking |
+| 6.3 | Standardize navigation methods (window.location.href → router.push) — 6 files, 13 occurrences replaced | Done |
+| 6.4 | Add responsive tab bars — DonorDashboard (6→3/6), admin/dashboard (5→3/5), donor/analytics (4→2/4) | Done |
+| 6.5 | Create domain glossary — `docs/glossary.md` with canonical terms, role names, status workflows | Done |
+
+**Files modified (6.3):** ResponsePlanningDashboard.tsx, VerificationDashboard.tsx, ReportManagement.tsx (3 calls), EnhancedVerificationDashboard.tsx, donor/reports/page.tsx, donor/analytics/page.tsx (4 calls)
+
+**Files modified (6.4):** DonorDashboard.tsx, admin/dashboard/page.tsx, donor/analytics/page.tsx
+
+**Files created (6.5):** docs/glossary.md
 
 ### Success Criteria — Achieved
 

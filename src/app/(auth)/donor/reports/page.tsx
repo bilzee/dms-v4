@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -59,6 +60,7 @@ interface ReportConfig {
 
 export default function DonorReportsPage() {
   const { currentRole, user } = useAuth()
+  const router = useRouter()
   const { toast } = useToast()
   const [reportConfig, setReportConfig] = useState<ReportConfig>({
     format: 'pdf',
@@ -442,7 +444,7 @@ export default function DonorReportsPage() {
                   <p className="text-gray-600 mb-4">
                     You need assigned entities to generate reports
                   </p>
-                  <Button onClick={() => window.location.href = '/donor/entities'}>
+                  <Button onClick={() => router.push('/donor/entities')}>
                     View Entities
                   </Button>
                 </div>

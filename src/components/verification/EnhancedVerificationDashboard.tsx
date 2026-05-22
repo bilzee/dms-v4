@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useVerificationMetrics } from '@/hooks/useVerification';
 import { useResponseVerificationMetrics } from '@/hooks/useResponseVerificationMetrics';
 import { VerificationQueue } from './VerificationQueue';
@@ -31,6 +32,7 @@ import type { VerificationQueueItem } from '@/types/verification';
 import type { ResponseVerificationQueueItem } from '@/types/response-verification';
 
 export function EnhancedVerificationDashboard() {
+  const router = useRouter();
   const [selectedAssessment, setSelectedAssessment] = useState<VerificationQueueItem | null>(null);
   const [selectedResponse, setSelectedResponse] = useState<ResponseVerificationQueueItem | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -573,7 +575,7 @@ export function EnhancedVerificationDashboard() {
               <div className="text-center py-8 text-muted-foreground">
                 <p className="mb-4">Auto-approval settings will be available here.</p>
                 <Button 
-                  onClick={() => window.location.href = '/coordinator/verification/auto-approval'}
+                  onClick={() => router.push('/coordinator/verification/auto-approval')}
                   variant="outline"
                 >
                   <Shield className="h-4 w-4 mr-2" />

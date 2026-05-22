@@ -188,7 +188,7 @@ function AdminDashboard() {
 
                   {/* Main Content Tabs */}
                   <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="grid w-full grid-cols-5">
+                    <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5">
                       <TabsTrigger value="overview">Overview</TabsTrigger>
                       <TabsTrigger value="users">Users</TabsTrigger>
                       <TabsTrigger value="system">System</TabsTrigger>

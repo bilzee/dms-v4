@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 
 // UI components
@@ -28,6 +29,7 @@ export function ResponsePlanningDashboard({
   onEditResponse 
 }: ResponsePlanningDashboardProps) {
   const { user } = useAuth()
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<string>('all')
   const [filterPriority, setFilterPriority] = useState<string>('all')
@@ -332,7 +334,7 @@ export function ResponsePlanningDashboard({
                             <Button
                               variant="default"
                               size="sm"
-                              onClick={() => window.location.href = `/responder/responses/${response.id}/deliver`}
+                              onClick={() => router.push(`/responder/responses/${response.id}/deliver`)}
                               className="flex items-center gap-1"
                             >
                               <Truck className="h-3 w-3" />
