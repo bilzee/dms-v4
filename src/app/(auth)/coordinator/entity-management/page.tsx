@@ -394,7 +394,7 @@ export default function EntityManagementPage() {
             ) : (
               <div className="space-y-4">
                 {filteredEntities.map((entity) => (
-                  <Card key={entity.id} className="border-l-4 border-l-blue-500">
+                  <Card key={entity.id}>
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">

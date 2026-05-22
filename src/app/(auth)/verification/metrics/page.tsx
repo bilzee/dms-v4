@@ -41,7 +41,7 @@ export default function VerificationMetricsPage() {
 
   if (!user) {
     return (
-      <div className="container mx-auto py-6">
+      <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Loading...</h1>
         </div>
@@ -51,7 +51,7 @@ export default function VerificationMetricsPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-6">
+      <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Loading metrics...</h1>
         </div>
@@ -61,38 +61,32 @@ export default function VerificationMetricsPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto py-6">
-        <Alert variant="destructive">
-          <XCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </div>
+      <Alert variant="destructive">
+        <XCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     )
   }
 
   if (!metrics) {
     return (
-      <div className="container mx-auto py-6">
-        <Alert>
-          <AlertDescription>No metrics data available</AlertDescription>
-        </Alert>
-      </div>
+      <Alert>
+        <AlertDescription>No metrics data available</AlertDescription>
+      </Alert>
     )
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
           <BarChart3 className="h-8 w-8" />
           Verification Metrics
         </h1>
-        <p className="text-gray-600">Assessment verification performance and statistics</p>
-        <Badge variant="outline" className="mt-2">Story 3.3</Badge>
+        <p className="text-muted-foreground">Assessment verification performance and statistics</p>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Assessments</CardTitle>
@@ -138,7 +132,6 @@ export default function VerificationMetricsPage() {
         </Card>
       </div>
 
-      {/* Detailed Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -229,7 +222,6 @@ export default function VerificationMetricsPage() {
         </Card>
       </div>
 
-      {/* Info for Non-Coordinators */}
       {!user.roles?.some(ur => ur.role.name === 'COORDINATOR') && (
         <Alert>
           <CheckCircle className="h-4 w-4" />

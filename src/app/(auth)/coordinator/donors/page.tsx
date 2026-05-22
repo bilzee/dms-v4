@@ -49,7 +49,7 @@ interface Donor {
 
 export default function DonorManagementPage() {
   const { data: donorsData, isLoading: loading } = useAdminDonors()
-  const donors: Donor[] = Array.isArray(donorsData?.donors) ? donorsData.donors : []
+  const donors: Donor[] = Array.isArray(donorsData?.items) ? donorsData.items : []
   const [searchTerm, setSearchTerm] = useState('')
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all')
 

@@ -328,12 +328,6 @@ const getNavigationItems = (role: string | null): NavItem[] => {
             description: 'View and manage all users' 
           },
           { 
-            name: 'Add New User', 
-            href: '/admin/users?action=create',
-            icon: Users,
-            description: 'Create a new user account' 
-          },
-          { 
             name: 'Role Management', 
             href: '/roles', 
             icon: Settings,

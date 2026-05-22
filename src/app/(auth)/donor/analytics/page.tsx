@@ -222,8 +222,8 @@ export default function DonorAnalyticsPage() {
                       {entities.slice(0, 5).map((entity) => (
                         <div key={entity.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                              <Building className="h-5 w-5 text-blue-600" />
+                            <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                              <Building className="h-5 w-5 text-gray-600" />
                             </div>
                             <div>
                               <p className="font-medium">{entity.name}</p>
