@@ -13,7 +13,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
@@ -44,25 +44,21 @@ interface CommitmentStatusTrackerProps {
 const STATUS_CONFIG = {
   PLANNED: {
     icon: Clock,
-    color: 'bg-blue-100 text-blue-800 border-blue-200',
     label: 'Planned',
     description: 'Commitment is planned but delivery has not started'
   },
   PARTIAL: {
     icon: Truck,
-    color: 'bg-amber-100 text-amber-800 border-amber-200',
     label: 'In Progress',
     description: 'Partial delivery has been made'
   },
   COMPLETE: {
     icon: CheckCircle2,
-    color: 'bg-green-100 text-green-800 border-green-200',
     label: 'Complete',
     description: 'Full commitment has been delivered'
   },
   CANCELLED: {
     icon: XCircle,
-    color: 'bg-red-100 text-red-800 border-red-200',
     label: 'Cancelled',
     description: 'Commitment has been cancelled'
   }
@@ -117,13 +113,13 @@ export function CommitmentStatusTracker({
     const config = STATUS_CONFIG[status]
     const Icon = config.icon
     return (
-      <Badge 
-        variant="outline" 
-        className={`${config.color} flex items-center gap-2 text-sm`}
-      >
-        <Icon className="h-4 w-4" />
-        {config.label}
-      </Badge>
+      <StatusBadge
+        domain="commitment"
+        status={status}
+        label={config.label}
+        icon={Icon}
+        className="text-sm"
+      />
     )
   }
 

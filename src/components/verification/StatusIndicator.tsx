@@ -2,42 +2,31 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { CheckCircle, Clock, XCircle, Shield, FileText } from 'lucide-react';
 import type { StatusIndicatorProps, VerificationStatus } from '@/types/verification';
+import { getBadgeClasses } from '@/components/shared/StatusBadge';
 
 const statusConfig: Record<VerificationStatus, {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  className: string;
-  bgClassName: string;
 }> = {
   DRAFT: {
     label: 'Draft',
     icon: FileText,
-    className: 'text-gray-600',
-    bgClassName: 'bg-gray-100 border-gray-300'
   },
   SUBMITTED: {
     label: 'Pending Verification',
     icon: Clock,
-    className: 'text-amber-600',
-    bgClassName: 'bg-amber-50 border-amber-300'
   },
   VERIFIED: {
     label: 'Verified',
     icon: CheckCircle,
-    className: 'text-green-600',
-    bgClassName: 'bg-green-50 border-green-300'
   },
   AUTO_VERIFIED: {
     label: 'Auto-Verified',
     icon: Shield,
-    className: 'text-blue-600',
-    bgClassName: 'bg-blue-50 border-blue-300'
   },
   REJECTED: {
     label: 'Rejected',
     icon: XCircle,
-    className: 'text-red-600',
-    bgClassName: 'bg-red-50 border-red-300'
   }
 };
 
@@ -68,27 +57,22 @@ export function StatusIndicator({
   const config = statusConfig[status];
   const sizes = sizeConfig[size];
   const IconComponent = config.icon;
+  const badgeClasses = getBadgeClasses('verification', status);
 
   return (
     <div
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full border font-medium',
-        config.bgClassName,
+        badgeClasses,
         sizes.container,
         className
       )}
     >
       <IconComponent 
-        className={cn(
-          sizes.icon,
-          config.className
-        )} 
+        className={sizes.icon}
       />
       {showText && (
-        <span className={cn(
-          sizes.text,
-          config.className
-        )}>
+        <span className={sizes.text}>
           {config.label}
         </span>
       )}
@@ -98,7 +82,7 @@ export function StatusIndicator({
 
 // Helper function to get status color for other components
 export function getStatusColor(status: VerificationStatus): string {
-  return statusConfig[status].className;
+  return getBadgeClasses('verification', status);
 }
 
 // Helper function to get status label

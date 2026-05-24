@@ -11,6 +11,8 @@ import { User } from '@prisma/client'
 // Error handling components
 import { SafeDataLoader } from '@/components/shared/SafeDataLoader'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 
 import { 
   Users, 
@@ -152,39 +154,35 @@ function AdminDashboard() {
                   </div>
 
                   {/* Quick Stats */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <MetricCard
-                      title="Total Users"
+                  <StatCardGrid columns={4}>
+                    <StatCard
+                      label="Total Users"
                       value={systemStats?.totalUsers || 0}
                       icon={Users}
-                      iconColor="text-blue-600"
-                      description="Registered users"
+                      severity="info"
                     />
                     
-                    <MetricCard
-                      title="Active Users"
+                    <StatCard
+                      label="Active Users"
                       value={systemStats?.activeUsers || 0}
                       icon={UserCheck}
-                      iconColor="text-green-600"
-                      description="Currently active"
+                      severity="success"
                     />
                     
-                    <MetricCard
-                      title="Total Entities"
+                    <StatCard
+                      label="Total Entities"
                       value={systemStats?.totalEntities || 0}
                       icon={Building2}
-                      iconColor="text-purple-600"
-                      description="System entities"
+                      severity="info"
                     />
                     
-                    <MetricCard
-                      title="System Health"
+                    <StatCard
+                      label="System Health"
                       value={systemStats?.systemHealth || 'Good'}
                       icon={Shield}
-                      iconColor="text-emerald-600"
-                      description="Overall system status"
+                      severity="success"
                     />
-                  </div>
+                  </StatCardGrid>
 
                   {/* Main Content Tabs */}
                   <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -442,33 +440,6 @@ function AdminDashboard() {
   )
 }
 
-// Helper Components
-interface MetricCardProps {
-  title: string
-  value: string | number
-  icon: React.ComponentType<{ className?: string }>
-  iconColor?: string
-  description?: string
-}
-
-function MetricCard({ title, value, icon: Icon, iconColor = "text-gray-600", description }: MetricCardProps) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
-            {description && (
-              <p className="text-xs text-gray-500 mt-1">{description}</p>
-            )}
-          </div>
-          <Icon className={cn("h-6 w-6", iconColor)} />
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
 
 function AdminDashboardPage() {
   return (

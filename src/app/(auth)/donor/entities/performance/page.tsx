@@ -6,6 +6,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { apiGet } from '@/lib/api';
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -307,66 +309,32 @@ export default function EntityPerformancePage() {
           </div>
         </div>
 
-        {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Activity className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{performanceData?.totalEntities || 0}</p>
-                  <p className="text-sm text-gray-600">Total Entities</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{performanceData?.averagePerformanceScore || 0}%</p>
-                  <p className="text-sm text-gray-600">Average Performance</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Users className="h-6 w-6 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">
-                    {performanceData?.overallStats.totalPopulationServed.toLocaleString() || 0}
-                  </p>
-                  <p className="text-sm text-gray-600">People Served</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <BarChart3 className="h-6 w-6 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{performanceData?.overallStats.averageCoverage || 0}%</p>
-                  <p className="text-sm text-gray-600">Assessment Coverage</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <StatCardGrid columns={4} gap="lg">
+          <StatCard
+            label="Total Entities"
+            value={performanceData?.totalEntities || 0}
+            severity="info"
+            icon={Activity}
+          />
+          <StatCard
+            label="Average Performance"
+            value={`${performanceData?.averagePerformanceScore || 0}%`}
+            severity="info"
+            icon={TrendingUp}
+          />
+          <StatCard
+            label="People Served"
+            value={performanceData?.overallStats.totalPopulationServed.toLocaleString() || 0}
+            severity="success"
+            icon={Users}
+          />
+          <StatCard
+            label="Assessment Coverage"
+            value={`${performanceData?.overallStats.averageCoverage || 0}%`}
+            severity="info"
+            icon={BarChart3}
+          />
+        </StatCardGrid>
 
         {/* Quick Insights */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

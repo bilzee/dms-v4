@@ -35,7 +35,7 @@ interface Assessment {
     severity: string
     gapFields: string[]
     recommendations: string[]
-  }
+  } | null
   incidentId: string
   healthAssessment?: {
     rapidAssessmentId: string
@@ -247,14 +247,16 @@ export default function AssessmentDetailsPage() {
           <div className="flex flex-wrap gap-2">
             {getStatusBadge(assessment)}
             {getPriorityBadge(assessment.priority)}
-            {assessment.gapAnalysis.hasGap && (
+            {assessment.gapAnalysis?.hasGap && (
               <Badge variant="outline">
                 {assessment.gapAnalysis.gapFields.length} Gap{assessment.gapAnalysis.gapFields.length !== 1 ? 's' : ''} Identified
               </Badge>
             )}
-            <Badge variant={assessment.gapAnalysis.severity === 'CRITICAL' ? 'destructive' : assessment.gapAnalysis.severity === 'HIGH' ? 'secondary' : 'outline'}>
-              {assessment.gapAnalysis.severity} Severity
-            </Badge>
+            {assessment.gapAnalysis?.severity && (
+              <Badge variant={assessment.gapAnalysis.severity === 'CRITICAL' ? 'destructive' : assessment.gapAnalysis.severity === 'HIGH' ? 'secondary' : 'outline'}>
+                {assessment.gapAnalysis.severity} Severity
+              </Badge>
+            )}
           </div>
 
           {(assessment.location || assessment.entity.location) && (
@@ -556,7 +558,7 @@ export default function AssessmentDetailsPage() {
       )}
 
       {/* Gap Analysis & Recommendations */}
-      {assessment.gapAnalysis.hasGap && (
+      {assessment.gapAnalysis?.hasGap && (
         <Card>
           <CardHeader>
             <CardTitle>Gap Analysis & Recommendations</CardTitle>

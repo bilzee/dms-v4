@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -236,44 +238,25 @@ export default function DatabaseManagementPage() {
           </div>
         </div>
 
-        {/* Database Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Database Size</p>
-                  <p className="text-2xl font-bold">{mockStats.totalSize}</p>
-                </div>
-                <HardDrive className="h-6 w-6 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Records</p>
-                  <p className="text-2xl font-bold">{mockStats.recordsCount.toLocaleString()}</p>
-                </div>
-                <FileText className="h-6 w-6 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Active Connections</p>
-                  <p className="text-2xl font-bold">{mockStats.activeConnections}</p>
-                </div>
-                <Server className="h-6 w-6 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
+        <StatCardGrid columns={4}>
+          <StatCard
+            label="Database Size"
+            value={mockStats.totalSize}
+            severity="neutral"
+            icon={HardDrive}
+          />
+          <StatCard
+            label="Total Records"
+            value={mockStats.recordsCount.toLocaleString()}
+            severity="info"
+            icon={FileText}
+          />
+          <StatCard
+            label="Active Connections"
+            value={mockStats.activeConnections}
+            severity="success"
+            icon={Server}
+          />
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -287,7 +270,7 @@ export default function DatabaseManagementPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </StatCardGrid>
 
         {/* Database Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>

@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { useAdminDonorDetail } from '@/hooks/useAdminDonorDetail'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -155,44 +157,25 @@ export default function DonorDetailsPage() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Commitments</p>
-                  <p className="text-2xl font-bold">{donor._count.commitments}</p>
-                </div>
-                <HandHeart className="h-6 w-6 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Responses</p>
-                  <p className="text-2xl font-bold">{donor._count.responses}</p>
-                </div>
-                <Package className="h-6 w-6 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Entity Assignments</p>
-                  <p className="text-2xl font-bold">{donor._count.entityAssignments}</p>
-                </div>
-                <Building2 className="h-6 w-6 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
+        <StatCardGrid columns={4}>
+          <StatCard
+            label="Commitments"
+            value={donor._count.commitments}
+            severity="info"
+            icon={HandHeart}
+          />
+          <StatCard
+            label="Responses"
+            value={donor._count.responses}
+            severity="info"
+            icon={Package}
+          />
+          <StatCard
+            label="Entity Assignments"
+            value={donor._count.entityAssignments}
+            severity="info"
+            icon={Building2}
+          />
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -210,7 +193,7 @@ export default function DonorDetailsPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </StatCardGrid>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Organization Information */}

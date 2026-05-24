@@ -10,7 +10,9 @@ import { apiGet } from '@/lib/api'
 // UI components
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -18,7 +20,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 
 // Icons
-import { Plus, Package, MapPin, AlertTriangle, CheckCircle2, Clock, Truck, XCircle, Filter, Search, Edit, Eye } from 'lucide-react'
+import { Plus, Package, MapPin, AlertTriangle, CheckCircle2, Clock, Truck, XCircle, Filter, Search, Edit, Eye, BarChart3 } from 'lucide-react'
 
 // Components
 import { CommitmentForm } from './CommitmentForm'
@@ -31,19 +33,6 @@ interface CommitmentDashboardProps {
   preSelectedEntityId?: string
 }
 
-const STATUS_COLORS = {
-  PLANNED: 'bg-blue-100 text-blue-800 border-blue-200',
-  PARTIAL: 'bg-amber-100 text-amber-800 border-amber-200',
-  COMPLETE: 'bg-green-100 text-green-800 border-green-200',
-  CANCELLED: 'bg-red-100 text-red-800 border-red-200'
-}
-
-const STATUS_ICONS = {
-  PLANNED: Clock,
-  PARTIAL: Truck,
-  COMPLETE: CheckCircle2,
-  CANCELLED: XCircle
-}
 
 export function CommitmentDashboard({ donorId, preSelectedEntityId }: CommitmentDashboardProps) {
   const router = useRouter()
@@ -137,17 +126,16 @@ export function CommitmentDashboard({ donorId, preSelectedEntityId }: Commitment
     toast.success('Commitment created successfully!')
   }
 
+  const COMMITMENT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+    PLANNED: Clock,
+    PARTIAL: Truck,
+    COMPLETE: CheckCircle2,
+    CANCELLED: XCircle
+  }
+
   const getStatusBadge = (status: string) => {
-    const Icon = STATUS_ICONS[status as keyof typeof STATUS_ICONS] || Clock
-    return (
-      <Badge 
-        variant="outline" 
-        className={`${STATUS_COLORS[status as keyof typeof STATUS_COLORS]} flex items-center gap-1`}
-      >
-        <Icon className="h-3 w-3" />
-        {status}
-      </Badge>
-    )
+    const Icon = COMMITMENT_ICONS[status] || Clock
+    return <StatusBadge domain="commitment" status={status} icon={Icon} />
   }
 
   const formatDate = (dateString: string) => {
@@ -203,61 +191,36 @@ export function CommitmentDashboard({ donorId, preSelectedEntityId }: Commitment
         </Button>
       </div>
 
-      {/* Statistics Cards */}
       {commitmentsData?.statistics && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Commitments
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {Object.values(commitmentsData.statistics.byStatus).reduce((a: number, b) => a + (b as number), 0)}
-              </div>
-            </CardContent>
-          </Card>
+        <StatCardGrid columns={4}>
+          <StatCard
+            label="Total Commitments"
+            value={Object.values(commitmentsData.statistics.byStatus).reduce((a: number, b) => a + (b as number), 0)}
+            severity="info"
+            icon={BarChart3}
+          />
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Planned
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {commitmentsData.statistics.byStatus.PLANNED || 0}
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            label="Planned"
+            value={commitmentsData.statistics.byStatus.PLANNED || 0}
+            severity="info"
+            icon={Clock}
+          />
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                In Progress
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-amber-600">
-                {commitmentsData.statistics.byStatus.PARTIAL || 0}
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            label="In Progress"
+            value={commitmentsData.statistics.byStatus.PARTIAL || 0}
+            severity="warning"
+            icon={Truck}
+          />
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Completed
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {commitmentsData.statistics.byStatus.COMPLETE || 0}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          <StatCard
+            label="Completed"
+            value={commitmentsData.statistics.byStatus.COMPLETE || 0}
+            severity="success"
+            icon={CheckCircle2}
+          />
+        </StatCardGrid>
       )}
 
       {/* Filters */}

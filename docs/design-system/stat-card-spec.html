@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRMS StatCard -- Design Specification</title>
+<style>
+/* ============================================================
+   CSS Custom Properties -- sourced from globals.css HSL tokens
+   ============================================================ */
+:root {
+  /* Light mode (shadcn default) */
+  --bg: hsl(0 0% 100%);
+  --fg: hsl(222.2 84% 4.9%);
+  --card: hsl(0 0% 100%);
+  --card-fg: hsl(222.2 84% 4.9%);
+  --primary: hsl(221.2 83.2% 53.3%);
+  --primary-fg: hsl(210 40% 98%);
+  --secondary: hsl(210 40% 96%);
+  --secondary-fg: hsl(222.2 84% 4.9%);
+  --muted: hsl(210 40% 96%);
+  --muted-fg: hsl(215.4 16.3% 46.9%);
+  --accent: hsl(210 40% 96%);
+  --accent-fg: hsl(222.2 84% 4.9%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-fg: hsl(210 40% 98%);
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: hsl(214.3 31.8% 91.4%);
+  --ring: hsl(221.2 83.2% 53.3%);
+  --radius: 0.5rem;
+
+  /* Semantic colors for severity tints */
+  --amber-50: #fffbeb;  --amber-100: #fef3c7;  --amber-200: #fde68a;  --amber-500: #f59e0b;  --amber-600: #d97706;  --amber-700: #b45309;
+  --green-50: #f0fdf4;  --green-100: #dcfce7;  --green-200: #bbf7d0;  --green-500: #22c55e;  --green-600: #16a34a;  --green-700: #15803d;
+  --blue-50: #eff6ff;   --blue-100: #dbeafe;   --blue-200: #bfdbfe;   --blue-500: #3b82f6;   --blue-600: #2563eb;   --blue-700: #1d4ed8;
+  --red-50: #fef2f2;    --red-100: #fee2e2;    --red-200: #fecaca;    --red-500: #ef4444;    --red-600: #dc2626;    --red-700: #b91c1c;
+  --purple-50: #faf5ff; --purple-100: #f3e8ff; --purple-200: #e9d5ff; --purple-500: #a855f7; --purple-600: #9333ea; --purple-700: #7e22ce;
+  --emerald-500: #10b981; --emerald-600: #059669;
+
+  /* Doc chrome */
+  --sidebar-w: 260px;
+  --topbar-h: 56px;
+  --content-max: 1100px;
+  --doc-bg: #fafafa;
+  --doc-border: #e5e7eb;
+}
+
+/* Dark mode */
+.dark {
+  --bg: hsl(224 71% 4%);
+  --fg: hsl(213 31% 91%);
+  --card: hsl(224 71% 4%);
+  --card-fg: hsl(213 31% 91%);
+  --primary: hsl(210 40% 98%);
+  --primary-fg: hsl(222.2 84% 4.9%);
+  --secondary: hsl(215 28% 17%);
+  --secondary-fg: hsl(210 40% 98%);
+  --muted: hsl(215 28% 17%);
+  --muted-fg: hsl(217.9 10.6% 64.9%);
+  --accent: hsl(215 28% 17%);
+  --accent-fg: hsl(210 40% 98%);
+  --destructive: hsl(0 63% 31%);
+  --destructive-fg: hsl(210 40% 98%);
+  --border: hsl(215 28% 17%);
+  --input: hsl(215 28% 17%);
+  --ring: hsl(216 12% 83.9%);
+
+  --doc-bg: #0b0f1a;
+  --doc-border: #1e293b;
+}
+
+/* ============================================================
+   Reset + Base
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--fg);
+  background: var(--doc-bg);
+}
+
+/* ============================================================
+   Layout
+   ============================================================ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--topbar-h);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+}
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.topbar-title { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; color: var(--fg); }
+.topbar-badge {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 2px 8px; border-radius: 4px;
+  background: var(--primary); color: var(--primary-fg);
+}
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-version { font-size: 12px; color: var(--muted-fg); font-family: 'SF Mono', 'Cascadia Code', monospace; }
+
+.sidebar {
+  position: fixed; top: var(--topbar-h); left: 0; bottom: 0; z-index: 90;
+  width: var(--sidebar-w);
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 24px 0;
+}
+.sidebar-section { margin-bottom: 24px; }
+.sidebar-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted-fg); padding: 0 20px; margin-bottom: 8px;
+}
+.sidebar a {
+  display: block; padding: 6px 20px; font-size: 13px; font-weight: 500;
+  color: var(--muted-fg); text-decoration: none; transition: all 0.15s;
+  border-left: 2px solid transparent;
+}
+.sidebar a:hover { color: var(--fg); background: var(--muted); }
+.sidebar a.active { color: var(--primary); border-left-color: var(--primary); background: hsl(221.2 83.2% 53.3% / 0.06); }
+
+.main {
+  margin-left: var(--sidebar-w);
+  margin-top: var(--topbar-h);
+  padding: 40px 48px 80px;
+  max-width: calc(var(--sidebar-w) + var(--content-max) + 96px);
+}
+
+/* ============================================================
+   Typography
+   ============================================================ */
+h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 8px; }
+h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.3; margin-bottom: 16px; padding-top: 48px; border-top: 1px solid var(--border); }
+h2:first-of-type { border-top: none; }
+h3 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.4; margin-bottom: 12px; }
+p { margin-bottom: 12px; color: var(--muted-fg); max-width: 72ch; }
+.subtitle { font-size: 17px; color: var(--muted-fg); margin-bottom: 32px; }
+
+/* ============================================================
+   Design Tokens
+   ============================================================ */
+.token-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+.token-chip {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--border);
+  font-size: 13px; font-family: 'SF Mono', 'Cascadia Code', monospace;
+}
+.token-swatch { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; }
+
+/* ============================================================
+   Variant Badge
+   ============================================================ */
+.variant-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  background: hsl(221.2 83.2% 53.3% / 0.1); color: hsl(221.2 83.2% 53.3%);
+  margin-bottom: 16px;
+}
+.variant-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* ============================================================
+   Rule Cards
+   ============================================================ */
+.rules-grid { display: grid; gap: 12px; margin: 16px 0 32px; }
+.rule {
+  display: flex; gap: 16px; padding: 16px 20px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+}
+.rule-icon {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--muted); color: var(--muted-fg); font-size: 16px;
+}
+.rule-body h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.rule-body p { font-size: 13px; margin-bottom: 0; }
+
+/* ============================================================
+   Mockup Cards -- realistic CSS renderings
+   ============================================================ */
+.mockup-container {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 20px 0 32px;
+}
+.mockup-container.dark-bg {
+  background: hsl(224 71% 4%);
+}
+
+/* The stat card mockup */
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.stat-card .card-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+}
+.stat-card .card-label {
+  font-size: 14px; font-weight: 500; color: var(--muted-fg);
+  margin-bottom: 8px;
+}
+.stat-card .card-value {
+  font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--card-fg);
+  line-height: 1;
+}
+.stat-card .card-description {
+  font-size: 13px; color: var(--muted-fg); margin-top: 8px;
+}
+.stat-card .card-icon {
+  width: 16px; height: 16px; color: var(--muted-fg); flex-shrink: 0;
+}
+.stat-card .card-icon svg { width: 16px; height: 16px; }
+
+/* Trend row */
+.trend-row {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 12px; font-size: 13px;
+}
+.trend-row.positive { color: var(--emerald-600); }
+.trend-row.negative { color: var(--red-600); }
+.trend-row.neutral  { color: var(--muted-fg); }
+.trend-row svg { width: 16px; height: 16px; }
+
+/* Tinted card */
+.stat-card.tinted-amber  { background: hsl(38 92% 50% / 0.05); border-color: hsl(38 92% 50% / 0.15); }
+.stat-card.tinted-green  { background: hsl(142 71% 45% / 0.05); border-color: hsl(142 71% 45% / 0.15); }
+.stat-card.tinted-blue   { background: hsl(217 91% 60% / 0.05); border-color: hsl(217 91% 60% / 0.15); }
+.stat-card.tinted-red    { background: hsl(0 84% 60% / 0.05);   border-color: hsl(0 84% 60% / 0.15); }
+.stat-card.tinted-purple { background: hsl(270 67% 55% / 0.05); border-color: hsl(270 67% 55% / 0.15); }
+
+/* Compact variant */
+.stat-card.compact { padding: 16px; }
+.stat-card.compact .card-value { font-size: 20px; font-weight: 600; }
+
+/* Centered variant */
+.stat-card.centered { text-align: center; }
+.stat-card.centered .card-header { justify-content: center; flex-direction: column; align-items: center; }
+.stat-card.centered .card-value { font-size: 36px; font-weight: 800; margin-bottom: 4px; order: -1; }
+.stat-card.centered .card-label { margin-bottom: 0; }
+.stat-card.centered .card-badge {
+  margin-top: 12px; display: inline-block;
+  padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  background: var(--secondary); color: var(--secondary-fg);
+}
+
+/* Skeleton */
+.skeleton {
+  background: linear-gradient(90deg, var(--muted) 25%, hsl(210 40% 96% / 0.6) 50%, var(--muted) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton-line { height: 14px; margin-bottom: 8px; }
+.skeleton-line.w-1-2 { width: 50%; }
+.skeleton-line.w-1-3 { width: 33%; }
+.skeleton-line.w-2-3 { width: 66%; }
+.skeleton-line.w-3-4 { width: 75%; }
+.skeleton-heading { height: 28px; width: 40%; margin-bottom: 12px; }
+
+/* Grid layout for card showcases */
+.mockup-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.mockup-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.mockup-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.mockup-grid-1 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  max-width: 320px;
+}
+
+@media (max-width: 900px) {
+  .mockup-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .mockup-grid-3 { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   Code Blocks
+   ============================================================ */
+.code-block {
+  background: hsl(224 71% 4%);
+  color: hsl(213 31% 91%);
+  border-radius: 10px;
+  padding: 20px 24px;
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: auto;
+  margin: 16px 0 24px;
+  border: 1px solid #1e293b;
+}
+.code-block .kw  { color: #c084fc; }
+.code-block .str { color: #86efac; }
+.code-block .typ { color: #67e8f9; }
+.code-block .cm  { color: #64748b; font-style: italic; }
+.code-block .fn  { color: #fbbf24; }
+.code-block .pr  { color: #f9a8d4; }
+.code-block .num { color: #fb923c; }
+
+/* Tailwind class display */
+.tw-classes {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: 'SF Mono', 'Cascadia Code', monospace;
+  font-size: 12px;
+  color: var(--muted-fg);
+  margin: 8px 0 16px;
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.tw-class {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--secondary);
+  color: var(--secondary-fg);
+  font-size: 12px;
+}
+
+/* ============================================================
+   API Table
+   ============================================================ */
+.api-table {
+  width: 100%; border-collapse: collapse; font-size: 14px;
+  margin: 16px 0 32px;
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.api-table th {
+  text-align: left; padding: 10px 16px; background: var(--muted); font-weight: 600;
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-fg);
+  border-bottom: 1px solid var(--border);
+}
+.api-table td {
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+}
+.api-table tr:last-child td { border-bottom: none; }
+.api-table code {
+  font-family: 'SF Mono', 'Cascadia Code', monospace; font-size: 12px;
+  background: var(--muted); padding: 2px 6px; border-radius: 4px;
+}
+
+/* ============================================================
+   Migration Table
+   ============================================================ */
+.migration-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+  margin: 16px 0 32px;
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.migration-table th {
+  text-align: left; padding: 10px 14px; background: var(--muted); font-weight: 600;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-fg);
+  border-bottom: 1px solid var(--border);
+}
+.migration-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top;
+}
+.migration-table tr:last-child td { border-bottom: none; }
+.migration-table code {
+  font-family: 'SF Mono', 'Cascadia Code', monospace; font-size: 11px;
+  background: var(--muted); padding: 2px 5px; border-radius: 3px;
+  white-space: nowrap;
+}
+.migration-table .file { color: var(--primary); font-weight: 500; }
+
+/* ============================================================
+   Section numbering / labels
+   ============================================================ */
+.section-number {
+  display: inline-block;
+  font-size: 12px; font-weight: 700;
+  color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+/* ============================================================
+   Dark mode toggle
+   ============================================================ */
+.theme-toggle {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--muted); border: 1px solid var(--border); border-radius: 8px;
+  padding: 4px 12px; cursor: pointer; user-select: none;
+  font-size: 12px; font-weight: 600; color: var(--muted-fg);
+  transition: all 0.2s;
+}
+.theme-toggle:hover { background: var(--accent); }
+.theme-toggle .toggle-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--primary);
+}
+
+/* ============================================================
+   Separator
+   ============================================================ */
+.sep { height: 1px; background: var(--border); margin: 40px 0; }
+
+/* ============================================================
+   Dark mode card overrides
+   ============================================================ */
+.dark .stat-card { box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.dark .stat-card.tinted-amber  { background: hsl(38 92% 50% / 0.08); border-color: hsl(38 92% 50% / 0.2); }
+.dark .stat-card.tinted-green  { background: hsl(142 71% 45% / 0.08); border-color: hsl(142 71% 45% / 0.2); }
+.dark .stat-card.tinted-blue   { background: hsl(217 91% 60% / 0.08); border-color: hsl(217 91% 60% / 0.2); }
+.dark .stat-card.tinted-red    { background: hsl(0 84% 60% / 0.08);   border-color: hsl(0 84% 60% / 0.2); }
+.dark .stat-card.tinted-purple { background: hsl(270 67% 55% / 0.08); border-color: hsl(270 67% 55% / 0.2); }
+.dark .skeleton {
+  background: linear-gradient(90deg, hsl(215 28% 17%) 25%, hsl(215 28% 22%) 50%, hsl(215 28% 17%) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ============================================================
+   Grid helper mockup
+   ============================================================ */
+.grid-helper-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted-fg); margin-bottom: 12px;
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     Top Bar
+     ============================================================ -->
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-title">DRMS Design System</span>
+    <span class="topbar-badge">Draft</span>
+  </div>
+  <div class="topbar-right">
+    <span class="topbar-version">v1.0.0 -- 2025-05-22</span>
+    <div class="theme-toggle" onclick="document.body.classList.toggle('dark')">
+      <span class="toggle-dot"></span>
+      Light / Dark
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     Sidebar Navigation
+     ============================================================ -->
+<nav class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Overview</div>
+    <a href="#overview">Introduction</a>
+    <a href="#design-rules">Design Rules</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Variant Showcase</div>
+    <a href="#variant-default">Default</a>
+    <a href="#variant-tinted">Tinted</a>
+    <a href="#variant-trend">With Trend</a>
+    <a href="#variant-compact">Compact</a>
+    <a href="#variant-centered">Centered</a>
+    <a href="#state-loading">Loading Skeleton</a>
+    <a href="#state-dark">Dark Mode</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Reference</div>
+    <a href="#api">Component API</a>
+    <a href="#migration">Migration Map</a>
+    <a href="#grid">StatCardGrid</a>
+  </div>
+</nav>
+
+<!-- ============================================================
+     Main Content
+     ============================================================ -->
+<main class="main">
+
+<!-- ===========================
+     Section 1: Overview
+     =========================== -->
+<div id="overview"></div>
+<span class="section-number">Section 01</span>
+<h1>StatCard</h1>
+<p class="subtitle">Unified metric/KPI card for all DRMS dashboard pages. One component to replace 16 ad-hoc variations across 14 source files.</p>
+
+<h3>Purpose</h3>
+<p>Every dashboard in DRMS renders metric cards -- small panels that display a label, a numeric value, and optionally an icon, a description, or a trend indicator. Today each page builds its own inline <code>MetricCard</code>, <code>KpiCard</code>, or hand-coded <code>&lt;Card&gt;</code> with inconsistent spacing, sizing, and dark-mode support.</p>
+<p>The unified <strong>StatCard</strong> component replaces all of these with a single, well-tested, theme-aware implementation that ships five visual variants out of the box.</p>
+
+<h3>Design Philosophy</h3>
+<p><strong>Vertical hierarchy.</strong> The label sits above the value, not beside it. The eye reads top-to-bottom naturally: what this is, then how much, then context. Generous spacing between layers prevents the card from feeling cramped. Minimal decoration -- no colored icon circles, no gradient backgrounds on generic cards -- lets the number itself carry visual weight.</p>
+
+<div class="token-grid">
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--card);border-color:var(--border)"></div>
+    <span>--card</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--border)"></div>
+    <span>--border</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--muted-fg)"></div>
+    <span>--muted-fg</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--fg)"></div>
+    <span>--foreground</span>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 2: Design Rules
+     =========================== -->
+<div id="design-rules"></div>
+<span class="section-number">Section 02</span>
+<h2>Design Rules</h2>
+
+<div class="rules-grid">
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Icon placement: top-right only</h4>
+      <p>Size <code>h-4 w-4</code> (16px). Color <code>text-muted-foreground</code>. No colored icon backgrounds. No circular containers. The icon is a quiet contextual hint, never the focal point.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Value: text-2xl font-bold tracking-tight</h4>
+      <p>Always 24px bold with tight tracking. Never smaller in a grid row. The value is the primary visual element and must be the same size whether the card sits alone or in a 4-column grid.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Label: text-sm font-medium text-muted-foreground</h4>
+      <p>14px, medium weight, muted color. Sits directly above the value with <code>mt-2</code> (8px) spacing between label and value. Never bold, never dark.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15h18"/><path d="M3 9h18"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Spacing: p-6 (24px) inside</h4>
+      <p><code>p-6</code> padding on all sides. <code>mt-2</code> between label and value. <code>mt-3</code> between value and trend row. The generous padding is intentional -- cards should breathe.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Colored backgrounds: status-aware only</h4>
+      <p>Reserved for verification queue cards, active incidents, or role-specific status indicators. Never for generic metrics (total users, total commitments). Use 5% opacity tint on background, 15% opacity tint on border.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Trend indicators: diagonal arrows</h4>
+      <p>Use <code>ArrowUpRight</code> / <code>ArrowDownRight</code> (diagonal), never <code>TrendingUp</code> / <code>TrendingDown</code>. Size <code>h-4 w-4</code>. Color: emerald-600 for positive, red-600 for negative. Neutral: em-dash, muted color.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Dark mode: mandatory for every variant</h4>
+      <p>All five variants and the loading skeleton must render correctly in dark mode. Tinted backgrounds increase to 8% opacity. Borders to 20%. Cards use <code>--card</code> background from the shadcn dark token set.</p>
+    </div>
+  </div>
+
+</div><!-- rules-grid -->
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 3: Variant Showcase
+     =========================== -->
+
+<!-- ---- Variant 1: Default ---- -->
+<div id="variant-default"></div>
+<span class="section-number">Section 03 -- Variants</span>
+<h2>Variant: Default</h2>
+<span class="variant-badge">default</span>
+<p>White card, no tint. Icon top-right (small, muted). Label above value. Optional description below value. This is the workhorse variant used for 70%+ of all metric cards.</p>
+
+<div class="mockup-container">
+  <div class="stat-card" style="max-width:320px;">
+    <div class="card-header">
+      <div>
+        <div class="card-label">Active Incidents</div>
+        <div class="card-value">12</div>
+        <div class="card-description">Currently being monitored</div>
+      </div>
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tw-classes">
+  <span class="tw-class">rounded-lg</span>
+  <span class="tw-class">border</span>
+  <span class="tw-class">bg-card</span>
+  <span class="tw-class">text-card-foreground</span>
+  <span class="tw-class">p-6</span>
+  <span class="tw-class">shadow-sm</span>
+</div>
+
+<div class="code-block"><span class="cm">&lt;!-- Default StatCard --&gt;</span>
+<span class="kw">&lt;</span><span class="fn">StatCard</span>
+  <span class="pr">label</span>=<span class="str">"Active Incidents"</span>
+  <span class="pr">value</span>=<span class="num">12</span>
+  <span class="pr">icon</span>={<span class="typ">AlertTriangle</span>}
+  <span class="pr">description</span>=<span class="str">"Currently being monitored"</span>
+<span class="kw">/&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ---- Variant 2: Tinted ---- -->
+<div id="variant-tinted"></div>
+<h2>Variant: Tinted</h2>
+<span class="variant-badge">tinted</span>
+<p>Subtle colored background tint (5% opacity) with a matching colored border (15% opacity). Same layout as Default but the card carries a semantic color wash. Reserved for status-aware metrics -- verification queue counts, incident severity, or role-specific indicators.</p>
+
+<div class="mockup-container">
+  <div class="mockup-grid-4">
+
+    <!-- Amber -->
+    <div class="stat-card tinted-amber">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Pending Verification</div>
+          <div class="card-value">23</div>
+        </div>
+        <div class="card-icon" style="color:var(--amber-600)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Green -->
+    <div class="stat-card tinted-green">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Verified Today</div>
+          <div class="card-value">156</div>
+        </div>
+        <div class="card-icon" style="color:var(--green-600)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blue -->
+    <div class="stat-card tinted-blue">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Auto-Verified</div>
+          <div class="card-value">89</div>
+        </div>
+        <div class="card-icon" style="color:var(--blue-600)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Red -->
+    <div class="stat-card tinted-red">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Rejected</div>
+          <div class="card-value">7</div>
+        </div>
+        <div class="card-icon" style="color:var(--red-600)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="tw-classes">
+  <span class="tw-class">rounded-lg</span>
+  <span class="tw-class">border-[color/0.15]</span>
+  <span class="tw-class">bg-[color/0.05]</span>
+  <span class="tw-class">text-card-foreground</span>
+  <span class="tw-class">p-6</span>
+  <span class="tw-class">shadow-sm</span>
+</div>
+
+<div class="code-block"><span class="cm">&lt;!-- Tinted StatCard (amber severity) --&gt;</span>
+<span class="kw">&lt;</span><span class="fn">StatCard</span>
+  <span class="pr">label</span>=<span class="str">"Pending Verification"</span>
+  <span class="pr">value</span>=<span class="num">23</span>
+  <span class="pr">icon</span>={<span class="typ">Clock</span>}
+  <span class="pr">severity</span>=<span class="str">"warning"</span>
+  <span class="pr">variant</span>=<span class="str">"tinted"</span>
+<span class="kw">/&gt;</span>
+
+<span class="cm">&lt;!-- Severity values map to colors --&gt;</span>
+<span class="cm">&lt;!-- "info"     = blue tint   --&gt;</span>
+<span class="cm">&lt;!-- "success"  = green tint  --&gt;</span>
+<span class="cm">&lt;!-- "warning"  = amber tint  --&gt;</span>
+<span class="cm">&lt;!-- "danger"   = red tint    --&gt;</span>
+<span class="cm">&lt;!-- "critical" = purple tint --&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ---- Variant 3: With Trend ---- -->
+<div id="variant-trend"></div>
+<h2>Variant: With Trend</h2>
+<span class="variant-badge">trend</span>
+<p>Same structure as Default but with a trend row below the value. Shows the delta as a percentage with a diagonal arrow and a comparison label. The trend row is separated from the value by <code>mt-3</code> (12px) spacing.</p>
+
+<div class="mockup-container">
+  <div class="mockup-grid-3">
+
+    <!-- Positive trend -->
+    <div class="stat-card">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Total Commitments</div>
+          <div class="card-value">1,284</div>
+        </div>
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        </div>
+      </div>
+      <div class="trend-row positive">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+        <span>+12.5%</span>
+        <span style="color:var(--muted-fg);margin-left:2px">vs last month</span>
+      </div>
+    </div>
+
+    <!-- Negative trend -->
+    <div class="stat-card">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Pending Items</div>
+          <div class="card-value">47</div>
+        </div>
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        </div>
+      </div>
+      <div class="trend-row negative">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>
+        <span>-8.3%</span>
+        <span style="color:var(--muted-fg);margin-left:2px">vs last week</span>
+      </div>
+    </div>
+
+    <!-- Neutral trend -->
+    <div class="stat-card">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Active Users</div>
+          <div class="card-value">342</div>
+        </div>
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+      </div>
+      <div class="trend-row neutral">
+        <span style="font-size:16px;line-height:1">--</span>
+        <span>No change</span>
+        <span style="color:var(--muted-fg);margin-left:2px">vs yesterday</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="tw-classes">
+  <span class="tw-class">flex</span>
+  <span class="tw-class">items-center</span>
+  <span class="tw-class">gap-1.5</span>
+  <span class="tw-class">mt-3</span>
+  <span class="tw-class">text-xs</span>
+  <span class="tw-class">text-emerald-600</span>
+  <span class="tw-class">/ text-red-600</span>
+  <span class="tw-class">/ text-muted-foreground</span>
+</div>
+
+<div class="code-block"><span class="cm">&lt;!-- StatCard with positive trend --&gt;</span>
+<span class="kw">&lt;</span><span class="fn">StatCard</span>
+  <span class="pr">label</span>=<span class="str">"Total Commitments"</span>
+  <span class="pr">value</span>=<span class="str">"1,284"</span>
+  <span class="pr">icon</span>={<span class="typ">Package</span>}
+  <span class="pr">trend</span>={{ <span class="pr">value</span>: <span class="num">12.5</span>, <span class="pr">label</span>: <span class="str">"vs last month"</span> }}
+<span class="kw">/&gt;</span>
+
+<span class="cm">&lt;!-- StatCard with negative trend --&gt;</span>
+<span class="kw">&lt;</span><span class="fn">StatCard</span>
+  <span class="pr">label</span>=<span class="str">"Pending Items"</span>
+  <span class="pr">value</span>=<span class="num">47</span>
+  <span class="pr">icon</span>={<span class="typ">LayoutGrid</span>}
+  <span class="pr">trend</span>={{ <span class="pr">value</span>: <span class="num">-8.3</span>, <span class="pr">label</span>: <span class="str">"vs last week"</span> }}
+<span class="kw">/&gt;</span>
+
+<span class="cm">&lt;!-- StatCard with neutral trend (value === 0) --&gt;</span>
+<span class="kw">&lt;</span><span class="fn">StatCard</span>
+  <span class="pr">label</span>=<span class="str">"Active Users"</span>
+  <span class="pr">value</span>=<span class="num">342</span>
+  <span class="pr">icon</span>={<span class="typ">Users</span>}
+  <span class="pr">trend</span>={{ <span class="pr">value</span>: <span class="num">0</span>, <span class="pr">label</span>: <span class="str">"vs yesterday"</span> }}
+<span class="kw">/&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ---- Variant 4: Compact ---- -->
+<div id="variant-compact"></div>
+<h2>Variant: Compact</h2>
+<span class="variant-badge">compact</span>
+<p>Same vertical structure but with <code>p-4</code> (16px) padding and <code>text-lg font-semibold</code> (20px) value. Designed for sidebars, inline panels, or anywhere horizontal space is limited.</p>
+
+<div class="mockup-container">
+  <div class="mockup-grid-4">
+    <div class="stat-card compact">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Queue Depth</div>
+          <div class="card-value">47</div>
+        </div>
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card compact">
+      <div class="card-header">
+        <div>
+          <div class="card-label">API Latency</div>
+          <div class="card-value">142ms</div>
+        </div>
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card compact">
+      <div class="card-header">
+        <div>
+          <div class="card-label">DB Sync</div>
+          <div class="card-value">Healthy</div>
+        </div>
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card compact">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Uptime</div>
+          <div class="card-value">99.8%</div>
+        </div>
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tw-classes">
+  <span class="tw-class">rounded-lg</span>
+  <span class="tw-class">border</span>
+  <span class="tw-class">bg-card</span>
+  <span class="tw-class">p-4</span>
+  <span class="tw-class">text-lg</span>
+  <span class="tw-class">font-semibold</span>
+</div>
+
+<div class="code-block"><span class="kw">&lt;</span><span class="fn">StatCard</span>
+  <span class="pr">label</span>=<span class="str">"Queue Depth"</span>
+  <span class="pr">value</span>=<span class="num">47</span>
+  <span class="pr">icon</span>={<span class="typ">LayoutGrid</span>}
+  <span class="pr">variant</span>=<span class="str">"compact"</span>
+<span class="kw">/&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ---- Variant 5: Centered ---- -->
+<div id="variant-centered"></div>
+<h2>Variant: Centered</h2>
+<span class="variant-badge">centered</span>
+<p>Centered text with the value ABOVE the label (inverted hierarchy). Designed for peer comparison / ranking contexts where the value is a rank position or percentile, and the label describes what the rank represents. An optional badge below provides secondary context.</p>
+
+<div class="mockup-container">
+  <div class="mockup-grid-3" style="max-width:720px;">
+    <div class="stat-card centered">
+      <div class="card-header">
+        <div>
+          <div class="card-value">#3</div>
+          <div class="card-label">Current Rank</div>
+          <div class="card-badge">87.2 percentile</div>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card centered">
+      <div class="card-header">
+        <div>
+          <div class="card-value">94.1%</div>
+          <div class="card-label">Delivery Rate</div>
+          <div class="card-badge">Top 15%</div>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card centered">
+      <div class="card-header">
+        <div>
+          <div class="card-value">A+</div>
+          <div class="card-label">Overall Grade</div>
+          <div class="card-badge">37 badges earned</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tw-classes">
+  <span class="tw-class">text-center</span>
+  <span class="tw-class">flex-col</span>
+  <span class="tw-class">items-center</span>
+  <span class="tw-class">text-4xl</span>
+  <span class="tw-class">font-extrabold</span>
+  <span class="tw-class">order-first</span>
+</div>
+
+<div class="code-block"><span class="kw">&lt;</span><span class="fn">StatCard</span>
+  <span class="pr">label</span>=<span class="str">"Current Rank"</span>
+  <span class="pr">value</span>=<span class="str">"#3"</span>
+  <span class="pr">variant</span>=<span class="str">"centered"</span>
+  <span class="pr">description</span>=<span class="str">"87.2 percentile"</span>
+<span class="kw">/&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ---- Loading State ---- -->
+<div id="state-loading"></div>
+<h2>State: Loading Skeleton</h2>
+<p>Displayed when <code>loading={true}</code>. Matches the Default variant structure: skeleton blocks for icon, label, value, and optional description. Uses the shadcn shimmer animation.</p>
+
+<div class="mockup-container">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+    <!-- Skeleton card -->
+    <div class="stat-card" style="position:relative;">
+      <div class="card-header">
+        <div>
+          <div class="skeleton skeleton-line w-2-3" style="height:14px;"></div>
+          <div class="skeleton skeleton-heading" style="margin-top:8px;"></div>
+          <div class="skeleton skeleton-line w-3-4" style="height:11px;margin-top:8px;"></div>
+        </div>
+        <div class="skeleton" style="width:16px;height:16px;border-radius:4px;flex-shrink:0;"></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="card-header">
+        <div>
+          <div class="skeleton skeleton-line w-1-2" style="height:14px;"></div>
+          <div class="skeleton skeleton-heading" style="margin-top:8px;"></div>
+          <div class="skeleton skeleton-line w-2-3" style="height:11px;margin-top:8px;"></div>
+        </div>
+        <div class="skeleton" style="width:16px;height:16px;border-radius:4px;flex-shrink:0;"></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="card-header">
+        <div>
+          <div class="skeleton skeleton-line w-1-3" style="height:14px;"></div>
+          <div class="skeleton skeleton-heading" style="margin-top:8px;"></div>
+          <div class="skeleton skeleton-line w-1-2" style="height:11px;margin-top:8px;"></div>
+        </div>
+        <div class="skeleton" style="width:16px;height:16px;border-radius:4px;flex-shrink:0;"></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="card-header">
+        <div>
+          <div class="skeleton skeleton-line w-2-3" style="height:14px;"></div>
+          <div class="skeleton skeleton-heading" style="margin-top:8px;"></div>
+          <div class="skeleton skeleton-line w-3-4" style="height:11px;margin-top:8px;"></div>
+        </div>
+        <div class="skeleton" style="width:16px;height:16px;border-radius:4px;flex-shrink:0;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="code-block"><span class="cm">&lt;!-- Loading state (automatic shimmer) --&gt;</span>
+<span class="kw">&lt;</span><span class="fn">StatCard</span>
+  <span class="pr">label</span>=<span class="str">"Active Incidents"</span>
+  <span class="pr">value</span>=<span class="num">0</span>
+  <span class="pr">icon</span>={<span class="typ">AlertTriangle</span>}
+  <span class="pr">loading</span>
+<span class="kw">/&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ---- Dark Mode ---- -->
+<div id="state-dark"></div>
+<h2>Dark Mode Rendering</h2>
+<p>Toggle the Light / Dark button in the top bar to see all variants adapt. Below is a dark-mode-only preview block showing Default and Tinted variants on the dark background. All card surfaces switch to <code>--card</code> (HSL 224 71% 4%), borders to <code>--border</code> (HSL 215 28% 17%), and text to <code>--card-foreground</code> (HSL 213 31% 91%).</p>
+
+<div class="mockup-container dark-bg" style="border:1px solid #1e293b;">
+  <div class="mockup-grid-4">
+
+    <div class="stat-card" style="background:hsl(224 71% 4%);border-color:hsl(215 28% 17%);color:hsl(213 31% 91%);">
+      <div class="card-header">
+        <div>
+          <div class="card-label" style="color:hsl(217.9 10.6% 64.9%)">Total Users</div>
+          <div class="card-value" style="color:hsl(213 31% 91%)">1,247</div>
+        </div>
+        <div class="card-icon" style="color:hsl(217.9 10.6% 64.9%)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card" style="background:hsl(38 92% 50% / 0.08);border-color:hsl(38 92% 50% / 0.2);">
+      <div class="card-header">
+        <div>
+          <div class="card-label" style="color:hsl(217.9 10.6% 64.9%)">Pending Verification</div>
+          <div class="card-value" style="color:hsl(213 31% 91%)">23</div>
+        </div>
+        <div class="card-icon" style="color:var(--amber-500)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card" style="background:hsl(142 71% 45% / 0.08);border-color:hsl(142 71% 45% / 0.2);">
+      <div class="card-header">
+        <div>
+          <div class="card-label" style="color:hsl(217.9 10.6% 64.9%)">Verified Today</div>
+          <div class="card-value" style="color:hsl(213 31% 91%)">156</div>
+        </div>
+        <div class="card-icon" style="color:var(--green-500)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card" style="background:hsl(0 84% 60% / 0.08);border-color:hsl(0 84% 60% / 0.2);">
+      <div class="card-header">
+        <div>
+          <div class="card-label" style="color:hsl(217.9 10.6% 64.9%)">Rejected</div>
+          <div class="card-value" style="color:hsl(213 31% 91%)">7</div>
+        </div>
+        <div class="card-icon" style="color:var(--red-500)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 4: Component API
+     =========================== -->
+<div id="api"></div>
+<span class="section-number">Section 04</span>
+<h2>Component API</h2>
+
+<div class="code-block"><span class="kw">interface</span> <span class="typ">StatCardProps</span> {
+  <span class="pr">label</span>: <span class="typ">string</span>
+  <span class="pr">value</span>: <span class="typ">string</span> | <span class="typ">number</span>
+  <span class="pr">description</span>?: <span class="typ">string</span>
+  <span class="pr">icon</span>?: <span class="typ">React.ComponentType</span>&lt;{ <span class="pr">className</span>?: <span class="typ">string</span> }&gt;
+  <span class="pr">severity</span>?: <span class="str">"info"</span> | <span class="str">"success"</span> | <span class="str">"warning"</span> | <span class="str">"danger"</span> | <span class="str">"critical"</span>
+  <span class="pr">variant</span>?: <span class="str">"default"</span> | <span class="str">"tinted"</span> | <span class="str">"compact"</span> | <span class="str">"centered"</span>
+  <span class="pr">trend</span>?: {
+    <span class="pr">value</span>: <span class="typ">number</span>
+    <span class="pr">label</span>: <span class="typ">string</span>
+  }
+  <span class="pr">loading</span>?: <span class="typ">boolean</span>
+  <span class="pr">className</span>?: <span class="typ">string</span>
+}
+
+<span class="kw">type</span> <span class="typ">SeverityLevel</span> = <span class="str">"info"</span> | <span class="str">"success"</span> | <span class="str">"warning"</span> | <span class="str">"danger"</span> | <span class="str">"critical"</span></div>
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Prop</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>label</code></td>
+      <td><code>string</code></td>
+      <td>--</td>
+      <td>Displayed above the value. Required.</td>
+    </tr>
+    <tr>
+      <td><code>value</code></td>
+      <td><code>string | number</code></td>
+      <td>--</td>
+      <td>The primary metric. Formatted by the parent (e.g. "1,284", "94.1%", "#3"). Required.</td>
+    </tr>
+    <tr>
+      <td><code>description</code></td>
+      <td><code>string</code></td>
+      <td><code>undefined</code></td>
+      <td>Secondary text below the value. Muted color, 13px.</td>
+    </tr>
+    <tr>
+      <td><code>icon</code></td>
+      <td><code>React.ComponentType</code></td>
+      <td><code>undefined</code></td>
+      <td>Lucide icon component. Rendered 16x16, top-right, muted color.</td>
+    </tr>
+    <tr>
+      <td><code>severity</code></td>
+      <td><code>SeverityLevel</code></td>
+      <td><code>undefined</code></td>
+      <td>Maps to tint color: info=blue, success=green, warning=amber, danger=red, critical=purple.</td>
+    </tr>
+    <tr>
+      <td><code>variant</code></td>
+      <td><code>"default" | "tinted" | "compact" | "centered"</code></td>
+      <td><code>"default"</code></td>
+      <td>Controls padding, font size, and layout direction.</td>
+    </tr>
+    <tr>
+      <td><code>trend</code></td>
+      <td><code>{ value: number, label: string }</code></td>
+      <td><code>undefined</code></td>
+      <td>Positive number = green up arrow. Negative = red down arrow. Zero = neutral dash.</td>
+    </tr>
+    <tr>
+      <td><code>loading</code></td>
+      <td><code>boolean</code></td>
+      <td><code>false</code></td>
+      <td>Renders skeleton placeholders matching the variant structure.</td>
+    </tr>
+    <tr>
+      <td><code>className</code></td>
+      <td><code>string</code></td>
+      <td><code>undefined</code></td>
+      <td>Merged via <code>cn()</code> for external overrides.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Usage Examples</h3>
+
+<div class="code-block"><span class="cm">// 1. Default with description</span>
+<span class="kw">&lt;</span><span class="fn">StatCard</span>
+  <span class="pr">label</span>=<span class="str">"Active Incidents"</span>
+  <span class="pr">value</span>={<span class="num">12</span>}
+  <span class="pr">icon</span>={<span class="typ">AlertTriangle</span>}
+  <span class="pr">description</span>=<span class="str">"Currently being monitored"</span>
+<span class="kw">/&gt;</span>
+
+<span class="cm">// 2. Tinted verification card</span>
+<span class="kw">&lt;</span><span class="fn">StatCard</span>
+  <span class="pr">label</span>=<span class="str">"Pending Verification"</span>
+  <span class="pr">value</span>={<span class="num">23</span>}
+  <span class="pr">icon</span>={<span class="typ">Clock</span>}
+  <span class="pr">severity</span>=<span class="str">"warning"</span>
+  <span class="pr">variant</span>=<span class="str">"tinted"</span>
+<span class="kw">/&gt;</span>
+
+<span class="cm">// 3. With trend</span>
+<span class="kw">&lt;</span><span class="fn">StatCard</span>
+  <span class="pr">label</span>=<span class="str">"Total Commitments"</span>
+  <span class="pr">value</span>=<span class="str">"1,284"</span>
+  <span class="pr">icon</span>={<span class="typ">Package</span>}
+  <span class="pr">trend</span>={{ <span class="pr">value</span>: <span class="num">12.5</span>, <span class="pr">label</span>: <span class="str">"vs last month"</span> }}
+<span class="kw">/&gt;</span>
+
+<span class="cm">// 4. Compact sidebar card</span>
+<span class="kw">&lt;</span><span class="fn">StatCard</span>
+  <span class="pr">label</span>=<span class="str">"Queue Depth"</span>
+  <span class="pr">value</span>={<span class="num">47</span>}
+  <span class="pr">variant</span>=<span class="str">"compact"</span>
+<span class="kw">/&gt;</span>
+
+<span class="cm">// 5. Centered rank card</span>
+<span class="kw">&lt;</span><span class="fn">StatCard</span>
+  <span class="pr">label</span>=<span class="str">"Current Rank"</span>
+  <span class="pr">value</span>=<span class="str">"#3"</span>
+  <span class="pr">variant</span>=<span class="str">"centered"</span>
+  <span class="pr">description</span>=<span class="str">"87.2 percentile"</span>
+<span class="kw">/&gt;</span>
+
+<span class="cm">// 6. Loading state</span>
+<span class="kw">&lt;</span><span class="fn">StatCard</span>
+  <span class="pr">label</span>=<span class="str">"Total Users"</span>
+  <span class="pr">value</span>={<span class="num">0</span>}
+  <span class="pr">icon</span>={<span class="typ">Users</span>}
+  <span class="pr">loading</span>
+<span class="kw">/&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 5: Migration Map
+     =========================== -->
+<div id="migration"></div>
+<span class="section-number">Section 05</span>
+<h2>Migration Map</h2>
+<p>Every ad-hoc metric card found in the current codebase maps to one of the StatCard variants below. After migration, all 16 inline <code>MetricCard</code> / <code>KpiCard</code> / hand-coded <code>&lt;Card&gt;</code> instances are replaced by the unified component.</p>
+
+<table class="migration-table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Current Location</th>
+      <th>Current Style</th>
+      <th>StatCard Equivalent</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>V1</td>
+      <td class="file">Admin Dashboard</td>
+      <td>White card, icon right, colored icon, description</td>
+      <td><code>&lt;StatCard label="Total Users" value={...} icon={Users} description="Registered users" /&gt;</code></td>
+    </tr>
+    <tr>
+      <td>V2</td>
+      <td class="file">Admin Dashboard</td>
+      <td>Same MetricCard with iconColor prop</td>
+      <td><code>&lt;StatCard label="Active Users" value={...} icon={UserCheck} /&gt;</code></td>
+    </tr>
+    <tr>
+      <td>V3</td>
+      <td class="file">Admin Dashboard (Overview tab)</td>
+      <td>Centered text, colored value, inline border</td>
+      <td><code>&lt;StatCard label="New Users" value={...} variant="centered" /&gt;</code></td>
+    </tr>
+    <tr>
+      <td>V4</td>
+      <td class="file">Home Dashboard (System Status)</td>
+      <td>Tinted bg green, animated pulse dot, no icon</td>
+      <td><code>&lt;StatCard label="System Status" value="Online" severity="success" variant="tinted" /&gt;</code></td>
+    </tr>
+    <tr>
+      <td>V5</td>
+      <td class="file">Home Dashboard (Active Incidents)</td>
+      <td>Tinted bg orange, large icon, colored value</td>
+      <td><code>&lt;StatCard label="Active Incidents" value={...} icon={AlertTriangle} severity="warning" variant="tinted" /&gt;</code></td>
+    </tr>
+    <tr>
+      <td>V6</td>
+      <td class="file">Home Dashboard (Available Commitments)</td>
+      <td>Tinted bg blue, large icon</td>
+      <td><code>&lt;StatCard label="Available Commitments" value={...} icon={HandHeart} severity="info" variant="tinted" /&gt;</code></td>
+    </tr>
+    <tr>
+      <td>V7</td>
+      <td class="file">Home Dashboard (Pending Verifications)</td>
+      <td>Tinted bg purple, large icon</td>
+      <td><code>&lt;StatCard label="Pending Verifications" value={...} icon={CheckCircle} severity="critical" variant="tinted" /&gt;</code></td>
+    </tr>
+    <tr>
+      <td>V8</td>
+      <td class="file">Donor Dashboard (MetricCard x5)</td>
+      <td>White card, icon right, colored icon, description</td>
+      <td><code>&lt;StatCard label="Assigned Entities" value={...} icon={MapPin} description="..." /&gt;</code></td>
+    </tr>
+    <tr>
+      <td>V9</td>
+      <td class="file">Verification Dashboard (MetricCard x4)</td>
+      <td>Colored bg+border tint, icon right, colored icon</td>
+      <td><code>&lt;StatCard label="Pending Verification" value={...} icon={Clock} severity="warning" variant="tinted" /&gt;</code></td>
+    </tr>
+    <tr>
+      <td>V10</td>
+      <td class="file">Verification Dashboard (Performance x3)</td>
+      <td>CardHeader+CardContent, colored value, subtitle</td>
+      <td><code>&lt;StatCard label="Verification Rate" value="87.3%" description="of submitted approved" /&gt;</code></td>
+    </tr>
+    <tr>
+      <td>V11</td>
+      <td class="file">Enhanced Verification Dashboard (x4)</td>
+      <td>Same as V9 with different icon colors</td>
+      <td><code>&lt;StatCard label="Pending Assessments" value={...} icon={FileText} severity="warning" variant="tinted" /&gt;</code></td>
+    </tr>
+    <tr>
+      <td>V12</td>
+      <td class="file">Verification Analytics (KpiCard x4)</td>
+      <td>Trend support, format prop, icon right</td>
+      <td><code>&lt;StatCard label="Items Processed" value={...} icon={CheckCircle} trend={{ value: 12.5, label: "vs last week" }} /&gt;</code></td>
+    </tr>
+    <tr>
+      <td>V13</td>
+      <td class="file">Response Planning Dashboard (x4)</td>
+      <td>Gradient bg (to-br), colored values, large icons</td>
+      <td><code>&lt;StatCard label="Total Plans" value={...} icon={Package} severity="info" variant="tinted" /&gt;</code></td>
+    </tr>
+    <tr>
+      <td>V14</td>
+      <td class="file">Donor Metrics Dashboard (MetricCard x4)</td>
+      <td>White card, icon right, colored icon, loading state</td>
+      <td><code>&lt;StatCard label="Total Donors" value={...} icon={Users} loading={isLoading} /&gt;</code></td>
+    </tr>
+    <tr>
+      <td>V15</td>
+      <td class="file">Report Management (x4)</td>
+      <td>CardHeader with icon right, value + subtitle</td>
+      <td><code>&lt;StatCard label="Total Configurations" value={...} icon={FileText} description="Active report configs" /&gt;</code></td>
+    </tr>
+    <tr>
+      <td>V16</td>
+      <td class="file">Peer Comparison (rank display)</td>
+      <td>Centered rank value, badge, percentile</td>
+      <td><code>&lt;StatCard label="Current Rank" value="#3" variant="centered" description="87.2 percentile" /&gt;</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 6: StatCardGrid
+     =========================== -->
+<div id="grid"></div>
+<span class="section-number">Section 06</span>
+<h2>StatCardGrid</h2>
+<p>A layout helper that provides consistent grid spacing and responsive breakpoints for dashboard metric rows. Wraps <code>StatCard</code> instances in a CSS Grid container.</p>
+
+<div class="code-block"><span class="kw">interface</span> <span class="typ">StatCardGridProps</span> {
+  <span class="pr">children</span>: <span class="typ">React.ReactNode</span>
+  <span class="pr">columns</span>?: <span class="num">2</span> | <span class="num">3</span> | <span class="num">4</span>
+  <span class="pr">className</span>?: <span class="typ">string</span>
+}
+
+<span class="cm">// Usage</span>
+<span class="kw">&lt;</span><span class="fn">StatCardGrid</span> <span class="pr">columns</span>={<span class="num">4</span>}<span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="fn">StatCard</span> <span class="pr">label</span>=<span class="str">"Total Donors"</span> <span class="pr">value</span>={<span class="num">1284</span>} <span class="pr">icon</span>={<span class="typ">Users</span>} <span class="kw">/&gt;</span>
+  <span class="kw">&lt;</span><span class="fn">StatCard</span> <span class="pr">label</span>=<span class="str">"Active Incidents"</span> <span class="pr">value</span>={<span class="num">12</span>} <span class="pr">icon</span>={<span class="typ">AlertTriangle</span>} <span class="kw">/&gt;</span>
+  <span class="kw">&lt;</span><span class="fn">StatCard</span> <span class="pr">label</span>=<span class="str">"Verified Today"</span> <span class="pr">value</span>={<span class="num">156</span>} <span class="pr">icon</span>={<span class="typ">CheckCircle</span>} <span class="kw">/&gt;</span>
+  <span class="kw">&lt;</span><span class="fn">StatCard</span> <span class="pr">label</span>=<span class="str">"Pending"</span> <span class="pr">value</span>={<span class="num">23</span>} <span class="pr">icon</span>={<span class="typ">Clock</span>} <span class="pr">severity</span>=<span class="str">"warning"</span> <span class="pr">variant</span>=<span class="str">"tinted"</span> <span class="kw">/&gt;</span>
+<span class="kw">&lt;/</span><span class="fn">StatCardGrid</span><span class="kw">&gt;</span></div>
+
+<h3>Grid Implementation</h3>
+
+<div class="code-block"><span class="cm">// StatCardGrid.tsx</span>
+<span class="kw">export function</span> <span class="fn">StatCardGrid</span>({ children, columns = <span class="num">4</span>, className }: <span class="typ">StatCardGridProps</span>) {
+  <span class="kw">return</span> (
+    <span class="kw">&lt;</span><span class="fn">div</span>
+      <span class="pr">className</span>={<span class="fn">cn</span>(
+        <span class="str">"grid gap-4"</span>,
+        columns === <span class="num">2</span> &amp;&amp; <span class="str">"grid-cols-1 md:grid-cols-2"</span>,
+        columns === <span class="num">3</span> &amp;&amp; <span class="str">"grid-cols-1 md:grid-cols-2 lg:grid-cols-3"</span>,
+        columns === <span class="num">4</span> &amp;&amp; <span class="str">"grid-cols-1 md:grid-cols-2 lg:grid-cols-4"</span>,
+        className
+      )}
+    <span class="kw">&gt;</span>
+      {children}
+    <span class="kw">&lt;/</span><span class="fn">div</span><span class="kw">&gt;</span>
+  )
+}</div>
+
+<h3>Live Grid Mockup</h3>
+<div class="grid-helper-label">StatCardGrid columns=4 -- Coordinator Dashboard</div>
+
+<div class="mockup-container">
+  <div class="mockup-grid-4">
+
+    <div class="stat-card tinted-green">
+      <div class="card-header">
+        <div>
+          <div class="card-label">System Status</div>
+          <div class="card-value" style="color:var(--green-600)">Online</div>
+        </div>
+        <div class="card-icon" style="color:var(--green-600)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card tinted-amber">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Active Incidents</div>
+          <div class="card-value">12</div>
+        </div>
+        <div class="card-icon" style="color:var(--amber-600)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+      </div>
+      <div class="trend-row positive">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+        <span>+3</span>
+        <span style="color:var(--muted-fg);margin-left:2px">since yesterday</span>
+      </div>
+    </div>
+
+    <div class="stat-card tinted-blue">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Available Commitments</div>
+          <div class="card-value">2,847</div>
+        </div>
+        <div class="card-icon" style="color:var(--blue-600)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card tinted-red">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Pending Verifications</div>
+          <div class="card-value">23</div>
+        </div>
+        <div class="card-icon" style="color:var(--red-600)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+      </div>
+      <div class="trend-row negative">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>
+        <span>-5</span>
+        <span style="color:var(--muted-fg);margin-left:2px">vs last hour</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="grid-helper-label" style="margin-top:32px;">StatCardGrid columns=4 -- Donor Dashboard</div>
+
+<div class="mockup-container">
+  <div class="mockup-grid-4">
+
+    <div class="stat-card">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Assigned Entities</div>
+          <div class="card-value">8</div>
+          <div class="card-description">Entities you can support</div>
+        </div>
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Total Commitments</div>
+          <div class="card-value">47</div>
+          <div class="card-description">Active commitments</div>
+        </div>
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="card-header">
+        <div>
+          <div class="card-label">Delivery Rate</div>
+          <div class="card-value">94.1%</div>
+          <div class="card-description">Fulfillment performance</div>
+        </div>
+        <div class="card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        </div>
+      </div>
+      <div class="trend-row positive">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+        <span>+2.3%</span>
+        <span style="color:var(--muted-fg);margin-left:2px">vs last month</span>
+      </div>
+    </div>
+
+    <div class="stat-card centered">
+      <div class="card-header">
+        <div>
+          <div class="card-value">#3</div>
+          <div class="card-label">Leaderboard Rank</div>
+          <div class="card-badge">Rising</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="sep"></div>
+<p style="font-size:13px;text-align:center;padding:24px 0;">
+  DRMS Design System -- StatCard Specification v1.0.0<br>
+  Generated 2025-05-22 &middot; For stakeholder review
+</p>
+
+</main>
+
+<!-- ============================================================
+     Sidebar active state script
+     ============================================================ -->
+<script>
+(function() {
+  const links = document.querySelectorAll('.sidebar a');
+  const sections = [];
+
+  links.forEach(link => {
+    const href = link.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      const el = document.getElementById(href.slice(1));
+      if (el) sections.push({ link, el });
+    }
+  });
+
+  function update() {
+    const scrollY = window.scrollY + 120;
+    let current = sections[0];
+    sections.forEach(s => {
+      if (s.el.offsetTop <= scrollY) current = s;
+    });
+    links.forEach(l => l.classList.remove('active'));
+    if (current) current.link.classList.add('active');
+  }
+
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+</script>
+
+</body>
+</html>

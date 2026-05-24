@@ -21,6 +21,7 @@ import { useIncident } from '@/hooks/useIncident'
 import { IncidentSchema } from '@/lib/validation/incidents'
 import { IncidentData } from '@/types/incidents'
 import { AlertTriangle, Plus, Zap, MapPin, Loader2 } from 'lucide-react'
+import { getBadgeClasses } from '@/components/shared/StatusBadge'
 import { apiGet, extractArray } from '@/lib/api'
 import { z } from 'zod'
 
@@ -38,10 +39,10 @@ interface IncidentCreationFormProps {
 }
 
 const severityOptions = [
-  { value: 'LOW', label: 'Low', color: 'bg-green-100 text-green-800' },
-  { value: 'MEDIUM', label: 'Medium', color: 'bg-yellow-100 text-yellow-800' },
-  { value: 'HIGH', label: 'High', color: 'bg-orange-100 text-orange-800' },
-  { value: 'CRITICAL', label: 'Critical', color: 'bg-red-100 text-red-800' }
+  { value: 'LOW', label: 'Low' },
+  { value: 'MEDIUM', label: 'Medium' },
+  { value: 'HIGH', label: 'High' },
+  { value: 'CRITICAL', label: 'Critical' }
 ]
 
 const statusOptions = [
@@ -345,7 +346,7 @@ export function IncidentCreationForm({
                   {severityOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       <div className="flex items-center gap-2">
-                        <div className={`px-2 py-1 rounded text-xs ${option.color}`}>
+                        <div className={`px-2 py-1 rounded text-xs ${getBadgeClasses('severity', option.value)}`}>
                           {option.label}
                         </div>
                       </div>

@@ -1,18 +1,16 @@
 'use client'
 
 import React from 'react'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMutation } from '@tanstack/react-query'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-
-// New error handling components
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { SafeDataLoader } from '@/components/shared/SafeDataLoader'
-import { EmptyState, EmptySearchResults } from '@/components/shared/EmptyState'
 import { 
   Select,
   SelectContent,
@@ -20,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue 
 } from '@/components/ui/select'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
   Dialog,
   DialogContent,
@@ -29,14 +26,7 @@ import {
   DialogTitle,
   DialogTrigger 
 } from '@/components/ui/dialog'
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow 
-} from '@/components/ui/table'
+import { DataTable, type ColumnDef } from '@/components/shared/DataTable'
 import { Checkbox } from '@/components/ui/checkbox'
 import { IncidentCreationForm } from '@/components/forms/incident/IncidentCreationForm'
 
@@ -44,25 +34,101 @@ import { IncidentCreationForm } from '@/components/forms/incident/IncidentCreati
 import { getAuthToken } from '@/lib/auth/token-utils'
 import { apiGet, apiPut, extractArray } from '@/lib/api'
 import { 
-  AlertTriangle, 
   MapPin, 
   Users, 
-  Home, 
   Activity,
-  Edit,
   Trash2,
   Plus,
   Search,
   Filter,
   RefreshCw,
-  Loader2,
   FileText,
-  ChevronDown,
-  ChevronRight,
   Link
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { Incident, PopulationImpact } from '@/types/incident'
+
+const incidentColumns: ColumnDef<any>[] = [
+  {
+    key: 'type',
+    header: 'Type',
+    render: (incident) => (
+      <div>
+        <div className="font-medium">{incident.type}</div>
+        {incident.subType && (
+          <div className="text-sm text-gray-500">{incident.subType}</div>
+        )}
+      </div>
+    )
+  },
+  {
+    key: 'name',
+    header: 'Incident Name',
+    render: (incident) => (
+      <div className="font-medium">
+        {incident.name || `${incident.type} Event ${incident.id?.slice(-3)}`}
+      </div>
+    )
+  },
+  {
+    key: 'severity',
+    header: 'Severity',
+    render: (incident) => <StatusBadge status={incident.severity} domain="severity" />
+  },
+  {
+    key: 'status',
+    header: 'Status',
+    render: (incident) => <StatusBadge status={incident.status} domain="incident" />
+  },
+  {
+    key: 'populationImpact',
+    header: 'Population Impact',
+    render: (incident) => {
+      const impact = incident.populationImpact || {}
+      const totalPopulation = impact.totalPopulation || 0
+      const livesLost = impact.livesLost || 0
+      const injured = impact.injured || 0
+      const affectedEntities = impact.affectedEntities || 0
+      return (
+        <div className="text-sm space-y-1">
+          <div className="flex items-center gap-2">
+            <Users className="h-3 w-3 text-gray-400" />
+            <span>Population: {totalPopulation}</span>
+          </div>
+          <div className="flex items-center gap-4 text-xs text-gray-500">
+            <span>Lives Lost: {livesLost}</span>
+            <span>Injured: {injured}</span>
+            <span>Entities: {affectedEntities}</span>
+          </div>
+        </div>
+      )
+    }
+  },
+  {
+    key: 'assessments',
+    header: 'Linked Assessments',
+    render: (incident) => (
+      <div className="space-y-1">
+        <div className="flex items-center gap-1">
+          <FileText className="h-3 w-3 text-blue-600" />
+          <span className="text-xs font-medium">
+            Prelim: {incident.preliminaryAssessments?.length || 0}
+          </span>
+          {(incident.preliminaryAssessments?.length || 0) > 0 && (
+            <Badge variant="secondary" className="text-xs">
+              Linked
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          <Activity className="h-3 w-3 text-green-600" />
+          <span className="text-xs">
+            Rapid: {incident.rapidAssessments?.length || 0}
+          </span>
+        </div>
+      </div>
+    )
+  }
+]
 
 interface IncidentManagementProps {
   className?: string
@@ -103,7 +169,6 @@ interface IncidentManagementState {
   showCreateModal: boolean
   showEditModal: boolean
   isUpdating: boolean
-  expandedRows: Set<string>
   showLinkAssessmentDialog: boolean
   incidentToLink: any | null
   availablePreliminaryAssessments: any[]
@@ -111,18 +176,6 @@ interface IncidentManagementState {
   selectedAssessmentIds: string[]
 }
 
-const severityColors = {
-  'LOW': 'bg-green-100 text-green-800',
-  'MEDIUM': 'bg-yellow-100 text-yellow-800',
-  'HIGH': 'bg-orange-100 text-orange-800',
-  'CRITICAL': 'bg-red-100 text-red-800'
-}
-
-const statusColors = {
-  'ACTIVE': 'bg-red-100 text-red-800',
-  'CONTAINED': 'bg-yellow-100 text-yellow-800',
-  'RESOLVED': 'bg-green-100 text-green-800'
-}
 
 export function IncidentManagement({
   className,
@@ -204,7 +257,6 @@ export function IncidentManagement({
     showCreateModal: false,
     showEditModal: false,
     isUpdating: false,
-    expandedRows: new Set<string>(),
     showLinkAssessmentDialog: false,
     incidentToLink: null,
     availablePreliminaryAssessments: [],
@@ -235,18 +287,6 @@ export function IncidentManagement({
       onSuccess: () => {
         retry() // Refresh the incidents list
       }
-    })
-  }
-
-  const toggleRowExpansion = (incidentId: string) => {
-    setState(prev => {
-      const newExpandedRows = new Set(prev.expandedRows)
-      if (newExpandedRows.has(incidentId)) {
-        newExpandedRows.delete(incidentId)
-      } else {
-        newExpandedRows.add(incidentId)
-      }
-      return { ...prev, expandedRows: newExpandedRows }
     })
   }
 
@@ -383,15 +423,6 @@ export function IncidentManagement({
       }
     } catch (error) {
       console.error('Error unlinking assessment:', error)
-    }
-  }
-
-  const formatPopulationImpact = (impact: PopulationImpact) => {
-    return {
-      totalPopulation: impact.totalPopulation || 0,
-      livesLost: impact.livesLost || 0,
-      injured: impact.injured || 0,
-      affectedEntities: impact.affectedEntities || 0
     }
   }
 
@@ -581,275 +612,150 @@ export function IncidentManagement({
         </CardContent>
       </Card>
 
-      {/* Incident List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Incidents ({filteredIncidents.length})</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={retryIncidents}
-              disabled={isLoadingIncidents}
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoadingIncidents ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {filteredIncidents.length === 0 ? (
-            state.filters.location || state.filters.status || state.filters.severity || state.filters.type ? (
-              <EmptySearchResults onClearFilters={() => {
-                setState(prev => ({
-                  ...prev,
-                  filters: {}
-                }))
-              }} />
-            ) : (
-              <EmptyState
-                type="data"
-                title="No incidents created yet"
-                description="Create your first incident to get started with crisis management."
-                action={{
-                  label: "Create Incident",
-                  onClick: () => setState(prev => ({ ...prev, showCreateModal: true })),
-                  variant: "default"
-                }}
-                icon={AlertTriangle}
-              />
-            )
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Incident Name</TableHead>
-                  <TableHead>Severity</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Population Impact</TableHead>
-                  <TableHead>Linked Assessments</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredIncidents.map((incident: any) => {
-                  const impact = formatPopulationImpact(incident.populationImpact || {})
-                  
-                  return (
-                    <React.Fragment key={incident.id}>
-                    <TableRow 
-                      className={`hover:bg-gray-50 ${
-                        selectedIncidentId === incident.id ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{incident.type}</div>
-                          {incident.subType && (
-                            <div className="text-sm text-gray-500">{incident.subType}</div>
-                          )}
+      <DataTable
+        title={`Incidents (${filteredIncidents.length})`}
+        description="Manage disaster incidents"
+        columns={incidentColumns}
+        data={filteredIncidents}
+        loading={false}
+        emptyMessage={state.filters.location || state.filters.status || state.filters.severity || state.filters.type ? 'No incidents match your filters' : 'No incidents created yet'}
+        emptyType={state.filters.location || state.filters.status || state.filters.severity || state.filters.type ? 'search' : 'data'}
+        expandable={true}
+        renderExpanded={(incident: any) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium text-sm flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-600" />
+                  Preliminary Assessments ({incident.preliminaryAssessments?.length || 0})
+                </h4>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => handleLinkAssessmentClick(incident)}
+                >
+                  <Link className="h-3 w-3 mr-1" />
+                  Manage Links
+                </Button>
+              </div>
+              {(incident.preliminaryAssessments?.length || 0) > 0 ? (
+                <div className="space-y-1 text-xs">
+                  {incident.preliminaryAssessments?.map((assessment: any, idx: number) => (
+                    <div key={idx} className="flex justify-between items-center p-2 bg-white rounded border">
+                      <div>
+                        <div className="font-medium">{assessment.reportingLGA}, {assessment.reportingWard}</div>
+                        <div className="text-xs text-gray-500">
+                          {assessment.reportingDate ? new Date(assessment.reportingDate).toLocaleDateString() : 'N/A'} •
+                          {assessment.numberLivesLost || 0} lives lost •
+                          {assessment.numberDisplaced || 0} displaced
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">
-                          {incident.name || `${incident.type} Event ${incident.id.slice(-3)}`}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={severityColors[incident.severity as keyof typeof severityColors]}>
-                          {incident.severity}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={statusColors[incident.status as keyof typeof statusColors]}>
-                          {incident.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Users className="h-3 w-3 text-gray-400" />
-                            <span>Population: {impact.totalPopulation}</span>
-                          </div>
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span>Lives Lost: {impact.livesLost}</span>
-                            <span>Injured: {impact.injured}</span>
-                            <span>Entities: {impact.affectedEntities}</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          {/* Preliminary Assessments */}
-                          <div className="flex items-center gap-1">
-                            <FileText className="h-3 w-3 text-blue-600" />
-                            <span className="text-xs font-medium">
-                              Prelim: {incident.preliminaryAssessments?.length || 0}
-                            </span>
-                            {(incident.preliminaryAssessments?.length || 0) > 0 && (
-                              <Badge variant="secondary" className="text-xs">
-                                Linked
-                              </Badge>
-                            )}
-                          </div>
-                          {/* Rapid Assessments */}
-                          <div className="flex items-center gap-1">
-                            <Activity className="h-3 w-3 text-green-600" />
-                            <span className="text-xs">
-                              Rapid: {incident.rapidAssessments?.length || 0}
-                            </span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => router.push(`/coordinator/incidents/${incident.id}`)}
-                            className="text-xs"
-                          >
-                            View Details
-                          </Button>
-                          {/* Expand/Collapse Button */}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              toggleRowExpansion(incident.id)
-                            }}
-                          >
-                            {state.expandedRows.has(incident.id) ? (
-                              <ChevronDown className="h-3 w-3" />
-                            ) : (
-                              <ChevronRight className="h-3 w-3" />
-                            )}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    
-                    {/* Expanded Row Content */}
-                    {state.expandedRows.has(incident.id) && (
-                      <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={7} className="p-0">
-                          <div className="px-4 py-3 bg-gray-50 border-t">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {/* Preliminary Assessments */}
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <h4 className="font-medium text-sm flex items-center gap-2">
-                                    <FileText className="h-4 w-4 text-blue-600" />
-                                    Preliminary Assessments ({incident.preliminaryAssessments?.length || 0})
-                                  </h4>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-xs"
-                                    onClick={() => handleLinkAssessmentClick(incident)}
-                                  >
-                                    <Link className="h-3 w-3 mr-1" />
-                                    Manage Links
-                                  </Button>
-                                </div>
-                                {(incident.preliminaryAssessments?.length || 0) > 0 ? (
-                                  <div className="space-y-1 text-xs">
-                                    {incident.preliminaryAssessments?.map((assessment: any, idx: number) => (
-                                      <div key={idx} className="flex justify-between items-center p-2 bg-white rounded border">
-                                        <div>
-                                          <div className="font-medium">{assessment.reportingLGA}, {assessment.reportingWard}</div>
-                                          <div className="text-xs text-gray-500">
-                                            {assessment.reportingDate ? new Date(assessment.reportingDate).toLocaleDateString() : 'N/A'} •
-                                            {assessment.numberLivesLost || 0} lives lost •
-                                            {assessment.numberDisplaced || 0} displaced
-                                          </div>
-                                        </div>
-                                        <Badge variant="secondary" className="text-xs">
-                                          Linked
-                                        </Badge>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center justify-center p-4 bg-gray-50 rounded border-2 border-dashed border-gray-300">
-                                    <span className="text-xs text-gray-500">No preliminary assessments linked</span>
-                                  </div>
-                                )}
-                              </div>
-                              
-                              {/* Additional Details */}
-                              <div className="space-y-2">
-                                <h4 className="font-medium text-sm">Additional Details</h4>
-                                <div className="space-y-1 text-xs">
-                                  <div className="flex justify-between">
-                                    <span>Description:</span>
-                                    <span className="text-right max-w-48 truncate">{incident.description}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>Location:</span>
-                                    <span className="text-right">
-                                      <div className="flex items-center gap-1">
-                                        <MapPin className="h-3 w-3 text-gray-400" />
-                                        {incident.location}
-                                      </div>
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>Sub Type:</span>
-                                    <span>{incident.subType || 'N/A'}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>Created:</span>
-                                    <span className="text-right">
-                                      {new Date(incident.createdAt).toLocaleDateString()} {new Date(incident.createdAt).toLocaleTimeString()}
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>Created By:</span>
-                                    <span>{incident.createdByUser?.name || incident.createdByUser?.email || incident.createdBy}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>Rapid Assessments:</span>
-                                    <span>{incident.rapidAssessments?.length || 0}</span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span>Response Deliveries:</span>
-                                    <span>{incident.responseDeliveries?.length || 0}</span>
-                                  </div>
-                                  <div className="flex justify-between items-center">
-                                    <span>Status:</span>
-                                    <Select
-                                      value={incident.status}
-                                      onValueChange={(value) => handleStatusChange(incident.id, value, retryIncidents)}
-                                      disabled={state.isUpdating}
-                                    >
-                                      <SelectTrigger className="w-24 h-6 text-xs">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="ACTIVE">Active</SelectItem>
-                                        <SelectItem value="CONTAINED">Contained</SelectItem>
-                                        <SelectItem value="RESOLVED">Resolved</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </React.Fragment>
-                  )
-                })}
-              </TableBody>
-            </Table>
-                  )}
-                </CardContent>
-              </Card>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        Linked
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center p-4 bg-gray-50 rounded border-2 border-dashed border-gray-300">
+                  <span className="text-xs text-gray-500">No preliminary assessments linked</span>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm">Additional Details</h4>
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between">
+                  <span>Description:</span>
+                  <span className="text-right max-w-48 truncate">{incident.description}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Location:</span>
+                  <span className="text-right">
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3 text-gray-400" />
+                      {incident.location}
+                    </div>
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Sub Type:</span>
+                  <span>{incident.subType || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Created:</span>
+                  <span className="text-right">
+                    {new Date(incident.createdAt).toLocaleDateString()} {new Date(incident.createdAt).toLocaleTimeString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Created By:</span>
+                  <span>{incident.createdByUser?.name || incident.createdByUser?.email || incident.createdBy}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Rapid Assessments:</span>
+                  <span>{incident.rapidAssessments?.length || 0}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Response Deliveries:</span>
+                  <span>{incident.responseDeliveries?.length || 0}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Status:</span>
+                  <Select
+                    value={incident.status}
+                    onValueChange={(value) => handleStatusChange(incident.id, value, retryIncidents)}
+                    disabled={state.isUpdating}
+                  >
+                    <SelectTrigger className="w-24 h-6 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ACTIVE">Active</SelectItem>
+                      <SelectItem value="CONTAINED">Contained</SelectItem>
+                      <SelectItem value="RESOLVED">Resolved</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        actions={[
+          {
+            label: 'View Details',
+            onClick: (incidentId: string) => router.push(`/coordinator/incidents/${incidentId}`),
+            icon: FileText
+          },
+          {
+            label: 'Link Assessment',
+            onClick: (incidentId: string) => {
+              const incident = filteredIncidents.find((inc: any) => inc.id === incidentId)
+              if (incident) handleLinkAssessmentClick(incident)
+            },
+            icon: Link
+          },
+          {
+            label: 'Delete',
+            onClick: (incidentId: string) => {},
+            icon: Trash2,
+            variant: 'destructive' as const
+          }
+        ]}
+        headerActions={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={retryIncidents}
+            disabled={isLoadingIncidents}
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoadingIncidents ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        }
+      />
                   </>
                 )
               }}

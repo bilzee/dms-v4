@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { CheckCircle, Shield, Star, Info } from 'lucide-react';
+import { getBadgeClasses } from '@/components/shared/StatusBadge';
 import {
   Tooltip,
   TooltipContent,
@@ -48,20 +49,20 @@ export function VerifiedBadge({
 
   // Determine colors and icon based on verification method
   let colors, Icon, text;
-  
+
   switch (verificationMethod) {
     case 'auto':
-      colors = 'bg-blue-100 text-blue-800 border-blue-300';
+      colors = getBadgeClasses('verification', 'AUTO_VERIFIED');
       Icon = Shield;
       text = 'Auto-Verified';
       break;
     case 'mixed':
-      colors = 'bg-purple-100 text-purple-800 border-purple-300';
+      colors = getBadgeClasses('verification', 'PUBLISHED');
       Icon = CheckCircle;
       text = 'Verified';
       break;
     default:
-      colors = 'bg-green-100 text-green-800 border-green-300';
+      colors = getBadgeClasses('verification', 'VERIFIED');
       Icon = Star;
       text = 'Verified';
       break;

@@ -5,8 +5,9 @@ import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '@/lib/api'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Activity, Database, Users, HardDrive, Clock, Shield, RefreshCw, Server } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -36,11 +37,6 @@ function SystemHealthContent() {
     return 'destructive' as const
   }
 
-  const getStatusColor = (status: string) => {
-    if (status === 'Healthy') return 'text-green-600'
-    if (status === 'Degraded') return 'text-yellow-600'
-    return 'text-red-600'
-  }
 
   return (
     <div className="container mx-auto py-8 space-y-6">
@@ -62,116 +58,54 @@ function SystemHealthContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Database Status</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <>
-                <div className="flex items-center gap-2">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full",
-                    health?.databaseSync === 'Healthy' ? "bg-green-500" :
-                    health?.databaseSync === 'Degraded' ? "bg-yellow-500" : "bg-red-500"
-                  )} />
-                  <span className={cn("text-2xl font-bold", getStatusColor(health?.databaseSync || 'Down'))}>
-                    {health?.databaseSync || 'Unknown'}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">PostgreSQL connection status</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+      <StatCardGrid columns={5} gap="lg">
+        <StatCard
+          label="Database Status"
+          value={health?.databaseSync || 'Unknown'}
+          severity={health?.databaseSync === 'Healthy' ? 'success' : health?.databaseSync === 'Degraded' ? 'warning' : 'critical'}
+          icon={Database}
+          loading={loading}
+        />
+        <StatCard
+          label="API Response Time"
+          value={`${health?.apiResponseTime || 0}ms`}
+          severity="info"
+          icon={Activity}
+          loading={loading}
+        />
+        <StatCard
+          label="Active Users (24h)"
+          value={health?.activeUsers || 0}
+          severity="info"
+          icon={Users}
+          loading={loading}
+        />
+        <StatCard
+          label="Storage Usage"
+          value={`${health?.storageUsage ?? 0}%`}
+          severity="neutral"
+          icon={HardDrive}
+          loading={loading}
+        />
+        <StatCard
+          label="Last Backup"
+          value={health?.lastBackup || 'N/A'}
+          severity="neutral"
+          icon={Clock}
+          loading={loading}
+        />
+      </StatCardGrid>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">API Response Time</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <>
-                <span className="text-2xl font-bold">{health?.apiResponseTime || 0}ms</span>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {(health?.apiResponseTime || 0) < 200 ? 'Excellent' :
-                   (health?.apiResponseTime || 0) < 500 ? 'Good' :
-                   (health?.apiResponseTime || 0) < 1000 ? 'Fair' : 'Slow'}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Users (24h)</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <>
-                <span className="text-2xl font-bold">{health?.activeUsers || 0}</span>
-                <p className="text-xs text-muted-foreground mt-1">Users active in last 24 hours</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Storage Usage</CardTitle>
-            <HardDrive className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <>
-                <span className="text-2xl font-bold">{health?.storageUsage ?? 0}%</span>
-                <p className="text-xs text-muted-foreground mt-1">Disk space utilization</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Last Backup</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <>
-                <span className="text-2xl font-bold">{health?.lastBackup || 'N/A'}</span>
-                <p className="text-xs text-muted-foreground mt-1">Most recent database backup</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <Badge variant="default">Secure</Badge>
-            <p className="text-xs text-muted-foreground mt-1">All security checks passing</p>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="max-w-xs">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Security</CardTitle>
+          <Shield className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <Badge variant="default">Secure</Badge>
+          <p className="text-xs text-muted-foreground mt-1">All security checks passing</p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

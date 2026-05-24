@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
@@ -424,9 +425,7 @@ export function DonorProfile({ donorId }: DonorProfileProps) {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Status</span>
-                  <Badge className={donor?.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                    {donor?.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
+                  <StatusBadge status={donor?.isActive ? 'ONLINE' : 'OFFLINE'} domain="system" label={donor?.isActive ? 'Active' : 'Inactive'} />
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Member Since</span>

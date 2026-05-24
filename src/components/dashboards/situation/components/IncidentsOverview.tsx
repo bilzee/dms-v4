@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { apiGet } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { getBadgeClasses } from '@/components/shared/StatusBadge';
 import {
   Activity,
   Droplets,
@@ -298,12 +299,12 @@ export function IncidentsOverview({ className }: IncidentsOverviewProps) {
               
               <div className="flex items-center gap-2">
                 {summary.activeCount > 0 && (
-                  <Badge variant="destructive" className="text-xs h-5">
+                  <Badge variant="outline" className={cn("text-xs h-5", getBadgeClasses('incident', 'ACTIVE'))}>
                     {summary.activeCount} Active
                   </Badge>
                 )}
                 {summary.containedCount > 0 && (
-                  <Badge variant="secondary" className="text-xs h-5 text-yellow-700 bg-yellow-100">
+                  <Badge variant="outline" className={cn("text-xs h-5", getBadgeClasses('incident', 'CONTAINED'))}>
                     {summary.containedCount} Contained
                   </Badge>
                 )}

@@ -6,6 +6,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { useCommitmentStats } from '@/hooks/use-commitment-stats'
 import { apiGet } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
@@ -167,68 +169,41 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* At-a-Glance Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {/* System Status */}
-        <Card className="border-green-200/50 bg-green-50/30 dark:bg-green-950/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">System Status</p>
-                <p className={`text-2xl font-bold ${systemHealth?.databaseSync !== 'Down' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{systemHealth?.databaseSync !== 'Down' ? 'Online' : 'Offline'}</p>
-              </div>
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-            </div>
-          </CardContent>
-        </Card>
+      <StatCardGrid columns={4}>
+        <StatCard
+          label="System Status"
+          value={systemHealth?.databaseSync !== 'Down' ? 'Online' : 'Offline'}
+          severity="success"
+          icon={Activity}
+        />
 
-        {/* Active Incidents */}
         {hasRole('COORDINATOR') && (
-          <Card className="border-orange-200/50 bg-orange-50/30 dark:bg-orange-950/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Active Incidents</p>
-                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{activeIncidents}</p>
-                </div>
-                <AlertTriangle className="h-8 w-8 text-orange-600 dark:text-orange-400 opacity-50" />
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            label="Active Incidents"
+            value={activeIncidents}
+            severity="critical"
+            icon={AlertTriangle}
+          />
         )}
 
-        {/* Available Commitments */}
         {hasRole('RESPONDER') && (
-          <Card className="border-blue-200/50 bg-blue-50/30 dark:bg-blue-950/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Available Commitments</p>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {stats?.availableCommitments || 0}
-                  </p>
-                </div>
-                <HandHeart className="h-8 w-8 text-blue-600 dark:text-blue-400 opacity-50" />
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            label="Available Commitments"
+            value={stats?.availableCommitments || 0}
+            severity="info"
+            icon={HandHeart}
+          />
         )}
 
-        {/* Pending Verifications */}
         {hasPermission('VERIFY_ASSESSMENTS') && (
-          <Card className="border-purple-200/50 bg-purple-50/30 dark:bg-purple-950/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Pending Verifications</p>
-                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{pendingVerifications}</p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-purple-600 dark:text-purple-400 opacity-50" />
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            label="Pending Verifications"
+            value={pendingVerifications}
+            severity="warning"
+            icon={Clock}
+          />
         )}
-      </div>
+      </StatCardGrid>
 
       {/* Key Monitoring Widgets */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

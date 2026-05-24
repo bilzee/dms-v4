@@ -2,13 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { DataCardList, type ExpandedCardProps } from '@/components/shared/DataCardList'
+import { type SeverityLevel } from '@/lib/utils/status-colors'
 import { PlusCircle, FileText, Clock, CheckCircle, AlertTriangle, Filter, X, MapPin, Calendar, User, Eye, Users, Home } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -235,143 +238,64 @@ export default function PreliminaryAssessmentPage() {
           )}
         </Card>
 
-        {/* Statistics */}
-        <div className="grid gap-6 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Assessments</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{filteredAssessments.length}</div>
-              <p className="text-xs text-muted-foreground">
-                Filtered assessments
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Lives Affected</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {filteredAssessments.reduce((sum, a) => sum + (a.numberLivesLost || 0), 0)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Total lives lost
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">People Displaced</CardTitle>
-              <Home className="h-4 w-4 text-muted-foreground text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {filteredAssessments.reduce((sum, a) => sum + (a.numberDisplaced || 0), 0)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Total displaced
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Houses Affected</CardTitle>
-              <Home className="h-4 w-4 text-muted-foreground text-orange-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">
-                {filteredAssessments.reduce((sum, a) => sum + (a.numberHousesAffected || 0), 0)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Total houses affected
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <StatCardGrid columns={4} gap="lg">
+          <StatCard label="Total Assessments" value={filteredAssessments.length} severity="info" icon={FileText} />
+          <StatCard label="Lives Affected" value={filteredAssessments.reduce((sum, a) => sum + (a.numberLivesLost || 0), 0)} severity="critical" icon={Users} />
+          <StatCard label="People Displaced" value={filteredAssessments.reduce((sum, a) => sum + (a.numberDisplaced || 0), 0)} severity="warning" icon={Home} />
+          <StatCard label="Houses Affected" value={filteredAssessments.reduce((sum, a) => sum + (a.numberHousesAffected || 0), 0)} severity="high" icon={Home} />
+        </StatCardGrid>
 
-        {/* Assessments Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Preliminary Assessments</CardTitle>
-            <CardDescription>
-              Your preliminary disaster impact assessments
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading assessments...</p>
-              </div>
-            ) : filteredAssessments.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">
-                  {assessments.length === 0 
-                    ? "No preliminary assessments found. Create your first assessment!" 
-                    : "No assessments match the current filters."
-                  }
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredAssessments.map((assessment) => (
-                  <div 
-                    key={assessment.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                  >
-                    <div className="flex items-center gap-4">
-                      <FileText className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium">Preliminary Assessment</h3>
-                          {getStatusBadge(assessment)}
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />
-                            <span>{assessment.reportingLGA || 'Unknown LGA'}, {assessment.reportingWard || 'Unknown Ward'}</span>
-                          </div>
-                          {assessment.incident && (
-                            <div className="flex items-center gap-1">
-                              <span className="font-medium">Incident:</span> 
-                              <span>{formatIncidentDisplay(assessment.incident)}</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            <span>{new Date(assessment.createdAt).toLocaleDateString()} at {new Date(assessment.createdAt).toLocaleTimeString()}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <User className="w-3 h-3" />
-                            <span>{assessment.reportingAgent || 'Unknown'}</span>
-                          </div>
-                        </div>
-                      </div>
+        <DataCardList
+          title="Preliminary Assessments"
+          description="Your preliminary disaster impact assessments"
+          data={filteredAssessments}
+          loading={isLoading}
+          emptyMessage={assessments.length === 0 ? "No preliminary assessments found. Create your first assessment!" : "No assessments match the current filters."}
+          getSeverity={() => 'success' as SeverityLevel}
+          renderCard={(assessment: any, { isExpanded, toggleExpand }: ExpandedCardProps) => (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <FileText className="w-5 h-5 text-blue-600" />
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-medium">Preliminary Assessment</h3>
+                    {getStatusBadge(assessment)}
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      <span>{assessment.reportingLGA || 'Unknown LGA'}, {assessment.reportingWard || 'Unknown Ward'}</span>
                     </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Link href={`/assessor/preliminary-assessment/${assessment.id}`}>
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4 mr-1" />
-                          View Details
-                        </Button>
-                      </Link>
+                    {assessment.incident && (
+                      <div className="flex items-center gap-1">
+                        <span className="font-medium">Incident:</span>
+                        <span>{formatIncidentDisplay(assessment.incident)}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      <span>{new Date(assessment.createdAt).toLocaleDateString()} at {new Date(assessment.createdAt).toLocaleTimeString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <User className="w-3 h-3" />
+                      <span>{assessment.reportingAgent || 'Unknown'}</span>
                     </div>
                   </div>
-                ))}
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <div className="flex items-center gap-2">
+                <Link href={`/assessor/preliminary-assessment/${assessment.id}`}>
+                  <Button variant="outline" size="sm">
+                    <Eye className="h-4 w-4 mr-1" />
+                    View Details
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
+        />
       </div>
     </RoleBasedRoute>
   )

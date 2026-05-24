@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { 
@@ -184,72 +186,12 @@ export default function DonorReportsPage() {
           </div>
         </div>
 
-        {/* Report Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Assigned Entities</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{entities.length}</div>
-              <p className="text-xs text-muted-foreground">
-                Available for reporting
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Population</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {entities.reduce((total, entity) => 
-                  total + (entity.demographics?.population || 0), 0
-                ).toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                People served
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Assessments</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {entities.reduce((total, entity) => 
-                  total + (entity.stats?.verifiedAssessments || 0), 0
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Completed assessments
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Commitments</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {entities.reduce((total, entity) => 
-                  total + (entity.stats?.commitments || 0), 0
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Total commitments
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <StatCardGrid columns={4} gap="lg">
+          <StatCard label="Assigned Entities" value={entities.length} severity="info" icon={Building} />
+          <StatCard label="Total Population" value={entities.reduce((total, entity) => total + (entity.demographics?.population || 0), 0).toLocaleString()} severity="info" icon={Users} />
+          <StatCard label="Total Assessments" value={entities.reduce((total, entity) => total + (entity.stats?.verifiedAssessments || 0), 0)} severity="info" icon={FileText} />
+          <StatCard label="Active Commitments" value={entities.reduce((total, entity) => total + (entity.stats?.commitments || 0), 0)} severity="success" icon={BarChart3} />
+        </StatCardGrid>
 
         {/* Report Configuration */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useVerificationStore } from '@/stores/verification.store';
 import { useAuth } from '@/hooks/useAuth';
 import { getAuthHeaders } from '@/lib/api';
+import { getBadgeClasses } from '@/components/shared/StatusBadge';
 
 interface UseRealTimeVerificationOptions {
   enabled?: boolean;
@@ -354,18 +355,7 @@ export function useConnectionStatus() {
   const lastUpdate = useVerificationStore(state => state.lastUpdate);
 
   const getStatusColor = useCallback((status: string) => {
-    switch (status) {
-      case 'connected':
-        return 'text-green-500';
-      case 'connecting':
-        return 'text-yellow-500';
-      case 'disconnected':
-        return 'text-orange-500';
-      case 'error':
-        return 'text-red-500';
-      default:
-        return 'text-gray-500';
-    }
+    return getBadgeClasses('system', status);
   }, []);
 
   const getStatusText = useCallback((status: string) => {

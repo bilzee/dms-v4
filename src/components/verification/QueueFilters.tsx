@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar, Filter, X, Save, RotateCcw } from 'lucide-react';
 import { VerificationFilters } from '@/stores/verification.store';
 import { cn } from '@/lib/utils';
+import { getDotColor } from '@/components/shared/StatusBadge';
 import { format } from 'date-fns';
 
 interface QueueFiltersProps {
@@ -33,10 +34,10 @@ const ASSESSMENT_TYPES = [
 
 // Priority levels
 const PRIORITY_LEVELS = [
-  { value: 'CRITICAL', label: 'Critical', color: 'bg-red-500' },
-  { value: 'HIGH', label: 'High', color: 'bg-orange-500' },
-  { value: 'MEDIUM', label: 'Medium', color: 'bg-yellow-500' },
-  { value: 'LOW', label: 'Low', color: 'bg-green-500' }
+  { value: 'CRITICAL', label: 'Critical' },
+  { value: 'HIGH', label: 'High' },
+  { value: 'MEDIUM', label: 'Medium' },
+  { value: 'LOW', label: 'Low' }
 ];
 
 // Status options
@@ -257,8 +258,8 @@ export function QueueFilters({
                     }
                   />
                   <div className="flex items-center gap-2">
-                    <div className={cn('w-3 h-3 rounded-full', priority.color)} />
-                    <Label 
+                    <div className={cn('w-3 h-3 rounded-full', getDotColor('severity', priority.value))} />
+                    <Label
                       htmlFor={`priority-${priority.value}`}
                       className="text-sm font-normal cursor-pointer"
                     >

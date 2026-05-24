@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/shared/StatCard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -179,7 +180,7 @@ export function EntityInsightsCard({ entityId, compact = false }: EntityInsights
     <Card 
       className={cn(
         compact ? 'h-48' : 'h-64', 
-        'cursor-pointer transition-all duration-200 hover:shadow-lg border-l-4 border-l-blue-500',
+        'cursor-pointer transition-all duration-200 hover:shadow-lg bg-blue-500/5 border-blue-500/15',
         isHovered && 'scale-105'
       )}
       onClick={handleViewDetails}
@@ -383,41 +384,30 @@ export function EntityMetrics({ entitiesData, isLoading }: EntityMetricsProps) {
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Entity Performance</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Entities</p>
-                <p className="text-2xl font-bold">{totalEntities}</p>
-              </div>
-              <MapPin className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">With Assessments</p>
-                <p className="text-2xl font-bold text-green-600">{entitiesWithAssessments}</p>
-              </div>
-              <FileText className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">With Commitments</p>
-                <p className="text-2xl font-bold text-purple-600">{entitiesWithCommitments}</p>
-              </div>
-              <Activity className="h-8 w-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          label="Total Entities"
+          value={totalEntities}
+          severity="info"
+          variant="tinted"
+          icon={MapPin}
+          loading={isLoading}
+        />
+        <StatCard
+          label="With Assessments"
+          value={entitiesWithAssessments}
+          severity="success"
+          variant="tinted"
+          icon={FileText}
+          loading={isLoading}
+        />
+        <StatCard
+          label="With Commitments"
+          value={entitiesWithCommitments}
+          severity="success"
+          variant="tinted"
+          icon={Activity}
+          loading={isLoading}
+        />
       </div>
     </div>
   )

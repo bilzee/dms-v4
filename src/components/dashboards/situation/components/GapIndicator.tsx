@@ -4,6 +4,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, AlertTriangle, AlertCircle, Info } from 'lucide-react';
+import { getBadgeClasses, getDotColor } from '@/components/shared/StatusBadge';
 
 interface GapIndicatorProps {
   hasGap: boolean;
@@ -14,43 +15,26 @@ interface GapIndicatorProps {
   className?: string;
 }
 
-// Severity configuration
 const severityConfig = {
   CRITICAL: {
-    color: 'bg-red-600 border-2 border-red-300 shadow-red-200',
-    textColor: 'text-red-800',
-    bgColor: 'bg-red-50',
-    borderColor: 'border-red-300',
     label: 'Critical Gap',
     description: 'Immediate attention required',
     icon: AlertTriangle,
     animation: 'animate-pulse'
   },
   HIGH: {
-    color: 'bg-orange-600 border-2 border-orange-300 shadow-orange-200',
-    textColor: 'text-orange-800',
-    bgColor: 'bg-orange-50',
-    borderColor: 'border-orange-300',
     label: 'High Priority Gap',
     description: 'Urgent attention needed',
     icon: AlertCircle,
     animation: 'animate-pulse'
   },
   MEDIUM: {
-    color: 'bg-yellow-600 border-2 border-yellow-300 shadow-yellow-200',
-    textColor: 'text-yellow-800',
-    bgColor: 'bg-yellow-50',
-    borderColor: 'border-yellow-300',
     label: 'Medium Gap',
     description: 'Attention needed',
     icon: Info,
     animation: ''
   },
   LOW: {
-    color: 'bg-blue-600 border-2 border-blue-300 shadow-blue-200',
-    textColor: 'text-blue-800',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-300',
     label: 'Low Gap',
     description: 'Monitor and address',
     icon: Info,
@@ -102,11 +86,15 @@ export function GapIndicator({
   
   const IconComponent = hasGap ? severityConfig[severity].icon : CheckCircle;
   
+  const dotClasses = getDotColor('severity', severity);
+  const badgeClasses = getBadgeClasses('severity', severity);
+
   if (!hasGap) {
     return (
       <div className={cn("flex items-center gap-2", className)}>
         <div className={cn(
-          "rounded-full bg-green-600 border-2 border-green-300 shadow-sm",
+          "rounded-full border-2 border-green-300 shadow-sm",
+          getDotColor('severity', 'LOW'),
           sizeClasses.dot
         )} aria-hidden="true" />
         <IconComponent className={cn(
@@ -124,6 +112,14 @@ export function GapIndicator({
 
   const config = severityConfig[severity];
 
+  const severityTextColors: Record<string, string> = {
+    CRITICAL: 'text-red-800',
+    HIGH: 'text-orange-800',
+    MEDIUM: 'text-yellow-800',
+    LOW: 'text-green-800'
+  };
+  const textColor = severityTextColors[severity] || 'text-gray-800';
+
   return (
     <div className={cn(
       "flex items-center gap-2",
@@ -132,21 +128,22 @@ export function GapIndicator({
     )}>
       <div className={cn(
         "rounded-full shadow-md",
-        config.color,
+        dotClasses,
+        "border-2",
         config.animation,
         sizeClasses.dot
       )} aria-hidden="true" />
       
       <IconComponent className={cn(
         "flex-shrink-0",
-        config.textColor,
+        textColor,
         sizeClasses.icon,
         config.animation && config.animation
       )} />
       
       {showLabel && (
         <div className="flex flex-col">
-          <span className={cn("font-semibold", config.textColor, sizeClasses.text)}>
+          <span className={cn("font-semibold", textColor, sizeClasses.text)}>
             {config.label}
           </span>
           {field && (
@@ -162,9 +159,7 @@ export function GapIndicator({
           variant="outline" 
           className={cn(
             sizeClasses.badge,
-            config.textColor,
-            config.borderColor,
-            config.bgColor,
+            badgeClasses,
             "font-semibold shadow-sm"
           )}
         >

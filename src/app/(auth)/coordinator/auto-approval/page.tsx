@@ -44,9 +44,6 @@ export default function AutoApprovalManagement() {
                   Back to Dashboard
                 </Button>
               </Link>
-              <Badge variant="default" className="bg-purple-100 text-purple-800 border-purple-200">
-                Story 6.2
-              </Badge>
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Auto-Approval Management</h1>
             <p className="text-gray-600 mt-2">

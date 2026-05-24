@@ -13,6 +13,7 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -74,12 +75,6 @@ interface TimelineItemData {
 }
 
 // Priority and verification status styling
-const PRIORITY_STYLES = {
-  CRITICAL: 'bg-red-100 text-red-800 border-red-200',
-  HIGH: 'bg-orange-100 text-orange-800 border-orange-200',
-  MEDIUM: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  LOW: 'bg-green-100 text-green-800 border-green-200',
-} as const;
 
 const VERIFICATION_ICONS = {
   DRAFT: AlertCircle,
@@ -201,12 +196,10 @@ export function AssessmentTimeline({
           <CardContent className="p-4">
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Badge 
-                  variant="outline" 
-                  className={PRIORITY_STYLES[item.assessment.priority]}
-                >
-                  {item.assessment.priority}
-                </Badge>
+                <StatusBadge 
+                  status={item.assessment.priority} 
+                  domain="severity" 
+                />
                 <Badge variant="outline">
                   {item.assessment.type}
                 </Badge>

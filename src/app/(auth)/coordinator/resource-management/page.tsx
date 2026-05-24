@@ -44,9 +44,6 @@ export default function ResourceDonationManagement() {
                   Back to Dashboard
                 </Button>
               </Link>
-              <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
-                Story 6.3
-              </Badge>
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Resource & Donation Management</h1>
             <p className="text-gray-600 mt-2">

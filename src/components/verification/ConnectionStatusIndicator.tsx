@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useConnectionStatus, useRealTimeVerification, useVerificationMetrics } from '@/hooks/useRealTimeVerification';
 import { cn } from '@/lib/utils';
+import { getBadgeClasses } from '@/components/shared/StatusBadge';
 
 interface ConnectionStatusIndicatorProps {
   className?: string;
@@ -65,13 +66,7 @@ export function ConnectionStatusIndicator({
         
         <Badge 
           variant="outline" 
-          className={cn(
-            'text-xs',
-            status === 'connected' && 'border-green-500 text-green-700 bg-green-50',
-            status === 'connecting' && 'border-yellow-500 text-yellow-700 bg-yellow-50',
-            status === 'disconnected' && 'border-orange-500 text-orange-700 bg-orange-50',
-            status === 'error' && 'border-red-500 text-red-700 bg-red-50'
-          )}
+          className={cn('text-xs', getBadgeClasses('system', status === 'error' ? 'ERROR' : status))}
         >
           {statusText}
         </Badge>

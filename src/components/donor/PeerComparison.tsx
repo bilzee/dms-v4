@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -280,45 +282,35 @@ export function PeerComparison({
         </CardHeader>
       </Card>
 
-      {/* Overall Performance Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">#{userRanking.rank}</div>
-            <p className="text-sm text-gray-600">Current Rank</p>
-            <Badge variant="secondary" className="mt-1">
-              {userPercentile.toFixed(1)}% percentile
-            </Badge>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {metrics.filter(m => m.trend === 'above').length}
-            </div>
-            <p className="text-sm text-gray-600">Above Average</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-amber-600">
-              {metrics.filter(m => m.trend === 'average').length}
-            </div>
-            <p className="text-sm text-gray-600">Average</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">
-              {metrics.filter(m => m.trend === 'below').length}
-            </div>
-            <p className="text-sm text-gray-600">Below Average</p>
-          </CardContent>
-        </Card>
-      </div>
+      <StatCardGrid columns={4}>
+        <StatCard
+          label="Current Rank"
+          value={`#${userRanking.rank}`}
+          severity="info"
+          icon={Target}
+        />
+
+        <StatCard
+          label="Above Average"
+          value={metrics.filter(m => m.trend === 'above').length}
+          severity="success"
+          icon={TrendingUp}
+        />
+
+        <StatCard
+          label="Average"
+          value={metrics.filter(m => m.trend === 'average').length}
+          severity="neutral"
+          icon={Equal}
+        />
+
+        <StatCard
+          label="Below Average"
+          value={metrics.filter(m => m.trend === 'below').length}
+          severity="warning"
+          icon={TrendingDown}
+        />
+      </StatCardGrid>
 
       {/* Performance Chart */}
       <Card>

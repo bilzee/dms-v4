@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PlusCircle, Activity, FileText, Clock, CheckCircle, AlertTriangle } from 'lucide-react'
@@ -161,65 +163,32 @@ export default function AssessorDashboard() {
         </div>
 
         {/* Statistics */}
-        <div className="grid gap-6 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Assessments</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{assessments.length}</div>
-              <p className="text-xs text-muted-foreground">
-                All assessments (submitted + drafts)
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Submitted</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {assessments.filter(a => a.status === 'SUBMITTED').length}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Submitted assessments
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Drafts</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {assessments.filter(a => a.status === 'DRAFT').length}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Draft assessments
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Critical Gaps</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {assessments.reduce((sum, a) => sum + (a.gapCount || 0), 0)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Total gaps identified
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <StatCardGrid columns={4}>
+          <StatCard
+            label="Total Assessments"
+            value={assessments.length}
+            severity="info"
+            icon={FileText}
+          />
+          <StatCard
+            label="Submitted"
+            value={assessments.filter(a => a.status === 'SUBMITTED').length}
+            severity="success"
+            icon={CheckCircle}
+          />
+          <StatCard
+            label="Drafts"
+            value={assessments.filter(a => a.status === 'DRAFT').length}
+            severity="warning"
+            icon={Clock}
+          />
+          <StatCard
+            label="Critical Gaps"
+            value={assessments.reduce((sum, a) => sum + (a.gapCount || 0), 0)}
+            severity="critical"
+            icon={AlertTriangle}
+          />
+        </StatCardGrid>
 
         {/* Assessments Table */}
         <Card>

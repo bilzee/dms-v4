@@ -4,42 +4,35 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useVerificationDeliveries } from '@/hooks/useVerificationDeliveries'
 import { apiPost } from '@/lib/api'
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { 
-  Package, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
+import {
+  Package,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
   Filter,
   Eye,
   MapPin,
   Calendar,
-  User,
   Loader2,
   Clock
 } from 'lucide-react'
+import { DataTable, type ColumnDef, type RowAction } from '@/components/shared/DataTable'
 
 interface DeliveryQueueItem {
   id: string
@@ -93,8 +86,23 @@ interface DeliveryQueueItem {
   updatedAt: string
 }
 
+const getPriorityBadge = (priority: string) => {
+  const variants: Record<string, 'default' | 'destructive' | 'outline' | 'secondary'> = {
+    'CRITICAL': 'destructive',
+    'HIGH': 'destructive',
+    'MEDIUM': 'default',
+    'LOW': 'secondary'
+  }
+  return <Badge variant={variants[priority] || 'default'}>{priority}</Badge>
+}
+
+const formatDateTime = (dateString: string) => {
+  return new Date(dateString).toLocaleString()
+}
+
 export default function DeliveryVerificationQueuePage() {
   const [selectedDelivery, setSelectedDelivery] = useState<DeliveryQueueItem | null>(null)
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
   const [verificationAction, setVerificationAction] = useState<'approve' | 'reject' | 'request_info'>('approve')
   const [rejectionReason, setRejectionReason] = useState('')
   const [feedback, setFeedback] = useState('')
@@ -171,23 +179,94 @@ export default function DeliveryVerificationQueuePage() {
     })
   }
 
-  const getPriorityBadge = (priority: string) => {
-    const variants: Record<string, 'default' | 'destructive' | 'outline' | 'secondary'> = {
-      'CRITICAL': 'destructive',
-      'HIGH': 'destructive',
-      'MEDIUM': 'default',
-      'LOW': 'secondary'
+  const handleReviewDelivery = (deliveryId: string) => {
+    const delivery = queueData?.data?.find((d: DeliveryQueueItem) => d.id === deliveryId)
+    if (delivery) {
+      setSelectedDelivery(delivery)
+      setReviewDialogOpen(true)
     }
-    return <Badge variant={variants[priority] || 'default'}>{priority}</Badge>
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString()
-  }
+  const deliveryColumns: ColumnDef<DeliveryQueueItem>[] = [
+    {
+      key: 'entity',
+      header: 'Entity',
+      render: (delivery) => (
+        <div>
+          <div className="font-medium">{delivery.entity.name}</div>
+          <div className="text-sm text-gray-500">{delivery.entity.type}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'responder',
+      header: 'Responder',
+      render: (delivery) => (
+        <div>
+          <div className="font-medium">{delivery.responder.name}</div>
+          <div className="text-sm text-gray-500">{delivery.responder.email}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'type',
+      header: 'Type',
+      render: (delivery) => <Badge variant="outline">{delivery.type}</Badge>,
+    },
+    {
+      key: 'priority',
+      header: 'Priority',
+      render: (delivery) => getPriorityBadge(delivery.priority),
+    },
+    {
+      key: 'responseDate',
+      header: 'Delivery Date',
+      render: (delivery) => (
+        <div className="flex items-center gap-1">
+          <Calendar className="h-4 w-4 text-gray-400" />
+          {delivery.responseDate
+            ? formatDateTime(delivery.responseDate)
+            : 'Not delivered'}
+        </div>
+      ),
+    },
+    {
+      key: 'verificationStatus',
+      header: 'Status',
+      render: (delivery) => (
+        <Badge
+          variant={
+            delivery.verificationStatus === 'VERIFIED' ? 'default' :
+            delivery.verificationStatus === 'REJECTED' ? 'destructive' :
+            'secondary'
+          }
+        >
+          {delivery.verificationStatus}
+        </Badge>
+      ),
+    },
+    {
+      key: 'location',
+      header: 'Location',
+      render: (delivery) => (
+        <div className="flex items-center gap-1">
+          <MapPin className="h-4 w-4 text-gray-400" />
+          <span className="text-sm font-mono">
+            {delivery.deliveryInfo.deliveryLocation.latitude.toFixed(4)},
+            {delivery.deliveryInfo.deliveryLocation.longitude.toFixed(4)}
+          </span>
+        </div>
+      ),
+    },
+  ]
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString()
-  }
+  const deliveryActions: RowAction[] = [
+    {
+      label: 'Review',
+      icon: Eye,
+      onClick: handleReviewDelivery,
+    },
+  ]
 
   if (queueError) {
     return (
@@ -283,335 +362,215 @@ export default function DeliveryVerificationQueuePage() {
         </CardContent>
       </Card>
 
-      {/* Queue Statistics */}
       {queueData?.data && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{queueData.meta.pagination.total}</div>
-              <p className="text-sm text-gray-600">Total Deliveries</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-blue-600">
-                {queueData.data.filter((d: DeliveryQueueItem) => d.verificationStatus === 'SUBMITTED').length}
-              </div>
-              <p className="text-sm text-gray-600">Pending Verification</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-600">
-                {queueData.data.filter((d: DeliveryQueueItem) => d.verificationStatus === 'VERIFIED').length}
-              </div>
-              <p className="text-sm text-gray-600">Verified</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-red-600">
-                {queueData.data.filter((d: DeliveryQueueItem) => d.verificationStatus === 'REJECTED').length}
-              </div>
-              <p className="text-sm text-gray-600">Rejected</p>
-            </CardContent>
-          </Card>
-        </div>
+        <StatCardGrid columns={4}>
+          <StatCard
+            label="Total Deliveries"
+            value={queueData.meta.pagination.total}
+            severity="info"
+            icon={Package}
+          />
+          <StatCard
+            label="Pending Verification"
+            value={queueData.data.filter((d: DeliveryQueueItem) => d.verificationStatus === 'SUBMITTED').length}
+            severity="warning"
+            icon={Clock}
+          />
+          <StatCard
+            label="Verified"
+            value={queueData.data.filter((d: DeliveryQueueItem) => d.verificationStatus === 'VERIFIED').length}
+            severity="success"
+            icon={CheckCircle}
+          />
+          <StatCard
+            label="Rejected"
+            value={queueData.data.filter((d: DeliveryQueueItem) => d.verificationStatus === 'REJECTED').length}
+            severity="critical"
+            icon={XCircle}
+          />
+        </StatCardGrid>
       )}
 
-      {/* Delivery Queue Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Delivery Queue</CardTitle>
-          <CardDescription>
-            Showing {queueData?.data?.length || 0} of {queueData?.meta?.pagination?.total || 0} deliveries
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoadingQueue ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
+      <DataTable
+        title="Delivery Queue"
+        description={`Showing ${queueData?.data?.length || 0} of ${queueData?.meta?.pagination?.total || 0} deliveries`}
+        columns={deliveryColumns}
+        data={queueData?.data ?? []}
+        loading={isLoadingQueue}
+        emptyMessage="No deliveries found in the verification queue"
+        actions={deliveryActions}
+        pagination={queueData?.meta?.pagination ? {
+          pageSize: queueData.meta.pagination.limit,
+          total: queueData.meta.pagination.total,
+          currentPage: queueData.meta.pagination.page,
+          onPageChange: (page: number) => setFilters({ ...filters, page }),
+        } : undefined}
+      />
+
+      <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Review Delivery</DialogTitle>
+            <DialogDescription>
+              Review delivery details and verification status
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedDelivery && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Entity</Label>
+                  <p className="font-medium">{selectedDelivery.entity.name}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Responder</Label>
+                  <p className="font-medium">{selectedDelivery.responder.name}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Response Type</Label>
+                  <p className="font-medium">{selectedDelivery.type}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Priority</Label>
+                  {getPriorityBadge(selectedDelivery.priority)}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Delivery Location</Label>
+                <div className="p-3 bg-gray-50 rounded">
+                  <p className="font-mono text-sm">
+                    {selectedDelivery.deliveryInfo.deliveryLocation.latitude.toFixed(6)},
+                    {selectedDelivery.deliveryInfo.deliveryLocation.longitude.toFixed(6)}
+                  </p>
+                  {selectedDelivery.deliveryInfo.deliveryLocation.accuracy && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Accuracy: ±{selectedDelivery.deliveryInfo.deliveryLocation.accuracy}m
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-gray-500">Delivered Items</Label>
+                <div className="space-y-1 mt-2">
+                  {selectedDelivery.deliveryInfo.deliveredItems.map((item, index) => (
+                    <div key={index} className="flex justify-between text-sm p-2 bg-gray-50 rounded">
+                      <span>{item.name}</span>
+                      <span className="font-medium">{item.quantity} {item.unit}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {selectedDelivery.deliveryInfo.deliveryNotes && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Delivery Notes</Label>
+                  <p className="text-sm mt-1">{selectedDelivery.deliveryInfo.deliveryNotes}</p>
+                </div>
+              )}
+
+              {selectedDelivery.deliveryProof.length > 0 && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Delivery Photos</Label>
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    {selectedDelivery.deliveryProof.map((photo) => (
+                      <div key={photo.id} className="border rounded p-2">
+                        <div className="aspect-square bg-gray-100 rounded flex items-center justify-center">
+                          <Package className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <p className="text-xs text-center mt-1 truncate">{photo.filename}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedDelivery.verificationStatus === 'SUBMITTED' && (
+                <div className="space-y-4">
+                  <Label className="text-sm font-medium text-gray-500">Verification Action</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="default"
+                      onClick={() => handleVerifyDelivery('approve')}
+                      disabled={verifyDeliveryMutation.isPending}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Approve
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleVerifyDelivery('reject')}
+                      disabled={verifyDeliveryMutation.isPending}
+                    >
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Reject
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleVerifyDelivery('request_info')}
+                      disabled={verifyDeliveryMutation.isPending}
+                    >
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      Request Info
+                    </Button>
+                  </div>
+
+                  {(verificationAction === 'reject' || verificationAction === 'request_info') && (
+                    <div className="space-y-3">
+                      {verificationAction === 'reject' && (
+                        <div>
+                          <Label htmlFor="rejectionReason">Rejection Reason *</Label>
+                          <Input
+                            id="rejectionReason"
+                            placeholder="Enter reason for rejection"
+                            value={rejectionReason}
+                            onChange={(e) => setRejectionReason(e.target.value)}
+                          />
+                        </div>
+                      )}
+
+                      <div>
+                        <Label htmlFor="feedback">Feedback (Optional)</Label>
+                        <Textarea
+                          id="feedback"
+                          placeholder="Provide additional feedback or requirements"
+                          value={feedback}
+                          onChange={(e) => setFeedback(e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleConfirmVerification}
+                          disabled={verifyDeliveryMutation.isPending || (verificationAction === 'reject' && !rejectionReason)}
+                        >
+                          {verifyDeliveryMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : null}
+                          {verificationAction === 'reject' ? 'Confirm Rejection' : 'Send Request'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setVerificationAction('approve')
+                            setRejectionReason('')
+                            setFeedback('')
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Entity</TableHead>
-                  <TableHead>Responder</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Delivery Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {queueData?.data?.map((delivery: DeliveryQueueItem) => (
-                  <TableRow key={delivery.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{delivery.entity.name}</div>
-                        <div className="text-sm text-gray-500">{delivery.entity.type}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{delivery.responder.name}</div>
-                        <div className="text-sm text-gray-500">{delivery.responder.email}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{delivery.type}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {getPriorityBadge(delivery.priority)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4 text-gray-400" />
-                        {delivery.responseDate 
-                          ? formatDateTime(delivery.responseDate)
-                          : 'Not delivered'
-                        }
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={
-                          delivery.verificationStatus === 'VERIFIED' ? 'default' :
-                          delivery.verificationStatus === 'REJECTED' ? 'destructive' :
-                          'secondary'
-                        }
-                      >
-                        {delivery.verificationStatus}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm font-mono">
-                          {delivery.deliveryInfo.deliveryLocation.latitude.toFixed(4)}, 
-                          {delivery.deliveryInfo.deliveryLocation.longitude.toFixed(4)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedDelivery(delivery)}
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            Review
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Review Delivery</DialogTitle>
-                            <DialogDescription>
-                              Review delivery details and verification status
-                            </DialogDescription>
-                          </DialogHeader>
-                          
-                          {selectedDelivery && (
-                            <div className="space-y-6">
-                              {/* Delivery Summary */}
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <Label className="text-sm font-medium text-gray-500">Entity</Label>
-                                  <p className="font-medium">{selectedDelivery.entity.name}</p>
-                                </div>
-                                <div>
-                                  <Label className="text-sm font-medium text-gray-500">Responder</Label>
-                                  <p className="font-medium">{selectedDelivery.responder.name}</p>
-                                </div>
-                                <div>
-                                  <Label className="text-sm font-medium text-gray-500">Response Type</Label>
-                                  <p className="font-medium">{selectedDelivery.type}</p>
-                                </div>
-                                <div>
-                                  <Label className="text-sm font-medium text-gray-500">Priority</Label>
-                                  {getPriorityBadge(selectedDelivery.priority)}
-                                </div>
-                              </div>
-
-                              {/* Delivery Location */}
-                              <div>
-                                <Label className="text-sm font-medium text-gray-500">Delivery Location</Label>
-                                <div className="p-3 bg-gray-50 rounded">
-                                  <p className="font-mono text-sm">
-                                    {selectedDelivery.deliveryInfo.deliveryLocation.latitude.toFixed(6)}, 
-                                    {selectedDelivery.deliveryInfo.deliveryLocation.longitude.toFixed(6)}
-                                  </p>
-                                  {selectedDelivery.deliveryInfo.deliveryLocation.accuracy && (
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      Accuracy: ±{selectedDelivery.deliveryInfo.deliveryLocation.accuracy}m
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Delivered Items */}
-                              <div>
-                                <Label className="text-sm font-medium text-gray-500">Delivered Items</Label>
-                                <div className="space-y-1 mt-2">
-                                  {selectedDelivery.deliveryInfo.deliveredItems.map((item, index) => (
-                                    <div key={index} className="flex justify-between text-sm p-2 bg-gray-50 rounded">
-                                      <span>{item.name}</span>
-                                      <span className="font-medium">{item.quantity} {item.unit}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Delivery Notes */}
-                              {selectedDelivery.deliveryInfo.deliveryNotes && (
-                                <div>
-                                  <Label className="text-sm font-medium text-gray-500">Delivery Notes</Label>
-                                  <p className="text-sm mt-1">{selectedDelivery.deliveryInfo.deliveryNotes}</p>
-                                </div>
-                              )}
-
-                              {/* Delivery Proof Photos */}
-                              {selectedDelivery.deliveryProof.length > 0 && (
-                                <div>
-                                  <Label className="text-sm font-medium text-gray-500">Delivery Photos</Label>
-                                  <div className="grid grid-cols-2 gap-4 mt-2">
-                                    {selectedDelivery.deliveryProof.map((photo) => (
-                                      <div key={photo.id} className="border rounded p-2">
-                                        <div className="aspect-square bg-gray-100 rounded flex items-center justify-center">
-                                          <Package className="h-8 w-8 text-gray-400" />
-                                        </div>
-                                        <p className="text-xs text-center mt-1 truncate">{photo.filename}</p>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Verification Actions */}
-                              {selectedDelivery.verificationStatus === 'SUBMITTED' && (
-                                <div className="space-y-4">
-                                  <Label className="text-sm font-medium text-gray-500">Verification Action</Label>
-                                  <div className="flex gap-2">
-                                    <Button
-                                      variant="default"
-                                      onClick={() => handleVerifyDelivery('approve')}
-                                      disabled={verifyDeliveryMutation.isPending}
-                                    >
-                                      <CheckCircle className="h-4 w-4 mr-2" />
-                                      Approve
-                                    </Button>
-                                    <Button
-                                      variant="destructive"
-                                      onClick={() => handleVerifyDelivery('reject')}
-                                      disabled={verifyDeliveryMutation.isPending}
-                                    >
-                                      <XCircle className="h-4 w-4 mr-2" />
-                                      Reject
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      onClick={() => handleVerifyDelivery('request_info')}
-                                      disabled={verifyDeliveryMutation.isPending}
-                                    >
-                                      <AlertCircle className="h-4 w-4 mr-2" />
-                                      Request Info
-                                    </Button>
-                                  </div>
-
-                                  {(verificationAction === 'reject' || verificationAction === 'request_info') && (
-                                    <div className="space-y-3">
-                                      {verificationAction === 'reject' && (
-                                        <div>
-                                          <Label htmlFor="rejectionReason">Rejection Reason *</Label>
-                                          <Input
-                                            id="rejectionReason"
-                                            placeholder="Enter reason for rejection"
-                                            value={rejectionReason}
-                                            onChange={(e) => setRejectionReason(e.target.value)}
-                                          />
-                                        </div>
-                                      )}
-                                      
-                                      <div>
-                                        <Label htmlFor="feedback">Feedback (Optional)</Label>
-                                        <Textarea
-                                          id="feedback"
-                                          placeholder="Provide additional feedback or requirements"
-                                          value={feedback}
-                                          onChange={(e) => setFeedback(e.target.value)}
-                                          rows={3}
-                                        />
-                                      </div>
-
-                                      <div className="flex gap-2">
-                                        <Button
-                                          onClick={handleConfirmVerification}
-                                          disabled={verifyDeliveryMutation.isPending || (verificationAction === 'reject' && !rejectionReason)}
-                                        >
-                                          {verifyDeliveryMutation.isPending ? (
-                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                          ) : null}
-                                          {verificationAction === 'reject' ? 'Confirm Rejection' : 'Send Request'}
-                                        </Button>
-                                        <Button
-                                          variant="outline"
-                                          onClick={() => {
-                                            setVerificationAction('approve')
-                                            setRejectionReason('')
-                                            setFeedback('')
-                                          }}
-                                        >
-                                          Cancel
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Pagination */}
-      {queueData?.meta?.pagination && (
-        <div className="flex items-center justify-between mt-6">
-          <div className="text-sm text-gray-600">
-            Page {queueData.meta.pagination.page} of {queueData.meta.pagination.totalPages}
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={queueData.meta.pagination.page === 1}
-              onClick={() => setFilters({ ...filters, page: queueData.meta.pagination.page - 1 })}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={queueData.meta.pagination.page === queueData.meta.pagination.totalPages}
-              onClick={() => setFilters({ ...filters, page: queueData.meta.pagination.page + 1 })}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

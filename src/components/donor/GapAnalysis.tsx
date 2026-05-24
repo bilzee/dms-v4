@@ -6,7 +6,10 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge, getBadgeClasses } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
@@ -47,12 +50,6 @@ interface GapAnalysisResponse {
   }
 }
 
-const SEVERITY_COLORS = {
-  critical: 'bg-red-100 text-red-800 border-red-200',
-  high: 'bg-orange-100 text-orange-800 border-orange-200',
-  medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  low: 'bg-blue-100 text-blue-800 border-blue-200'
-}
 
 const SEVERITY_ICONS = {
   critical: AlertTriangle,
@@ -162,64 +159,36 @@ export function GapAnalysis({ entityId }: GapAnalysisProps) {
 
   return (
     <div className="space-y-6">
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Overall Gap Score</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              <span className={getScoreColor(overallGapScore)}>
-                {overallGapScore.toFixed(1)}%
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {getScoreLabel(overallGapScore)}
-            </p>
-          </CardContent>
-        </Card>
+      <StatCardGrid columns={4}>
+        <StatCard
+          label="Overall Gap Score"
+          value={`${overallGapScore.toFixed(1)}%`}
+          severity="neutral"
+          variant="centered"
+          icon={Activity}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Gaps</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary.totalGaps}</div>
-            <p className="text-xs text-muted-foreground">
-              Across all categories
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard
+          label="Total Gaps"
+          value={summary.totalGaps}
+          severity="info"
+          icon={AlertTriangle}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Critical Gaps</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{summary.criticalGaps}</div>
-            <p className="text-xs text-muted-foreground">
-              Require immediate attention
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard
+          label="Critical Gaps"
+          value={summary.criticalGaps}
+          severity="critical"
+          icon={AlertTriangle}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Most Affected</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-bold">{summary.mostAffectedCategory}</div>
-            <p className="text-xs text-muted-foreground">
-              Priority category
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        <StatCard
+          label="Most Affected"
+          value={summary.mostAffectedCategory}
+          severity="neutral"
+          icon={Users}
+        />
+      </StatCardGrid>
 
       {/* Filters */}
       <Card>
@@ -289,7 +258,7 @@ export function GapAnalysis({ entityId }: GapAnalysisProps) {
                 return (
                   <div 
                     key={index}
-                    className={`border rounded-lg p-4 ${SEVERITY_COLORS[gap.severity]}`}
+                    className={`border rounded-lg p-4 ${getBadgeClasses('severity', gap.severity)}`}
                   >
                     {/* Gap Header */}
                     <div className="flex items-start justify-between mb-3">
@@ -298,9 +267,7 @@ export function GapAnalysis({ entityId }: GapAnalysisProps) {
                         <div>
                           <div className="flex items-center gap-2">
                             <h3 className="font-semibold">{gap.category}</h3>
-                            <Badge variant="outline" className="capitalize">
-                              {gap.severity}
-                            </Badge>
+                            <StatusBadge domain="severity" status={gap.severity} />
                             {trendConfig && TrendIcon && (
                               <div className={`flex items-center gap-1 ${trendConfig.color}`}>
                                 <TrendIcon className="h-4 w-4" />

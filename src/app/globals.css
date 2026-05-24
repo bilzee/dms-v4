@@ -25,6 +25,15 @@
     --ring: 221.2 83.2% 53.3%;
     --ring-offset: 0 0% 100%;
     --radius: 0.5rem;
+
+    --severity-critical: 0 84.2% 60.2%;
+    --severity-high: 24.6 95% 53.1%;
+    --severity-medium: 47.9 95.2% 53.1%;
+    --severity-low: 142.1 76.2% 36.3%;
+    --severity-info: 217.2 91.2% 59.8%;
+    --severity-success: 160 84.1% 39.4%;
+    --severity-warning: 37.7 92.1% 50.3%;
+    --severity-neutral: 220 8.9% 46.1%;
   }
 
   .dark {
@@ -48,6 +57,15 @@
     --input: 215 28% 17%;
     --ring: 216 12% 83.9%;
     --ring-offset: 224 71% 4%;
+
+    --severity-critical: 0 72.2% 50.6%;
+    --severity-high: 20.5 90.2% 48.2%;
+    --severity-medium: 48 96.5% 53.7%;
+    --severity-low: 142.1 70.6% 45.3%;
+    --severity-info: 217.2 80.6% 66.7%;
+    --severity-success: 160 70.1% 53.3%;
+    --severity-warning: 38.9 85.3% 55.7%;
+    --severity-neutral: 220 8.9% 56.5%;
   }
 }
 

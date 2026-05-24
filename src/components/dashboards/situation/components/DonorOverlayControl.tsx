@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { getBadgeClasses } from '@/components/shared/StatusBadge';
 import { 
   Users, 
   Package, 
@@ -58,15 +59,6 @@ function DonorOverlayLegend({
     );
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status.toUpperCase()) {
-      case 'FULFILLED': return 'bg-green-100 text-green-800 border-green-200';
-      case 'PARTIAL': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'PLANNED': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'CANCELLED': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
 
   const statusCount = donors.reduce((acc, donor) => {
     acc[donor.commitmentStatus] = (acc[donor.commitmentStatus] || 0) + 1;
@@ -99,7 +91,7 @@ function DonorOverlayLegend({
           <div key={status} className="flex items-center justify-between text-xs">
             <Badge 
               variant="outline" 
-              className={cn("text-xs", getStatusColor(status))}
+              className={cn("text-xs", getBadgeClasses('commitment', status))}
             >
               {status}
             </Badge>
@@ -118,7 +110,7 @@ function DonorOverlayLegend({
             </div>
             <Badge 
               variant="outline" 
-              className={cn("text-xs", getStatusColor(donor.commitmentStatus))}
+              className={cn("text-xs", getBadgeClasses('commitment', donor.commitmentStatus))}
             >
               {donor.commitmentStatus}
             </Badge>

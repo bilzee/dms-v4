@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '@/lib/api'
 import { getAuthToken } from '@/lib/auth/token-utils'
+import { getBadgeClasses } from '@/components/shared/StatusBadge'
 
 interface SeverityThreshold {
   id: string
@@ -164,7 +165,7 @@ export function useSeverityThresholds(impactType: 'POPULATION' | 'PRELIMINARY') 
       if (meetsThreshold) {
         return {
           level: threshold.severityLevel,
-          color: getSeverityColor(threshold.severityLevel)
+          color: getBadgeClasses('severity', threshold.severityLevel)
         }
       }
     }
@@ -172,26 +173,12 @@ export function useSeverityThresholds(impactType: 'POPULATION' | 'PRELIMINARY') 
     // Default to LOW if no thresholds are met
     return {
       level: 'Low',
-      color: 'text-green-600 bg-green-100'
+      color: getBadgeClasses('severity', 'LOW')
     }
   }
 
   return {
     ...query,
     calculateSeverity
-  }
-}
-
-// Helper function to get severity colors
-function getSeverityColor(level: string): string {
-  switch (level) {
-    case 'CRITICAL':
-      return 'text-red-600 bg-red-100'
-    case 'HIGH':
-      return 'text-orange-600 bg-orange-100'
-    case 'MEDIUM':
-      return 'text-yellow-600 bg-yellow-100'
-    default:
-      return 'text-green-600 bg-green-100'
   }
 }

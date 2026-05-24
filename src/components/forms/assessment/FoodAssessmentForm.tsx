@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { GPSCapture } from '@/components/shared/GPSCapture'
 import { MediaField } from '@/components/shared/MediaField'
 import { EntitySelector } from '@/components/shared/EntitySelector'
@@ -311,8 +312,7 @@ export function FoodAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Food Sufficient
-                          {!field.value && <Badge variant="destructive">Gap</Badge>}
-                          {field.value && <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>}
+                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                         </FormLabel>
                         <FormDescription>
                           Food supplies are sufficient to meet the population&apos;s needs
@@ -337,8 +337,7 @@ export function FoodAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Regular Meal Access
-                          {!field.value && <Badge variant="destructive">Gap</Badge>}
-                          {field.value && <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>}
+                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                         </FormLabel>
                         <FormDescription>
                           Population has regular access to meals (at least 2 per day)
@@ -363,8 +362,7 @@ export function FoodAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Infant Nutrition Available
-                          {!field.value && <Badge variant="destructive">Gap</Badge>}
-                          {field.value && <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>}
+                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                         </FormLabel>
                         <FormDescription>
                           Adequate nutrition available for infants and young children

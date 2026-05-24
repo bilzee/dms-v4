@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { GPSCapture } from '@/components/shared/GPSCapture'
 import { MediaField } from '@/components/shared/MediaField'
 import { EntitySelector } from '@/components/shared/EntitySelector'
@@ -324,8 +325,7 @@ export function SecurityAssessmentForm({
                     <div className="space-y-1 leading-none">
                       <FormLabel className="flex items-center gap-2">
                         Security Presence
-                        {!field.value && <Badge variant="destructive">Gap</Badge>}
-                        {field.value && <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>}
+                        <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                       </FormLabel>
                       <FormDescription>
                         Security personnel or forces are present in the area
@@ -351,8 +351,7 @@ export function SecurityAssessmentForm({
                       <FormLabel className="flex items-center gap-2">
                         <Phone className="h-4 w-4" />
                         Protection Reporting Mechanism
-                        {!field.value && <Badge variant="destructive">Gap</Badge>}
-                        {field.value && <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>}
+                        <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                       </FormLabel>
                       <FormDescription>
                         Mechanisms exist for reporting protection concerns
@@ -391,8 +390,7 @@ export function SecurityAssessmentForm({
                     <div className="space-y-1 leading-none">
                       <FormLabel className="flex items-center gap-2">
                         Vulnerable Groups Have Access
-                        {!field.value && <Badge variant="destructive">Gap</Badge>}
-                        {field.value && <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>}
+                        <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                       </FormLabel>
                       <FormDescription>
                         Vulnerable groups have access to protection services

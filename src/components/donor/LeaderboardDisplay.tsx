@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 // New error handling components
 import { SafeDataLoader } from '@/components/shared/SafeDataLoader';
 import { EmptyState, EmptySearchResults } from '@/components/shared/EmptyState';
+import { DataCardList } from '@/components/shared/DataCardList';
 import { 
   Trophy, 
   Medal, 
@@ -35,6 +36,12 @@ import type {
 
 // API utilities
 import { apiGet } from '@/lib/api';
+
+type LeaderboardEntryWithActions = LeaderboardEntry & {
+  rank: number;
+  trend?: 'up' | 'down' | 'same';
+  previousRank?: number;
+};
 
 interface LeaderboardDisplayProps {
   timeframe?: '7d' | '30d' | '90d' | '1y' | 'all';

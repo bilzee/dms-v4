@@ -8,6 +8,7 @@ import { Trophy, Info, RefreshCw } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatCard } from '@/components/shared/StatCard';
 import { Button } from '@/components/ui/button';
 
 export default function LeaderboardPage() {
@@ -85,32 +86,18 @@ export default function LeaderboardPage() {
           ) : criteria ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="text-center p-6 bg-blue-50 rounded-lg border">
-                  <div className="text-3xl font-bold text-blue-700 mb-2">
-                    Response Verification Rate
-                  </div>
-                  <div className="text-sm text-gray-600 mb-2">Percentage of verified donor responses</div>
-                  <div className="text-xs text-gray-500">
-                    {criteria.performanceMetrics?.responseVerificationRate?.description || 
-                     "Percentage of donor responses that have been verified"}
-                  </div>
-                  <div className="mt-3 px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
-                    Direct Addition to Score
-                  </div>
-                </div>
-                <div className="text-center p-6 bg-green-50 rounded-lg border">
-                  <div className="text-3xl font-bold text-green-700 mb-2">
-                    Total Commitments
-                  </div>
-                  <div className="text-sm text-gray-600 mb-2">Count of all commitments made</div>
-                  <div className="text-xs text-gray-500">
-                    {criteria.performanceMetrics?.totalCommitments?.description || 
-                     "Total number of commitments regardless of status"}
-                  </div>
-                  <div className="mt-3 px-3 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">
-                    Direct Addition to Score
-                  </div>
-                </div>
+                <StatCard
+                  label="Response Verification Rate"
+                  value={criteria.performanceMetrics?.responseVerificationRate?.description || "Percentage of donor responses that have been verified"}
+                  severity="info"
+                  variant="centered"
+                />
+                <StatCard
+                  label="Total Commitments"
+                  value={criteria.performanceMetrics?.totalCommitments?.description || "Total number of commitments regardless of status"}
+                  severity="success"
+                  variant="centered"
+                />
               </div>
               
               <div className="flex flex-wrap gap-2 justify-center">

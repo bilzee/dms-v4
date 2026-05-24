@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRMS DataList Component Family — Design Spec</title>
+<style>
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+    --severity-critical: 0 84.2% 60.2%;
+    --severity-high: 24.6 95% 53.1%;
+    --severity-medium: 47.9 95.2% 53.1%;
+    --severity-low: 142.1 76.2% 36.3%;
+    --severity-info: 217.2 91.2% 59.8%;
+    --severity-success: 160 84.1% 39.4%;
+    --severity-warning: 37.7 92.1% 50.3%;
+    --severity-neutral: 220 8.9% 46.1%;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: hsl(var(--foreground));
+    background: hsl(var(--background));
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .spec-container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 48px 24px;
+  }
+
+  .spec-header {
+    margin-bottom: 48px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  .spec-header h1 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: hsl(var(--foreground));
+  }
+  .spec-header p {
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+    margin-top: 8px;
+  }
+  .spec-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    padding: 2px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    margin-top: 12px;
+  }
+
+  .section {
+    margin-bottom: 48px;
+  }
+  .section h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  .section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    margin-top: 20px;
+  }
+  .section p, .section li {
+    font-size: 0.875rem;
+    color: hsl(var(--foreground));
+    line-height: 1.6;
+  }
+  .section ul {
+    list-style: none;
+    padding: 0;
+  }
+  .section ul li {
+    padding-left: 16px;
+    position: relative;
+  }
+  .section ul li::before {
+    content: '\2022';
+    position: absolute;
+    left: 0;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* ===== SHADCN FAITHFUL COMPONENT STYLES ===== */
+
+  .card {
+    border-radius: 0.5rem;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+  .card-header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 24px;
+  }
+  .card-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.025em;
+  }
+  .card-title-sm {
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.015em;
+  }
+  .card-description {
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+  }
+  .card-content {
+    padding: 0 24px 24px;
+  }
+  .card-footer {
+    display: flex;
+    align-items: center;
+    padding: 0 24px 24px;
+  }
+
+  /* Table */
+  .table-wrap {
+    position: relative;
+    width: 100%;
+    overflow: auto;
+  }
+  .table-wrap table {
+    width: 100%;
+    caption-side: bottom;
+    font-size: 0.875rem;
+    border-collapse: collapse;
+  }
+  .table-wrap thead tr {
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  .table-wrap thead th {
+    height: 48px;
+    padding: 0 16px;
+    text-align: left;
+    vertical-align: middle;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+  }
+  .table-wrap tbody tr {
+    border-bottom: 1px solid hsl(var(--border));
+    transition: background 150ms;
+  }
+  .table-wrap tbody tr:last-child {
+    border-bottom: none;
+  }
+  .table-wrap tbody tr:hover {
+    background: hsl(var(--muted) / 0.5);
+  }
+  .table-wrap tbody tr.selected {
+    background: hsl(var(--muted));
+  }
+  .table-wrap tbody td {
+    padding: 16px;
+    vertical-align: middle;
+  }
+
+  /* Badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    border: 1px solid;
+    padding: 2px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.25;
+    white-space: nowrap;
+  }
+  .badge-severity-critical {
+    background: hsl(var(--severity-critical) / 0.1);
+    color: hsl(var(--severity-critical));
+    border-color: hsl(var(--severity-critical) / 0.2);
+  }
+  .badge-severity-high {
+    background: hsl(var(--severity-high) / 0.1);
+    color: hsl(var(--severity-high));
+    border-color: hsl(var(--severity-high) / 0.2);
+  }
+  .badge-severity-medium {
+    background: hsl(var(--severity-medium) / 0.1);
+    color: hsl(var(--severity-medium));
+    border-color: hsl(var(--severity-medium) / 0.2);
+  }
+  .badge-severity-low {
+    background: hsl(var(--severity-low) / 0.1);
+    color: hsl(var(--severity-low));
+    border-color: hsl(var(--severity-low) / 0.2);
+  }
+  .badge-severity-info {
+    background: hsl(var(--severity-info) / 0.1);
+    color: hsl(var(--severity-info));
+    border-color: hsl(var(--severity-info) / 0.2);
+  }
+  .badge-severity-success {
+    background: hsl(var(--severity-success) / 0.1);
+    color: hsl(var(--severity-success));
+    border-color: hsl(var(--severity-success) / 0.2);
+  }
+  .badge-severity-warning {
+    background: hsl(var(--severity-warning) / 0.1);
+    color: hsl(var(--severity-warning));
+    border-color: hsl(var(--severity-warning) / 0.2);
+  }
+  .badge-severity-neutral {
+    background: hsl(var(--severity-neutral) / 0.1);
+    color: hsl(var(--severity-neutral));
+    border-color: hsl(var(--severity-neutral) / 0.2);
+  }
+  .badge-secondary {
+    border-color: transparent;
+    background: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+  }
+
+  /* Button */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    height: 40px;
+    padding: 8px 16px;
+    border: none;
+    cursor: pointer;
+    transition: background 150ms;
+  }
+  .btn-primary {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+  .btn-primary:hover { background: hsl(var(--primary) / 0.9); }
+  .btn-outline {
+    border: 1px solid hsl(var(--input));
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+  .btn-outline:hover {
+    background: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+  .btn-ghost {
+    background: transparent;
+    color: hsl(var(--foreground));
+    border: none;
+  }
+  .btn-ghost:hover {
+    background: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+  .btn-sm {
+    height: 36px;
+    border-radius: 0.375rem;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+  }
+  .btn-icon {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+  }
+
+  /* Input */
+  .input {
+    display: flex;
+    height: 40px;
+    width: 100%;
+    border-radius: 0.375rem;
+    border: 1px solid hsl(var(--input));
+    background: hsl(var(--background));
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    color: hsl(var(--foreground));
+    outline: none;
+  }
+  .input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+  }
+  .input::placeholder {
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Skeleton */
+  .skeleton {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    border-radius: 0.375rem;
+    background: hsl(var(--muted));
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .separator {
+    height: 1px;
+    background: hsl(var(--border));
+    width: 100%;
+  }
+
+  /* ===== LAYOUT HELPERS ===== */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .grid-4 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  @media (min-width: 768px) {
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  .flex-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .text-sm { font-size: 0.875rem; }
+  .text-xs { font-size: 0.75rem; }
+  .text-muted { color: hsl(var(--muted-foreground)); }
+  .text-medium { font-weight: 500; }
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dropdown-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 0.375rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: hsl(var(--muted-foreground));
+    font-size: 18px;
+  }
+  .dropdown-trigger:hover {
+    background: hsl(var(--accent));
+  }
+
+  /* SearchToolbar */
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+  }
+  .toolbar .input {
+    max-width: 280px;
+  }
+
+  /* Empty state */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 16px;
+    text-align: center;
+  }
+  .empty-icon-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 9999px;
+    background: hsl(var(--muted));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    color: hsl(var(--muted-foreground));
+    font-size: 24px;
+  }
+  .empty-title {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: hsl(var(--foreground));
+    margin-bottom: 8px;
+  }
+  .empty-desc {
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+    max-width: 28rem;
+  }
+
+  /* Decision flowchart */
+  .flowchart {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    padding: 24px;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+  .flow-node {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 0.375rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    text-align: center;
+  }
+  .flow-node.question {
+    border-color: hsl(var(--primary) / 0.3);
+    background: hsl(var(--primary) / 0.05);
+  }
+  .flow-node.result {
+    border-color: hsl(var(--severity-success) / 0.3);
+    background: hsl(var(--severity-success) / 0.05);
+    color: hsl(var(--severity-success));
+    font-weight: 600;
+  }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .flow-arrow {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.75rem;
+  }
+
+  .variant-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: hsl(var(--primary) / 0.1);
+    color: hsl(var(--primary));
+    margin-bottom: 12px;
+  }
+
+  /* Page mapping table */
+  .mapping-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  .mapping-table th {
+    text-align: left;
+    padding: 8px 12px;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+    border-bottom: 1px solid hsl(var(--border));
+    background: hsl(var(--muted) / 0.3);
+  }
+  .mapping-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid hsl(var(--border));
+    vertical-align: top;
+  }
+  .mapping-table tr:hover td {
+    background: hsl(var(--muted) / 0.3);
+  }
+  .mapping-table code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.8125rem;
+    background: hsl(var(--muted));
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* API definition */
+  .api-block {
+    background: hsl(var(--muted) / 0.3);
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    padding: 16px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+  .api-block .keyword { color: hsl(var(--primary)); font-weight: 600; }
+  .api-block .type { color: hsl(var(--severity-medium)); }
+  .api-block .comment { color: hsl(var(--muted-foreground)); }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .status-dot-critical { background: hsl(var(--severity-critical)); }
+  .status-dot-success { background: hsl(var(--severity-success)); }
+  .status-dot-warning { background: hsl(var(--severity-warning)); }
+  .status-dot-info { background: hsl(var(--severity-info)); }
+  .status-dot-neutral { background: hsl(var(--severity-neutral)); }
+
+  .stat-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+  }
+  .stat-value {
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+
+  .config-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  .config-row:last-child { border-bottom: none; }
+
+  .principle-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+  }
+  .principle-card {
+    padding: 16px;
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    background: hsl(var(--card));
+  }
+  .principle-card h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .principle-card p {
+    font-size: 0.8125rem;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+  }
+  .pagination-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 0.375rem;
+    border: 1px solid hsl(var(--input));
+    background: hsl(var(--background));
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: hsl(var(--foreground));
+    transition: background 150ms;
+  }
+  .pagination-btn:hover { background: hsl(var(--accent)); }
+  .pagination-btn.active {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary));
+  }
+
+  /* Section nav */
+  .section-nav {
+    position: sticky;
+    top: 16px;
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    padding: 16px;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+  .section-nav a {
+    display: block;
+    font-size: 0.8125rem;
+    color: hsl(var(--muted-foreground));
+    text-decoration: none;
+    padding: 4px 0;
+  }
+  .section-nav a:hover { color: hsl(var(--foreground)); }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 32px;
+  }
+  @media (max-width: 768px) {
+    .two-col { grid-template-columns: 1fr; }
+    .section-nav { display: none; }
+  }
+
+  /* ===== EXPAND/COLLAPSE ===== */
+  .expand-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 0.375rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: hsl(var(--muted-foreground));
+    transition: background 150ms, color 150ms;
+    flex-shrink: 0;
+  }
+  .expand-btn:hover {
+    background: hsl(var(--accent));
+    color: hsl(var(--foreground));
+  }
+  .expand-btn svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 150ms;
+  }
+  .expand-btn[aria-expanded="true"] svg {
+    transform: rotate(90deg);
+  }
+
+  .expand-content {
+    border-top: 1px solid hsl(var(--border));
+    padding-top: 16px;
+    margin-top: 12px;
+  }
+  .expand-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    font-size: 0.8125rem;
+  }
+  @media (min-width: 640px) {
+    .expand-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .expand-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .expand-field-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+  }
+  .expand-field-value {
+    color: hsl(var(--foreground));
+  }
+
+  /* Expanded row for DataTable */
+  .expanded-row {
+    background: hsl(var(--muted) / 0.3);
+  }
+  .expanded-row:hover {
+    background: hsl(var(--muted) / 0.3) !important;
+  }
+  .expanded-cell-inner {
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    font-size: 0.8125rem;
+  }
+  @media (min-width: 640px) {
+    .expanded-cell-inner { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ===== PROGRESS BAR (for DataCardGrid) ===== */
+  .progress-bar-track {
+    width: 100%;
+    height: 6px;
+    border-radius: 9999px;
+    background: hsl(var(--muted));
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 300ms;
+  }
+
+  /* ===== SEVERITY TINT BG (replaces side accent) ===== */
+  .severity-bg-critical { background: hsl(var(--severity-critical) / 0.04); }
+  .severity-bg-high { background: hsl(var(--severity-high) / 0.04); }
+  .severity-bg-warning { background: hsl(var(--severity-warning) / 0.04); }
+  .severity-bg-info { background: hsl(var(--severity-info) / 0.04); }
+  .severity-bg-success { background: hsl(var(--severity-success) / 0.04); }
+</style>
+</head>
+<body>
+<div class="spec-container">
+  <div class="two-col">
+    <nav class="section-nav">
+      <strong style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:hsl(var(--muted-foreground));">Contents</strong>
+      <a href="#research">Research Sources</a>
+      <a href="#principles">Core Principles</a>
+      <a href="#decision-logic">Decision Logic</a>
+      <a href="#datatable">Variant: DataTable</a>
+      <a href="#datacardlist">Variant: DataCardList</a>
+      <a href="#datacardgrid">Variant: DataCardGrid</a>
+      <a href="#dataconfig">Variant: DataConfig</a>
+      <a href="#expand-collapse">Feature: Expand/Collapse</a>
+      <a href="#searchtoolbar">Cross-cutting: SearchToolbar</a>
+      <a href="#states">Loading / Empty / Error</a>
+      <a href="#mapping">Page-to-Variant Mapping</a>
+      <a href="#api">Component API</a>
+    </nav>
+
+    <div>
+      <!-- HEADER -->
+      <div class="spec-header">
+        <h1>DataList Component Family</h1>
+        <p>Phase 3 design spec for DRMS data display components. All variants share the same shadcn/ui visual DNA.</p>
+        <span class="spec-badge">PHASE 3 — REV 2</span>
+      </div>
+
+      <!-- RESEARCH -->
+      <div class="section" id="research">
+        <h2>1. Research Sources</h2>
+        <ul>
+          <li><strong>Ant Design Data Display</strong> — Table, List, Card patterns; row selection, inline actions, batch operations</li>
+          <li><strong>NN/g Data Tables</strong> — Scanning vs comparing; progressive disclosure; sortable columns for comparison tasks</li>
+          <li><strong>Material Design M3</strong> — DataTable (comprehensive), CardList (reading), CardGrid (browsing), Config forms</li>
+          <li><strong>Shneiderman's Information-Seeking Mantra</strong> — Overview first, zoom/filter, details on demand</li>
+          <li><strong>OCHA Humanitarian Data Management</strong> — Severity-first display, role-based density, incident tracking</li>
+          <li><strong>ISCRAM Emergency Response Patterns</strong> — Sitrep tiles, rapid scan, action-oriented cards</li>
+        </ul>
+      </div>
+
+      <!-- PRINCIPLES -->
+      <div class="section" id="principles">
+        <h2>2. Core Principles</h2>
+        <div class="principle-grid">
+          <div class="principle-card">
+            <h4>Comparison drives layout</h4>
+            <p>When users need to compare items across the same attributes, use a table. When they read items independently, use cards.</p>
+          </div>
+          <div class="principle-card">
+            <h4>Density matches task</h4>
+            <p>Operational monitoring needs high density (tables). Browsing and selection needs scannable tiles (card grids).</p>
+          </div>
+          <div class="principle-card">
+            <h4>Progressive disclosure</h4>
+            <p>Show the minimum needed for the current task. Details, history, and secondary info are revealed on interaction.</p>
+          </div>
+          <div class="principle-card">
+            <h4>Structure, not content, decides</h4>
+            <p>Variant is chosen by the shape of the data and the user's task — not by what the data is about.</p>
+          </div>
+          <div class="principle-card">
+            <h4>Config is not a list</h4>
+            <p>Settings/thresholds are editable key-value pairs, not browsable data items. They get their own pattern.</p>
+          </div>
+          <div class="principle-card">
+            <h4>One design system, four layouts</h4>
+            <p>All variants share the same tokens, border radius, shadows, fonts, spacing, and color system. Only the layout differs.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- DECISION LOGIC -->
+      <div class="section" id="decision-logic">
+        <h2>3. Variant Decision Logic</h2>
+        <div class="flowchart">
+          <div class="flow-row" style="margin-bottom:12px;">
+            <span class="flow-node question">Q1: Do items share the same fields?</span>
+            <span class="flow-arrow">Yes →</span>
+            <span class="flow-node question">Q2: Is the task comparison or editing?</span>
+          </div>
+          <div style="padding-left:32px;margin-bottom:12px;">
+            <div class="flow-row">
+              <span class="flow-arrow">Comparison →</span>
+              <span class="flow-node result">DataTable</span>
+            </div>
+          </div>
+          <div style="padding-left:32px;margin-bottom:16px;">
+            <div class="flow-row">
+              <span class="flow-arrow">Inline editing →</span>
+              <span class="flow-node result">DataConfig</span>
+            </div>
+          </div>
+          <div class="flow-row" style="margin-bottom:12px;">
+            <span class="flow-node question" style="border-color:hsl(var(--severity-warning)/0.3);">Q1 answer: No (fields vary per item)</span>
+            <span class="flow-arrow">→</span>
+            <span class="flow-node question">Q3: Visual tiles or sequential reading?</span>
+          </div>
+          <div style="padding-left:32px;">
+            <div class="flow-row" style="margin-bottom:8px;">
+              <span class="flow-arrow">Tiles / browse →</span>
+              <span class="flow-node result">DataCardGrid</span>
+            </div>
+            <div class="flow-row">
+              <span class="flow-arrow">Sequential →</span>
+              <span class="flow-node result">DataCardList</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- VARIANT 1: DataTable (with expand/collapse) -->
+      <!-- ============================================ -->
+      <div class="section" id="datatable">
+        <h2>4. Variant: DataTable</h2>
+        <span class="variant-label">DataTable</span>
+        <p style="margin-bottom:16px;">For structured data where users scan, sort, compare, and act on rows with the same fields. Wraps shadcn <code>&lt;Table&gt;</code>. Supports optional expand/collapse for row details.</p>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="flex-between">
+              <div>
+                <div class="card-title-sm">Incident Management</div>
+                <div class="card-description">Active incidents requiring coordinator action</div>
+              </div>
+              <button class="btn btn-primary btn-sm">+ Report Incident</button>
+            </div>
+          </div>
+          <div class="card-content">
+            <div class="toolbar">
+              <input type="text" class="input" placeholder="Search incidents..." style="max-width:260px;">
+              <select class="input" style="max-width:160px;height:40px;">
+                <option>All Types</option>
+                <option>Security</option>
+                <option>Medical</option>
+                <option>Logistics</option>
+              </select>
+              <select class="input" style="max-width:140px;height:40px;">
+                <option>All Status</option>
+                <option>Active</option>
+                <option>Contained</option>
+                <option>Resolved</option>
+              </select>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:36px;"></th>
+                    <th>Incident</th>
+                    <th>Type</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                    <th>Population</th>
+                    <th style="width:48px;"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Row 1 - collapsed -->
+                  <tr>
+                    <td>
+                      <button class="expand-btn" title="Expand row">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+                      </button>
+                    </td>
+                    <td style="font-weight:500;">NW Region Supply Disruption</td>
+                    <td><span class="badge badge-secondary">Logistics</span></td>
+                    <td><span class="badge badge-severity-critical">CRITICAL</span></td>
+                    <td><span class="flex-row"><span class="status-dot status-dot-critical"></span>Active</span></td>
+                    <td>12,400</td>
+                    <td><button class="dropdown-trigger">⋮</button></td>
+                  </tr>
+
+                  <!-- Row 2 - expanded -->
+                  <tr>
+                    <td>
+                      <button class="expand-btn" style="color:hsl(var(--primary));" title="Collapse row">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="transform:rotate(90deg);"><path d="M6 4l4 4-4 4"/></svg>
+                      </button>
+                    </td>
+                    <td style="font-weight:500;">Central Camp Water Contamination</td>
+                    <td><span class="badge badge-secondary">Medical</span></td>
+                    <td><span class="badge badge-severity-high">HIGH</span></td>
+                    <td><span class="flex-row"><span class="status-dot status-dot-warning"></span>Active</span></td>
+                    <td>8,200</td>
+                    <td><button class="dropdown-trigger">⋮</button></td>
+                  </tr>
+                  <!-- Expanded detail row -->
+                  <tr class="expanded-row">
+                    <td colspan="7" style="padding:0;">
+                      <div style="padding:16px 16px 16px 52px;border-top:1px solid hsl(var(--border));">
+                        <div class="expanded-cell-inner">
+                          <div>
+                            <div style="font-weight:500;font-size:0.8125rem;margin-bottom:8px;">Details</div>
+                            <div class="expand-field">
+                              <span class="expand-field-label">Description</span>
+                              <span class="expand-field-value">Contaminated water supply detected in sector B. Initial tests show elevated bacterial levels.</span>
+                            </div>
+                            <div class="expand-field" style="margin-top:6px;">
+                              <span class="expand-field-label">Location</span>
+                              <span class="expand-field-value">Abuja Central Camp, Sector B</span>
+                            </div>
+                            <div class="expand-field" style="margin-top:6px;">
+                              <span class="expand-field-label">Reported By</span>
+                              <span class="expand-field-value">Dr. Okafor — 2 hours ago</span>
+                            </div>
+                          </div>
+                          <div>
+                            <div style="font-weight:500;font-size:0.8125rem;margin-bottom:8px;">Linked Assessments</div>
+                            <div style="display:flex;flex-direction:column;gap:6px;">
+                              <div style="display:flex;align-items:center;gap:8px;">
+                                <span class="status-dot status-dot-critical"></span>
+                                <span style="font-size:0.8125rem;">Water Quality Assessment #WQ-2024-031</span>
+                              </div>
+                              <div style="display:flex;align-items:center;gap:8px;">
+                                <span class="status-dot status-dot-warning"></span>
+                                <span style="font-size:0.8125rem;">Population Health Risk #PH-2024-018</span>
+                              </div>
+                            </div>
+                            <div style="margin-top:10px;display:flex;gap:8px;">
+                              <button class="btn btn-outline btn-sm">Link Assessment</button>
+                              <button class="btn btn-ghost btn-sm">View Timeline</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Row 3 - collapsed -->
+                  <tr>
+                    <td>
+                      <button class="expand-btn" title="Expand row">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+                      </button>
+                    </td>
+                    <td style="font-weight:500;">SE Region Road Access Blocked</td>
+                    <td><span class="badge badge-secondary">Security</span></td>
+                    <td><span class="badge badge-severity-medium">MEDIUM</span></td>
+                    <td><span class="flex-row"><span class="status-dot status-dot-success"></span>Contained</span></td>
+                    <td>3,100</td>
+                    <td><button class="dropdown-trigger">⋮</button></td>
+                  </tr>
+
+                  <!-- Row 4 - collapsed -->
+                  <tr>
+                    <td>
+                      <button class="expand-btn" title="Expand row">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+                      </button>
+                    </td>
+                    <td style="font-weight:500;">Vaccine Cold Chain Breach — Kano</td>
+                    <td><span class="badge badge-secondary">Medical</span></td>
+                    <td><span class="badge badge-severity-high">HIGH</span></td>
+                    <td><span class="flex-row"><span class="status-dot status-dot-warning"></span>Active</span></td>
+                    <td>5,600</td>
+                    <td><button class="dropdown-trigger">⋮</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="pagination">
+              <span>Showing 1-4 of 11 incidents</span>
+              <div class="flex-row" style="gap:4px;">
+                <button class="pagination-btn">‹</button>
+                <button class="pagination-btn active">1</button>
+                <button class="pagination-btn">2</button>
+                <button class="pagination-btn">3</button>
+                <button class="pagination-btn">›</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Expand/Collapse Behaviour (DataTable)</h3>
+        <ul>
+          <li><strong>Trigger:</strong> Chevron button (ghost variant, 28px) in the first column. Collapsed = chevron-right, Expanded = chevron-down (rotated 90deg).</li>
+          <li><strong>Expanded row:</strong> A full-width <code>&lt;tr&gt;</code> below the parent with <code>colSpan</code> spanning all columns. Background: <code>bg-muted/30</code> (subtly tinted). Hover removed on expanded rows.</li>
+          <li><strong>Content:</strong> Two-column grid with detail fields and linked records. Padding indented to align with text columns.</li>
+          <li><strong>No animation:</strong> Content appears instantly (matches existing codebase convention).</li>
+          <li><strong>State:</strong> <code>expandedRows: Set&lt;string&gt;</code> in component state.</li>
+        </ul>
+
+        <h3>DRMS Pages Using DataTable</h3>
+        <ul>
+          <li><strong>Users</strong> — same columns for all rows, sort/filter/compare</li>
+          <li><strong>Roles &amp; Permissions</strong> — tabular RBAC management</li>
+          <li><strong>Database Tables</strong> — system admin table browser</li>
+          <li><strong>Incident Management</strong> — expandable rows for incident details + linked assessments</li>
+        </ul>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- VARIANT 2: DataCardList (with expand/collapse, NO side accent) -->
+      <!-- ============================================ -->
+      <div class="section" id="datacardlist">
+        <h2>5. Variant: DataCardList</h2>
+        <span class="variant-label">DataCardList</span>
+        <p style="margin-bottom:16px;">For items with varying content that users read sequentially. Each card is a Card primitive with optional severity background tinting and expand/collapse for additional detail.</p>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="flex-between">
+              <div>
+                <div class="card-title-sm">Verification Queue</div>
+                <div class="card-description">Items pending verification review</div>
+              </div>
+              <div class="flex-row">
+                <input type="text" class="input" placeholder="Search queue..." style="max-width:220px;">
+                <select class="input" style="max-width:140px;height:40px;">
+                  <option>All Priority</option>
+                  <option>Critical</option>
+                  <option>High</option>
+                  <option>Medium</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="card-content">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+
+              <!-- Card 1 - Critical, COLLAPSED -->
+              <div class="card severity-bg-critical" style="padding:16px;">
+                <div class="flex-between">
+                  <div class="flex-row">
+                    <button class="expand-btn" title="Expand">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+                    </button>
+                    <span class="badge badge-severity-critical">CRITICAL</span>
+                    <span style="font-weight:500;font-size:0.875rem;">Medical Supply Delivery — NW Region</span>
+                  </div>
+                  <div class="flex-row">
+                    <span class="text-xs text-muted">Submitted 2h ago</span>
+                    <button class="dropdown-trigger" style="width:28px;height:28px;">⋮</button>
+                  </div>
+                </div>
+                <div style="display:flex;gap:24px;font-size:0.8125rem;color:hsl(var(--muted-foreground));margin-left:36px;margin-top:4px;">
+                  <span>Entity: <span style="color:hsl(var(--foreground));">Kano Warehouse</span></span>
+                  <span>Value: <span style="color:hsl(var(--foreground));">$45,000</span></span>
+                  <span>Reporter: <span style="color:hsl(var(--foreground));">Dr. Okafor</span></span>
+                </div>
+                <div style="margin-top:8px;margin-left:36px;display:flex;gap:8px;">
+                  <button class="btn btn-primary btn-sm">Verify</button>
+                  <button class="btn btn-outline btn-sm">Request Info</button>
+                </div>
+              </div>
+
+              <!-- Card 2 - Warning, EXPANDED -->
+              <div class="card severity-bg-warning" style="padding:16px;">
+                <div class="flex-between">
+                  <div class="flex-row">
+                    <button class="expand-btn" style="color:hsl(var(--primary));" title="Collapse">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="transform:rotate(90deg);"><path d="M6 4l4 4-4 4"/></svg>
+                    </button>
+                    <span class="badge badge-severity-warning">PENDING</span>
+                    <span style="font-weight:500;font-size:0.875rem;">Water Purification Kit Shipment — SE Region</span>
+                  </div>
+                  <div class="flex-row">
+                    <span class="text-xs text-muted">Submitted 5h ago</span>
+                    <button class="dropdown-trigger" style="width:28px;height:28px;">⋮</button>
+                  </div>
+                </div>
+                <div style="display:flex;gap:24px;font-size:0.8125rem;color:hsl(var(--muted-foreground));margin-left:36px;margin-top:4px;">
+                  <span>Entity: <span style="color:hsl(var(--foreground));">Enugu Distribution Hub</span></span>
+                  <span>Value: <span style="color:hsl(var(--foreground));">$12,500</span></span>
+                  <span>Reporter: <span style="color:hsl(var(--foreground));">N. Ibrahim</span></span>
+                </div>
+                <!-- Expanded content -->
+                <div class="expand-content" style="margin-left:36px;">
+                  <div class="expand-grid">
+                    <div>
+                      <div class="expand-field">
+                        <span class="expand-field-label">Description</span>
+                        <span class="expand-field-value">Emergency shipment of 500 water purification kits for flood-affected communities in SE region.</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="expand-field">
+                        <span class="expand-field-label">Assessor</span>
+                        <span class="expand-field-value">N. Ibrahim — nibrahim@drms.org</span>
+                      </div>
+                      <div class="expand-field" style="margin-top:6px;">
+                        <span class="expand-field-label">Assessment ID</span>
+                        <span class="expand-field-value">WA-2024-042</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="expand-field">
+                        <span class="expand-field-label">Created</span>
+                        <span class="expand-field-value">2024-03-15 09:30 UTC</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="expand-field">
+                        <span class="expand-field-label">Last Updated</span>
+                        <span class="expand-field-value">2024-03-15 14:22 UTC</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="margin-top:12px;display:flex;gap:8px;">
+                    <button class="btn btn-primary btn-sm">Verify</button>
+                    <button class="btn btn-outline btn-sm">Request Info</button>
+                    <button class="btn btn-ghost btn-sm">Reject</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 3 - Info, COLLAPSED -->
+              <div class="card severity-bg-info" style="padding:16px;">
+                <div class="flex-between">
+                  <div class="flex-row">
+                    <button class="expand-btn" title="Expand">
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 4l4 4-4 4"/></svg>
+                    </button>
+                    <span class="badge badge-severity-info">AUTO-VERIFIED</span>
+                    <span style="font-weight:500;font-size:0.875rem;">Blanket Distribution Report — Central Camp</span>
+                  </div>
+                  <div class="flex-row">
+                    <span class="text-xs text-muted">Submitted 1d ago</span>
+                    <button class="dropdown-trigger" style="width:28px;height:28px;">⋮</button>
+                  </div>
+                </div>
+                <div style="display:flex;gap:24px;font-size:0.8125rem;color:hsl(var(--muted-foreground));margin-left:36px;margin-top:4px;">
+                  <span>Entity: <span style="color:hsl(var(--foreground));">Abuja Central Camp</span></span>
+                  <span>Value: <span style="color:hsl(var(--foreground));">$3,200</span></span>
+                  <span>Reporter: <span style="color:hsl(var(--foreground));">UNHCR Field Team</span></span>
+                </div>
+                <div style="margin-top:8px;margin-left:36px;display:flex;gap:8px;">
+                  <button class="btn btn-outline btn-sm">Review</button>
+                  <button class="btn btn-ghost btn-sm">View Details</button>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="pagination">
+              <span>Showing 1-3 of 18 items</span>
+              <div class="flex-row" style="gap:4px;">
+                <button class="pagination-btn">‹</button>
+                <button class="pagination-btn active">1</button>
+                <button class="pagination-btn">2</button>
+                <button class="pagination-btn">3</button>
+                <button class="pagination-btn">›</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Severity Indication (No Side Accent)</h3>
+        <ul>
+          <li><strong>Background tint:</strong> The entire card gets a very subtle severity-tinted background (4% opacity). This creates an at-a-glance color association without the heavy left-border pattern.</li>
+          <li><strong>Severity badge:</strong> StatusBadge component with severity colors provides explicit labeling.</li>
+          <li><strong>Expand chevron:</strong> Positioned inline with the badge row for clean alignment.</li>
+        </ul>
+
+        <h3>Expand/Collapse Behaviour (DataCardList)</h3>
+        <ul>
+          <li><strong>Trigger:</strong> Chevron button at the start of each card, aligned with the badge/title row.</li>
+          <li><strong>Collapsed:</strong> Shows badge + title + metadata row + action buttons. Consistent card shape for all items.</li>
+          <li><strong>Expanded:</strong> A bordered section appears below the metadata, with a 2-column detail grid. Actions move to the bottom of the expanded section.</li>
+          <li><strong>State:</strong> <code>expandedItems: Set&lt;string&gt;</code></li>
+        </ul>
+
+        <h3>DRMS Pages Using DataCardList</h3>
+        <ul>
+          <li><strong>Verification Queue</strong> — varying severity + context, sequential review, expand for details</li>
+          <li><strong>Commitment Dashboard</strong> — each commitment has different status + detail</li>
+          <li><strong>Configuration Audit History</strong> — chronological event cards</li>
+          <li><strong>Incident Management</strong> — expandable incident cards with severity tint</li>
+          <li><strong>Leaderboard</strong> — ranked donor cards with position indicators</li>
+        </ul>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- VARIANT 3: DataCardGrid (REDESIGNED) -->
+      <!-- ============================================ -->
+      <div class="section" id="datacardgrid">
+        <h2>6. Variant: DataCardGrid</h2>
+        <span class="variant-label">DataCardGrid</span>
+        <p style="margin-bottom:16px;">For visual browsing and selection. Cards in a responsive grid with a single primary metric, a progress indicator, and key context. Click to select and drill down.</p>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="flex-between">
+              <div>
+                <div class="card-title-sm">Entity Overview</div>
+                <div class="card-description">Select an entity to view detailed insights</div>
+              </div>
+              <input type="text" class="input" placeholder="Filter entities..." style="max-width:220px;">
+            </div>
+          </div>
+          <div class="card-content">
+            <div class="grid-3" style="margin-bottom:16px;">
+
+              <!-- Grid Card 1 -->
+              <div class="card" style="padding:20px;cursor:pointer;transition:box-shadow 150ms,border-color 150ms;border-color:hsl(var(--primary)/0.3);">
+                <div class="flex-between" style="margin-bottom:16px;">
+                  <div>
+                    <div style="font-weight:600;font-size:0.9375rem;">Kano Warehouse</div>
+                    <div class="text-xs text-muted">NW Region — Nigeria</div>
+                  </div>
+                  <span class="badge badge-severity-success">ONLINE</span>
+                </div>
+                <div style="margin-bottom:12px;">
+                  <div class="flex-between" style="margin-bottom:6px;">
+                    <span class="stat-label">Fulfillment Rate</span>
+                    <span style="font-size:0.875rem;font-weight:600;color:hsl(var(--severity-success));">75%</span>
+                  </div>
+                  <div class="progress-bar-track">
+                    <div class="progress-bar-fill" style="width:75%;background:hsl(var(--severity-success));"></div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:16px;font-size:0.8125rem;">
+                  <span class="text-muted">24 commitments</span>
+                  <span class="text-muted">$1.2M value</span>
+                </div>
+              </div>
+
+              <!-- Grid Card 2 -->
+              <div class="card" style="padding:20px;cursor:pointer;transition:box-shadow 150ms,border-color 150ms;">
+                <div class="flex-between" style="margin-bottom:16px;">
+                  <div>
+                    <div style="font-weight:600;font-size:0.9375rem;">Enugu Distribution Hub</div>
+                    <div class="text-xs text-muted">SE Region — Nigeria</div>
+                  </div>
+                  <span class="badge badge-severity-warning">PARTIAL</span>
+                </div>
+                <div style="margin-bottom:12px;">
+                  <div class="flex-between" style="margin-bottom:6px;">
+                    <span class="stat-label">Fulfillment Rate</span>
+                    <span style="font-size:0.875rem;font-weight:600;color:hsl(var(--severity-warning));">58%</span>
+                  </div>
+                  <div class="progress-bar-track">
+                    <div class="progress-bar-fill" style="width:58%;background:hsl(var(--severity-warning));"></div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:16px;font-size:0.8125rem;">
+                  <span class="text-muted">12 commitments</span>
+                  <span class="text-muted">$480K value</span>
+                </div>
+              </div>
+
+              <!-- Grid Card 3 -->
+              <div class="card" style="padding:20px;cursor:pointer;transition:box-shadow 150ms,border-color 150ms;">
+                <div class="flex-between" style="margin-bottom:16px;">
+                  <div>
+                    <div style="font-weight:600;font-size:0.9375rem;">Abuja Central Camp</div>
+                    <div class="text-xs text-muted">Central Region — Nigeria</div>
+                  </div>
+                  <span class="badge badge-severity-success">ONLINE</span>
+                </div>
+                <div style="margin-bottom:12px;">
+                  <div class="flex-between" style="margin-bottom:6px;">
+                    <span class="stat-label">Fulfillment Rate</span>
+                    <span style="font-size:0.875rem;font-weight:600;color:hsl(var(--severity-success));">90%</span>
+                  </div>
+                  <div class="progress-bar-track">
+                    <div class="progress-bar-fill" style="width:90%;background:hsl(var(--severity-success));"></div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:16px;font-size:0.8125rem;">
+                  <span class="text-muted">31 commitments</span>
+                  <span class="text-muted">$2.1M value</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <h3>Design Rationale (DataCardGrid)</h3>
+        <ul>
+          <li><strong>Single primary metric + progress bar:</strong> Each card shows ONE key metric (fulfillment rate) with a visual progress bar. This gives instant scannability — users can compare cards by bar length at a glance.</li>
+          <li><strong>Supporting context:</strong> Secondary text below the bar provides commitment count and value. No 2x2 stat grid — that created visual noise.</li>
+          <li><strong>Entity identity top-left, status top-right:</strong> Consistent card header layout — name/region on the left, status badge on the right.</li>
+          <li><strong>Selected state:</strong> Border color changes to <code>primary/30</code> to indicate selection (see Card 1).</li>
+        </ul>
+
+        <h3>DRMS Pages Using DataCardGrid</h3>
+        <ul>
+          <li><strong>Entity Insights</strong> — browse entities with key metrics, click to drill down</li>
+          <li><strong>Executive Incidents</strong> — situation-awareness tiles with severity indicators</li>
+          <li><strong>Peer Comparison</strong> — side-by-side donor metric cards</li>
+        </ul>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- VARIANT 4: DataConfig -->
+      <!-- ============================================ -->
+      <div class="section" id="dataconfig">
+        <h2>7. Variant: DataConfig</h2>
+        <span class="variant-label">DataConfig</span>
+        <p style="margin-bottom:16px;">For editable key-value settings. Not a data list — a configuration form using Card primitives with inline editing.</p>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="flex-between">
+              <div>
+                <div class="card-title-sm">Severity Thresholds</div>
+                <div class="card-description">Configure auto-escalation rules for gap field severity</div>
+              </div>
+              <button class="btn btn-outline btn-sm">Reset to Defaults</button>
+            </div>
+          </div>
+          <div class="card-content">
+            <div style="display:flex;flex-direction:column;">
+
+              <div class="config-row">
+                <div style="flex:1;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                    <span class="status-dot status-dot-critical"></span>
+                    <span style="font-weight:500;font-size:0.875rem;">Critical Threshold</span>
+                  </div>
+                  <span class="text-xs text-muted">Gap percentage that triggers critical escalation</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="number" class="input" value="75" style="width:80px;text-align:center;">
+                    <span class="text-sm text-muted">%</span>
+                  </div>
+                  <span class="badge badge-severity-critical">CRITICAL</span>
+                </div>
+              </div>
+
+              <div class="config-row">
+                <div style="flex:1;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                    <span class="status-dot" style="background:hsl(var(--severity-high));"></span>
+                    <span style="font-weight:500;font-size:0.875rem;">High Threshold</span>
+                  </div>
+                  <span class="text-xs text-muted">Gap percentage that triggers high-priority alert</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="number" class="input" value="50" style="width:80px;text-align:center;">
+                    <span class="text-sm text-muted">%</span>
+                  </div>
+                  <span class="badge badge-severity-high">HIGH</span>
+                </div>
+              </div>
+
+              <div class="config-row">
+                <div style="flex:1;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                    <span class="status-dot" style="background:hsl(var(--severity-medium));"></span>
+                    <span style="font-weight:500;font-size:0.875rem;">Medium Threshold</span>
+                  </div>
+                  <span class="text-xs text-muted">Gap percentage that triggers medium-priority notification</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="number" class="input" value="25" style="width:80px;text-align:center;">
+                    <span class="text-sm text-muted">%</span>
+                  </div>
+                  <span class="badge badge-severity-medium">MEDIUM</span>
+                </div>
+              </div>
+
+              <div class="config-row">
+                <div style="flex:1;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                    <span class="status-dot" style="background:hsl(var(--severity-low));"></span>
+                    <span style="font-weight:500;font-size:0.875rem;">Low Threshold</span>
+                  </div>
+                  <span class="text-xs text-muted">Gap percentage that triggers low-priority tracking</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="number" class="input" value="10" style="width:80px;text-align:center;">
+                    <span class="text-sm text-muted">%</span>
+                  </div>
+                  <span class="badge badge-severity-low">LOW</span>
+                </div>
+              </div>
+
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid hsl(var(--border));">
+              <button class="btn btn-outline">Cancel</button>
+              <button class="btn btn-primary">Save Changes</button>
+            </div>
+          </div>
+        </div>
+
+        <h3>DRMS Pages Using DataConfig</h3>
+        <ul>
+          <li><strong>Severity Thresholds</strong> — editable gap field severity thresholds</li>
+          <li><strong>Auto-Approval Config</strong> — verification rule settings</li>
+          <li><strong>Notification Rules</strong> — system alert configuration</li>
+        </ul>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- FEATURE: Expand/Collapse -->
+      <!-- ============================================ -->
+      <div class="section" id="expand-collapse">
+        <h2>8. Feature: Expand/Collapse</h2>
+        <p style="margin-bottom:16px;">Expand/collapse is a <strong>feature</strong> of DataCardList and DataTable, not a separate variant. Both use the same interaction pattern, adapted to their layout.</p>
+
+        <div class="principle-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+          <div class="principle-card">
+            <h4>Trigger pattern</h4>
+            <p>Ghost-variant chevron button (28px). Collapsed = chevron-right icon. Expanded = rotated 90deg to point down. Uses <code>e.stopPropagation()</code> to prevent parent click handlers.</p>
+          </div>
+          <div class="principle-card">
+            <h4>Expanded content</h4>
+            <p>Two-column responsive grid (<code>grid-cols-1 md:grid-cols-2</code>) with labeled fields. Shows additional data not visible in collapsed state: descriptions, linked records, timelines.</p>
+          </div>
+          <div class="principle-card">
+            <h4>Visual separation</h4>
+            <p>DataTable: <code>bg-muted/30</code> background on expanded row. DataCardList: <code>border-top</code> separator with padding. Both clearly distinguish expanded content from summary.</p>
+          </div>
+          <div class="principle-card">
+            <h4>State management</h4>
+            <p><code>expandedItems: Set&lt;string&gt;</code> tracked in component state. Toggle function creates a new Set, adding/removing the item ID. Multiple items can be expanded simultaneously.</p>
+          </div>
+          <div class="principle-card">
+            <h4>No animation</h4>
+            <p>Content appears/disappears instantly via conditional rendering. Matches the existing codebase convention in IncidentManagement and VerificationQueue components.</p>
+          </div>
+          <div class="principle-card">
+            <h4>Collapsed consistency</h4>
+            <p>When all items are collapsed, DataCardList items all share the same card shape. This makes the list scannable — users can quickly compare summaries before expanding the ones they need.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- CROSS-CUTTING: SearchToolbar -->
+      <!-- ============================================ -->
+      <div class="section" id="searchtoolbar">
+        <h2>9. Cross-cutting: SearchToolbar</h2>
+        <span class="variant-label">SearchToolbar</span>
+        <p style="margin-bottom:16px;">A shared toolbar component used by all DataList variants. Wraps shadcn Input + Select with consistent spacing.</p>
+
+        <div class="card">
+          <div class="card-content" style="padding:16px 24px;">
+            <div class="toolbar" style="flex-wrap:wrap;">
+              <input type="text" class="input" placeholder="Search..." style="max-width:280px;">
+              <select class="input" style="max-width:160px;height:40px;">
+                <option>All Categories</option>
+                <option>Category A</option>
+                <option>Category B</option>
+              </select>
+              <select class="input" style="max-width:140px;height:40px;">
+                <option>All Status</option>
+                <option>Active</option>
+                <option>Inactive</option>
+              </select>
+              <div style="flex:1;"></div>
+              <button class="btn btn-outline btn-sm">Reset Filters</button>
+              <button class="btn btn-outline btn-sm">Export</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- STATES -->
+      <!-- ============================================ -->
+      <div class="section" id="states">
+        <h2>10. Loading / Empty / Error States</h2>
+        <p style="margin-bottom:16px;">All variants share the same state patterns, built from the same shadcn primitives.</p>
+
+        <div class="grid-3" style="margin-bottom:24px;">
+          <!-- Loading -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title-sm" style="font-size:0.875rem;">Loading State</div>
+            </div>
+            <div class="card-content" style="display:flex;flex-direction:column;gap:12px;">
+              <div class="skeleton" style="height:48px;width:100%;"></div>
+              <div class="skeleton" style="height:48px;width:100%;"></div>
+              <div class="skeleton" style="height:48px;width:80%;"></div>
+              <div class="skeleton" style="height:48px;width:60%;"></div>
+            </div>
+          </div>
+
+          <!-- Empty -->
+          <div class="card" style="border-style:dashed;">
+            <div class="card-content">
+              <div class="empty-state">
+                <div class="empty-icon-wrap">∅</div>
+                <div class="empty-title">No data found</div>
+                <div class="empty-desc">No data is available at the moment. Check back later or try refreshing.</div>
+                <button class="btn btn-outline btn-sm" style="margin-top:16px;">Refresh</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div class="card" style="border-color:hsl(var(--destructive)/0.3);">
+            <div class="card-content" style="padding:16px;">
+              <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;border-radius:0.375rem;background:hsl(var(--destructive)/0.05);border:1px solid hsl(var(--destructive)/0.2);">
+                <span style="color:hsl(var(--destructive));font-size:1.125rem;">⚠</span>
+                <div style="flex:1;">
+                  <div style="font-weight:500;font-size:0.875rem;color:hsl(var(--destructive));">Something went wrong</div>
+                  <div style="font-size:0.8125rem;color:hsl(var(--muted-foreground));margin-top:4px;">We encountered an error loading this data. Please try again.</div>
+                </div>
+                <button class="btn btn-outline btn-sm" style="border-color:hsl(var(--destructive)/0.3);color:hsl(var(--destructive));">Retry</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- PAGE MAPPING -->
+      <!-- ============================================ -->
+      <div class="section" id="mapping">
+        <h2>11. Page-to-Variant Mapping</h2>
+        <div class="card">
+          <div class="card-content" style="padding:0;overflow:auto;">
+            <table class="mapping-table">
+              <thead>
+                <tr>
+                  <th>Page</th>
+                  <th>Variant</th>
+                  <th>Expand?</th>
+                  <th>Rationale</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>admin/users</code></td>
+                  <td>DataTable</td>
+                  <td>—</td>
+                  <td>Same columns, comparison task, sort/filter</td>
+                </tr>
+                <tr>
+                  <td><code>roles</code></td>
+                  <td>DataTable</td>
+                  <td>—</td>
+                  <td>RBAC management — same fields per role</td>
+                </tr>
+                <tr>
+                  <td><code>system/database</code></td>
+                  <td>DataTable</td>
+                  <td>—</td>
+                  <td>Table browser — structured, same columns</td>
+                </tr>
+                <tr>
+                  <td><code>coordinator/incidents</code></td>
+                  <td>DataTable</td>
+                  <td>Yes</td>
+                  <td>Expandable rows for linked assessments + detail</td>
+                </tr>
+                <tr>
+                  <td><code>verification/queue</code></td>
+                  <td>DataCardList</td>
+                  <td>Yes</td>
+                  <td>Varying content, sequential review, expand for details</td>
+                </tr>
+                <tr>
+                  <td><code>donor/commitments</code></td>
+                  <td>DataCardList</td>
+                  <td>Yes</td>
+                  <td>Different commitment states, expand for timeline</td>
+                </tr>
+                <tr>
+                  <td><code>verification/audit</code></td>
+                  <td>DataCardList</td>
+                  <td>—</td>
+                  <td>Chronological events, sequential reading</td>
+                </tr>
+                <tr>
+                  <td><code>donor/leaderboard</code></td>
+                  <td>DataCardList</td>
+                  <td>—</td>
+                  <td>Ranked cards with position, sequential scan</td>
+                </tr>
+                <tr>
+                  <td><code>donor/entities</code></td>
+                  <td>DataCardGrid</td>
+                  <td>—</td>
+                  <td>Visual browsing, click to drill down</td>
+                </tr>
+                <tr>
+                  <td><code>executive/incidents</code></td>
+                  <td>DataCardGrid</td>
+                  <td>—</td>
+                  <td>Situation tiles, visual scanning</td>
+                </tr>
+                <tr>
+                  <td><code>donor/peer-comparison</code></td>
+                  <td>DataCardGrid</td>
+                  <td>—</td>
+                  <td>Side-by-side metric comparison</td>
+                </tr>
+                <tr>
+                  <td><code>settings/thresholds</code></td>
+                  <td>DataConfig</td>
+                  <td>—</td>
+                  <td>Editable key-value severity settings</td>
+                </tr>
+                <tr>
+                  <td><code>verification/auto-approval</code></td>
+                  <td>DataConfig</td>
+                  <td>—</td>
+                  <td>Rule configuration with inline edit</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- COMPONENT API -->
+      <!-- ============================================ -->
+      <div class="section" id="api">
+        <h2>12. Component API</h2>
+
+        <h3>DataTable</h3>
+        <div class="api-block">
+<span class="keyword">interface</span> <span class="type">DataTableProps</span>&lt;T&gt; {
+  columns: <span class="type">ColumnDef</span>&lt;T&gt;[]            <span class="comment">// Column definitions (TanStack Table)</span>
+  data: T[]
+  loading?: <span class="type">boolean</span>                     <span class="comment">// Shows skeleton rows</span>
+  emptyMessage?: <span class="type">string</span>               <span class="comment">// Shown when data is []</span>
+  searchable?: <span class="type">boolean</span>                  <span class="comment">// Adds search input in toolbar</span>
+  filterable?: <span class="type">FilterConfig</span>[]            <span class="comment">// Adds select dropdowns</span>
+  selectable?: <span class="type">boolean</span>                  <span class="comment">// Checkbox column</span>
+  expandable?: <span class="type">boolean</span>                  <span class="comment">// Adds expand/collapse chevron column</span>
+  renderExpanded?: (row: T) =&gt; <span class="type">ReactNode</span> <span class="comment">// Content for expanded row</span>
+  pagination?: <span class="type">PaginationConfig</span>          <span class="comment">// Page size, total count</span>
+  onRowClick?: (row: T) =&gt; <span class="type">void</span>
+  actions?: <span class="type">RowAction</span>[]                  <span class="comment">// DropdownMenu items</span>
+}</div>
+
+        <h3>DataCardList</h3>
+        <div class="api-block">
+<span class="keyword">interface</span> <span class="type">DataCardListProps</span>&lt;T&gt; {
+  data: T[]
+  loading?: <span class="type">boolean</span>
+  emptyMessage?: <span class="type">string</span>
+  renderCard: (item: T, <span class="type">ExpandedCardProps</span>) =&gt; <span class="type">ReactNode</span>  <span class="comment">// Card renderer with expand API</span>
+  getSeverity?: (item: T) =&gt; <span class="type">SeverityLevel</span>   <span class="comment">// For background tint</span>
+  expandable?: <span class="type">boolean</span>                    <span class="comment">// Enables expand/collapse</span>
+  renderExpanded?: (item: T) =&gt; <span class="type">ReactNode</span>   <span class="comment">// Expanded detail content</span>
+  searchable?: <span class="type">boolean</span>
+  pagination?: <span class="type">PaginationConfig</span>
+  cardPadding?: <span class="type">'sm' | 'md' | 'lg'</span>           <span class="comment">// Default: md (p-4)</span>
+}
+
+<span class="keyword">interface</span> <span class="type">ExpandedCardProps</span> {
+  isExpanded: <span class="type">boolean</span>
+  toggleExpand: () =&gt; <span class="type">void</span>
+}</div>
+
+        <h3>DataCardGrid</h3>
+        <div class="api-block">
+<span class="keyword">interface</span> <span class="type">DataCardGridProps</span>&lt;T&gt; {
+  data: T[]
+  loading?: <span class="type">boolean</span>
+  emptyMessage?: <span class="type">string</span>
+  columns?: <span class="type">2 | 3 | 4</span>                    <span class="comment">// Grid columns, default 3</span>
+  renderCard: (item: T) =&gt; <span class="type">ReactNode</span>
+  onCardClick?: (item: T) =&gt; <span class="type">void</span>
+  selectedId?: <span class="type">string</span>                     <span class="comment">// Highlights selected card (border-primary/30)</span>
+  searchable?: <span class="type">boolean</span>
+}</div>
+
+        <h3>DataConfig</h3>
+        <div class="api-block">
+<span class="keyword">interface</span> <span class="type">DataConfigProps</span> {
+  title: <span class="type">string</span>
+  description?: <span class="type">string</span>
+  fields: <span class="type">ConfigField</span>[]                  <span class="comment">// Key-value field definitions</span>
+  values: <span class="type">Record</span>&lt;string, unknown&gt;         <span class="comment">// Current values</span>
+  onSave: (values: <span class="type">Record</span>&lt;string, unknown&gt;) =&gt; <span class="type">void</span>
+  onReset?: () =&gt; <span class="type">void</span>
+  loading?: <span class="type">boolean</span>
+}
+
+<span class="keyword">interface</span> <span class="type">ConfigField</span> {
+  key: <span class="type">string</span>
+  label: <span class="type">string</span>
+  description?: <span class="type">string</span>
+  type: <span class="type">'number' | 'select' | 'toggle' | 'text'</span>
+  severity?: <span class="type">SeverityLevel</span>               <span class="comment">// For status dot + badge</span>
+  options?: { label: <span class="type">string</span>; value: <span class="type">string</span> }[]
+  defaultValue?: unknown
+}</div>
+
+        <h3>SearchToolbar (cross-cutting)</h3>
+        <div class="api-block">
+<span class="keyword">interface</span> <span class="type">SearchToolbarProps</span> {
+  searchPlaceholder?: <span class="type">string</span>
+  onSearchChange?: (value: <span class="type">string</span>) =&gt; <span class="type">void</span>
+  filters?: <span class="type">FilterConfig</span>[]
+  onFilterChange?: (key: <span class="type">string</span>, value: <span class="type">string</span>) =&gt; <span class="type">void</span>
+  actions?: <span class="type">ToolbarAction</span>[]               <span class="comment">// Reset, Export, etc.</span>
+}
+
+<span class="keyword">interface</span> <span class="type">FilterConfig</span> {
+  key: <span class="type">string</span>
+  label: <span class="type">string</span>
+  options: { label: <span class="type">string</span>; value: <span class="type">string</span> }[]
+}</div>
+
+        <h3>File Structure</h3>
+        <div class="api-block">
+src/components/shared/
+  DataList.tsx           <span class="comment">// Re-exports all variants</span>
+  DataTable.tsx          <span class="comment">// Wraps shadcn Table + TanStack Table + expand</span>
+  DataCardList.tsx       <span class="comment">// Card stack with severity tint + expand</span>
+  DataCardGrid.tsx       <span class="comment">// Responsive card grid with progress bars</span>
+  DataConfig.tsx         <span class="comment">// Key-value config editor</span>
+  SearchToolbar.tsx      <span class="comment">// Shared filter/search bar</span></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -7,19 +7,21 @@ import { apiGet } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import {
   Building,
   FileCheck,
   Truck,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   Activity,
   CheckCircle,
   Clock,
   BarChart3,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus
 } from 'lucide-react';
 
 // Types for aggregate metrics data
@@ -42,19 +44,6 @@ interface AggregateMetricsData {
   };
 }
 
-interface MetricCard {
-  title: string;
-  value: string | number;
-  subtitle?: string;
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  trend?: {
-    value: number;
-    direction: 'up' | 'down' | 'neutral';
-  };
-}
 
 /**
  * Format percentage values
@@ -63,21 +52,6 @@ const formatPercentage = (value: number): string => {
   return `${Math.round(value * 100)}%`;
 };
 
-/**
- * Get trend icon and color
- */
-const getTrendIndicator = (trend: number | undefined) => {
-  if (!trend) return null;
-  
-  const isPositive = trend > 0;
-  const isNeutral = trend === 0;
-  
-  return {
-    icon: isNeutral ? Minus : isPositive ? TrendingUp : TrendingDown,
-    color: isNeutral ? 'text-gray-500' : isPositive ? 'text-green-600' : 'text-red-600',
-    label: isNeutral ? 'No change' : `${isPositive ? '+' : ''}${trend}%`
-  };
-};
 
 /**
  * Get delivery rate status
@@ -227,51 +201,6 @@ export function AggregateMetrics({ incidentId, className }: AggregateMetricsProp
   // Alias for easier access in JSX
   const data = metricsData;
 
-  // Prepare metric cards data
-  const metrics: MetricCard[] = [
-    {
-      title: 'Affected Entities',
-      value: metricsData.affectedEntitiesCount,
-      subtitle: 'Locations impacted',
-      icon: Building,
-      color: 'text-blue-700',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      trend: metricsData.trends?.entitiesChange ? {
-        value: metricsData.trends.entitiesChange,
-        direction: metricsData.trends.entitiesChange > 0 ? 'up' : 
-                   metricsData.trends.entitiesChange < 0 ? 'down' : 'neutral'
-      } : undefined
-    },
-    {
-      title: 'Total Assessments',
-      value: metricsData.totalAssessmentsCount,
-      subtitle: `${metricsData.verifiedAssessmentsCount} verified`,
-      icon: FileCheck,
-      color: 'text-purple-700',
-      bgColor: 'bg-purple-50',
-      borderColor: 'border-purple-200',
-      trend: metricsData.trends?.assessmentsChange ? {
-        value: metricsData.trends.assessmentsChange,
-        direction: metricsData.trends.assessmentsChange > 0 ? 'up' : 
-                   metricsData.trends.assessmentsChange < 0 ? 'down' : 'neutral'
-      } : undefined
-    },
-    {
-      title: 'Responses',
-      value: metricsData.responsesCount,
-      subtitle: 'Resources delivered',
-      icon: Truck,
-      color: 'text-green-700',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200',
-      trend: metricsData.trends?.responsesChange ? {
-        value: metricsData.trends.responsesChange,
-        direction: metricsData.trends.responsesChange > 0 ? 'up' : 
-                   metricsData.trends.responsesChange < 0 ? 'down' : 'neutral'
-      } : undefined
-    }
-  ];
 
   return (
     <Card className={cn("h-fit", className)}>
@@ -283,57 +212,32 @@ export function AggregateMetrics({ incidentId, className }: AggregateMetricsProp
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Main Metrics Grid */}
-        <div className="grid grid-cols-1 gap-3">
-          {metrics.map((metric, index) => {
-            const Icon = metric.icon;
-            const trendIndicator = metric.trend ? getTrendIndicator(metric.trend.value) : null;
-            
-            return (
-              <div 
-                key={index}
-                className={cn(
-                  "p-3 rounded-lg border",
-                  metric.bgColor,
-                  metric.borderColor
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={cn("p-2 rounded-lg bg-white", metric.color)}>
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-gray-700">
-                        {metric.title}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {metric.subtitle}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <div className="text-right">
-                      <div className={cn("text-lg font-bold", metric.color)}>
-                        {typeof metric.value === 'number' 
-                          ? metric.value.toLocaleString() 
-                          : metric.value
-                        }
-                      </div>
-                      {trendIndicator && (
-                        <div className={cn("flex items-center gap-1 text-xs", trendIndicator.color)}>
-                          <trendIndicator.icon className="h-3 w-3" />
-                          <span>{trendIndicator.label}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <StatCardGrid columns={3} gap="sm">
+          <StatCard
+            label="Affected Entities"
+            value={metricsData.affectedEntitiesCount.toLocaleString()}
+            severity="critical"
+            variant="tinted"
+            icon={Building}
+            trend={metricsData.trends?.entitiesChange ? { value: metricsData.trends.entitiesChange, label: `${metricsData.trends.entitiesChange > 0 ? '+' : ''}${metricsData.trends.entitiesChange}%` } : null}
+          />
+          <StatCard
+            label="Total Assessments"
+            value={metricsData.totalAssessmentsCount.toLocaleString()}
+            severity="info"
+            variant="tinted"
+            icon={FileCheck}
+            trend={metricsData.trends?.assessmentsChange ? { value: metricsData.trends.assessmentsChange, label: `${metricsData.trends.assessmentsChange > 0 ? '+' : ''}${metricsData.trends.assessmentsChange}%` } : null}
+          />
+          <StatCard
+            label="Responses"
+            value={metricsData.responsesCount.toLocaleString()}
+            severity="success"
+            variant="tinted"
+            icon={Truck}
+            trend={metricsData.trends?.responsesChange ? { value: metricsData.trends.responsesChange, label: `${metricsData.trends.responsesChange > 0 ? '+' : ''}${metricsData.trends.responsesChange}%` } : null}
+          />
+        </StatCardGrid>
 
         {/* Assessment Verification Status */}
         {data.totalAssessmentsCount > 0 && (
@@ -425,23 +329,27 @@ export function AggregateMetrics({ incidentId, className }: AggregateMetricsProp
           <div className="pt-2 border-t border-gray-100">
             <div className="text-sm font-medium text-gray-700 mb-2">24h Trends</div>
             <div className="space-y-1">
-              {Object.entries(data.trends).map(([key, value]) => {
-                const trendIndicator = getTrendIndicator(value);
-                if (!trendIndicator) return null;
-                
-                const TrendIcon = trendIndicator.icon;
-                const labels = {
+              {Object.entries(data.trends).map(([key, val]) => {
+                if (!val) return null;
+
+                const isUp = val > 0;
+                const isNeutral = val === 0;
+                const TrendIcon = isNeutral ? Minus : isUp ? ArrowUpRight : ArrowDownRight;
+                const trendColor = isNeutral ? 'text-gray-500' : isUp ? 'text-emerald-600' : 'text-red-600';
+                const trendLabel = isNeutral ? 'No change' : `${isUp ? '+' : ''}${val}%`;
+
+                const labels: Record<string, string> = {
                   assessmentsChange: 'Assessments',
-                  responsesChange: 'Responses', 
+                  responsesChange: 'Responses',
                   entitiesChange: 'Entities'
                 };
-                
+
                 return (
                   <div key={key} className="flex items-center justify-between text-xs">
-                    <span className="text-gray-600">{labels[key as keyof typeof labels]}</span>
-                    <div className={cn("flex items-center gap-1", trendIndicator.color)}>
+                    <span className="text-gray-600">{labels[key]}</span>
+                    <div className={cn("flex items-center gap-1", trendColor)}>
                       <TrendIcon className="h-3 w-3" />
-                      <span>{trendIndicator.label}</span>
+                      <span>{trendLabel}</span>
                     </div>
                   </div>
                 );

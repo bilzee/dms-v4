@@ -5,6 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { apiGet } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -374,87 +376,47 @@ export function DonorPerformanceDashboard({
         </div>
       </div>
 
-      {/* Key Metrics Cards */}
       {performanceMetrics && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Delivery Rate</p>
-                  <p className="text-2xl font-bold">{performanceMetrics.deliveryRate.toFixed(1)}%</p>
-                  <div className={cn(
-                    "flex items-center text-xs",
-                    performanceMetrics.deliveryRateTrend >= 0 ? "text-green-600" : "text-red-600"
-                  )}>
-                    {performanceMetrics.deliveryRateTrend >= 0 ? (
-                      <TrendingUp className="w-3 h-3 mr-1" />
-                    ) : (
-                      <TrendingDown className="w-3 h-3 mr-1" />
-                    )}
-                    {Math.abs(performanceMetrics.deliveryRateTrend).toFixed(1)}%
-                  </div>
-                </div>
-                <Target className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
+        <StatCardGrid columns={4}>
+          <StatCard
+            label="Delivery Rate"
+            value={`${performanceMetrics.deliveryRate.toFixed(1)}%`}
+            severity="success"
+            icon={Target}
+            trend={{
+              value: performanceMetrics.deliveryRateTrend,
+              label: `${Math.abs(performanceMetrics.deliveryRateTrend).toFixed(1)}%`
+            }}
+          />
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Commitments</p>
-                  <p className="text-2xl font-bold">{performanceMetrics.totalCommitments}</p>
-                  <div className={cn(
-                    "flex items-center text-xs",
-                    performanceMetrics.commitmentTrend >= 0 ? "text-green-600" : "text-red-600"
-                  )}>
-                    {performanceMetrics.commitmentTrend >= 0 ? (
-                      <TrendingUp className="w-3 h-3 mr-1" />
-                    ) : (
-                      <TrendingDown className="w-3 h-3 mr-1" />
-                    )}
-                    {Math.abs(performanceMetrics.commitmentTrend)}
-                  </div>
-                </div>
-                <Activity className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            label="Total Commitments"
+            value={performanceMetrics.totalCommitments}
+            severity="info"
+            icon={Activity}
+            trend={{
+              value: performanceMetrics.commitmentTrend,
+              label: `${Math.abs(performanceMetrics.commitmentTrend)}`
+            }}
+          />
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Value</p>
-                  <p className="text-2xl font-bold">${(performanceMetrics.totalValue / 1000).toFixed(1)}k</p>
-                  <p className="text-xs text-gray-500">Estimated impact</p>
-                </div>
-                <Award className="w-8 h-8 text-purple-500" />
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            label="Total Value"
+            value={`$${(performanceMetrics.totalValue / 1000).toFixed(1)}k`}
+            severity="info"
+            icon={Award}
+          />
 
           {showRanking && leaderboardData && (
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Current Rank</p>
-                    <p className="text-2xl font-bold">#{leaderboardData.rank}</p>
-                    <Badge variant="secondary" className="text-xs">
-                      {leaderboardData.trend === 'up' && '📈 Rising'}
-                      {leaderboardData.trend === 'down' && '📉 Declining'}
-                      {leaderboardData.trend === 'stable' && '➡️ Stable'}
-                    </Badge>
-                  </div>
-                  <Trophy className="w-8 h-8 text-yellow-500" />
-                </div>
-              </CardContent>
-            </Card>
+            <StatCard
+              label="Current Rank"
+              value={`#${leaderboardData.rank}`}
+              severity="info"
+              variant="centered"
+              icon={Trophy}
+            />
           )}
-        </div>
+        </StatCardGrid>
       )}
 
       {/* Badges Section */}

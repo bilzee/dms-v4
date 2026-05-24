@@ -5,10 +5,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Select, 
@@ -274,67 +277,38 @@ export function AutoApprovalConfig({ className }: AutoApprovalConfigProps) {
 
       {/* Summary metrics */}
       {configData?.summary && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Entities</p>
-                  <p className="text-2xl font-bold">{configData.summary.totalEntities}</p>
-                </div>
-                <MapPin className="h-6 w-6 text-gray-400" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Auto-Approval Enabled</p>
-                  <p className="text-2xl font-bold text-green-600">{configData.summary.enabledCount}</p>
-                </div>
-                <Shield className="h-6 w-6 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Manual Verification</p>
-                  <p className="text-2xl font-bold text-amber-600">{configData.summary.disabledCount}</p>
-                </div>
-                <Settings className="h-6 w-6 text-amber-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Auto-Verified Assessments</p>
-                  <p className="text-2xl font-bold text-blue-600">{configData.summary.totalAutoVerifiedAssessments}</p>
-                </div>
-                <CheckCircle className="h-6 w-6 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Auto-Verified Responses</p>
-                  <p className="text-2xl font-bold text-green-600">{configData.summary.totalAutoVerifiedResponses}</p>
-                </div>
-                <CheckCircle className="h-6 w-6 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <StatCardGrid columns={4}>
+          <StatCard
+            label="Total Entities"
+            value={configData.summary.totalEntities}
+            severity="info"
+            icon={MapPin}
+          />
+          <StatCard
+            label="Auto-Approval Enabled"
+            value={configData.summary.enabledCount}
+            severity="success"
+            icon={Shield}
+          />
+          <StatCard
+            label="Manual Verification"
+            value={configData.summary.disabledCount}
+            severity="warning"
+            icon={Settings}
+          />
+          <StatCard
+            label="Auto-Verified Assessments"
+            value={configData.summary.totalAutoVerifiedAssessments}
+            severity="success"
+            icon={CheckCircle}
+          />
+          <StatCard
+            label="Auto-Verified Responses"
+            value={configData.summary.totalAutoVerifiedResponses}
+            severity="success"
+            icon={CheckCircle}
+          />
+        </StatCardGrid>
       )}
 
       {/* Bulk actions */}
@@ -564,16 +538,7 @@ function EntityConfigCard({
               <div>
                 <Label className="font-medium text-gray-700">Max Priority</Label>
                 <div className="mt-1">
-                  <Badge 
-                    className={cn(
-                      entity.conditions.maxPriority === 'CRITICAL' && 'bg-red-100 text-red-800',
-                      entity.conditions.maxPriority === 'HIGH' && 'bg-orange-100 text-orange-800',
-                      entity.conditions.maxPriority === 'MEDIUM' && 'bg-yellow-100 text-yellow-800',
-                      entity.conditions.maxPriority === 'LOW' && 'bg-green-100 text-green-800'
-                    )}
-                  >
-                    {entity.conditions.maxPriority}
-                  </Badge>
+                  <StatusBadge status={entity.conditions.maxPriority} domain="severity" />
                 </div>
               </div>
               

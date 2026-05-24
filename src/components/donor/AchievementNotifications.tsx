@@ -98,7 +98,7 @@ export function AchievementNotifications({
           className={cn(
             "relative overflow-hidden transition-all duration-300 ease-in-out",
             getAnimationClass(notification.showAnimation, notification.isNew),
-            "shadow-lg border-l-4 border-l-yellow-500"
+            "shadow-lg bg-amber-500/5 border-amber-500/15"
           )}
         >
           {/* Background gradient for new achievements */}

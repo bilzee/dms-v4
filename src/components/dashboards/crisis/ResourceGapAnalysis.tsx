@@ -3,8 +3,11 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge, getBadgeClasses } from '@/components/shared/StatusBadge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -142,32 +145,31 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
   };
 
   const getSeverityBadge = (severity: string) => {
-    const severityConfig = {
-      HIGH: { className: 'bg-red-100 text-red-800 border-red-200', icon: AlertTriangle },
-      MEDIUM: { className: 'bg-amber-100 text-amber-800 border-amber-200', icon: TrendingUp },
-      LOW: { className: 'bg-green-100 text-green-800 border-green-200', icon: Package }
+    const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+      HIGH: AlertTriangle,
+      MEDIUM: TrendingUp,
+      LOW: Package
     };
-    
-    const config = severityConfig[severity as keyof typeof severityConfig] || severityConfig.LOW;
-    const Icon = config.icon;
-    
+    const Icon = iconMap[severity] || Package;
+
     return (
-      <Badge className={`${config.className} flex items-center gap-1`}>
-        <Icon className="h-3 w-3" />
-        {severity}
-      </Badge>
+      <StatusBadge
+        domain="severity"
+        status={severity}
+        icon={Icon}
+      />
     );
   };
 
   const getCompatibilityBadge = (score: number) => {
-    let className = 'bg-green-100 text-green-800';
-    if (score < 70) className = 'bg-amber-100 text-amber-800';
-    if (score < 40) className = 'bg-red-100 text-red-800';
-    
+    const status = score >= 70 ? 'COMPLETE' : score >= 40 ? 'PARTIAL' : 'CANCELLED';
+
     return (
-      <Badge className={className}>
-        {score}% Match
-      </Badge>
+      <StatusBadge
+        domain="commitment"
+        status={status}
+        label={`${score}% Match`}
+      />
     );
   };
 
@@ -230,61 +232,32 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
 
       {/* Summary Statistics */}
       {gapAnalysisData?.summary && (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Entities with Gaps</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{gapAnalysisData.summary.totalEntities}</div>
-              <p className="text-xs text-muted-foreground">
-                Of all active entities
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Resource Gaps</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{gapAnalysisData.summary.totalGaps}</div>
-              <p className="text-xs text-muted-foreground">
-                Across all categories
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Critical Gaps</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{gapAnalysisData.summary.criticalGaps}</div>
-              <p className="text-xs text-muted-foreground">
-                Require immediate attention
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Gap Value</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                ${(gapAnalysisData.summary.totalGapValue || 0).toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Estimated resource value needed
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <StatCardGrid columns={4} className="mb-6">
+          <StatCard
+            label="Entities with Gaps"
+            value={gapAnalysisData.summary.totalEntities}
+            severity="warning"
+            icon={Users}
+          />
+          <StatCard
+            label="Total Resource Gaps"
+            value={gapAnalysisData.summary.totalGaps}
+            severity="info"
+            icon={Target}
+          />
+          <StatCard
+            label="Critical Gaps"
+            value={gapAnalysisData.summary.criticalGaps}
+            severity="critical"
+            icon={AlertTriangle}
+          />
+          <StatCard
+            label="Gap Value"
+            value={`$${(gapAnalysisData.summary.totalGapValue || 0).toLocaleString()}`}
+            severity="high"
+            icon={BarChart3}
+          />
+        </StatCardGrid>
       )}
 
       {/* Filters */}
@@ -391,7 +364,7 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
           ) : (
             <div className="space-y-6">
               {filteredGaps?.map((gapAnalysis) => (
-                <Card key={gapAnalysis.entityId} className="border-l-4 border-l-orange-500">
+                <Card key={gapAnalysis.entityId} className="bg-orange-500/5 border-orange-500/15">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">{gapAnalysis.entity.name}</CardTitle>
@@ -516,7 +489,7 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
               ) : (
                 <div className="space-y-4">
                   {donorRecommendations?.data?.map((recommendation) => (
-                    <Card key={recommendation.donorId} className="border-l-4 border-l-green-500">
+                    <Card key={recommendation.donorId} className="bg-emerald-500/5 border-emerald-500/15">
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between mb-4">
                           <div>

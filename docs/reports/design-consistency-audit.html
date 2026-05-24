@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRMS v4 - Design Consistency Audit Report</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sidebar-w:280px;
+  --bg:#f8f9fb;--surface:#fff;--border:#e2e8f0;--border-lt:#f1f5f9;
+  --text:#1e293b;--text2:#64748b;--text3:#94a3b8;
+  --sb-bg:#0f172a;--sb-text:#cbd5e1;--sb-hover:#1e293b;
+  --accent:#3b82f6;--accent-lt:#eff6ff;
+  --gA:#16a34a;--gA-bg:#f0fdf4;
+  --gB:#2563eb;--gB-bg:#eff6ff;
+  --gC:#ca8a04;--gC-bg:#fefce8;
+  --gD:#ea580c;--gD-bg:#fff7ed;
+  --gF:#dc2626;--gF-bg:#fef2f2;
+  --code-bg:#1e293b;--code-tx:#e2e8f0;
+  --r:8px;--rl:12px;
+  --sh-sm:0 1px 2px rgba(0,0,0,.05);
+  --sh-md:0 4px 6px -1px rgba(0,0,0,.07),0 2px 4px -2px rgba(0,0,0,.05);
+}
+html{scroll-behavior:smooth;font-size:15px}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
+.layout{display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{width:var(--sidebar-w);background:var(--sb-bg);color:var(--sb-text);position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:100;border-right:1px solid rgba(255,255,255,.06);scrollbar-width:thin;scrollbar-color:#334155 transparent}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:#334155;border-radius:4px}
+.sb-hdr{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sb-hdr h2{font-size:14px;font-weight:700;color:#fff;letter-spacing:.02em}
+.sb-hdr .sub{font-size:11px;color:var(--text3);margin-top:4px}
+.sb-sec{padding:16px 12px 8px}
+.sb-sec-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);padding:0 8px 8px}
+.sb-link{display:flex;align-items:center;gap:10px;padding:7px 12px;font-size:13px;color:var(--sb-text);text-decoration:none;border-radius:6px;transition:all .15s;line-height:1.4}
+.sb-link:hover{background:var(--sb-hover);color:#fff}
+.sb-link .ln{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;color:#fff}
+.ln-exec{background:var(--gF)}.ln-grades{background:var(--gC)}.ln-detail{background:var(--accent)}.ln-cross{background:#dc2626}.ln-recs{background:var(--gA)}.ln-map{background:#8b5cf6}
+.sb-link .gb{margin-left:auto;font-size:11px;font-weight:700;padding:1px 6px;border-radius:3px;flex-shrink:0}
+.gbA{background:var(--gA-bg);color:var(--gA)}.gbB{background:var(--gB-bg);color:var(--gB)}.gbC{background:var(--gC-bg);color:var(--gC)}.gbD{background:var(--gD-bg);color:var(--gD)}.gbF{background:var(--gF-bg);color:var(--gF)}
+
+/* Main */
+.main{margin-left:var(--sidebar-w);flex:1;min-width:0}
+.main-inner{max-width:1200px;margin:0 auto;padding:32px 40px 80px}
+
+/* Sections */
+.section{margin-bottom:48px}
+.sec-hdr{position:sticky;top:0;background:var(--bg);padding:16px 0;z-index:10;border-bottom:2px solid var(--border);margin-bottom:24px}
+.sec-hdr h2{font-size:22px;font-weight:700}
+.sec-hdr h2 .sn{color:var(--accent);margin-right:8px}
+.subsec{margin-bottom:32px}
+.subsec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border-lt)}
+.subsec-hdr h3{font-size:17px;font-weight:600}
+.subsec-hdr .sg{font-size:13px;font-weight:700;padding:2px 10px;border-radius:4px}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-sm)}
+.alert{border-left:4px solid var(--gF);background:var(--gF-bg);padding:16px 20px;border-radius:0 var(--r) var(--r) 0;margin-bottom:24px}
+.alert.warn{border-left-color:#ea580c;background:#fff7ed}
+.alert.info{border-left-color:var(--accent);background:var(--accent-lt)}
+.alert.ok{border-left-color:var(--gA);background:var(--gA-bg)}
+.alert h4{font-size:14px;font-weight:600;margin-bottom:4px}
+.alert p{font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:0}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin:20px 0}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center}
+.stat .sv{font-size:28px;font-weight:800;line-height:1.2}
+.stat .sl{font-size:12px;color:var(--text2);margin-top:4px;font-weight:500}
+
+/* Grade Banner */
+.grade-banner{display:flex;align-items:center;gap:20px;padding:20px 24px;background:var(--surface);border:2px solid var(--gD);border-radius:var(--rl);margin:20px 0}
+.grade-banner .gl{font-size:48px;font-weight:900;color:var(--gD);line-height:1;text-shadow:0 2px 4px rgba(234,88,12,.2)}
+.grade-banner h3{font-size:16px;font-weight:600}
+.grade-banner p{font-size:13px;margin-bottom:0}
+
+/* Tables */
+.tw{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r);margin:16px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:#f8fafc;padding:10px 14px;text-align:left;font-weight:600;font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--border);white-space:nowrap}
+tbody td{padding:10px 14px;border-bottom:1px solid var(--border-lt);vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#f8fafc}
+
+/* Code */
+.code{background:var(--code-bg);color:var(--code-tx);border-radius:6px;padding:14px 16px;font-family:'JetBrains Mono','Fira Code','Cascadia Code',Consolas,monospace;font-size:12px;line-height:1.6;overflow-x:auto;margin:8px 0;white-space:pre}
+.code .kw{color:#93c5fd}.code .str{color:#86efac}.code .cmt{color:#64748b;font-style:italic}.code .tag{color:#f9a8d4}.code .attr{color:#c4b5fd}.code .val{color:#fcd34d}
+.code-lbl{display:inline-block;font-size:10px;font-weight:600;background:#334155;color:#94a3b8;padding:2px 8px;border-radius:3px 3px 0 0;margin-bottom:-1px}
+.code-lbl+.code{border-radius:0 6px 6px 6px}
+
+/* Severity */
+.sev{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:.03em}
+.sev-crit{background:var(--gF-bg);color:var(--gF)}.sev-high{background:var(--gD-bg);color:var(--gD)}.sev-med{background:var(--gC-bg);color:var(--gC)}.sev-low{background:var(--gB-bg);color:var(--gB)}
+
+/* Variation Grid */
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin:20px 0}
+.vcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .15s}
+.vcard:hover{box-shadow:var(--sh-md)}
+.vcard-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;border-bottom:1px solid var(--border-lt)}
+.vcard-hdr .vid{font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-lt);padding:2px 8px;border-radius:3px}
+.vcard-hdr .vfile{font-size:11px;color:var(--text3);font-family:monospace;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vcard-body{padding:14px}
+
+/* Mockups */
+.mock{border:1px solid var(--border);border-radius:6px;padding:12px;background:#fff;margin-bottom:10px;min-height:55px;position:relative}
+.mock-amber{background:#fffbeb;border-color:#fde68a}.mock-green{background:#f0fdf4;border-color:#bbf7d0}.mock-blue{background:#eff6ff;border-color:#bfdbfe}.mock-red{background:#fef2f2;border-color:#fecaca}
+.mock-semi{background:rgba(254,243,199,.3);border-color:rgba(253,230,138,.5)}.mock-dark{background:#1e293b;border-color:#334155;color:#e2e8f0}.mock-dash{border-style:dashed}
+.m-row{display:flex;align-items:center;justify-content:space-between}
+.m-col{display:flex;flex-direction:column;gap:2px}
+.m-col.center{align-items:center}
+.m-ico{border-radius:4px;background:#e2e8f0;flex-shrink:0}
+.m-ico.sm{width:16px;height:16px}.m-ico.md{width:24px;height:24px}.m-ico.lg{width:32px;height:32px}
+.m-ico.amber{background:#f59e0b;opacity:.3}.m-ico.green{background:#22c55e;opacity:.3}.m-ico.blue{background:#3b82f6;opacity:.3}.m-ico.red{background:#ef4444;opacity:.3}.m-ico.muted{background:#475569}
+.m-ttl{font-size:11px;color:#64748b}.m-val{font-size:18px;font-weight:700;color:#1e293b;line-height:1.2}.m-val.sm{font-size:14px}.m-val.colored{color:#3b82f6}.m-val.dark{color:#e2e8f0}
+.m-desc{font-size:10px;color:#94a3b8;margin-top:2px}
+.m-trend{display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:600}
+.m-trend.up{color:#16a34a}.m-trend.down{color:#dc2626}
+.m-badge{display:inline-block;font-size:9px;font-weight:600;padding:1px 6px;border-radius:3px;background:#f1f5f9;color:#64748b}
+.m-sk{height:10px;background:linear-gradient(90deg,#e2e8f0 25%,#f1f5f9 50%,#e2e8f0 75%);background-size:200% 100%;border-radius:3px;animation:shim 1.5s infinite}
+.m-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pls 1.5s infinite;display:inline-block}
+@keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes pls{0%,100%{opacity:1}50%{opacity:.4}}
+
+.vprops{font-size:11px;color:var(--text2);line-height:1.7}
+.vprops .pr{display:flex;gap:6px}
+.vprops .pk{font-weight:600;color:var(--text);min-width:70px;flex-shrink:0}
+.vprops .pv{color:var(--text2)}
+
+/* Patterns */
+.plist{list-style:none;padding:0}
+.pitem{padding:12px 16px;border:1px solid var(--border-lt);border-radius:6px;margin-bottom:8px;background:var(--surface)}
+.pitem .pn{font-size:13px;font-weight:600;margin-bottom:4px}
+.pitem .pd{font-size:12px;color:var(--text2);line-height:1.5}
+.ptag{display:inline-block;font-size:10px;font-weight:500;padding:1px 6px;border-radius:3px;background:#f1f5f9;color:#64748b;margin-right:4px;margin-top:4px}
+
+/* Issues */
+.issue{display:flex;gap:14px;padding:14px;border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;background:var(--surface)}
+.issue .ii{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+.ii.crit{background:var(--gF-bg);color:var(--gF)}.ii.high{background:var(--gD-bg);color:var(--gD)}.ii.med{background:var(--gC-bg);color:var(--gC)}
+.issue h4{font-size:14px;font-weight:600;margin-bottom:4px}
+.issue p{font-size:12.5px;color:var(--text2);line-height:1.5;margin-bottom:0}
+
+/* Recs */
+.rec{padding:16px 20px;border-left:3px solid var(--accent);background:var(--accent-lt);border-radius:0 var(--r) var(--r) 0;margin-bottom:12px}
+.rec h4{font-size:14px;font-weight:600;margin-bottom:4px}
+.rec p{font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:0}
+.rec code{font-family:monospace;font-size:12px;background:rgba(0,0,0,.06);padding:1px 5px;border-radius:3px}
+
+/* File Map */
+.fcat{margin-bottom:16px}
+.fcat h4{font-size:13px;font-weight:600;padding:8px 12px;background:#f8fafc;border:1px solid var(--border-lt);border-radius:6px 6px 0 0;margin-bottom:0}
+.flist{list-style:none;border:1px solid var(--border-lt);border-top:none;border-radius:0 0 6px 6px;overflow:hidden}
+.flist li{font-family:monospace;font-size:12px;padding:6px 12px;border-bottom:1px solid var(--border-lt);color:var(--text2);display:flex;align-items:center;gap:8px}
+.flist li:last-child{border-bottom:none}
+.flist li::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--text3);flex-shrink:0}
+
+/* Misc */
+p{margin-bottom:10px;font-size:14px;color:var(--text2);line-height:1.7}
+h4{margin-bottom:8px}
+.ic{font-family:monospace;font-size:12px;background:#f1f5f9;padding:2px 6px;border-radius:3px;color:var(--text)}
+
+/* Responsive */
+@media(max-width:1024px){
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .main-inner{padding:20px}
+  .vgrid{grid-template-columns:1fr}
+}
+
+/* Print */
+@media print{
+  .sidebar{display:none!important}
+  .main{margin-left:0!important}
+  .main-inner{padding:0!important;max-width:100%!important}
+  .sec-hdr{position:static!important}
+  body{font-size:11px}
+  .vgrid{grid-template-columns:repeat(2,1fr)}
+  .card,.vcard,.stat{break-inside:avoid}
+  .code{font-size:9px}
+  a{color:#000!important;text-decoration:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- ========== SIDEBAR ========== -->
+<nav class="sidebar">
+  <div class="sb-hdr">
+    <h2>DRMS Design Audit</h2>
+    <div class="sub">Consistency Report v4 &middot; 2026-05-22</div>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-sec-label">Report Sections</div>
+    <a href="#s1" class="sb-link"><span class="ln ln-exec">1</span> Executive Summary</a>
+    <a href="#s2" class="sb-link"><span class="ln ln-grades">2</span> Grade Overview</a>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-sec-label">Detailed Analysis</div>
+    <a href="#s3-1" class="sb-link"><span class="ln ln-detail">3.1</span> Metric/Stat Cards <span class="gb gbF">F</span></a>
+    <a href="#s3-2" class="sb-link"><span class="ln ln-detail">3.2</span> Data Lists &amp; Tables <span class="gb gbD">D</span></a>
+    <a href="#s3-3" class="sb-link"><span class="ln ln-detail">3.3</span> List Filters <span class="gb gbD">D+</span></a>
+    <a href="#s3-4" class="sb-link"><span class="ln ln-detail">3.4</span> Forms <span class="gb gbD">D+</span></a>
+    <a href="#s3-5" class="sb-link"><span class="ln ln-detail">3.5</span> Tabs <span class="gb gbB">B+</span></a>
+    <a href="#s3-6" class="sb-link"><span class="ln ln-detail">3.6</span> Badges/Status <span class="gb gbC">C-</span></a>
+    <a href="#s3-7" class="sb-link"><span class="ln ln-detail">3.7</span> Buttons <span class="gb gbB">B</span></a>
+    <a href="#s3-8" class="sb-link"><span class="ln ln-detail">3.8</span> Modals/Dialogs <span class="gb gbB">B</span></a>
+    <a href="#s3-9" class="sb-link"><span class="ln ln-detail">3.9</span> Empty States <span class="gb gbC">C</span></a>
+    <a href="#s3-10" class="sb-link"><span class="ln ln-detail">3.10</span> Loading States <span class="gb gbC">C-</span></a>
+    <a href="#s3-11" class="sb-link"><span class="ln ln-detail">3.11</span> Error States <span class="gb gbC">C</span></a>
+    <a href="#s3-12" class="sb-link"><span class="ln ln-detail">3.12</span> Charts <span class="gb gbD">D</span></a>
+    <a href="#s3-13" class="sb-link"><span class="ln ln-detail">3.13</span> Navigation <span class="gb gbB">B+</span></a>
+    <a href="#s3-14" class="sb-link"><span class="ln ln-detail">3.14</span> Toasts <span class="gb gbD">D</span></a>
+  </div>
+  <div class="sb-sec">
+    <div class="sb-sec-label">Findings</div>
+    <a href="#s4" class="sb-link"><span class="ln ln-cross">4</span> Cross-Cutting Issues</a>
+    <a href="#s5" class="sb-link"><span class="ln ln-recs">5</span> Recommendations</a>
+    <a href="#s6" class="sb-link"><span class="ln ln-map">6</span> Design File Map</a>
+  </div>
+</nav>
+
+<!-- ========== MAIN CONTENT ========== -->
+<div class="main">
+<div class="main-inner">
+
+<!-- SECTION 1 -->
+<div class="section" id="s1">
+  <div class="sec-hdr"><h2><span class="sn">1.</span> Executive Summary</h2></div>
+
+  <div class="grade-banner">
+    <div class="gl">D+</div>
+    <div>
+      <h3>Overall Design Consistency Grade: Poor</h3>
+      <p>The DRMS v4 frontend exhibits significant design fragmentation with no centralized design system. Components are defined locally and copy-pasted across features, resulting in 16 distinct metric card patterns alone.</p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="sv" style="color:var(--gF)">48</div><div class="sl">Total Pages</div></div>
+    <div class="stat"><div class="sv" style="color:var(--gD)">100+</div><div class="sl">Components</div></div>
+    <div class="stat"><div class="sv" style="color:var(--gF)">16</div><div class="sl">Metric Card Variations</div></div>
+    <div class="stat"><div class="sv" style="color:var(--gD)">6</div><div class="sl">Local MetricCard Defs</div></div>
+    <div class="stat"><div class="sv" style="color:var(--gC)">14</div><div class="sl">Categories Audited</div></div>
+    <div class="stat"><div class="sv" style="color:var(--gF)">6+</div><div class="sl">Duplicated Severity Maps</div></div>
+  </div>
+
+  <div class="alert">
+    <h4>Critical Finding: No Shared Design System</h4>
+    <p>The core issue is the complete absence of a shared component design system. Metric cards, data displays, status badges, form layouts, and loading states are defined locally within individual feature files and copy-pasted between dashboards. This creates a maintenance nightmare where fixing a visual bug requires editing 10+ files. The variations show tell-tale signs of LLM-assisted development: slightly different naming conventions (MetricCard vs KpiCard), inconsistent prop interfaces, and near-identical implementations with subtle differences in class names.</p>
+  </div>
+
+  <div class="alert info">
+    <h4>User Report vs Audit Findings</h4>
+    <p>The user reported approximately 5 categories of metric card variations. The audit found <strong>10+ structurally distinct patterns</strong> with 16 total variations when accounting for minor differences in padding, icon sizing, background colors, and dark mode support.</p>
+  </div>
+</div>
+
+<!-- SECTION 2 -->
+<div class="section" id="s2">
+  <div class="sec-hdr"><h2><span class="sn">2.</span> Grade Overview</h2></div>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr><th>Category</th><th>Grade</th><th>Variations</th><th>Severity</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Metric/Stat Cards</strong></td><td><span class="sev sev-crit">F</span></td><td>16 variations</td><td><span class="sev sev-crit">Critical</span></td><td>6 local defs + 10 inline. No sharing.</td></tr>
+        <tr><td><strong>Data Lists &amp; Tables</strong></td><td><span class="sev sev-high">D</span></td><td>9 variations</td><td><span class="sev sev-high">High</span></td><td>Mix of shadcn Table, raw HTML, card stacks.</td></tr>
+        <tr><td><strong>List Filters</strong></td><td><span class="sev sev-high">D+</span></td><td>6 variations</td><td><span class="sev sev-high">High</span></td><td>6 different filter panel patterns.</td></tr>
+        <tr><td><strong>Forms</strong></td><td><span class="sev sev-high">D+</span></td><td>10 variations</td><td><span class="sev sev-high">High</span></td><td>Mixed raw Label/Input and shadcn FormField.</td></tr>
+        <tr><td><strong>Tabs</strong></td><td><span class="sev sev-low">B+</span></td><td>1 variation</td><td><span class="sev sev-low">Low</span></td><td>Consistent shadcn/ui Tabs. Best category.</td></tr>
+        <tr><td><strong>Badges/Status</strong></td><td><span class="sev sev-med">C-</span></td><td>4 approaches</td><td><span class="sev sev-med">Medium</span></td><td>Inline Tailwind colors duplicated 10+ times.</td></tr>
+        <tr><td><strong>Buttons &amp; Actions</strong></td><td><span class="sev sev-low">B</span></td><td>1 base + variants</td><td><span class="sev sev-low">Low</span></td><td>Consistent shadcn/ui Button. Minor custom colors.</td></tr>
+        <tr><td><strong>Modals/Dialogs</strong></td><td><span class="sev sev-low">B</span></td><td>2 patterns</td><td><span class="sev sev-low">Low</span></td><td>Dialog + AlertDialog. Minor overlay diff.</td></tr>
+        <tr><td><strong>Empty States</strong></td><td><span class="sev sev-med">C</span></td><td>3 approaches</td><td><span class="sev sev-med">Medium</span></td><td>Shared component exists but inconsistently adopted.</td></tr>
+        <tr><td><strong>Loading States</strong></td><td><span class="sev sev-med">C-</span></td><td>4 approaches</td><td><span class="sev sev-med">Medium</span></td><td>SafeDataLoader, animate-pulse, Skeleton, Loader2.</td></tr>
+        <tr><td><strong>Error States</strong></td><td><span class="sev sev-med">C</span></td><td>3 approaches</td><td><span class="sev sev-med">Medium</span></td><td>SafeDataLoader, Alert, inline error cards.</td></tr>
+        <tr><td><strong>Charts</strong></td><td><span class="sev sev-high">D</span></td><td>3 approaches</td><td><span class="sev sev-med">Medium</span></td><td>Chart.js, custom CSS bars, Progress components.</td></tr>
+        <tr><td><strong>Navigation</strong></td><td><span class="sev sev-low">B+</span></td><td>Consistent</td><td><span class="sev sev-low">Low</span></td><td>Collapsible sidebar, role-based sections.</td></tr>
+        <tr><td><strong>Toasts</strong></td><td><span class="sev sev-high">D</span></td><td>2 systems</td><td><span class="sev sev-med">Medium</span></td><td>Radix toast AND Sonner both used.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SECTION 3.1: METRIC CARDS -->
+<div class="section" id="s3-1">
+  <div class="sec-hdr"><h2><span class="sn">3.1</span> Metric/Stat Cards <span class="sev sev-crit" style="margin-left:12px">Grade: F</span></h2></div>
+
+  <div class="alert">
+    <h4>16 Distinct Variations Found</h4>
+    <p>This is the most fragmented component category in the entire application. Six separate local MetricCard/KpiCard component definitions exist across different files, plus 10 inline card implementations. No card component is shared globally. The same dashboard sometimes uses 2-3 different card styles on a single page.</p>
+  </div>
+
+  <h4 style="margin-bottom:16px">Visual Comparison Grid</h4>
+
+  <div class="vgrid">
+
+    <!-- V1 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V1</span><span class="vfile">admin/dashboard/page.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock">
+          <div class="m-row"><div class="m-col"><div class="m-ttl">Total Users</div><div class="m-val">1,234</div><div class="m-desc">Active accounts</div></div><div class="m-ico md"></div></div>
+        </div>
+        <div class="code-lbl">Tailwind Classes</div>
+        <div class="code"><span class="kw">Card</span> <span class="punc">&gt;</span> <span class="kw">CardContent</span> <span class="kw">p-6</span>
+  <span class="attr">icon:</span> <span class="str">h-6 w-6</span> <span class="cmt">// gray-500</span>
+  <span class="attr">title:</span> <span class="str">text-sm text-gray-600</span>
+  <span class="attr">value:</span> <span class="str">text-2xl font-bold</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">CardContent only</span></div>
+          <div class="pr"><span class="pk">Icon pos</span><span class="pv">Right</span></div>
+          <div class="pr"><span class="pk">Icon size</span><span class="pv">h-6 w-6 (medium)</span></div>
+          <div class="pr"><span class="pk">Background</span><span class="pv">White (none)</span></div>
+          <div class="pr"><span class="pk">Dark mode</span><span class="pv">No</span></div>
+          <div class="pr"><span class="pk">Loading</span><span class="pv">No</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Local component</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V2 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V2</span><span class="vfile">donor/DonorDashboard.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock">
+          <div class="m-row"><div class="m-col"><div class="m-ttl">Donations</div><div class="m-val">$45.2K</div><div class="m-desc">Total value</div></div><div class="m-ico md"></div></div>
+        </div>
+        <div class="code-lbl">Tailwind Classes</div>
+        <div class="code"><span class="kw">Card</span> <span class="punc">&gt;</span> <span class="kw">CardContent</span> <span class="kw">p-6</span>
+  <span class="cmt">// Same as V1 but spread props</span>
+  <span class="attr">value:</span> <span class="str">text-2xl font-bold</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">CardContent only</span></div>
+          <div class="pr"><span class="pk">Icon pos</span><span class="pv">Right</span></div>
+          <div class="pr"><span class="pk">Icon size</span><span class="pv">h-6 w-6 (medium)</span></div>
+          <div class="pr"><span class="pk">Background</span><span class="pv">White (none)</span></div>
+          <div class="pr"><span class="pk">Dark mode</span><span class="pv">No</span></div>
+          <div class="pr"><span class="pk">Loading</span><span class="pv">No</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Local component</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V3 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V3</span><span class="vfile">verification/VerificationDashboard.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock mock-amber">
+          <div class="m-row"><div class="m-col"><div class="m-ttl">Pending</div><div class="m-val">28</div><div class="m-desc">Awaiting review</div></div><div class="m-ico md amber"></div></div>
+        </div>
+        <div class="code-lbl">Tailwind Classes</div>
+        <div class="code"><span class="kw">Card</span> <span class="kw">bg-amber-50 border-amber-200</span>
+  <span class="attr">icon:</span> <span class="str">h-6 w-6</span> <span class="cmt">// colored</span>
+  <span class="attr">value:</span> <span class="str">text-2xl font-bold</span>
+  <span class="attr">loading:</span> <span class="str">Skeleton</span> <span class="kw">w-24 h-8</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">CardContent only</span></div>
+          <div class="pr"><span class="pk">Icon pos</span><span class="pv">Right</span></div>
+          <div class="pr"><span class="pk">Icon size</span><span class="pv">h-6 w-6 (medium)</span></div>
+          <div class="pr"><span class="pk">Background</span><span class="pv">Colored (solid)</span></div>
+          <div class="pr"><span class="pk">Dark mode</span><span class="pv">No</span></div>
+          <div class="pr"><span class="pk">Loading</span><span class="pv">Yes (Skeleton)</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Local component</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V4 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V4</span><span class="vfile">verification/EnhancedVerificationDashboard.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock mock-green">
+          <div class="m-row"><div class="m-col"><div class="m-ttl">Approved</div><div class="m-val">156</div><div class="m-desc">This month</div></div><div class="m-ico md green"></div></div>
+        </div>
+        <div class="code-lbl">Tailwind Classes</div>
+        <div class="code"><span class="cmt">// Copy-paste of V3</span>
+  <span class="kw">Card</span> <span class="kw">bg-green-50 border-green-200</span>
+  <span class="attr">loading:</span> <span class="str">Skeleton</span> <span class="kw">w-24 h-8</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">CardContent only</span></div>
+          <div class="pr"><span class="pk">Diff from V3</span><span class="pv">Copy-pasted, identical pattern</span></div>
+          <div class="pr"><span class="pk">Background</span><span class="pv">Colored (solid)</span></div>
+          <div class="pr"><span class="pk">Loading</span><span class="pv">Yes (Skeleton)</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Local component</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V5 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V5</span><span class="vfile">verification/VerificationAnalytics.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock">
+          <div class="m-row"><div class="m-col"><div class="m-ttl">Avg Process Time</div><div class="m-val">2.4h</div><div class="m-trend up">&#9650; 12%</div></div><div class="m-ico lg muted"></div></div>
+        </div>
+        <div class="code-lbl">Tailwind Classes (KpiCard)</div>
+        <div class="code"><span class="kw">Card</span> <span class="punc">&gt;</span> <span class="kw">CardContent</span> <span class="kw">p-6</span>
+  <span class="attr">icon:</span> <span class="str">h-8 w-8 text-muted-foreground</span>
+  <span class="attr">value:</span> <span class="str">text-2xl font-bold</span>
+  <span class="attr">trend:</span> <span class="str">green/red arrows</span>
+  <span class="cmt">// Value formatting: number/%/duration</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">CardContent only</span></div>
+          <div class="pr"><span class="pk">Icon pos</span><span class="pv">Right</span></div>
+          <div class="pr"><span class="pk">Icon size</span><span class="pv">h-8 w-8 (large)</span></div>
+          <div class="pr"><span class="pk">Background</span><span class="pv">White</span></div>
+          <div class="pr"><span class="pk">Dark mode</span><span class="pv">Yes</span></div>
+          <div class="pr"><span class="pk">Trend</span><span class="pv">Yes (arrows + text)</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Local KpiCard component</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V6 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V6</span><span class="vfile">dashboard/page.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock mock-semi">
+          <div class="m-row"><div class="m-col"><div class="m-ttl">Active Incidents <span class="m-dot"></span></div><div class="m-val">7</div><div class="m-desc">Current emergencies</div></div><div class="m-ico lg amber" style="opacity:.5"></div></div>
+        </div>
+        <div class="code-lbl">Tailwind Classes</div>
+        <div class="code"><span class="kw">Card</span> <span class="kw">bg-amber-50/30 border-amber-200/50</span>
+  <span class="attr">icon:</span> <span class="str">h-8 w-8 opacity-50</span>
+  <span class="attr">value:</span> <span class="str">text-2xl font-bold</span>
+  <span class="cmt">// Pulsing dot for System Status</span>
+  <span class="cmt">// Semi-transparent backgrounds</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">CardContent only</span></div>
+          <div class="pr"><span class="pk">Icon pos</span><span class="pv">Right</span></div>
+          <div class="pr"><span class="pk">Icon size</span><span class="pv">h-8 w-8 (large, opacity 50%)</span></div>
+          <div class="pr"><span class="pk">Background</span><span class="pv">Semi-transparent</span></div>
+          <div class="pr"><span class="pk">Dark mode</span><span class="pv">Yes</span></div>
+          <div class="pr"><span class="pk">Pulse dot</span><span class="pv">Yes (System Status only)</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Inline JSX</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V7 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V7</span><span class="vfile">coordinator/dashboard/page.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock">
+          <div style="padding-bottom:8px;border-bottom:1px solid #e2e8f0;margin-bottom:8px;display:flex;align-items:center;gap:8px"><div class="m-ico sm"></div><span class="m-ttl" style="margin:0;font-size:12px;font-weight:600">Tasks</span></div>
+          <div class="m-val">23</div>
+          <div class="m-desc">Pending assignments</div>
+        </div>
+        <div class="code-lbl">Tailwind Classes</div>
+        <div class="code"><span class="kw">CardHeader</span> <span class="punc">&gt;</span> <span class="kw">CardTitle</span>
+  <span class="attr">icon:</span> <span class="str">h-4 w-4 text-muted-foreground</span>
+  <span class="kw">CardContent</span>
+  <span class="attr">loading:</span> <span class="str">Skeleton component</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">CardHeader + CardContent</span></div>
+          <div class="pr"><span class="pk">Icon pos</span><span class="pv">In CardHeader (left)</span></div>
+          <div class="pr"><span class="pk">Icon size</span><span class="pv">h-4 w-4 (small)</span></div>
+          <div class="pr"><span class="pk">Background</span><span class="pv">White</span></div>
+          <div class="pr"><span class="pk">Loading</span><span class="pv">Yes (Skeleton)</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Inline JSX</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V8 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V8</span><span class="vfile">donor/GapAnalysis.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock">
+          <div style="padding-bottom:8px;border-bottom:1px solid #e2e8f0;margin-bottom:8px"><span style="font-size:12px;font-weight:600">Coverage Gap</span></div>
+          <div class="m-val sm" style="color:#ef4444">34%</div>
+        </div>
+        <div class="code-lbl">Tailwind Classes</div>
+        <div class="code"><span class="kw">CardHeader</span> <span class="punc">&gt;</span> <span class="kw">CardTitle</span>
+  <span class="attr">value:</span> <span class="str">text-lg</span> <span class="cmt">// NOT text-2xl!</span>
+  <span class="attr">grid:</span> <span class="str">gap-6</span> <span class="cmt">// NOT gap-4!</span>
+  <span class="attr">colors:</span> <span class="str">dynamic colored values</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">CardHeader + CardContent</span></div>
+          <div class="pr"><span class="pk">Icon pos</span><span class="pv">None in header</span></div>
+          <div class="pr"><span class="pk">Value font</span><span class="pv">text-lg (inconsistent!)</span></div>
+          <div class="pr"><span class="pk">Grid gap</span><span class="pv">gap-6 (not gap-4)</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Inline JSX</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V9 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V9</span><span class="vfile">dashboards/crisis/VerificationQueueManagement.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock">
+          <div style="padding-bottom:8px;border-bottom:1px solid #e2e8f0;margin-bottom:8px;display:flex;align-items:center;gap:8px"><div class="m-ico sm" style="background:#3b82f6"></div><span class="m-ttl" style="margin:0;font-size:12px;font-weight:600">Queue Size</span></div>
+          <div class="m-val">45</div>
+        </div>
+        <div class="code-lbl">Tailwind Classes</div>
+        <div class="code"><span class="kw">CardTitle</span> <span class="kw">flex items-center gap-2</span>
+  <span class="attr">icon:</span> <span class="str">BEFORE title, colored</span>
+  <span class="kw">CardHeader</span> <span class="kw">pb-2</span>
+  <span class="attr">value:</span> <span class="str">text-2xl font-bold</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">CardHeader(pb-2) + CardContent</span></div>
+          <div class="pr"><span class="pk">Icon pos</span><span class="pv">LEFT of title (in CardTitle)</span></div>
+          <div class="pr"><span class="pk">Icon color</span><span class="pv">Colored (not muted)</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Inline JSX</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V10 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V10</span><span class="vfile">verification/AutoApprovalConfig.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock">
+          <div class="m-row"><div class="m-col"><div class="m-ttl">Auto-Approved</div><div class="m-val">89%</div></div><div class="m-ico md" style="background:#22c55e;opacity:.3"></div></div>
+        </div>
+        <div class="code-lbl">Tailwind Classes</div>
+        <div class="code"><span class="cmt">// Inline JSX, NO reusable component</span>
+  <span class="kw">CardContent</span>
+  <span class="attr">icon:</span> <span class="str">h-6 w-6</span>
+  <span class="attr">value:</span> <span class="str">text-2xl font-bold</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">CardContent only</span></div>
+          <div class="pr"><span class="pk">Icon pos</span><span class="pv">Right</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Inline JSX (no component)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V11 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V11</span><span class="vfile">verification/EnhancedAutoApprovalConfig.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock">
+          <div class="m-row"><div class="m-col"><div class="m-ttl">Rejection Rate</div><div class="m-val" style="color:#ef4444">11%</div><div class="m-desc">Last 30 days</div></div><div class="m-ico md"></div></div>
+        </div>
+        <div class="code-lbl">Tailwind Classes</div>
+        <div class="code"><span class="cmt">// Copy of V10, inline pagination text</span>
+  <span class="kw">CardContent</span>
+  <span class="attr">value:</span> <span class="str">text-2xl font-bold</span> <span class="cmt">// sometimes colored</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">CardContent only</span></div>
+          <div class="pr"><span class="pk">Diff from V10</span><span class="pv">Copy-pasted + pagination text</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Inline JSX (no component)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V12 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V12</span><span class="vfile">dashboards/crisis/DonorMetricsDashboard.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock">
+          <div class="m-row"><div class="m-col"><div class="m-ttl">Commitments</div><div class="m-val">342</div><div class="m-desc">Total active</div></div><div class="m-ico md"></div></div>
+        </div>
+        <div class="code-lbl">Tailwind Classes</div>
+        <div class="code"><span class="cmt">// Like V1/V2 but with loading skeleton</span>
+  <span class="kw">CardContent</span> <span class="kw">p-6</span>
+  <span class="attr">loading:</span> <span class="str">Skeleton</span> <span class="kw">w-20 h-8</span>
+  <span class="attr">value:</span> <span class="str">text-2xl font-bold</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">CardContent only</span></div>
+          <div class="pr"><span class="pk">Icon pos</span><span class="pv">Right</span></div>
+          <div class="pr"><span class="pk">Background</span><span class="pv">White</span></div>
+          <div class="pr"><span class="pk">Loading</span><span class="pv">Yes (Skeleton)</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Local component</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V13 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V13</span><span class="vfile">donor/PeerComparison.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock" style="text-align:center">
+          <div class="m-val" style="text-align:center">75th</div>
+          <div class="m-ttl" style="text-align:center">Percentile</div>
+          <div style="margin-top:4px"><span class="m-badge">Above Average</span></div>
+        </div>
+        <div class="code-lbl">Tailwind Classes</div>
+        <div class="code"><span class="kw">CardContent</span> <span class="kw">text-center</span>
+  <span class="cmt">// Value ABOVE label (inverted!)</span>
+  <span class="attr">value:</span> <span class="str">text-2xl font-bold</span>
+  <span class="attr">badge:</span> <span class="str">Badge for percentile</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">CardContent only, centered</span></div>
+          <div class="pr"><span class="pk">Layout</span><span class="pv">Value ABOVE label (unique)</span></div>
+          <div class="pr"><span class="pk">Text align</span><span class="pv">Center</span></div>
+          <div class="pr"><span class="pk">Badge</span><span class="pv">Yes (percentile)</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Inline JSX</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V14 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V14</span><span class="vfile">dashboards/situation/components/AggregateMetrics.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock" style="display:flex;align-items:center;gap:10px;padding:10px">
+          <div class="m-ico md" style="background:#3b82f6;opacity:.5"></div>
+          <div><div class="m-ttl">Response Rate</div><div class="m-val sm">87%</div><span class="m-trend up">&#9650; 5%</span></div>
+        </div>
+        <div class="code-lbl">Tailwind Classes</div>
+        <div class="code"><span class="cmt">// Raw &lt;div&gt;, NOT Card component!</span>
+  <span class="kw">div</span> <span class="kw">bg-white rounded-lg p-4</span>
+  <span class="attr">icon:</span> <span class="str">LEFT of title</span>
+  <span class="attr">value:</span> <span class="str">text-lg</span>
+  <span class="attr">trend:</span> <span class="str">colored arrows</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">Raw div (no Card!)</span></div>
+          <div class="pr"><span class="pk">Icon pos</span><span class="pv">LEFT of title</span></div>
+          <div class="pr"><span class="pk">Value font</span><span class="pv">text-lg</span></div>
+          <div class="pr"><span class="pk">Trend</span><span class="pv">Yes</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Inline JSX</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V15 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V15</span><span class="vfile">verification/VerificationDashboard.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock">
+          <div style="padding-bottom:8px;border-bottom:1px solid #e2e8f0;margin-bottom:8px"><span style="font-size:12px;font-weight:600;color:#64748b">Throughput</span></div>
+          <div class="m-val colored">94.2%</div>
+        </div>
+        <div class="code-lbl">Tailwind Classes</div>
+        <div class="code"><span class="kw">CardHeader</span> <span class="punc">&gt;</span> <span class="kw">CardTitle</span>
+  <span class="cmt">// No icon in header</span>
+  <span class="attr">value:</span> <span class="str">text-2xl font-bold</span>
+  <span class="cmt">// Colored value text</span>
+  <span class="kw">grid-cols-3</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">CardHeader + CardContent</span></div>
+          <div class="pr"><span class="pk">Icon pos</span><span class="pv">None</span></div>
+          <div class="pr"><span class="pk">Value color</span><span class="pv">Colored text</span></div>
+          <div class="pr"><span class="pk">Grid</span><span class="pv">3-column</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Inline JSX</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- V16 -->
+    <div class="vcard">
+      <div class="vcard-hdr"><span class="vid">V16</span><span class="vfile">verification/VerificationAnalytics.tsx</span></div>
+      <div class="vcard-body">
+        <div class="mock mock-dark mock-dash" style="text-align:center;padding:8px">
+          <div class="m-val dark" style="text-align:center;font-size:16px">128</div>
+          <div style="font-size:10px;color:#94a3b8;text-align:center">Data Points</div>
+        </div>
+        <div class="code-lbl">Tailwind Classes</div>
+        <div class="code"><span class="cmt">// NO Card wrapper at all!</span>
+  <span class="kw">div</span> <span class="kw">text-center</span>
+  <span class="cmt">// Bare div, value above label</span>
+  <span class="attr">value:</span> <span class="str">text-lg font-semibold</span>
+  <span class="cmt">// Dark mode support</span></div>
+        <div class="vprops">
+          <div class="pr"><span class="pk">Structure</span><span class="pv">Bare div (no Card!)</span></div>
+          <div class="pr"><span class="pk">Icon pos</span><span class="pv">None</span></div>
+          <div class="pr"><span class="pk">Layout</span><span class="pv">Value above label, centered</span></div>
+          <div class="pr"><span class="pk">Dark mode</span><span class="pv">Yes</span></div>
+          <div class="pr"><span class="pk">Reusable</span><span class="pv">Inline JSX</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Comparison Table -->
+  <h4 style="margin-bottom:12px">Property Comparison Matrix</h4>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr><th>Property</th><th>Variations Found</th><th>Inconsistency</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Card structure</td><td>CardContent only vs CardHeader+CardContent vs raw div vs bare div</td><td style="color:var(--gF);font-weight:600">4 approaches</td></tr>
+        <tr><td>Icon position</td><td>Right side vs Left side vs In header vs None</td><td style="color:var(--gF);font-weight:600">4 approaches</td></tr>
+        <tr><td>Icon size</td><td>h-4 w-4 vs h-6 w-6 vs h-8 w-8</td><td style="color:var(--gD);font-weight:600">3 sizes</td></tr>
+        <tr><td>Value font size</td><td>text-2xl (12 instances) vs text-lg (4 instances)</td><td style="color:var(--gD);font-weight:600">2 sizes</td></tr>
+        <tr><td>Background color</td><td>White/none vs solid colored vs semi-transparent</td><td style="color:var(--gF);font-weight:600">3 approaches</td></tr>
+        <tr><td>Dark mode</td><td>V5, V6, V16 support it; V1-V4, V7-V15 do not</td><td style="color:var(--gD);font-weight:600">Mixed</td></tr>
+        <tr><td>Loading state</td><td>V3, V4, V7, V12 have it; others do not</td><td style="color:var(--gD);font-weight:600">Mixed</td></tr>
+        <tr><td>Trend indicators</td><td>V5, V14 have trend arrows; others do not</td><td style="color:var(--gC);font-weight:600">2 of 16</td></tr>
+        <tr><td>Component reusability</td><td>6 local definitions (not shared) + 10 inline JSX</td><td style="color:var(--gF);font-weight:600">None shared globally</td></tr>
+        <tr><td>Text alignment</td><td>Left-aligned (14) vs Centered (V13, V16)</td><td style="color:var(--gC);font-weight:600">2 approaches</td></tr>
+        <tr><td>Label/value order</td><td>Label above value (14) vs Value above label (V13, V16)</td><td style="color:var(--gC);font-weight:600">2 approaches</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+
+<!-- SECTION 3.2: DATA LISTS & TABLES -->
+<div class="section" id="s3-2">
+  <div class="sec-hdr"><h2><span class="sn">3.2</span> Data Lists &amp; Tables <span class="sev sev-high" style="margin-left:12px">Grade: D</span></h2></div>
+
+  <div class="alert warn">
+    <h4>9 Distinct Presentation Patterns</h4>
+    <p>The same data types (lists of records, tables of entities) are rendered using at least 9 fundamentally different approaches. Some use the proper shadcn/ui Table component, others use raw HTML tables, card stacks, card grids, or custom row layouts. Row actions, status indicators, empty states, and loading states all vary independently.</p>
+  </div>
+
+  <h4 style="margin-bottom:12px">Pattern Inventory</h4>
+  <ul class="plist">
+    <li class="pitem">
+      <div class="pn">1. shadcn/ui Table (Standard)</div>
+      <div class="pd">Used in: Roles, Users, Incidents, Backups, DB Tables. Uses the proper <code>&lt;Table&gt;</code> component with <code>&lt;TableHeader&gt;</code>, <code>&lt;TableBody&gt;</code>, <code>&lt;TableRow&gt;</code>, <code>&lt;TableCell&gt;</code>. Row actions via DropdownMenu or inline Button.</div>
+      <span class="ptag">shadcn Table</span><span class="ptag">DropdownMenu</span><span class="ptag">Consistent</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">2. Raw HTML &lt;table&gt;</div>
+      <div class="pd">Used in: Gap Field Severity table. NOT using shadcn/ui Table component. Uses plain <code>&lt;table&gt;</code>, <code>&lt;thead&gt;</code>, <code>&lt;tbody&gt;</code> with inline Tailwind classes. Has bulk operations with checkboxes.</div>
+      <span class="ptag">Raw HTML</span><span class="ptag">Bulk Operations</span><span class="ptag">Inconsistent</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">3. Card Stack (space-y-N)</div>
+      <div class="pd">Used in: Verification Queue, Commitments, Audit History. Vertical stack of clickable cards with expand/collapse functionality. No table markup at all.</div>
+      <span class="ptag">Card Stack</span><span class="ptag">space-y</span><span class="ptag">Expand/Collapse</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">4. Card Grid (grid-cols-N)</div>
+      <div class="pd">Used in: Entity Insights (3-col grid with <code>border-l-4</code> accent), Executive Incidents (5-col grid with <code>border-2</code> outline). Grid-based card layouts instead of tabular data.</div>
+      <span class="ptag">Card Grid</span><span class="ptag">border-l-4</span><span class="ptag">Inconsistent</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">5. Leaderboard Rows</div>
+      <div class="pd">Used in: Donor Leaderboard. Horizontal bar-like rows with gradient background for top 3 positions. Custom layout, no table component.</div>
+      <span class="ptag">Custom Rows</span><span class="ptag">Gradient</span><span class="ptag">Leaderboard</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">6. Metric Rows</div>
+      <div class="pd">Used in: AggregateMetrics. Simple bordered horizontal rows with icon, label, value, and trend indicator. Uses <code>&lt;div&gt;</code> elements, not table markup.</div>
+      <span class="ptag">div rows</span><span class="ptag">Trend Indicators</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">7. Config Card Stack</div>
+      <div class="pd">Used in: AutoApprovalConfig. Editable cards with pending changes ring indicator. Inline editing within card layout.</div>
+      <span class="ptag">Editable Cards</span><span class="ptag">Ring Indicator</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">8. Donor Response Table</div>
+      <div class="pd">A hybrid approach mixing table structure with inline expandable rows and action buttons directly in cells rather than in a dropdown.</div>
+      <span class="ptag">Hybrid</span><span class="ptag">Inline Actions</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">9. Report Builder List</div>
+      <div class="pd">Uses a custom drag-and-drop reorderable list pattern with Card components as list items. Not a table at all.</div>
+      <span class="ptag">Drag & Drop</span><span class="ptag">Card List</span>
+    </li>
+  </ul>
+
+  <h4 style="margin:24px 0 12px">Property Comparison</h4>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Property</th><th>Variations</th></tr></thead>
+      <tbody>
+        <tr><td>Layout primitive</td><td>shadcn Table / raw <code>&lt;table&gt;</code> / Card stack / Card grid / div rows / Card list</td></tr>
+        <tr><td>Row actions</td><td>DropdownMenu / inline buttons / ghost icon buttons / click entire card / drag handle</td></tr>
+        <tr><td>Status display</td><td>Badge with inline colors / Badge with variant / StatusIndicator component / colored circles</td></tr>
+        <tr><td>Empty state</td><td>Shared EmptyState component / inline text / inline icon card</td></tr>
+        <tr><td>Loading state</td><td>SafeDataLoader / animate-pulse / Skeleton / Loader2 spinner</td></tr>
+        <tr><td>Severity colors</td><td>Duplicated across 6+ files with no centralized mapping</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SECTION 3.3: LIST FILTERS -->
+<div class="section" id="s3-3">
+  <div class="sec-hdr"><h2><span class="sn">3.3</span> List Filters <span class="sev sev-high" style="margin-left:12px">Grade: D+</span></h2></div>
+
+  <p>Filter controls appear in 6 fundamentally different patterns across the application. There is no shared FilterPanel component. Each page implements its own filter approach with different containers, control types, search inputs, and collapsible behavior.</p>
+
+  <ul class="plist">
+    <li class="pitem">
+      <div class="pn">1. QueueFilters</div>
+      <div class="pd">Collapsible Card container with checkboxes and <code>datetime-local</code> inputs in a grid layout. Uses shadcn Checkbox components. Found in verification queue pages.</div>
+      <span class="ptag">Card</span><span class="ptag">Checkboxes</span><span class="ptag">datetime-local</span><span class="ptag">Collapsible</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">2. AdvancedFilters</div>
+      <div class="pd">Card with collapsible advanced section. Uses toggle buttons with <code>variant="default"</code> for active and <code>variant="outline"</code> for inactive. Found in incident pages.</div>
+      <span class="ptag">Card</span><span class="ptag">Toggle Buttons</span><span class="ptag">Collapsible</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">3. IncidentSelector (Combobox)</div>
+      <div class="pd">Uses Popover + Command pattern as a combobox/searchable dropdown. For selecting incidents to filter by. Found in coordinator dashboard.</div>
+      <span class="ptag">Popover</span><span class="ptag">Command</span><span class="ptag">Combobox</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">4. EntitySelector</div>
+      <div class="pd">Same combobox pattern (Popover + Command) as IncidentSelector but for entities. Slight prop differences suggest separate implementations.</div>
+      <span class="ptag">Popover</span><span class="ptag">Command</span><span class="ptag">Combobox</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">5. Users Page Filters</div>
+      <div class="pd">Inline filter bar in a single row: search input + dropdown selects. No card wrapper, no collapsible section. Direct inline layout.</div>
+      <span class="ptag">Inline</span><span class="ptag">Select Dropdowns</span><span class="ptag">Search Input</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">6. DonorOverlayControl</div>
+      <div class="pd">Map toggle overlay using absolute positioning. Completely different UI paradigm from other filters.</div>
+      <span class="ptag">Absolute Positioned</span><span class="ptag">Map Overlay</span><span class="ptag">Toggle</span>
+    </li>
+  </ul>
+
+  <h4 style="margin:16px 0 12px">Property Comparison</h4>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Property</th><th>Variations</th></tr></thead>
+      <tbody>
+        <tr><td>Container</td><td>Card / Popover / Inline bar / Absolute positioned overlay</td></tr>
+        <tr><td>Filter controls</td><td>Checkboxes / Toggle buttons / Select dropdowns / Command search</td></tr>
+        <tr><td>Search input</td><td>Standard Input / With icon overlay (pl-10) / Command search</td></tr>
+        <tr><td>Collapsible</td><td>Yes (QueueFilters, AdvancedFilters) / No (Users, Selectors)</td></tr>
+        <tr><td>Multi-select style</td><td>Checkboxes (QueueFilters) vs Toggle buttons (AdvancedFilters)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SECTION 3.4: FORMS -->
+<div class="section" id="s3-4">
+  <div class="sec-hdr"><h2><span class="sn">3.4</span> Forms <span class="sev sev-high" style="margin-left:12px">Grade: D+</span></h2></div>
+
+  <p>10 distinct form implementations found. The codebase mixes two form-building approaches: raw <code>&lt;Label&gt;</code>/<code>&lt;Input&gt;</code> with <code>react-hook-form</code> directly, and shadcn's <code>&lt;FormField&gt;</code>/<code>&lt;FormLabel&gt;</code> wrapper components. Max widths, action button placement, cancel button presence, and border separators all vary.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Form</th><th>Presentation</th><th>Max Width</th><th>Form Lib</th><th>Actions</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>LoginForm</td><td>Separate page</td><td>max-w-md</td><td>react-hook-form (raw)</td><td>w-full submit</td></tr>
+        <tr><td>2</td><td>RegisterForm</td><td>Dialog/modal</td><td>max-w-md</td><td>react-hook-form (raw)</td><td>w-full submit</td></tr>
+        <tr><td>3</td><td>EditUserForm</td><td>Dialog/modal</td><td>max-w-2xl</td><td>react-hook-form (raw)</td><td>flex-1 submit</td></tr>
+        <tr><td>4</td><td>DonorRegistrationForm</td><td>Separate page wizard</td><td>max-w-2xl</td><td>shadcn FormField</td><td>Multi-step nav</td></tr>
+        <tr><td>5</td><td>CommitmentForm</td><td>Separate page</td><td>max-w-4xl</td><td>shadcn FormField</td><td>justify-end</td></tr>
+        <tr><td>6</td><td>EntityForm</td><td>Separate page</td><td>max-w-2xl</td><td>react-hook-form (raw)</td><td>border-t separator</td></tr>
+        <tr><td>7</td><td>IncidentCreationForm</td><td>Card inline</td><td>max-w-2xl</td><td>react-hook-form (raw)</td><td>No separator</td></tr>
+        <tr><td>8</td><td>ResponsePlanningForm</td><td>Card</td><td>max-w-4xl</td><td>shadcn FormField</td><td>Colored buttons</td></tr>
+        <tr><td>9</td><td>DeliveryConfirmationForm</td><td>Multi-card</td><td>max-w-4xl</td><td>shadcn FormField</td><td>justify-end</td></tr>
+        <tr><td>10</td><td>RoleForm</td><td>Dialog/modal</td><td>No max-w</td><td>useState manual</td><td>Scrollable perms</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4 style="margin:16px 0 12px">Property Comparison</h4>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Property</th><th>Variations</th></tr></thead>
+      <tbody>
+        <tr><td>Presentation</td><td>Separate page / Dialog / Card inline / Multi-card / Page wizard</td></tr>
+        <tr><td>Max width</td><td>max-w-md / max-w-2xl / max-w-4xl / none</td></tr>
+        <tr><td>Form library</td><td>react-hook-form + zod (raw) / react-hook-form + zod (shadcn FormField) / useState manual</td></tr>
+        <tr><td>Label approach</td><td>Raw <code>&lt;Label&gt;</code> / shadcn <code>&lt;FormLabel&gt;</code></td></tr>
+        <tr><td>Action alignment</td><td>w-full / flex-1 / justify-end / justify-between</td></tr>
+        <tr><td>Cancel button</td><td>Present in some forms, absent in others</td></tr>
+        <tr><td>Border separator</td><td>Present (EntityForm) / Absent (IncidentCreationForm)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SECTION 3.5: TABS -->
+<div class="section" id="s3-5">
+  <div class="sec-hdr"><h2><span class="sn">3.5</span> Tabs <span class="sev sev-low" style="margin-left:12px">Grade: B+</span></h2></div>
+
+  <div class="alert ok">
+    <h4>Most Consistent Category</h4>
+    <p>All tab implementations use shadcn/ui Tabs with pill/boxed style. Grid distribution uses <code>grid w-full grid-cols-N</code>. No custom tab implementations were found. This is the only component category that achieves near-perfect consistency.</p>
+  </div>
+
+  <p><strong>Pattern:</strong> <code>&lt;TabsList&gt;</code> with <code>className="grid w-full grid-cols-N"</code>, containing <code>&lt;TabsTrigger&gt;</code> elements. Each <code>&lt;TabsTrigger&gt;</code> controls a <code>&lt;TabsContent&gt;</code>. This pattern is used consistently across Admin Dashboard, Donor Dashboard, Coordinator Dashboard, Verification pages, and Settings pages.</p>
+
+  <p><strong>Minor note:</strong> Some older pages use a slightly different TabsTrigger variant (<code>data-[state=active]:bg-white</code> vs relying on default variant styling), but the visual result is nearly identical.</p>
+</div>
+
+<!-- SECTION 3.6: BADGES/STATUS -->
+<div class="section" id="s3-6">
+  <div class="sec-hdr"><h2><span class="sn">3.6</span> Badges/Status Indicators <span class="sev sev-med" style="margin-left:12px">Grade: C-</span></h2></div>
+
+  <p>Four distinct approaches to rendering status badges. The most common approach (inline Tailwind color classes) is duplicated 10+ times across files with no centralized color mapping.</p>
+
+  <ul class="plist">
+    <li class="pitem">
+      <div class="pn">1. Badge with inline Tailwind classes (Most Common)</div>
+      <div class="pd"><code>&lt;Badge className="bg-green-100 text-green-800 border-green-200"&gt;Active&lt;/Badge&gt;</code> -- Duplicated 10+ times. The same severity-to-color mapping is redefined in every file that uses it.</div>
+      <span class="ptag">Inline Classes</span><span class="ptag">Duplicated 10+</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">2. Badge with shadcn variant</div>
+      <div class="pd"><code>&lt;Badge variant="destructive"&gt;Critical&lt;/Badge&gt;</code> -- Uses the built-in variant system. Limited to 3-4 predefined variants, so custom statuses still need inline classes.</div>
+      <span class="ptag">shadcn Variant</span><span class="ptag">Limited Options</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">3. Custom StatusIndicator component</div>
+      <div class="pd">A dedicated component that wraps Badge with additional logic. Found in only a few files. Includes its own color mapping logic (duplicated from other sources).</div>
+      <span class="ptag">Custom Component</span><span class="ptag">Separate Logic</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">4. Colored circle icons</div>
+      <div class="pd"><code>&lt;span className="h-2 w-2 rounded-full bg-green-500"&gt;</code> -- Tiny colored dots used alongside or instead of badges in some data tables.</div>
+      <span class="ptag">Circle Dots</span><span class="ptag">Minimal</span>
+    </li>
+  </ul>
+
+  <div class="alert warn">
+    <h4>Severity Color Map Duplication</h4>
+    <p>The mapping from severity levels (CRITICAL, HIGH, MEDIUM, LOW) to Tailwind color classes is defined independently in 6+ files. Any change to the color scheme requires editing all of them.</p>
+  </div>
+</div>
+
+<!-- SECTION 3.7: BUTTONS -->
+<div class="section" id="s3-7">
+  <div class="sec-hdr"><h2><span class="sn">3.7</span> Buttons &amp; Actions <span class="sev sev-low" style="margin-left:12px">Grade: B</span></h2></div>
+
+  <p>Consistent use of shadcn/ui <code>&lt;Button&gt;</code> component with 6 standard variants (default, destructive, outline, secondary, ghost, link) and 4 sizes (default, sm, lg, icon). The component library handles this well.</p>
+
+  <div class="alert info">
+    <h4>Minor Issue: Custom Colored Buttons</h4>
+    <p>Some forms bypass the variant system and use custom colors: <code>className="bg-orange-600 hover:bg-orange-700"</code> and <code>className="bg-green-600 hover:bg-green-700"</code>. These should use proper variants or be added as custom variants.</p>
+  </div>
+</div>
+
+<!-- SECTION 3.8: MODALS/DIALOGS -->
+<div class="section" id="s3-8">
+  <div class="sec-hdr"><h2><span class="sn">3.8</span> Modals/Dialogs <span class="sev sev-low" style="margin-left:12px">Grade: B</span></h2></div>
+
+  <p>Consistent use of shadcn/ui <code>&lt;Dialog&gt;</code> and <code>&lt;AlertDialog&gt;</code> components. Both patterns are used appropriately -- Dialog for forms and content, AlertDialog for confirmations.</p>
+
+  <p><strong>Minor inconsistency:</strong> Overlay backgrounds differ. Some dialogs use <code>bg-black/80</code> while others use <code>backdrop-blur-sm</code>. This should be standardized in the Dialog component's default styling.</p>
+</div>
+
+<!-- SECTION 3.9: EMPTY STATES -->
+<div class="section" id="s3-9">
+  <div class="sec-hdr"><h2><span class="sn">3.9</span> Empty States <span class="sev sev-med" style="margin-left:12px">Grade: C</span></h2></div>
+
+  <p>A shared <code>EmptyState</code> component exists in <code>src/components/shared/EmptyState.tsx</code> but adoption is inconsistent. Many components implement their own inline empty state patterns.</p>
+
+  <h4 style="margin-bottom:12px">3 Approaches Found</h4>
+  <ul class="plist">
+    <li class="pitem">
+      <div class="pn">1. Shared EmptyState Component</div>
+      <div class="pd">Accepts icon, title, description, and optional action button. Used in approximately 40% of pages that need empty states.</div>
+      <span class="ptag">Shared Component</span><span class="ptag">Preferred</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">2. Inline Text/Icon Pattern</div>
+      <div class="pd"><code>&lt;div className="text-center text-muted-foreground py-8"&gt;No records found&lt;/div&gt;</code> -- Quick inline pattern used in many table-based pages.</div>
+      <span class="ptag">Inline</span><span class="ptag">Common</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">3. Inline Icon Card</div>
+      <div class="pd">A Card with centered icon, title, and description. Structurally similar to the shared component but implemented inline.</div>
+      <span class="ptag">Inline Card</span><span class="ptag">Redundant</span>
+    </li>
+  </ul>
+</div>
+
+<!-- SECTION 3.10: LOADING STATES -->
+<div class="section" id="s3-10">
+  <div class="sec-hdr"><h2><span class="sn">3.10</span> Loading States <span class="sev sev-med" style="margin-left:12px">Grade: C-</span></h2></div>
+
+  <p>Four different loading state approaches are used throughout the application with no standardized pattern.</p>
+
+  <ul class="plist">
+    <li class="pitem">
+      <div class="pn">1. SafeDataLoader Component</div>
+      <div class="pd">A wrapper component that handles loading, error, and empty states with a consistent UI. Used in newer pages. The most robust approach.</div>
+      <span class="ptag">Component</span><span class="ptag">Robust</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">2. animate-pulse Skeleton Divs</div>
+      <div class="pd"><code>&lt;div className="animate-pulse bg-muted rounded h-N"&gt;</code> -- Hand-crafted skeleton placeholders using Tailwind's animate-pulse. No consistency in dimensions or layout.</div>
+      <span class="ptag">animate-pulse</span><span class="ptag">Inconsistent Dimensions</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">3. Skeleton Component</div>
+      <div class="pd">Uses shadcn/ui <code>&lt;Skeleton&gt;</code> component with proper dimensions. More consistent than animate-pulse divs but used inconsistently alongside them.</div>
+      <span class="ptag">shadcn Skeleton</span><span class="ptag">Preferred</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">4. Loader2 Spinner</div>
+      <div class="pd"><code>&lt;Loader2 className="h-6 w-6 animate-spin"&gt;</code> -- lucide-react spinner icon. Used in some places instead of skeleton patterns. Gives a different UX feel.</div>
+      <span class="ptag">Loader2 Spinner</span><span class="ptag">Different UX</span>
+    </li>
+  </ul>
+</div>
+
+<!-- SECTION 3.11: ERROR STATES -->
+<div class="section" id="s3-11">
+  <div class="sec-hdr"><h2><span class="sn">3.11</span> Error States <span class="sev sev-med" style="margin-left:12px">Grade: C</span></h2></div>
+
+  <p>Three different error state patterns, sometimes overlapping with loading states through SafeDataLoader.</p>
+
+  <ul class="plist">
+    <li class="pitem">
+      <div class="pn">1. SafeDataLoader (built-in error state)</div>
+      <div class="pd">The SafeDataLoader component includes an error state with a retry button. Consistent UI when used, but not universally adopted.</div>
+    </li>
+    <li class="pitem">
+      <div class="pn">2. Alert Component</div>
+      <div class="pd"><code>&lt;Alert variant="destructive"&gt;</code> -- Uses shadcn/ui Alert for error display. Standard but used inconsistently.</div>
+    </li>
+    <li class="pitem">
+      <div class="pn">3. Inline Error Cards</div>
+      <div class="pd">Custom error cards with red text and retry buttons. Similar to Alert but implemented inline with slightly different styling each time.</div>
+    </li>
+  </ul>
+</div>
+
+<!-- SECTION 3.12: CHARTS -->
+<div class="section" id="s3-12">
+  <div class="sec-hdr"><h2><span class="sn">3.12</span> Charts &amp; Visualizations <span class="sev sev-high" style="margin-left:12px">Grade: D</span></h2></div>
+
+  <p>Three different charting approaches with no standardized chart component or theming.</p>
+
+  <ul class="plist">
+    <li class="pitem">
+      <div class="pn">1. Chart.js (via react-chartjs-2)</div>
+      <div class="pd">Used for line charts, bar charts, and doughnut charts in analytics pages. Requires manual canvas rendering and responsive configuration.</div>
+      <span class="ptag">Chart.js</span><span class="ptag">react-chartjs-2</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">2. Custom CSS Bar Charts</div>
+      <div class="pd">Horizontal bar charts built with plain <code>&lt;div&gt;</code> elements, Tailwind width classes, and gradient backgrounds. Used in leaderboard and gap analysis views. No chart library needed but limited in functionality.</div>
+      <span class="ptag">Custom CSS</span><span class="ptag">No Library</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">3. Progress Component</div>
+      <div class="pd">shadcn/ui <code>&lt;Progress&gt;</code> component used as a simplified bar chart in some metric displays. Not intended for data visualization but repurposed for it.</div>
+      <span class="ptag">shadcn Progress</span><span class="ptag">Repurposed</span>
+    </li>
+  </ul>
+</div>
+
+<!-- SECTION 3.13: NAVIGATION -->
+<div class="section" id="s3-13">
+  <div class="sec-hdr"><h2><span class="sn">3.13</span> Navigation <span class="sev sev-low" style="margin-left:12px">Grade: B+</span></h2></div>
+
+  <div class="alert ok">
+    <h4>Consistent Sidebar Navigation</h4>
+    <p>The collapsible sidebar with role-based sections is well-implemented and consistent. Navigation items use lucide-react icons, badges for notifications, and proper active state highlighting. This is one of the strongest areas of the UI.</p>
+  </div>
+
+  <p>The sidebar is implemented as a single shared layout component with role-based section filtering. All pages use the same sidebar, ensuring consistent navigation. The only minor note is that some nested pages could benefit from breadcrumb navigation, which is currently absent.</p>
+</div>
+
+<!-- SECTION 3.14: TOASTS -->
+<div class="section" id="s3-14">
+  <div class="sec-hdr"><h2><span class="sn">3.14</span> Toasts &amp; Notifications <span class="sev sev-high" style="margin-left:12px">Grade: D</span></h2></div>
+
+  <div class="alert warn">
+    <h4>Dual Toast Systems</h4>
+    <p>Two separate toast notification systems are installed and used: Radix Toast (via shadcn/ui's Toaster) and Sonner. Both appear in the dependency list and both are called from different parts of the application. This results in inconsistent notification appearance and behavior.</p>
+  </div>
+
+  <ul class="plist">
+    <li class="pitem">
+      <div class="pn">Radix Toast (shadcn/ui Toaster)</div>
+      <div class="pd">The standard shadcn/ui toast system using <code>useToast()</code> hook and <code>&lt;Toaster&gt;</code> component. Used in older pages and some form submissions.</div>
+      <span class="ptag">Radix</span><span class="ptag">useToast Hook</span>
+    </li>
+    <li class="pitem">
+      <div class="pn">Sonner</div>
+      <div class="pd"><code>toast.success("...")</code> / <code>toast.error("...")</code> -- The Sonner library provides a simpler API. Used in newer pages. Produces visually different notifications from Radix Toast.</div>
+      <span class="ptag">Sonner</span><span class="ptag">toast() API</span>
+    </li>
+  </ul>
+
+  <p><strong>Recommendation:</strong> Standardize on Sonner (simpler API, better DX) and remove the Radix toast dependency.</p>
+</div>
+
+
+<!-- SECTION 4: CROSS-CUTTING ISSUES -->
+<div class="section" id="s4">
+  <div class="sec-hdr"><h2><span class="sn">4.</span> Cross-Cutting Issues</h2></div>
+
+  <p>These issues span multiple component categories and represent systemic problems in the codebase that cannot be fixed by addressing a single component type.</p>
+
+  <div class="issue">
+    <div class="ii crit">1</div>
+    <div class="issue-content">
+      <h4>Severity Color Maps Duplicated 6+ Times</h4>
+      <p>The mapping from severity levels (<code>CRITICAL</code>, <code>HIGH</code>, <code>MEDIUM</code>, <code>LOW</code>) to Tailwind background/text/border color classes is independently defined in at least 6 different files. Any design change to the severity color scheme requires finding and updating every instance. Found in: GapAnalysis, VerificationDashboard, VerificationAnalytics, VerificationQueueManagement, AggregateMetrics, DonorMetricsDashboard, and more.</p>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="ii crit">2</div>
+    <div class="issue-content">
+      <h4>6 Separate Local MetricCard Definitions -- None Shared Globally</h4>
+      <p>Six different files define their own <code>MetricCard</code> or <code>KpiCard</code> component locally. None of these are exported from a shared location. The naming itself is inconsistent (MetricCard vs KpiCard vs unnamed inline). Additionally, 10 more card implementations are inline JSX with no reusable component at all.</p>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="ii high">3</div>
+    <div class="issue-content">
+      <h4>Status Badge Colors Inline Everywhere</h4>
+      <p>Status badges use inline Tailwind color classes like <code>bg-green-100 text-green-800 border-green-200</code> directly in JSX. The same status-to-color mapping is rewritten in every component that renders a status. There is no centralized <code>getStatusColors(status)</code> utility or <code>StatusBadge</code> component with a lookup table.</p>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="ii high">4</div>
+    <div class="issue-content">
+      <h4>Mixed Form Approaches -- Raw vs shadcn FormField</h4>
+      <p>Approximately half the forms use raw <code>&lt;Label&gt;</code> + <code>&lt;Input&gt;</code> with <code>register()</code> from react-hook-form, while the other half uses shadcn's <code>&lt;FormField&gt;</code> + <code>&lt;FormLabel&gt;</code> + <code>&lt;FormControl&gt;</code> wrapper components. This creates two different validation display patterns, error message positions, and accessibility behaviors. Some forms even mix both approaches within the same form.</p>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="ii med">5</div>
+    <div class="issue-content">
+      <h4>Inconsistent Dark Mode Support</h4>
+      <p>Some components include <code>dark:</code> Tailwind variants (V5, V6, V16 in metric cards; some analytics pages) while the majority do not. This creates a broken dark mode experience where some elements adapt and others do not. Either commit to full dark mode support or remove the partial implementations to avoid confusion.</p>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="ii med">6</div>
+    <div class="issue-content">
+      <h4>LLM Tell-Tale Signs in Code</h4>
+      <p>The variations show clear patterns of LLM-assisted code generation: (a) overly verbose and slightly different Tailwind class names for identical visual results, (b) inconsistent component naming (MetricCard vs KpiCard), (c) near-identical implementations with subtle differences suggesting copy-paste from different sessions, (d) slight variations in prop interfaces that should be identical, (e) components that could be unified but were generated independently each time.</p>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="ii high">7</div>
+    <div class="issue-content">
+      <h4>Dual Toast Notification Systems</h4>
+      <p>Both Radix Toast (via shadcn/ui) and Sonner are installed as dependencies and used in different parts of the application. This results in two different notification styles, positions, and behaviors. Users may see both styles in a single session.</p>
+    </div>
+  </div>
+
+  <div class="issue">
+    <div class="ii med">8</div>
+    <div class="issue-content">
+      <h4>Multiple Loading/Empty/Error Patterns</h4>
+      <p>SafeDataLoader, animate-pulse divs, Skeleton component, and Loader2 spinner are all used for loading states. Empty states use the shared EmptyState component, inline text, or inline icon cards. Error states use SafeDataLoader, Alert component, or custom error cards. There is no standard pattern for any of these three fundamental UI states.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 5: RECOMMENDATIONS -->
+<div class="section" id="s5">
+  <div class="sec-hdr"><h2><span class="sn">5.</span> Recommendations</h2></div>
+
+  <p>The following recommendations are prioritized by impact and ordered from highest to lowest return on investment.</p>
+
+  <div class="rec">
+    <h4>1. Create a Centralized Design System in <code>src/components/shared/</code></h4>
+    <p>Build shared components with well-defined variants:</p>
+    <ul style="margin:8px 0 0 18px;font-size:13px;color:var(--text2);line-height:1.8">
+      <li><strong><code>&lt;MetricCard&gt;</code></strong> with variants: <code>default</code> (white bg), <code>colored</code> (solid bg), <code>semi-transparent</code>, <code>with-trend</code> (trend arrows), <code>compact</code> (smaller). Support icon position (left/right/none), icon size, loading skeleton, dark mode.</li>
+      <li><strong><code>&lt;StatusBadge&gt;</code></strong> with centralized severity/status color maps from <code>status-colors.ts</code>.</li>
+      <li><strong><code>&lt;DataTable&gt;</code></strong> wrapping shadcn Table with standard row actions, empty state, loading state.</li>
+      <li><strong><code>&lt;FilterPanel&gt;</code></strong> with consistent layout for all filter patterns.</li>
+      <li><strong><code>&lt;FormCard&gt;</code></strong> with standard action bar, cancel button, and border separator.</li>
+    </ul>
+  </div>
+
+  <div class="rec">
+    <h4>2. Create <code>src/lib/utils/status-colors.ts</code></h4>
+    <p>A single source of truth for all severity/status-to-color mappings. Export functions like <code>getSeverityColors(level)</code>, <code>getStatusColors(status)</code> that return consistent Tailwind class objects. Replace all 6+ duplicated color maps with imports from this file.</p>
+  </div>
+
+  <div class="rec">
+    <h4>3. Standardize Form Approach</h4>
+    <p>Pick one approach and apply it consistently: either raw <code>&lt;Label&gt;</code>/<code>&lt;Input&gt;</code> with react-hook-form, or shadcn <code>&lt;FormField&gt;</code>. Recommendation: adopt shadcn FormField for all forms, as it provides better validation display, accessibility, and consistency. Migrate the RoleForm from manual <code>useState</code> to react-hook-form + zod.</p>
+  </div>
+
+  <div class="rec">
+    <h4>4. Pick One Toast System</h4>
+    <p><strong>Recommendation: Sonner.</strong> Remove Radix Toast (<code>@radix-ui/react-toast</code>) and the shadcn Toaster component. Sonner provides a simpler API (<code>toast.success()</code>, <code>toast.error()</code>), better animations, and requires less boilerplate. Update all existing <code>useToast()</code> calls to use Sonner's <code>toast()</code> function.</p>
+  </div>
+
+  <div class="rec">
+    <h4>5. Standardize Loading/Empty/Error States</h4>
+    <p>Adopt <code>SafeDataLoader</code> as the standard pattern for data-dependent pages. For component-level loading, use shadcn <code>&lt;Skeleton&gt;</code> consistently. Deprecate animate-pulse divs and Loader2 spinner for page-level loading. Use the shared <code>&lt;EmptyState&gt;</code> component everywhere.</p>
+  </div>
+
+  <div class="rec">
+    <h4>6. Dark Mode: All or Nothing</h4>
+    <p>Either add <code>dark:</code> variants to all components systematically, or remove the partial dark mode support that exists in some components. A half-implemented dark mode is worse than no dark mode. Recommendation: if pursuing dark mode, start with a Tailwind CSS config that defines the complete dark palette, then apply it systematically using the shared design system components.</p>
+  </div>
+
+  <div class="rec">
+    <h4>7. Consolidate Chart Library</h4>
+    <p>Standardize on one charting approach. Recommendation: keep Chart.js for complex visualizations, build a <code>&lt;BarChart&gt;</code> wrapper for the simple horizontal bar charts currently done with custom CSS, and stop repurposing <code>&lt;Progress&gt;</code> for data visualization.</p>
+  </div>
+</div>
+
+<!-- SECTION 6: DESIGN FILE MAP -->
+<div class="section" id="s6">
+  <div class="sec-hdr"><h2><span class="sn">6.</span> Design File Map</h2></div>
+
+  <p>This section maps which files contain which components, organized by category. Use this to find all instances that need updating when implementing the design system.</p>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:16px">
+
+    <div class="fcat">
+      <h4>Metric/Stat Cards (16 variations)</h4>
+      <ul class="flist">
+        <li>src/app/(auth)/admin/dashboard/page.tsx <span class="sev sev-crit" style="font-size:9px">V1 Local MetricCard</span></li>
+        <li>src/components/donor/DonorDashboard.tsx <span class="sev sev-crit" style="font-size:9px">V2 Local MetricCard</span></li>
+        <li>src/components/verification/VerificationDashboard.tsx <span class="sev sev-crit" style="font-size:9px">V3+V15 Local MetricCard</span></li>
+        <li>src/components/verification/EnhancedVerificationDashboard.tsx <span class="sev sev-crit" style="font-size:9px">V4 Copy of V3</span></li>
+        <li>src/components/verification/VerificationAnalytics.tsx <span class="sev sev-crit" style="font-size:9px">V5+V16 Local KpiCard</span></li>
+        <li>src/app/(auth)/dashboard/page.tsx <span class="sev sev-crit" style="font-size:9px">V6 Inline JSX</span></li>
+        <li>src/app/(auth)/coordinator/dashboard/page.tsx <span class="sev sev-crit" style="font-size:9px">V7 Inline JSX</span></li>
+        <li>src/components/donor/GapAnalysis.tsx <span class="sev sev-crit" style="font-size:9px">V8 Inline JSX</span></li>
+        <li>src/components/dashboards/crisis/VerificationQueueManagement.tsx <span class="sev sev-crit" style="font-size:9px">V9 Inline JSX</span></li>
+        <li>src/components/verification/AutoApprovalConfig.tsx <span class="sev sev-crit" style="font-size:9px">V10 Inline JSX</span></li>
+        <li>src/components/verification/EnhancedAutoApprovalConfig.tsx <span class="sev sev-crit" style="font-size:9px">V11 Copy of V10</span></li>
+        <li>src/components/dashboards/crisis/DonorMetricsDashboard.tsx <span class="sev sev-crit" style="font-size:9px">V12 Local MetricCard</span></li>
+        <li>src/components/donor/PeerComparison.tsx <span class="sev sev-crit" style="font-size:9px">V13 Inline JSX</span></li>
+        <li>src/components/dashboards/situation/components/AggregateMetrics.tsx <span class="sev sev-crit" style="font-size:9px">V14 Raw div</span></li>
+      </ul>
+    </div>
+
+    <div class="fcat">
+      <h4>Data Lists &amp; Tables (9 patterns)</h4>
+      <ul class="flist">
+        <li>src/app/(auth)/roles/page.tsx <span class="ptag" style="font-size:9px">shadcn Table</span></li>
+        <li>src/app/(auth)/admin/users/page.tsx <span class="ptag" style="font-size:9px">shadcn Table</span></li>
+        <li>src/app/(auth)/admin/incidents/page.tsx <span class="ptag" style="font-size:9px">shadcn Table</span></li>
+        <li>src/components/donor/GapAnalysis.tsx <span class="ptag" style="font-size:9px">Raw HTML Table</span></li>
+        <li>src/components/verification/VerificationDashboard.tsx <span class="ptag" style="font-size:9px">Card Stack</span></li>
+        <li>src/components/donor/PeerComparison.tsx <span class="ptag" style="font-size:9px">Card Grid</span></li>
+        <li>src/components/dashboards/situation/components/AggregateMetrics.tsx <span class="ptag" style="font-size:9px">Metric Rows</span></li>
+        <li>src/components/verification/AutoApprovalConfig.tsx <span class="ptag" style="font-size:9px">Config Cards</span></li>
+        <li>src/components/reports/builder/ReportBuilder.tsx <span class="ptag" style="font-size:9px">Drag-drop List</span></li>
+      </ul>
+    </div>
+
+    <div class="fcat">
+      <h4>List Filters (6 patterns)</h4>
+      <ul class="flist">
+        <li>src/components/verification/QueueFilters.tsx <span class="ptag" style="font-size:9px">Card + Checkboxes</span></li>
+        <li>src/components/filters/AdvancedFilters.tsx <span class="ptag" style="font-size:9px">Card + Toggle Buttons</span></li>
+        <li>src/components/selectors/IncidentSelector.tsx <span class="ptag" style="font-size:9px">Popover + Command</span></li>
+        <li>src/components/selectors/EntitySelector.tsx <span class="ptag" style="font-size:9px">Popover + Command</span></li>
+        <li>src/app/(auth)/admin/users/page.tsx <span class="ptag" style="font-size:9px">Inline Filter Bar</span></li>
+        <li>src/components/donor/DonorOverlayControl.tsx <span class="ptag" style="font-size:9px">Map Overlay</span></li>
+      </ul>
+    </div>
+
+    <div class="fcat">
+      <h4>Forms (10 variations)</h4>
+      <ul class="flist">
+        <li>src/app/(auth)/login/page.tsx <span class="ptag" style="font-size:9px">Login Form</span></li>
+        <li>src/components/auth/RegisterForm.tsx <span class="ptag" style="font-size:9px">Register Form</span></li>
+        <li>src/components/admin/EditUserForm.tsx <span class="ptag" style="font-size:9px">Edit User Form</span></li>
+        <li>src/components/donor/DonorRegistrationForm.tsx <span class="ptag" style="font-size:9px">Donor Registration</span></li>
+        <li>src/components/commitments/CommitmentForm.tsx <span class="ptag" style="font-size:9px">Commitment Form</span></li>
+        <li>src/components/entities/EntityForm.tsx <span class="ptag" style="font-size:9px">Entity Form</span></li>
+        <li>src/components/incidents/IncidentCreationForm.tsx <span class="ptag" style="font-size:9px">Incident Form</span></li>
+        <li>src/components/response/ResponsePlanningForm.tsx <span class="ptag" style="font-size:9px">Response Planning</span></li>
+        <li>src/components/delivery/DeliveryConfirmationForm.tsx <span class="ptag" style="font-size:9px">Delivery Confirm</span></li>
+        <li>src/components/admin/RoleForm.tsx <span class="ptag" style="font-size:9px">Role Form</span></li>
+      </ul>
+    </div>
+
+    <div class="fcat">
+      <h4>Severity Color Duplications (6+ files)</h4>
+      <ul class="flist">
+        <li>src/components/donor/GapAnalysis.tsx <span class="sev sev-crit" style="font-size:9px">Duplicated</span></li>
+        <li>src/components/verification/VerificationDashboard.tsx <span class="sev sev-crit" style="font-size:9px">Duplicated</span></li>
+        <li>src/components/verification/VerificationAnalytics.tsx <span class="sev sev-crit" style="font-size:9px">Duplicated</span></li>
+        <li>src/components/dashboards/crisis/VerificationQueueManagement.tsx <span class="sev sev-crit" style="font-size:9px">Duplicated</span></li>
+        <li>src/components/dashboards/situation/components/AggregateMetrics.tsx <span class="sev sev-crit" style="font-size:9px">Duplicated</span></li>
+        <li>src/components/dashboards/crisis/DonorMetricsDashboard.tsx <span class="sev sev-crit" style="font-size:9px">Duplicated</span></li>
+      </ul>
+    </div>
+
+    <div class="fcat">
+      <h4>Toast Notifications</h4>
+      <ul class="flist">
+        <li>src/components/ui/toast.tsx <span class="ptag" style="font-size:9px">Radix Toast</span></li>
+        <li>src/components/ui/toaster.tsx <span class="ptag" style="font-size:9px">Radix Toaster</span></li>
+        <li>src/hooks/use-toast.ts <span class="ptag" style="font-size:9px">Radix Hook</span></li>
+        <li>src/components/ui/sonner.tsx <span class="ptag" style="font-size:9px">Sonner Wrapper</span></li>
+        <li>Various page files <span class="ptag" style="font-size:9px">Both APIs Used</span></li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div style="margin-top:40px;padding:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rl)">
+    <h4 style="margin-bottom:8px">Audit Report Details</h4>
+    <p style="margin-bottom:4px"><strong>Date:</strong> 2026-05-22</p>
+    <p style="margin-bottom:4px"><strong>Application:</strong> DRMS v4 (Disaster Management System)</p>
+    <p style="margin-bottom:4px"><strong>Tech Stack:</strong> Next.js 14, React 18, shadcn/ui, Tailwind CSS, lucide-react</p>
+    <p style="margin-bottom:4px"><strong>Audit Scope:</strong> Frontend component design consistency across all authenticated pages</p>
+    <p style="margin-bottom:0"><strong>Overall Grade:</strong> <span style="color:var(--gD);font-weight:700;font-size:18px">D+</span> (Poor)</p>
+  </div>
+</div>
+
+
+</div></div>
+</div>
+
+
+</body>
+</html>

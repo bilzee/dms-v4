@@ -3,6 +3,8 @@
 import { useAuth } from '@/hooks/useAuth';
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users, AlertTriangle, CheckCircle, Clock, FileText, Activity, PlusCircle, TrendingUp, Shield, BarChart3, Shield as ReportIcon, RefreshCw } from 'lucide-react';
@@ -12,7 +14,7 @@ import { useVerificationStore } from '@/stores/verification.store';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
-import { Skeleton } from '@/components/ui/skeleton';
+
 
 export default function CoordinatorDashboard() {
   const { currentRole, user, token } = useAuth();
@@ -132,96 +134,39 @@ export default function CoordinatorDashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {statsLoading ? (
-            // Loading skeletons
-            Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-4 w-4 rounded" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-8 w-16 mb-2" />
-                  <Skeleton className="h-3 w-20" />
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Responses</CardTitle>
-                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {dashboardStats?.activeResponses?.total ?? 0}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {dashboardStats?.activeResponses?.description ?? "Loading..."}
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Responders Deployed</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {dashboardStats?.responders?.total ?? 0}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {dashboardStats?.responders?.description ?? "Loading..."}
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pending Verification</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {dashboardStats?.pendingVerification?.total ?? totalPendingVerifications}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {dashboardStats?.pendingVerification?.description ?? 
-                     `${safeAssessmentQueueDepth.critical + safeDeliveryQueueDepth.critical} critical priority`}
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Completed Today</CardTitle>
-                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {dashboardStats?.completedToday?.total ?? 0}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {dashboardStats?.completedToday?.description ?? "Loading..."}
-                  </p>
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </div>
+        <StatCardGrid columns={4}>
+          <StatCard
+            label="Active Responses"
+            value={dashboardStats?.activeResponses?.total ?? 0}
+            severity="high"
+            icon={AlertTriangle}
+            loading={statsLoading}
+          />
+          <StatCard
+            label="Responders Deployed"
+            value={dashboardStats?.responders?.total ?? 0}
+            severity="info"
+            icon={Users}
+            loading={statsLoading}
+          />
+          <StatCard
+            label="Pending Verification"
+            value={dashboardStats?.pendingVerification?.total ?? totalPendingVerifications}
+            severity="warning"
+            icon={Clock}
+            loading={statsLoading}
+          />
+          <StatCard
+            label="Completed Today"
+            value={dashboardStats?.completedToday?.total ?? 0}
+            severity="success"
+            icon={CheckCircle}
+            loading={statsLoading}
+          />
+        </StatCardGrid>
 
   
-        {/* Verification Queue Management - Story 6.1 */}
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Badge variant="default" className="bg-blue-100 text-blue-800 border-blue-200">
-              Story 6.1
-            </Badge>
-            <span className="text-sm text-gray-600">Verification Queue Management</span>
-          </div>
           <VerificationQueueManagement />
         </div>
 

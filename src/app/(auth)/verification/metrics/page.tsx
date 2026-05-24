@@ -2,6 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { BarChart3, CheckCircle, XCircle, Clock, Users, FileText } from 'lucide-react'
@@ -86,51 +88,32 @@ export default function VerificationMetricsPage() {
         <p className="text-muted-foreground">Assessment verification performance and statistics</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Assessments</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{(metrics.totalPending + metrics.totalVerified + metrics.totalRejected + metrics.totalAutoVerified)}</div>
-            <p className="text-xs text-muted-foreground">All submitted assessments</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Verification</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{metrics.totalPending}</div>
-            <p className="text-xs text-muted-foreground">Awaiting coordinator review</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Verified</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{metrics.totalVerified}</div>
-            <p className="text-xs text-muted-foreground">Manually approved</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-            <XCircle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{metrics.totalRejected}</div>
-            <p className="text-xs text-muted-foreground">Quality control rejections</p>
-          </CardContent>
-        </Card>
-      </div>
+      <StatCardGrid columns={4}>
+        <StatCard
+          label="Total Assessments"
+          value={metrics.totalPending + metrics.totalVerified + metrics.totalRejected + metrics.totalAutoVerified}
+          severity="info"
+          icon={FileText}
+        />
+        <StatCard
+          label="Pending Verification"
+          value={metrics.totalPending}
+          severity="warning"
+          icon={Clock}
+        />
+        <StatCard
+          label="Verified"
+          value={metrics.totalVerified}
+          severity="success"
+          icon={CheckCircle}
+        />
+        <StatCard
+          label="Rejected"
+          value={metrics.totalRejected}
+          severity="critical"
+          icon={XCircle}
+        />
+      </StatCardGrid>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>

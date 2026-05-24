@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { GPSCapture } from '@/components/shared/GPSCapture'
 import { MediaField } from '@/components/shared/MediaField'
 import { EntitySelector } from '@/components/shared/EntitySelector'
@@ -360,8 +361,7 @@ export function WASHAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Water Sufficient
-                          {!field.value && <Badge variant="destructive">Gap</Badge>}
-                          {field.value && <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>}
+                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                         </FormLabel>
                         <FormDescription>
                           Water quantity is sufficient for basic needs
@@ -386,8 +386,7 @@ export function WASHAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Clean Water Access
-                          {!field.value && <Badge variant="destructive">Gap</Badge>}
-                          {field.value && <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>}
+                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                         </FormLabel>
                         <FormDescription>
                           Population has access to safe drinking water
@@ -455,8 +454,7 @@ export function WASHAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Latrines Sufficient
-                          {!field.value && <Badge variant="destructive">Gap</Badge>}
-                          {field.value && <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>}
+                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                         </FormLabel>
                         <FormDescription>
                           Number of latrines is sufficient for population
@@ -482,7 +480,7 @@ export function WASHAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2 text-red-600">
                           Open Defecation Concerns
-                          {field.value && <Badge variant="destructive">Public Health Risk</Badge>}
+                          {field.value && <StatusBadge domain="assessment" status="PUBLIC_HEALTH_RISK" label="Public Health Risk" />}
                         </FormLabel>
                         <FormDescription>
                           Open defecation practices observed (disease transmission risk)
@@ -521,8 +519,7 @@ export function WASHAssessmentForm({
                     <div className="space-y-1 leading-none">
                       <FormLabel className="flex items-center gap-2">
                         Handwashing Facilities Available
-                        {!field.value && <Badge variant="destructive">Gap</Badge>}
-                          {field.value && <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>}
+                        <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                       </FormLabel>
                       <FormDescription>
                         Handwashing facilities with soap/water are available

@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -255,85 +257,45 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
           {selectedTab === 'overview' && analyticsData && (
             <>
               {/* Key Metrics */}
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Total Entities</p>
-                        <p className="text-2xl font-bold">{analyticsData.overview.totalEntities}</p>
-                      </div>
-                      <Shield className="h-6 w-6 text-gray-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Auto-Approval Enabled</p>
-                        <p className="text-2xl font-bold text-green-600">{analyticsData.overview.autoApprovalEnabled}</p>
-                      </div>
-                      <CheckCircle className="h-6 w-6 text-green-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Auto-Approval Rate</p>
-                        <p className="text-2xl font-bold text-blue-600">
-                          {formatPercentage(analyticsData.overview.autoApprovalRate)}
-                        </p>
-                      </div>
-                      <TrendingUp className="h-6 w-6 text-blue-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Config Changes</p>
-                        <p className="text-2xl font-bold text-purple-600">{analyticsData.overview.configurationChanges}</p>
-                      </div>
-                      <Activity className="h-6 w-6 text-purple-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Avg Processing Time</p>
-                        <p className="text-2xl font-bold text-orange-600">
-                          {formatTime(analyticsData.overview.averageProcessingTime)}
-                        </p>
-                      </div>
-                      <Clock className="h-6 w-6 text-orange-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Effectiveness Score</p>
-                        <p className="text-2xl font-bold text-indigo-600">
-                          {Math.round(analyticsData.overview.effectivenessScore)}/100
-                        </p>
-                      </div>
-                      <BarChart3 className="h-6 w-6 text-indigo-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <StatCardGrid columns={6}>
+                <StatCard
+                  label="Total Entities"
+                  value={analyticsData.overview.totalEntities}
+                  severity="info"
+                  icon={Shield}
+                />
+                <StatCard
+                  label="Auto-Approval Enabled"
+                  value={analyticsData.overview.autoApprovalEnabled}
+                  severity="success"
+                  icon={CheckCircle}
+                />
+                <StatCard
+                  label="Auto-Approval Rate"
+                  value={formatPercentage(analyticsData.overview.autoApprovalRate)}
+                  severity="success"
+                  icon={TrendingUp}
+                />
+                <StatCard
+                  label="Config Changes"
+                  value={analyticsData.overview.configurationChanges}
+                  severity="info"
+                  icon={Activity}
+                />
+                <StatCard
+                  label="Avg Processing Time"
+                  value={formatTime(analyticsData.overview.averageProcessingTime)}
+                  severity="info"
+                  icon={Clock}
+                />
+                <StatCard
+                  label="Effectiveness Score"
+                  value={`${Math.round(analyticsData.overview.effectivenessScore)}/100`}
+                  severity="success"
+                  variant="centered"
+                  icon={BarChart3}
+                />
+              </StatCardGrid>
 
               {/* Quick Insights */}
               <Card>

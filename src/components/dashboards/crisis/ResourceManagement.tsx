@@ -3,8 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -49,13 +52,6 @@ interface CommitmentStats {
   byStatus: Record<string, number>;
   criticalGaps: number;
 }
-
-const STATUS_COLORS = {
-  PLANNED: 'bg-blue-100 text-blue-800 border-blue-200',
-  PARTIAL: 'bg-amber-100 text-amber-800 border-amber-200',
-  COMPLETE: 'bg-green-100 text-green-800 border-green-200',
-  CANCELLED: 'bg-red-100 text-red-800 border-red-200'
-};
 
 const STATUS_ICONS = {
   PLANNED: Clock,
@@ -145,13 +141,11 @@ export function ResourceManagement({ className }: ResourceManagementProps) {
   const getStatusBadge = (status: string) => {
     const Icon = STATUS_ICONS[status as keyof typeof STATUS_ICONS] || Clock;
     return (
-      <Badge 
-        variant="outline" 
-        className={`${STATUS_COLORS[status as keyof typeof STATUS_COLORS]} flex items-center gap-1`}
-      >
-        <Icon className="h-3 w-3" />
-        {status}
-      </Badge>
+      <StatusBadge
+        domain="commitment"
+        status={status}
+        icon={Icon}
+      />
     );
   };
 
@@ -228,65 +222,32 @@ export function ResourceManagement({ className }: ResourceManagementProps) {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Commitments</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{displayStats.totalCommitments || 0}</div>
-              <p className="text-xs text-muted-foreground">
-                ${(displayStats.totalValue || 0).toLocaleString()} estimated value
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Delivery Progress</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {calculateDeliveryProgress(displayStats.totalCommittedQuantity || 0, displayStats.totalDeliveredQuantity || 0)}%
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {displayStats.totalDeliveredQuantity || 0} / {displayStats.totalCommittedQuantity || 0} units delivered
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Donors</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {(displayStats.byStatus as any)?.PLANNED || 0} planned
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {(displayStats.byStatus as any)?.PARTIAL || 0} in progress
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Critical Gaps</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {displayCriticalGaps.length || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Resources urgently needed
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+      <StatCardGrid columns={4} className="mb-6">
+          <StatCard
+            label="Total Commitments"
+            value={displayStats.totalCommitments || 0}
+            severity="info"
+            icon={Package}
+          />
+          <StatCard
+            label="Delivery Progress"
+            value={`${calculateDeliveryProgress(displayStats.totalCommittedQuantity || 0, displayStats.totalDeliveredQuantity || 0)}%`}
+            severity="success"
+            icon={Target}
+          />
+          <StatCard
+            label="Active Donors"
+            value={(displayStats.byStatus as any)?.PLANNED || 0}
+            severity="info"
+            icon={Users}
+          />
+          <StatCard
+            label="Critical Gaps"
+            value={displayCriticalGaps.length || 0}
+            severity="critical"
+            icon={AlertTriangle}
+          />
+        </StatCardGrid>
 
       {/* Critical Gaps Alert */}
       {displayCriticalGaps.length > 0 && (
@@ -414,7 +375,7 @@ export function ResourceManagement({ className }: ResourceManagementProps) {
               ) : (
                 <div className="space-y-4">
                   {displayCommitments.map((commitment) => (
-                    <Card key={commitment.id} className="border-l-4 border-l-blue-500">
+                    <Card key={commitment.id} className="bg-blue-500/5 border-blue-500/15">
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex-1">

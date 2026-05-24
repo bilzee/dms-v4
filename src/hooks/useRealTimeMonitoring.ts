@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useQuery, useQueryClient, QueryClient } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
+import { getBadgeClasses } from '@/components/shared/StatusBadge';
 
 // Types for real-time updates
 interface RealTimeConfig {
@@ -374,18 +375,7 @@ export function useRealTimeMonitoring(config: RealTimeConfig) {
 
   // Connection status helper functions
   const getStatusColor = useCallback(() => {
-    switch (state.connectionStatus) {
-      case 'connected':
-        return 'text-green-600 bg-green-100';
-      case 'connecting':
-        return 'text-blue-600 bg-blue-100';
-      case 'disconnected':
-        return 'text-gray-600 bg-gray-100';
-      case 'error':
-        return 'text-red-600 bg-red-100';
-      default:
-        return 'text-gray-600 bg-gray-100';
-    }
+    return getBadgeClasses('system', state.connectionStatus);
   }, [state.connectionStatus]);
 
   const getStatusIcon = useCallback(() => {

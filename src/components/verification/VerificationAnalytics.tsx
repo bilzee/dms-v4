@@ -6,12 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Clock, 
-  CheckCircle, 
-  Users, 
+import {
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  Users,
   Activity,
   BarChart3,
   LineChart,
@@ -23,6 +22,8 @@ import {
 import { useVerificationMetrics } from '@/hooks/useRealTimeVerification';
 import { useAuth } from '@/hooks/useAuth';
 import { useVerificationStore } from '@/stores/verification.store';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { cn } from '@/lib/utils';
 import { priorityDotColors, statusBadgeColors } from '@/lib/utils/priority-colors';
 import { apiGet } from '@/lib/api';
@@ -206,43 +207,39 @@ export function VerificationAnalytics({ className }: VerificationAnalyticsProps)
         </div>
       </div>
 
-      {/* Key Performance Indicators */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          title="Items Processed"
-          value={performanceMetrics.totalProcessed}
+      <StatCardGrid columns={4}>
+        <StatCard
+          label="Items Processed"
+          value={performanceMetrics.totalProcessed.toLocaleString()}
           icon={CheckCircle}
-          trend={{ trend: (performanceMetrics.backlogTrend as any) || "neutral", value: 0 }}
-          format="number"
+          severity="success"
+          trend={{ value: performanceMetrics.backlogTrend.value, label: `${performanceMetrics.backlogTrend.value.toFixed(1)}% from previous period` }}
         />
-        
-        <KpiCard
-          title="Avg Processing Time"
-          value={performanceMetrics.averageProcessingTime}
+
+        <StatCard
+          label="Avg Processing Time"
+          value={performanceMetrics.averageProcessingTime < 60 ? `${performanceMetrics.averageProcessingTime}m` : `${Math.floor(performanceMetrics.averageProcessingTime / 60)}h ${performanceMetrics.averageProcessingTime % 60}m`}
           icon={Clock}
-          trend={{ trend: "neutral", value: 0 }}
-          format="duration"
-          unit="minutes"
+          severity="info"
+          trend={null}
         />
-        
-        <KpiCard
-          title="Throughput"
-          value={performanceMetrics.throughput}
+
+        <StatCard
+          label="Throughput"
+          value={`${performanceMetrics.throughput.toLocaleString()} items/hr`}
           icon={BarChart3}
-          trend={{ trend: "neutral", value: 0 }}
-          format="number"
-          unit="items/hr"
+          severity="info"
+          trend={null}
         />
-        
-        <KpiCard
-          title="Verification Rate"
-          value={metrics.verificationRate * 100}
+
+        <StatCard
+          label="Verification Rate"
+          value={`${(metrics.verificationRate * 100).toFixed(1)}%`}
           icon={TrendingUp}
-          trend={{ trend: "neutral", value: 0 }}
-          format="percentage"
-          unit="%"
+          severity="success"
+          trend={null}
         />
-      </div>
+      </StatCardGrid>
 
       {/* Detailed Analytics */}
       <Tabs defaultValue="overview" className="space-y-4">
@@ -336,62 +333,6 @@ export function VerificationAnalytics({ className }: VerificationAnalyticsProps)
         </TabsContent>
       </Tabs>
     </div>
-  );
-}
-
-// KPI Card Component
-interface KpiCardProps {
-  title: string;
-  value: number;
-  icon: React.ComponentType<{ className?: string }>;
-  trend: { trend: 'up' | 'down' | 'neutral'; value: number };
-  format: 'number' | 'percentage' | 'duration';
-  unit?: string;
-}
-
-function KpiCard({ title, value, icon: Icon, trend, format, unit }: KpiCardProps) {
-  const formatValue = (val: number) => {
-    switch (format) {
-      case 'percentage':
-        return `${val.toFixed(1)}${unit || ''}`;
-      case 'duration':
-        if (val < 60) return `${val}m`;
-        const hours = Math.floor(val / 60);
-        const minutes = val % 60;
-        return `${hours}h ${minutes}m`;
-      default:
-        return `${val.toLocaleString()}${unit ? ` ${unit}` : ''}`;
-    }
-  };
-
-  return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">{formatValue(value)}</p>
-          </div>
-          <Icon className="h-8 w-8 text-muted-foreground" />
-        </div>
-        
-        {trend && trend.trend !== 'neutral' && (
-          <div className="flex items-center gap-1 mt-2">
-            {trend.trend === 'up' ? (
-              <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
-            )}
-            <span className={cn(
-              'text-sm',
-              trend.trend === 'up' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-            )}>
-              {trend.value.toFixed(1)}% from previous period
-            </span>
-          </div>
-        )}
-      </CardContent>
-    </Card>
   );
 }
 
@@ -562,25 +503,25 @@ function PriorityBreakdown({ data }: { data: any }) {
 function TrendsChart({ data }: { data: any[] }) {
   return (
     <div className="space-y-4">
-      <div role="img" aria-label="Verification trends over time" className="grid grid-cols-3 gap-4 text-sm">
-        <div className="text-center">
-          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            {data.reduce((sum, item) => sum + item.assessments, 0)}
-          </div>
-          <div className="text-muted-foreground">Total Assessments</div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {data.reduce((sum, item) => sum + item.deliveries, 0)}
-          </div>
-          <div className="text-muted-foreground">Total Deliveries</div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-            {data.reduce((sum, item) => sum + item.verified, 0)}
-          </div>
-          <div className="text-muted-foreground">Total Verified</div>
-        </div>
+      <div className="grid grid-cols-3 gap-4">
+        <StatCard
+          variant="centered"
+          label="Total Assessments"
+          value={data.reduce((sum, item) => sum + item.assessments, 0).toLocaleString()}
+          severity="info"
+        />
+        <StatCard
+          variant="centered"
+          label="Total Deliveries"
+          value={data.reduce((sum, item) => sum + item.deliveries, 0).toLocaleString()}
+          severity="success"
+        />
+        <StatCard
+          variant="centered"
+          label="Total Verified"
+          value={data.reduce((sum, item) => sum + item.verified, 0).toLocaleString()}
+          severity="success"
+        />
       </div>
       
       <ProcessingMetricsChart data={data} />

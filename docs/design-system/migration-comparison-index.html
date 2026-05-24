@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DRMS DataList Migration Comparison</title>
+  <style>
+    :root {
+      --bg: hsl(0 0% 100%);
+      --fg: hsl(222.2 84% 4.9%);
+      --card: hsl(0 0% 100%);
+      --card-fg: hsl(222.2 84% 4.9%);
+      --primary: hsl(221.2 83.2% 53.3%);
+      --primary-fg: hsl(210 40% 98%);
+      --secondary: hsl(210 40% 96%);
+      --secondary-fg: hsl(222.2 84% 4.9%);
+      --muted: hsl(210 40% 96%);
+      --muted-fg: hsl(215.4 16.3% 46.9%);
+      --border: hsl(214.3 31.8% 91.4%);
+      --radius: 0.5rem;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: hsl(210 40% 98%);
+      color: var(--fg);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    .header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      padding: 2.5rem 2rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--fg);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.025em;
+    }
+
+    .header p {
+      font-size: 0.9375rem;
+      color: var(--muted-fg);
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    /* ── Summary strip ──────────────────────────────────── */
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .summary-stat {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      text-align: center;
+    }
+
+    .summary-stat .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .summary-stat .stat-label {
+      font-size: 0.8125rem;
+      color: var(--muted-fg);
+      margin-top: 0.25rem;
+    }
+
+    /* ── Section heading ────────────────────────────────── */
+    .section-heading {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Navigation cards grid ──────────────────────────── */
+    .nav-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .nav-card {
+      display: flex;
+      flex-direction: column;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .nav-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(59 130 246 / 0.12);
+    }
+
+    .nav-card-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 9999px;
+      background: var(--primary);
+      color: var(--primary-fg);
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .nav-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: 0.125rem;
+    }
+
+    .nav-card-subtitle {
+      font-size: 0.8125rem;
+      color: var(--muted-fg);
+      margin-bottom: 0.75rem;
+    }
+
+    .nav-card-pattern {
+      font-size: 0.75rem;
+      color: var(--muted-fg);
+      background: var(--muted);
+      display: inline-block;
+      padding: 0.25rem 0.625rem;
+      border-radius: var(--radius);
+      margin-bottom: 0.875rem;
+      font-family: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", monospace;
+    }
+
+    .nav-card-components {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+
+    .nav-card-components li {
+      font-size: 0.8125rem;
+      color: var(--card-fg);
+      padding-left: 1rem;
+      position: relative;
+    }
+
+    .nav-card-components li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 4px;
+      height: 4px;
+      border-radius: 9999px;
+      background: var(--primary);
+    }
+
+    /* ── Legend ──────────────────────────────────────────── */
+    .legend {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .legend-items {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-top: 0.75rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .legend-swatch {
+      flex-shrink: 0;
+      width: 3rem;
+      height: 1.5rem;
+      border-radius: 0.25rem;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.625rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .legend-swatch.original {
+      background: hsl(215 16% 92%);
+      color: hsl(215 16% 40%);
+    }
+
+    .legend-swatch.migrated {
+      background: var(--primary);
+      color: var(--primary-fg);
+    }
+
+    .legend-text .legend-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--fg);
+    }
+
+    .legend-text .legend-desc {
+      font-size: 0.8125rem;
+      color: var(--muted-fg);
+    }
+
+    /* ── API Summary table ──────────────────────────────── */
+    .api-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .api-table-wrapper {
+      overflow-x: auto;
+      margin-top: 0.75rem;
+    }
+
+    .api-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .api-table thead th {
+      background: var(--muted);
+      color: var(--muted-fg);
+      font-weight: 600;
+      text-align: left;
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .api-table thead th:first-child {
+      border-radius: var(--radius) 0 0 0;
+    }
+
+    .api-table thead th:last-child {
+      border-radius: 0 var(--radius) 0 0;
+    }
+
+    .api-table tbody td {
+      padding: 0.625rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--fg);
+      vertical-align: top;
+    }
+
+    .api-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .api-table code {
+      font-family: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", monospace;
+      font-size: 0.75rem;
+      background: var(--muted);
+      padding: 0.125rem 0.375rem;
+      border-radius: 0.25rem;
+      color: var(--primary);
+    }
+
+    .api-table .component-name {
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .prop-required {
+      color: hsl(0 72% 51%);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      margin-left: 0.25rem;
+    }
+
+    .prop-optional {
+      color: var(--muted-fg);
+      font-size: 0.6875rem;
+      margin-left: 0.25rem;
+    }
+
+    /* ── Responsive ─────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .summary-strip {
+        grid-template-columns: 1fr;
+      }
+      .nav-grid {
+        grid-template-columns: 1fr;
+      }
+      .legend-items {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- ── Header ───────────────────────────────────────── -->
+    <div class="header">
+      <h1>DRMS DataList Migration Comparison</h1>
+      <p>Side-by-side visual comparison: Original patterns vs. DataList components (DataTable, DataCardList, DataCardGrid)</p>
+    </div>
+
+    <!-- ── Summary strip ────────────────────────────────── -->
+    <div class="summary-strip">
+      <div class="summary-stat">
+        <div class="stat-value">3</div>
+        <div class="stat-label">DataList Component Variants<br>DataTable &middot; DataCardList &middot; DataCardGrid</div>
+      </div>
+      <div class="summary-stat">
+        <div class="stat-value">47</div>
+        <div class="stat-label">Total Files Identified<br>across 7 categories</div>
+      </div>
+      <div class="summary-stat">
+        <div class="stat-value">10</div>
+        <div class="stat-label">Representative Comparisons<br>across 4 comparison files</div>
+      </div>
+    </div>
+
+    <!-- ── Comparison files navigation ──────────────────── -->
+    <h2 class="section-heading">Comparison Files</h2>
+    <div class="nav-grid">
+
+      <!-- File 1 -->
+      <a href="migration-comparison-1-tables.html" class="nav-card">
+        <div class="nav-card-number">1</div>
+        <div class="nav-card-title">Tables &rarr; DataTable</div>
+        <div class="nav-card-subtitle">migration-comparison-1-tables.html</div>
+        <div class="nav-card-pattern">shadcn &lt;Table&gt; with rows &rarr; &lt;DataTable&gt; with ColumnDef</div>
+        <ul class="nav-card-components">
+          <li>Admin Users Table</li>
+          <li>Coordinator Donors Table</li>
+          <li>Coordinator Entities Table</li>
+        </ul>
+      </a>
+
+      <!-- File 2 -->
+      <a href="migration-comparison-2-cardlists.html" class="nav-card">
+        <div class="nav-card-number">2</div>
+        <div class="nav-card-title">Card Lists &rarr; DataCardList</div>
+        <div class="nav-card-subtitle">migration-comparison-2-cardlists.html</div>
+        <div class="nav-card-pattern">border rounded-lg p-4 rows &rarr; &lt;DataCardList&gt; with renderCard</div>
+        <ul class="nav-card-components">
+          <li>Assessor Rapid Assessments</li>
+          <li>Donor Rapid Assessments</li>
+          <li>Preliminary Assessments</li>
+        </ul>
+      </a>
+
+      <!-- File 3 -->
+      <a href="migration-comparison-3-cardgrids.html" class="nav-card">
+        <div class="nav-card-number">3</div>
+        <div class="nav-card-title">Card Grids &rarr; DataCardGrid</div>
+        <div class="nav-card-subtitle">migration-comparison-3-cardgrids.html</div>
+        <div class="nav-card-pattern">grid-cols-3 card grid &rarr; &lt;DataCardGrid&gt; with renderCard</div>
+        <ul class="nav-card-components">
+          <li>Response Planning Dashboard</li>
+          <li>Donor Responses</li>
+          <li>Responder Responses</li>
+        </ul>
+      </a>
+
+      <!-- File 4 -->
+      <a href="migration-comparison-4-complex.html" class="nav-card">
+        <div class="nav-card-number">4</div>
+        <div class="nav-card-title">Complex / Expandable &rarr; DataCardList / DataTable</div>
+        <div class="nav-card-subtitle">migration-comparison-4-complex.html</div>
+        <div class="nav-card-pattern">Expandable cards/rows &rarr; DataCardList/DataTable with expandable + renderExpanded</div>
+        <ul class="nav-card-components">
+          <li>Verification Queue</li>
+          <li>Incident Management</li>
+        </ul>
+      </a>
+
+    </div>
+
+    <!-- ── Legend ────────────────────────────────────────── -->
+    <h2 class="section-heading">How to Read These Comparisons</h2>
+    <div class="legend">
+      <div class="legend-items">
+        <div class="legend-item">
+          <div class="legend-swatch original">LEFT</div>
+          <div class="legend-text">
+            <div class="legend-label">Current / Original Implementation</div>
+            <div class="legend-desc">Rendered components copied directly from the existing DRMS codebase. Uses ad-hoc patterns (raw shadcn Table, hand-built card loops, inline grids).</div>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-swatch migrated">RIGHT</div>
+          <div class="legend-text">
+            <div class="legend-label">Target Migration with DataList</div>
+            <div class="legend-desc">Equivalent UI built with the DataList family (DataTable, DataCardList, DataCardGrid). Uses declarative column/row configs and shared infrastructure.</div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top: 1rem; font-size: 0.8125rem; color: var(--muted-fg);">
+        Both sides render from <strong>identical mock data</strong> so that visual parity and behavioural differences are immediately apparent.
+      </p>
+    </div>
+
+    <!-- ── API Summary ──────────────────────────────────── -->
+    <h2 class="section-heading">DataList Component API Summary</h2>
+    <div class="api-section">
+      <div class="api-table-wrapper">
+        <table class="api-table">
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Key Prop</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- DataTable -->
+            <tr>
+              <td class="component-name" rowspan="5">DataTable</td>
+              <td><code>columns</code><span class="prop-required">*</span></td>
+              <td><code>ColumnDef&lt;T&gt;[]</code></td>
+              <td>Column definitions (header, cell accessor, sorting, width)</td>
+            </tr>
+            <tr>
+              <td><code>data</code><span class="prop-required">*</span></td>
+              <td><code>T[]</code></td>
+              <td>Array of row data objects</td>
+            </tr>
+            <tr>
+              <td><code>sortable</code></td>
+              <td><code>boolean</code></td>
+              <td>Enable column-header sorting</td>
+            </tr>
+            <tr>
+              <td><code>filterable</code></td>
+              <td><code>boolean</code></td>
+              <td>Show the global search / filter bar</td>
+            </tr>
+            <tr>
+              <td><code>pagination</code></td>
+              <td><code>{ pageSize }</code></td>
+              <td>Pagination controls beneath the table</td>
+            </tr>
+
+            <!-- DataCardList -->
+            <tr>
+              <td class="component-name" rowspan="5">DataCardList</td>
+              <td><code>data</code><span class="prop-required">*</span></td>
+              <td><code>T[]</code></td>
+              <td>Array of card data objects</td>
+            </tr>
+            <tr>
+              <td><code>renderCard</code><span class="prop-required">*</span></td>
+              <td><code>(item: T) =&gt; ReactNode</code></td>
+              <td>Render function for each card</td>
+            </tr>
+            <tr>
+              <td><code>expandable</code></td>
+              <td><code>boolean</code></td>
+              <td>Allow cards to expand on click</td>
+            </tr>
+            <tr>
+              <td><code>renderExpanded</code></td>
+              <td><code>(item: T) =&gt; ReactNode</code></td>
+              <td>Content shown when a card is expanded</td>
+            </tr>
+            <tr>
+              <td><code>filterable</code></td>
+              <td><code>boolean</code></td>
+              <td>Show the filter / search bar</td>
+            </tr>
+
+            <!-- DataCardGrid -->
+            <tr>
+              <td class="component-name" rowspan="5">DataCardGrid</td>
+              <td><code>data</code><span class="prop-required">*</span></td>
+              <td><code>T[]</code></td>
+              <td>Array of card data objects</td>
+            </tr>
+            <tr>
+              <td><code>renderCard</code><span class="prop-required">*</span></td>
+              <td><code>(item: T) =&gt; ReactNode</code></td>
+              <td>Render function for each card</td>
+            </tr>
+            <tr>
+              <td><code>columns</code></td>
+              <td><code>number</code></td>
+              <td>Grid column count (default responsive)</td>
+            </tr>
+            <tr>
+              <td><code>gap</code></td>
+              <td><code>string</code></td>
+              <td>Tailwind gap class, e.g. <code>"gap-4"</code></td>
+            </tr>
+            <tr>
+              <td><code>filterable</code></td>
+              <td><code>boolean</code></td>
+              <td>Show the filter / search bar</td>
+            </tr>
+
+            <!-- Shared -->
+            <tr>
+              <td style="font-weight: 600; color: var(--muted-fg);">All (shared)</td>
+              <td><code>loading</code></td>
+              <td><code>boolean</code></td>
+              <td>Show skeleton loading state</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td><code>emptyMessage</code></td>
+              <td><code>string</code></td>
+              <td>Message when data array is empty</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td><code>onRowClick</code></td>
+              <td><code>(item: T) =&gt; void</code></td>
+              <td>Click handler for rows / cards</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--muted-fg);">
+        <span class="prop-required" style="margin-left: 0;">*</span> = required &nbsp;&middot;&nbsp;
+        All other props are optional. Full TypeScript definitions are in the DataList spec.
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>

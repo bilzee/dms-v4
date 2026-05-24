@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { apiGet } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { getBadgeClasses } from '@/components/shared/StatusBadge';
 import {
   Activity,
   Droplets,
@@ -91,39 +92,6 @@ const getTimeSince = (createdAt: string): string => {
   }
 };
 
-/**
- * Get status badge styling
- */
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case 'ACTIVE':
-      return { label: 'Active', color: 'destructive' as const };
-    case 'CONTAINED':
-      return { label: 'Contained', color: 'secondary' as const, className: 'text-yellow-700 bg-yellow-100' };
-    case 'RESOLVED':
-      return { label: 'Resolved', color: 'secondary' as const, className: 'text-green-700 bg-green-100' };
-    default:
-      return { label: status, color: 'secondary' as const };
-  }
-};
-
-/**
- * Get severity badge styling
- */
-const getSeverityBadge = (severity: string) => {
-  switch (severity) {
-    case 'CRITICAL':
-      return { label: 'Critical', color: 'destructive' as const };
-    case 'HIGH':
-      return { label: 'High', color: 'secondary' as const, className: 'text-orange-700 bg-orange-100' };
-    case 'MEDIUM':
-      return { label: 'Medium', color: 'secondary' as const, className: 'text-yellow-700 bg-yellow-100' };
-    case 'LOW':
-      return { label: 'Low', color: 'secondary' as const, className: 'text-green-700 bg-green-100' };
-    default:
-      return { label: severity, color: 'secondary' as const };
-  }
-};
 
 // Fetch dashboard data for incidents overview
 const fetchIncidentsData = async (): Promise<DashboardData> => {
@@ -253,8 +221,8 @@ export function ExecutiveIncidentsTable({ selectedIncidentId, onIncidentSelect, 
           {activeContainedIncidents.map((incident) => {
             const config = incidentTypeConfig[incident.type.toUpperCase()] || incidentTypeConfig.OTHER;
             const Icon = config.icon;
-            const statusBadge = getStatusBadge(incident.status);
-            const severityBadge = getSeverityBadge(incident.severity);
+            const statusClasses = getBadgeClasses('incident', incident.status);
+            const severityClasses = getBadgeClasses('severity', incident.severity);
             const isSelected = selectedIncidentId === incident.id;
             
             return (
@@ -274,10 +242,10 @@ export function ExecutiveIncidentsTable({ selectedIncidentId, onIncidentSelect, 
                   <div className="flex items-center gap-2 flex-1">
                     <div className="text-xs text-gray-500">{config.label}</div>
                     <Badge 
-                      variant={severityBadge.color} 
-                      className={cn("text-xs", severityBadge.className)}
+                      variant="outline"
+                      className={cn("text-xs", severityClasses)}
                     >
-                      {severityBadge.label}
+                      {incident.severity}
                     </Badge>
                   </div>
                 </div>
@@ -292,10 +260,10 @@ export function ExecutiveIncidentsTable({ selectedIncidentId, onIncidentSelect, 
                 {/* Status */}
                 <div className="mb-3">
                   <Badge 
-                    variant={statusBadge.color} 
-                    className={cn("text-xs w-full justify-center", statusBadge.className)}
+                    variant="outline"
+                    className={cn("text-xs w-full justify-center", statusClasses)}
                   >
-                    {statusBadge.label}
+                    {incident.status}
                   </Badge>
                 </div>
 

@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -215,24 +215,17 @@ export function EntityDonorAssignment({ className }: EntityDonorAssignmentProps)
     sendNotificationMutation.mutate({ commitmentId, donorId });
   };
 
+  const COMMITMENT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+    PLANNED: Clock,
+    PARTIAL: Package,
+    COMPLETE: CheckCircle2,
+    CANCELLED: X
+  }
+
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      PLANNED: { icon: Clock, className: 'bg-blue-100 text-blue-800' },
-      PARTIAL: { icon: Package, className: 'bg-amber-100 text-amber-800' },
-      COMPLETE: { icon: CheckCircle2, className: 'bg-green-100 text-green-800' },
-      CANCELLED: { icon: X, className: 'bg-red-100 text-red-800' }
-    };
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.PLANNED;
-    const Icon = config.icon;
-    
-    return (
-      <Badge className={`${config.className} flex items-center gap-1`}>
-        <Icon className="h-3 w-3" />
-        {status}
-      </Badge>
-    );
-  };
+    const Icon = COMMITMENT_ICONS[status] || Clock
+    return <StatusBadge domain="commitment" status={status} icon={Icon} />
+  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -520,7 +513,7 @@ export function EntityDonorAssignment({ className }: EntityDonorAssignmentProps)
           ) : (
             <div className="space-y-4">
               {commitmentsData?.data?.map((commitment) => (
-                <Card key={commitment.id} className="border-l-4 border-l-green-500">
+                <Card key={commitment.id} className="bg-emerald-500/5 border-emerald-500/15">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">

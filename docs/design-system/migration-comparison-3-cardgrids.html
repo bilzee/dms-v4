@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Grid Migration Comparison — DataCardGrid</title>
+<style>
+  /* ── Reset & Tokens ─────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: hsl(0 0% 100%);
+    --fg: hsl(222.2 84% 4.9%);
+    --card: hsl(0 0% 100%);
+    --card-fg: hsl(222.2 84% 4.9%);
+    --primary: hsl(221.2 83.2% 53.3%);
+    --primary-fg: hsl(210 40% 98%);
+    --secondary: hsl(210 40% 96%);
+    --secondary-fg: hsl(222.2 84% 4.9%);
+    --muted: hsl(210 40% 96%);
+    --muted-fg: hsl(215.4 16.3% 46.9%);
+    --border: hsl(214.3 31.8% 91.4%);
+    --radius: 0.5rem;
+    --destructive: hsl(0 84.2% 60.2%);
+    --success: hsl(142.1 76.2% 36.3%);
+    --success-bg: hsl(140 60% 95%);
+    --warning: hsl(38 92% 50%);
+    --warning-bg: hsl(48 96% 89%);
+    --info: hsl(221.2 83.2% 53.3%);
+    --info-bg: hsl(220 70% 95%);
+  }
+  html { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg); line-height: 1.5; }
+  body { min-height: 100vh; }
+
+  /* ── Nav Bar ────────────────────────────────────────────────── */
+  .navbar {
+    position: sticky; top: 0; z-index: 50;
+    background: white; border-bottom: 1px solid var(--border);
+    padding: 0 2rem; display: flex; align-items: center; gap: 1.5rem; height: 56px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .navbar-brand { font-weight: 700; font-size: 15px; color: var(--primary); white-space: nowrap; }
+  .navbar-links { display: flex; gap: 0; }
+  .navbar-links a {
+    font-size: 13px; padding: 6px 14px; border-radius: 6px; text-decoration: none; color: var(--muted-fg);
+    transition: background .15s, color .15s;
+  }
+  .navbar-links a:hover { background: var(--secondary); color: var(--fg); }
+
+  /* ── Page Layout ────────────────────────────────────────────── */
+  .page { max-width: 1600px; margin: 0 auto; padding: 2rem; }
+  .page-title { font-size: 24px; font-weight: 700; margin-bottom: .25rem; }
+  .page-subtitle { font-size: 14px; color: var(--muted-fg); margin-bottom: 2rem; }
+
+  /* ── Section ────────────────────────────────────────────────── */
+  .section { margin-bottom: 4rem; }
+  .section-header { font-size: 18px; font-weight: 600; margin-bottom: .5rem; }
+  .section-source { font-size: 13px; color: var(--muted-fg); font-family: monospace; margin-bottom: 1.25rem; }
+
+  /* ── Comparison Grid (50/50) ────────────────────────────────── */
+  .comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 1100px) { .comparison-grid { grid-template-columns: 1fr; } }
+
+  /* ── Panel ──────────────────────────────────────────────────── */
+  .panel { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .panel-header {
+    padding: 12px 20px; font-size: 13px; font-weight: 600; letter-spacing: .03em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel-header--current { background: var(--secondary); color: var(--secondary-fg); }
+  .panel-header--target { background: var(--primary); color: var(--primary-fg); }
+  .panel-header .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .panel-header--current .dot { background: var(--muted-fg); }
+  .panel-header--target .dot { background: white; }
+  .panel-body { padding: 20px; background: var(--bg); }
+
+  /* ── Differences Summary Box ────────────────────────────────── */
+  .diff-summary {
+    margin-top: 1.5rem;
+    background: var(--info-bg);
+    border: 1px solid hsl(220 50% 88%);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+  }
+  .diff-summary h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--info); }
+  .diff-summary ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .diff-summary li {
+    font-size: 13px; color: var(--fg); padding-left: 1.25rem; position: relative;
+  }
+  .diff-summary li::before {
+    content: ""; position: absolute; left: 0; top: 7px;
+    width: 6px; height: 6px; border-radius: 50%; background: var(--primary);
+  }
+  .diff-summary li.breaking::before { background: var(--destructive); }
+  .diff-summary li.improvement::before { background: var(--success); }
+
+  /* ── Shared Card Styles ─────────────────────────────────────── */
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; transition: box-shadow .2s;
+  }
+  .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+  .card-header { padding: 16px 16px 0; }
+  .card-content { padding: 12px 16px 16px; }
+
+  /* ── Badges ─────────────────────────────────────────────────── */
+  .badge {
+    display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px;
+    font-size: 11px; font-weight: 600; line-height: 1.4; white-space: nowrap;
+  }
+  .badge--default { background: var(--primary); color: white; }
+  .badge--secondary { background: var(--secondary); color: var(--secondary-fg); }
+  .badge--outline { background: transparent; border: 1px solid var(--border); color: var(--muted-fg); }
+  .badge--destructive { background: var(--destructive); color: white; }
+  .badge--success { background: var(--success); color: white; }
+  .badge--success-outline { background: transparent; border: 1px solid var(--success); color: var(--success); }
+  .badge--warning { background: var(--warning); color: white; }
+  .badge--blue-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+
+  /* ── Grid Helpers ───────────────────────────────────────────── */
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .grid-1 { display: grid; grid-template-columns: 1fr; gap: 12px; }
+
+  /* ── Toolbar ────────────────────────────────────────────────── */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .toolbar-search {
+    flex: 1; min-width: 180px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 13px; background: white; color: var(--fg);
+  }
+  .toolbar-search::placeholder { color: var(--muted-fg); }
+  .toolbar-select {
+    padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 13px; background: white; color: var(--fg); cursor: pointer;
+    appearance: auto;
+  }
+  .toolbar-filter-group { display: flex; gap: 0; }
+  .toolbar-filter-btn {
+    padding: 7px 14px; font-size: 12px; font-weight: 500; border: 1px solid var(--border);
+    background: white; color: var(--muted-fg); cursor: pointer; transition: all .15s;
+  }
+  .toolbar-filter-btn:first-child { border-radius: 6px 0 0 6px; }
+  .toolbar-filter-btn:last-child { border-radius: 0 6px 6px 0; }
+  .toolbar-filter-btn:not(:last-child) { border-right: none; }
+  .toolbar-filter-btn--active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  /* ── Buttons ────────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 4px; padding: 6px 14px;
+    border-radius: 6px; font-size: 13px; font-weight: 500; border: none; cursor: pointer;
+    transition: opacity .15s;
+  }
+  .btn:hover { opacity: .9; }
+  .btn--primary { background: var(--primary); color: white; }
+  .btn--outline { background: white; border: 1px solid var(--border); color: var(--fg); }
+  .btn--ghost { background: transparent; color: var(--primary); }
+  .btn--sm { padding: 4px 10px; font-size: 12px; }
+
+  /* ── Separator ──────────────────────────────────────────────── */
+  .sep { border-top: 1px solid var(--border); margin: 12px 0; }
+
+  /* ── Current-card specific (LEFT panels) ────────────────────── */
+  .current-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; transition: all .2s; cursor: pointer;
+  }
+  .current-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,.1);
+    transform: scale(1.02);
+  }
+
+  /* ── Target-card specific (RIGHT panels) ────────────────────── */
+  .target-card {
+    background: var(--card); border: 2px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; transition: box-shadow .2s, border-color .2s; cursor: pointer;
+  }
+  .target-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+  .target-card--selected { border-color: hsl(221.2 83.2% 53.3% / .35); }
+  .target-card--severity-success { border-left: 4px solid var(--success); }
+  .target-card--severity-info { border-left: 4px solid var(--info); }
+  .target-card--severity-critical { border-left: 4px solid var(--destructive); }
+  .target-card--severity-warning { border-left: 4px solid var(--warning); }
+  .target-card--tint-success { background: var(--success-bg); }
+  .target-card--tint-info { background: var(--info-bg); }
+  .target-card--tint-critical { background: hsl(0 84% 97%); }
+  .target-card--tint-warning { background: var(--warning-bg); }
+
+  /* ── Row Cards (Comparison 3) ───────────────────────────────── */
+  .row-card {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--card); transition: box-shadow .2s;
+  }
+  .row-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .row-card-left { display: flex; align-items: center; gap: 12px; }
+  .row-card-icon {
+    width: 36px; height: 36px; border-radius: 8px; background: var(--secondary);
+    display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+  }
+  .row-card-info { display: flex; flex-direction: column; gap: 4px; }
+  .row-card-title { font-size: 14px; font-weight: 600; }
+  .row-card-badges { display: flex; gap: 6px; align-items: center; }
+  .row-card-meta { font-size: 12px; color: var(--muted-fg); display: flex; gap: 12px; }
+  .row-card-actions { display: flex; gap: 8px; }
+
+  /* ── Target list rows ───────────────────────────────────────── */
+  .target-row-card {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--card); transition: box-shadow .2s, border-color .2s;
+    border-left: 4px solid transparent;
+  }
+  .target-row-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .target-row-card--success { border-left-color: var(--success); background: var(--success-bg); }
+  .target-row-card--info { border-left-color: var(--info); background: var(--info-bg); }
+  .target-row-card--critical { border-left-color: var(--destructive); background: hsl(0 84% 97%); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ NAVBAR ═══════════════════ -->
+<nav class="navbar">
+  <span class="navbar-brand">DMS Design System</span>
+  <div class="navbar-links">
+    <a href="#comparison-1">1. Response Planning</a>
+    <a href="#comparison-2">2. Donor Responses</a>
+    <a href="#comparison-3">3. Responder Responses</a>
+  </div>
+</nav>
+
+<div class="page">
+  <h1 class="page-title">Card Grid Migration — 3 Comparison</h1>
+  <p class="page-subtitle">Side-by-side comparison of current card-grid implementations against the proposed DataCardGrid / DataCardList unified component.</p>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- COMPARISON 1: Response Planning Dashboard                  -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <section class="section" id="comparison-1">
+    <h2 class="section-header">Comparison 1: Response Planning Dashboard</h2>
+    <p class="section-source">Source: src/components/response/ResponsePlanningDashboard.tsx</p>
+
+    <div class="comparison-grid">
+      <!-- ── LEFT: Current ────────────────────────────────────── -->
+      <div class="panel">
+        <div class="panel-header panel-header--current">
+          <span class="dot"></span>
+          CURRENT — ResponsePlanningDashboard
+        </div>
+        <div class="panel-body">
+          <!-- Toolbar -->
+          <div class="toolbar">
+            <input type="text" class="toolbar-search" placeholder="Search response plans...">
+            <select class="toolbar-select"><option>All Types</option><option>HEALTH</option><option>WASH</option><option>SHELTER</option></select>
+            <select class="toolbar-select"><option>All Priorities</option><option>CRITICAL</option><option>HIGH</option><option>MEDIUM</option></select>
+          </div>
+          <!-- Card Grid -->
+          <div class="grid-3">
+            <!-- Card 1: CRITICAL / HEALTH -->
+            <div class="current-card" style="border-left: 4px solid #3b82f6;">
+              <div style="padding: 16px 16px 0;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span class="badge badge--destructive">CRITICAL</span>
+                  <span style="font-size:12px; color:var(--muted-fg);">5/15/2025</span>
+                </div>
+                <h3 style="font-size:18px; font-weight:600; margin-top:8px;">HEALTH</h3>
+                <p style="font-size:14px; color:var(--muted-fg);">Initial Assessment</p>
+              </div>
+              <div style="padding: 12px 16px 16px;">
+                <p style="font-size:14px; margin-bottom:12px;">Emergency medical supplies for flood victims</p>
+                <div>
+                  <h4 style="font-size:14px; font-weight:500; margin-bottom:8px;">Items</h4>
+                  <div style="font-size:14px; display:flex; justify-content:space-between;">
+                    <span><strong>500 units</strong> &bull; Medical Kit Type A</span>
+                    <span class="badge badge--outline">Medical</span>
+                  </div>
+                  <div style="font-size:14px; display:flex; justify-content:space-between; margin-top:4px;">
+                    <span><strong>200 units</strong> &bull; Water Purification Tablets</span>
+                    <span class="badge badge--outline">WASH</span>
+                  </div>
+                  <div style="font-size:12px; color:var(--muted-fg); margin-top:4px;">+3 more items...</div>
+                </div>
+                <div class="sep"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <span class="badge badge--outline" style="font-size:12px;">PLANNED</span>
+                    <span style="font-size:12px; color:var(--muted-fg);">Updated 5/15/2025</span>
+                  </div>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn--primary btn--sm">&#128666; Document Delivery</button>
+                    <button class="btn btn--outline btn--sm">&#9998; Edit</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: HIGH / WASH -->
+            <div class="current-card" style="border-left: 4px solid #3b82f6;">
+              <div style="padding: 16px 16px 0;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span class="badge badge--warning">HIGH</span>
+                  <span style="font-size:12px; color:var(--muted-fg);">5/20/2025</span>
+                </div>
+                <h3 style="font-size:18px; font-weight:600; margin-top:8px;">WASH</h3>
+                <p style="font-size:14px; color:var(--muted-fg);">Water &amp; Sanitation</p>
+              </div>
+              <div style="padding: 12px 16px 16px;">
+                <p style="font-size:14px; margin-bottom:12px;">Water and sanitation response</p>
+                <div>
+                  <h4 style="font-size:14px; font-weight:500; margin-bottom:8px;">Items</h4>
+                  <div style="font-size:14px; display:flex; justify-content:space-between;">
+                    <span><strong>1000 units</strong> &bull; Water Filters</span>
+                    <span class="badge badge--outline">WASH</span>
+                  </div>
+                  <div style="font-size:14px; display:flex; justify-content:space-between; margin-top:4px;">
+                    <span><strong>50 units</strong> &bull; Sanitation Kit</span>
+                    <span class="badge badge--outline">WASH</span>
+                  </div>
+                  <div style="font-size:12px; color:var(--muted-fg); margin-top:4px;">+1 more items...</div>
+                </div>
+                <div class="sep"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <span class="badge badge--outline" style="font-size:12px;">PLANNED</span>
+                    <span style="font-size:12px; color:var(--muted-fg);">Updated 5/20/2025</span>
+                  </div>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn--primary btn--sm">&#128666; Document Delivery</button>
+                    <button class="btn btn--outline btn--sm">&#9998; Edit</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3: MEDIUM / SHELTER -->
+            <div class="current-card" style="border-left: 4px solid #3b82f6;">
+              <div style="padding: 16px 16px 0;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span class="badge badge--secondary">MEDIUM</span>
+                  <span style="font-size:12px; color:var(--muted-fg);">5/25/2025</span>
+                </div>
+                <h3 style="font-size:18px; font-weight:600; margin-top:8px;">SHELTER</h3>
+                <p style="font-size:14px; color:var(--muted-fg);">Temporary Housing</p>
+              </div>
+              <div style="padding: 12px 16px 16px;">
+                <p style="font-size:14px; margin-bottom:12px;">Temporary shelter setup</p>
+                <div>
+                  <h4 style="font-size:14px; font-weight:500; margin-bottom:8px;">Items</h4>
+                  <div style="font-size:14px; display:flex; justify-content:space-between;">
+                    <span><strong>200 units</strong> &bull; Tents</span>
+                    <span class="badge badge--outline">Shelter</span>
+                  </div>
+                  <div style="font-size:14px; display:flex; justify-content:space-between; margin-top:4px;">
+                    <span><strong>500 units</strong> &bull; Blankets</span>
+                    <span class="badge badge--outline">Shelter</span>
+                  </div>
+                </div>
+                <div class="sep"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <span class="badge badge--outline" style="font-size:12px;">PLANNED</span>
+                    <span style="font-size:12px; color:var(--muted-fg);">Updated 5/25/2025</span>
+                  </div>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn--primary btn--sm">&#128666; Document Delivery</button>
+                    <button class="btn btn--outline btn--sm">&#9998; Edit</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RIGHT: Target ────────────────────────────────────── -->
+      <div class="panel">
+        <div class="panel-header panel-header--target">
+          <span class="dot"></span>
+          TARGET — DataCardGrid
+        </div>
+        <div class="panel-body">
+          <!-- SearchToolbar (integrated) -->
+          <div class="toolbar">
+            <input type="text" class="toolbar-search" placeholder="Search response plans...">
+            <select class="toolbar-select"><option>All Types</option><option>HEALTH</option><option>WASH</option><option>SHELTER</option></select>
+            <select class="toolbar-select"><option>All Priorities</option><option>CRITICAL</option><option>HIGH</option><option>MEDIUM</option></select>
+            <select class="toolbar-select"><option>Sort: Newest</option><option>Sort: Priority</option><option>Sort: Type</option></select>
+          </div>
+          <!-- DataCardGrid columns=3 -->
+          <div class="grid-3">
+            <!-- Card 1 -->
+            <div class="target-card target-card--selected target-card--severity-info">
+              <div class="card-header">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span class="badge badge--destructive">CRITICAL</span>
+                  <span style="font-size:12px; color:var(--muted-fg);">5/15/2025</span>
+                </div>
+                <h3 style="font-size:16px; font-weight:600; margin-top:6px;">HEALTH</h3>
+                <p style="font-size:13px; color:var(--muted-fg);">Initial Assessment</p>
+              </div>
+              <div class="card-content">
+                <p style="font-size:13px; margin-bottom:10px;">Emergency medical supplies for flood victims</p>
+                <h4 style="font-size:12px; font-weight:600; margin-bottom:6px; color:var(--muted-fg); text-transform:uppercase; letter-spacing:.04em;">Items</h4>
+                <div style="font-size:13px; display:flex; justify-content:space-between;">
+                  <span><strong>500 units</strong> &bull; Medical Kit Type A</span>
+                  <span class="badge badge--outline" style="font-size:10px;">Medical</span>
+                </div>
+                <div style="font-size:13px; display:flex; justify-content:space-between; margin-top:3px;">
+                  <span><strong>200 units</strong> &bull; Water Purification Tablets</span>
+                  <span class="badge badge--outline" style="font-size:10px;">WASH</span>
+                </div>
+                <div style="font-size:12px; color:var(--muted-fg); margin-top:3px;">+3 more items...</div>
+                <div class="sep"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span class="badge badge--outline" style="font-size:11px;">PLANNED</span>
+                  <div style="display:flex; gap:6px;">
+                    <button class="btn btn--primary btn--sm">Document Delivery</button>
+                    <button class="btn btn--outline btn--sm">Edit</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="target-card target-card--severity-info">
+              <div class="card-header">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span class="badge badge--warning">HIGH</span>
+                  <span style="font-size:12px; color:var(--muted-fg);">5/20/2025</span>
+                </div>
+                <h3 style="font-size:16px; font-weight:600; margin-top:6px;">WASH</h3>
+                <p style="font-size:13px; color:var(--muted-fg);">Water &amp; Sanitation</p>
+              </div>
+              <div class="card-content">
+                <p style="font-size:13px; margin-bottom:10px;">Water and sanitation response</p>
+                <h4 style="font-size:12px; font-weight:600; margin-bottom:6px; color:var(--muted-fg); text-transform:uppercase; letter-spacing:.04em;">Items</h4>
+                <div style="font-size:13px; display:flex; justify-content:space-between;">
+                  <span><strong>1000 units</strong> &bull; Water Filters</span>
+                  <span class="badge badge--outline" style="font-size:10px;">WASH</span>
+                </div>
+                <div style="font-size:13px; display:flex; justify-content:space-between; margin-top:3px;">
+                  <span><strong>50 units</strong> &bull; Sanitation Kit</span>
+                  <span class="badge badge--outline" style="font-size:10px;">WASH</span>
+                </div>
+                <div style="font-size:12px; color:var(--muted-fg); margin-top:3px;">+1 more items...</div>
+                <div class="sep"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span class="badge badge--outline" style="font-size:11px;">PLANNED</span>
+                  <div style="display:flex; gap:6px;">
+                    <button class="btn btn--primary btn--sm">Document Delivery</button>
+                    <button class="btn btn--outline btn--sm">Edit</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="target-card target-card--severity-info">
+              <div class="card-header">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span class="badge badge--secondary">MEDIUM</span>
+                  <span style="font-size:12px; color:var(--muted-fg);">5/25/2025</span>
+                </div>
+                <h3 style="font-size:16px; font-weight:600; margin-top:6px;">SHELTER</h3>
+                <p style="font-size:13px; color:var(--muted-fg);">Temporary Housing</p>
+              </div>
+              <div class="card-content">
+                <p style="font-size:13px; margin-bottom:10px;">Temporary shelter setup</p>
+                <h4 style="font-size:12px; font-weight:600; margin-bottom:6px; color:var(--muted-fg); text-transform:uppercase; letter-spacing:.04em;">Items</h4>
+                <div style="font-size:13px; display:flex; justify-content:space-between;">
+                  <span><strong>200 units</strong> &bull; Tents</span>
+                  <span class="badge badge--outline" style="font-size:10px;">Shelter</span>
+                </div>
+                <div style="font-size:13px; display:flex; justify-content:space-between; margin-top:3px;">
+                  <span><strong>500 units</strong> &bull; Blankets</span>
+                  <span class="badge badge--outline" style="font-size:10px;">Shelter</span>
+                </div>
+                <div class="sep"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span class="badge badge--outline" style="font-size:11px;">PLANNED</span>
+                  <div style="display:flex; gap:6px;">
+                    <button class="btn btn--primary btn--sm">Document Delivery</button>
+                    <button class="btn btn--outline btn--sm">Edit</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Differences Summary -->
+    <div class="diff-summary">
+      <h4>Differences Summary</h4>
+      <ul>
+        <li class="breaking">Removed <code>hover:scale-[1.02]</code> transform — replaced with consistent <code>box-shadow</code> hover only</li>
+        <li class="improvement">Replaced hardcoded <code>border-left: 4px solid #3b82f6</code> with DataCardGrid severity-driven <code>border-left</code> via <code>getSeverity()</code></li>
+        <li class="improvement">Added sort dropdown to SearchToolbar (not present in original)</li>
+        <li class="improvement">Card selection state via <code>border-primary/30</code> ring (first card shown selected)</li>
+        <li class="improvement">Consistent <code>renderCard</code> function eliminates per-card inline style duplication</li>
+        <li>Section labels use <code>uppercase + letter-spacing</code> for hierarchy instead of bold weight alone</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- COMPARISON 2: Donor Responses (Read-only)                  -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <section class="section" id="comparison-2">
+    <h2 class="section-header">Comparison 2: Donor Responses (Read-only)</h2>
+    <p class="section-source">Source: src/app/(auth)/donor/responses/page.tsx</p>
+
+    <div class="comparison-grid">
+      <!-- ── LEFT: Current ────────────────────────────────────── -->
+      <div class="panel">
+        <div class="panel-header panel-header--current">
+          <span class="dot"></span>
+          CURRENT — Donor Responses
+        </div>
+        <div class="panel-body">
+          <!-- Toolbar -->
+          <div class="toolbar">
+            <input type="text" class="toolbar-search" placeholder="Search responses...">
+            <select class="toolbar-select"><option>All Status</option><option>Planned</option><option>Delivered</option><option>Verified</option></select>
+            <select class="toolbar-select"><option>All Types</option><option>HEALTH</option><option>WASH</option><option>FOOD</option></select>
+          </div>
+          <!-- Card Grid -->
+          <div class="grid-3">
+            <!-- Card 1: DELIVERED / VERIFIED / HEALTH -->
+            <div class="current-card" style="border-left: 4px solid #3b82f6;">
+              <div style="padding: 16px 16px 0;">
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <span class="badge badge--default">DELIVERED</span>
+                  <span class="badge badge--default">VERIFIED</span>
+                  <span class="badge badge--destructive">HIGH</span>
+                </div>
+                <h3 style="font-size:18px; font-weight:600; margin-top:8px;">HEALTH</h3>
+                <p style="font-size:14px; color:var(--muted-fg);">Lagos Emergency Hub</p>
+              </div>
+              <div style="padding: 12px 16px 16px;">
+                <div style="font-size:13px; color:var(--muted-fg); margin-bottom:8px;">From Commitment #a1b2c3</div>
+                <div style="font-size:14px;"><strong>500 units</strong> &bull; Medical Kit Type A</div>
+                <div style="font-size:12px; color:var(--muted-fg); margin-top:2px;">+1 more items...</div>
+                <div class="sep"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div style="font-size:12px; color:var(--muted-fg);">
+                    <div>Planned: 15/05/2025</div>
+                    <div>Delivered: 18/05/2025</div>
+                  </div>
+                  <span class="badge badge--blue-outline">Your Donation</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: PLANNED / WASH -->
+            <div class="current-card" style="border-left: 4px solid #3b82f6;">
+              <div style="padding: 16px 16px 0;">
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <span class="badge badge--secondary">PLANNED</span>
+                  <span class="badge badge--destructive">HIGH</span>
+                </div>
+                <h3 style="font-size:18px; font-weight:600; margin-top:8px;">WASH</h3>
+                <p style="font-size:14px; color:var(--muted-fg);">Abuja Relief Center</p>
+              </div>
+              <div style="padding: 12px 16px 16px;">
+                <div style="font-size:14px;"><strong>1000 units</strong> &bull; Water Filters</div>
+                <div class="sep"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div style="font-size:12px; color:var(--muted-fg);">
+                    <div>Planned: 25/05/2025</div>
+                  </div>
+                  <span class="badge badge--blue-outline">Your Donation</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3: DELIVERED / FOOD -->
+            <div class="current-card" style="border-left: 4px solid #3b82f6;">
+              <div style="padding: 16px 16px 0;">
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <span class="badge badge--default">DELIVERED</span>
+                  <span class="badge badge--outline">PENDING</span>
+                  <span class="badge badge--secondary">MEDIUM</span>
+                </div>
+                <h3 style="font-size:18px; font-weight:600; margin-top:8px;">FOOD</h3>
+                <p style="font-size:14px; color:var(--muted-fg);">Kano Distribution Point</p>
+              </div>
+              <div style="padding: 12px 16px 16px;">
+                <div style="font-size:14px;"><strong>2000 units</strong> &bull; Rice Bags</div>
+                <div style="font-size:14px; margin-top:2px;"><strong>500 units</strong> &bull; Cooking Oil</div>
+                <div class="sep"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div style="font-size:12px; color:var(--muted-fg);">
+                    <div>Planned: 10/05/2025</div>
+                    <div>Delivered: 12/05/2025</div>
+                  </div>
+                  <span class="badge badge--blue-outline">Your Donation</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RIGHT: Target ────────────────────────────────────── -->
+      <div class="panel">
+        <div class="panel-header panel-header--target">
+          <span class="dot"></span>
+          TARGET — DataCardGrid
+        </div>
+        <div class="panel-body">
+          <!-- SearchToolbar -->
+          <div class="toolbar">
+            <input type="text" class="toolbar-search" placeholder="Search responses...">
+            <div class="toolbar-filter-group">
+              <button class="toolbar-filter-btn toolbar-filter-btn--active">All</button>
+              <button class="toolbar-filter-btn">Planned</button>
+              <button class="toolbar-filter-btn">Delivered</button>
+              <button class="toolbar-filter-btn">Verified</button>
+            </div>
+            <select class="toolbar-select"><option>All Types</option><option>HEALTH</option><option>WASH</option><option>FOOD</option></select>
+          </div>
+          <!-- DataCardGrid columns=3 -->
+          <div class="grid-3">
+            <!-- Card 1 -->
+            <div class="target-card target-card--selected target-card--severity-success">
+              <div class="card-header">
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:4px;">
+                  <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                    <span class="badge badge--default">DELIVERED</span>
+                    <span class="badge badge--success-outline">VERIFIED</span>
+                    <span class="badge badge--destructive">HIGH</span>
+                  </div>
+                </div>
+                <h3 style="font-size:16px; font-weight:600; margin-top:6px;">HEALTH</h3>
+                <p style="font-size:13px; color:var(--muted-fg);">Lagos Emergency Hub</p>
+              </div>
+              <div class="card-content">
+                <div style="font-size:12px; color:var(--muted-fg); margin-bottom:8px; font-family:monospace;">From Commitment #a1b2c3</div>
+                <div style="font-size:13px;"><strong>500 units</strong> &bull; Medical Kit Type A</div>
+                <div style="font-size:12px; color:var(--muted-fg); margin-top:2px;">+1 more items...</div>
+                <div class="sep"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div style="font-size:12px; color:var(--muted-fg); display:flex; flex-direction:column; gap:2px;">
+                    <span>Planned: 15/05/2025</span>
+                    <span>Delivered: 18/05/2025</span>
+                  </div>
+                  <span class="badge badge--blue-outline">Your Donation</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="target-card target-card--severity-info">
+              <div class="card-header">
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <span class="badge badge--secondary">PLANNED</span>
+                  <span class="badge badge--destructive">HIGH</span>
+                </div>
+                <h3 style="font-size:16px; font-weight:600; margin-top:6px;">WASH</h3>
+                <p style="font-size:13px; color:var(--muted-fg);">Abuja Relief Center</p>
+              </div>
+              <div class="card-content">
+                <div style="font-size:13px;"><strong>1000 units</strong> &bull; Water Filters</div>
+                <div class="sep"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div style="font-size:12px; color:var(--muted-fg);">
+                    <span>Planned: 25/05/2025</span>
+                  </div>
+                  <span class="badge badge--blue-outline">Your Donation</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="target-card target-card--severity-warning">
+              <div class="card-header">
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                  <span class="badge badge--default">DELIVERED</span>
+                  <span class="badge badge--outline">PENDING</span>
+                  <span class="badge badge--secondary">MEDIUM</span>
+                </div>
+                <h3 style="font-size:16px; font-weight:600; margin-top:6px;">FOOD</h3>
+                <p style="font-size:13px; color:var(--muted-fg);">Kano Distribution Point</p>
+              </div>
+              <div class="card-content">
+                <div style="font-size:13px;"><strong>2000 units</strong> &bull; Rice Bags</div>
+                <div style="font-size:13px; margin-top:2px;"><strong>500 units</strong> &bull; Cooking Oil</div>
+                <div class="sep"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div style="font-size:12px; color:var(--muted-fg); display:flex; flex-direction:column; gap:2px;">
+                    <span>Planned: 10/05/2025</span>
+                    <span>Delivered: 12/05/2025</span>
+                  </div>
+                  <span class="badge badge--blue-outline">Your Donation</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Differences Summary -->
+    <div class="diff-summary">
+      <h4>Differences Summary</h4>
+      <ul>
+        <li class="breaking">Removed hardcoded <code>border-l-4 border-l-blue-500</code> ("Your Donation" indicator) — replaced with DataCardGrid <code>selected</code> state + severity-driven border</li>
+        <li class="improvement">Status filter replaced from <code>&lt;select&gt;</code> to segmented button group for faster interaction</li>
+        <li class="improvement">Severity-based left-border tinting: DELIVERED/VERIFIED = green, PLANNED = blue, PENDING = amber</li>
+        <li class="improvement">"Your Donation" badge now part of <code>headerActions</code> slot rather than inline in footer</li>
+        <li class="improvement">VERIFIED badge changed from filled blue to green outline for semantic clarity</li>
+        <li>Card content uses consistent <code>renderCard</code> function eliminating per-card layout duplication</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- COMPARISON 3: Responder Responses                          -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <section class="section" id="comparison-3">
+    <h2 class="section-header">Comparison 3: Responder Responses</h2>
+    <p class="section-source">Source: src/app/(auth)/responder/responses/page.tsx</p>
+
+    <div class="comparison-grid">
+      <!-- ── LEFT: Current ────────────────────────────────────── -->
+      <div class="panel">
+        <div class="panel-header panel-header--current">
+          <span class="dot"></span>
+          CURRENT — Responder Responses
+        </div>
+        <div class="panel-body">
+          <div class="grid-1">
+            <!-- Row 1: DELIVERED / VERIFIED -->
+            <div class="row-card">
+              <div class="row-card-left">
+                <div class="row-card-icon">&#128196;</div>
+                <div class="row-card-info">
+                  <span class="row-card-title">HEALTH Response</span>
+                  <div class="row-card-badges">
+                    <span class="badge badge--default">DELIVERED</span>
+                    <span class="badge badge--success-outline">VERIFIED</span>
+                  </div>
+                  <div class="row-card-meta">
+                    <span>&#128205; Lagos Island</span>
+                    <span>&#128197; Delivered: 18/05/2025</span>
+                  </div>
+                </div>
+              </div>
+              <div class="row-card-actions">
+                <button class="btn btn--outline btn--sm">View Details</button>
+              </div>
+            </div>
+
+            <!-- Row 2: PLANNED / PENDING -->
+            <div class="row-card">
+              <div class="row-card-left">
+                <div class="row-card-icon">&#128196;</div>
+                <div class="row-card-info">
+                  <span class="row-card-title">WASH Response</span>
+                  <div class="row-card-badges">
+                    <span class="badge badge--secondary">PLANNED</span>
+                    <span class="badge badge--outline">PENDING</span>
+                  </div>
+                  <div class="row-card-meta">
+                    <span>&#128205; Central, Abuja</span>
+                    <span>&#128197; Planned: 25/05/2025</span>
+                  </div>
+                </div>
+              </div>
+              <div class="row-card-actions">
+                <button class="btn btn--primary btn--sm">Document Delivery</button>
+                <button class="btn btn--outline btn--sm">View Details</button>
+              </div>
+            </div>
+
+            <!-- Row 3: DELIVERED / REJECTED -->
+            <div class="row-card">
+              <div class="row-card-left">
+                <div class="row-card-icon">&#128196;</div>
+                <div class="row-card-info">
+                  <span class="row-card-title">SHELTER Response</span>
+                  <div class="row-card-badges">
+                    <span class="badge badge--default">DELIVERED</span>
+                    <span class="badge badge--destructive">REJECTED</span>
+                  </div>
+                  <div class="row-card-meta">
+                    <span>&#128205; Municipal, Kano</span>
+                    <span>&#128197; Delivered: 12/05/2025</span>
+                  </div>
+                </div>
+              </div>
+              <div class="row-card-actions">
+                <button class="btn btn--outline btn--sm">View Details</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RIGHT: Target ────────────────────────────────────── -->
+      <div class="panel">
+        <div class="panel-header panel-header--target">
+          <span class="dot"></span>
+          TARGET — DataCardList
+        </div>
+        <div class="panel-body">
+          <div class="grid-1">
+            <!-- Row 1: DELIVERED / VERIFIED — severity: success -->
+            <div class="target-row-card target-row-card--success">
+              <div class="row-card-left">
+                <div class="row-card-icon" style="background: var(--success-bg);">&#128196;</div>
+                <div class="row-card-info">
+                  <span class="row-card-title">HEALTH Response</span>
+                  <div class="row-card-badges">
+                    <span class="badge badge--success-outline">DELIVERED</span>
+                    <span class="badge badge--success-outline">VERIFIED</span>
+                  </div>
+                  <div class="row-card-meta">
+                    <span>&#128205; Lagos Island</span>
+                    <span>&#128197; Delivered: 18/05/2025</span>
+                  </div>
+                </div>
+              </div>
+              <div class="row-card-actions">
+                <button class="btn btn--ghost btn--sm">View Details</button>
+              </div>
+            </div>
+
+            <!-- Row 2: PLANNED / PENDING — severity: info -->
+            <div class="target-row-card target-row-card--info">
+              <div class="row-card-left">
+                <div class="row-card-icon" style="background: var(--info-bg);">&#128196;</div>
+                <div class="row-card-info">
+                  <span class="row-card-title">WASH Response</span>
+                  <div class="row-card-badges">
+                    <span class="badge badge--default">PLANNED</span>
+                    <span class="badge badge--outline">PENDING</span>
+                  </div>
+                  <div class="row-card-meta">
+                    <span>&#128205; Central, Abuja</span>
+                    <span>&#128197; Planned: 25/05/2025</span>
+                  </div>
+                </div>
+              </div>
+              <div class="row-card-actions">
+                <button class="btn btn--primary btn--sm">Document Delivery</button>
+                <button class="btn btn--ghost btn--sm">View Details</button>
+              </div>
+            </div>
+
+            <!-- Row 3: DELIVERED / REJECTED — severity: critical -->
+            <div class="target-row-card target-row-card--critical">
+              <div class="row-card-left">
+                <div class="row-card-icon" style="background: hsl(0 84% 97%);">&#128196;</div>
+                <div class="row-card-info">
+                  <span class="row-card-title">SHELTER Response</span>
+                  <div class="row-card-badges">
+                    <span class="badge badge--outline">DELIVERED</span>
+                    <span class="badge badge--destructive">REJECTED</span>
+                  </div>
+                  <div class="row-card-meta">
+                    <span>&#128205; Municipal, Kano</span>
+                    <span>&#128197; Delivered: 12/05/2025</span>
+                  </div>
+                </div>
+              </div>
+              <div class="row-card-actions">
+                <button class="btn btn--ghost btn--sm">View Details</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Differences Summary -->
+    <div class="diff-summary">
+      <h4>Differences Summary</h4>
+      <ul>
+        <li class="improvement">Severity-driven card tinting: <code>getSeverity()</code> maps status to visual treatment — DELIVERED+VERIFIED = green, PLANNED = blue, REJECTED = red</li>
+        <li class="improvement">Left border color follows severity instead of being static/uniform</li>
+        <li class="improvement">Icon background tinted to match severity for visual coherence</li>
+        <li class="improvement">DELIVERED badge downgraded from filled blue to outline green when paired with VERIFIED, reducing visual noise</li>
+        <li class="breaking">Replaced from flat <code>flex items-center justify-between p-4 border rounded-lg</code> to DataCardList's structured row with severity support</li>
+        <li class="improvement">"View Details" uses ghost style (text-only) instead of outlined button for reduced visual weight</li>
+        <li>Action buttons integrated into card footer slot via <code>renderCard</code></li>
+      </ul>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>

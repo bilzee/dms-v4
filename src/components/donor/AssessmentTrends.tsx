@@ -6,6 +6,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -206,49 +208,28 @@ export function AssessmentTrends({ entityId }: AssessmentTrendsProps) {
         </CardContent>
       </Card>
 
-      {/* Trend Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Categories Tracked</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{trends.length}</div>
-            <p className="text-xs text-muted-foreground">
-              Assessment categories
-            </p>
-          </CardContent>
-        </Card>
+      <StatCardGrid columns={3}>
+        <StatCard
+          label="Categories Tracked"
+          value={trends.length}
+          severity="info"
+          icon={BarChart3}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Data Points</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {trends.reduce((sum, trend) => sum + trend.dataPoints.length, 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Total assessments analyzed
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard
+          label="Data Points"
+          value={trends.reduce((sum, trend) => sum + trend.dataPoints.length, 0)}
+          severity="info"
+          icon={Activity}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Time Granularity</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold capitalize">{timeframe.granularity}</div>
-            <p className="text-xs text-muted-foreground">
-              Analysis period
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        <StatCard
+          label="Time Granularity"
+          value={<span className="capitalize">{timeframe.granularity}</span>}
+          severity="neutral"
+          icon={Calendar}
+        />
+      </StatCardGrid>
 
       {/* Category Trends */}
       <div className="space-y-6">

@@ -7,12 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 // New error handling components
 import { SafeDataLoader } from '@/components/shared/SafeDataLoader'
 import { EmptyState, EmptyEntities } from '@/components/shared/EmptyState'
+import { StatCard as SharedStatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { 
   Search, 
   MapPin, 
@@ -150,36 +153,36 @@ export function EntitySelector({ onEntitySelect, showStats = true }: EntitySelec
               </div>
 
               {/* Summary Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4" data-testid="entity-summary-stats">
-                <StatCard
-                  title="Total Assigned"
+              <StatCardGrid columns={4} data-testid="entity-summary-stats">
+                <SharedStatCard
+                  label="Total Assigned"
                   value={summary.totalAssigned || 0}
                   icon={MapPin}
-                  iconColor="text-blue-600"
+                  severity="info"
                   data-testid="total-assigned-stat"
                 />
-                <StatCard
-                  title="With Responses"
+                <SharedStatCard
+                  label="With Responses"
                   value={summary.totalWithResponses || 0}
                   icon={Package}
-                  iconColor="text-green-600"
+                  severity="success"
                   data-testid="with-responses-stat"
                 />
-                <StatCard
-                  title="With Commitments"
+                <SharedStatCard
+                  label="With Commitments"
                   value={summary.totalWithCommitments || 0}
                   icon={CheckCircle}
-                  iconColor="text-purple-600"
+                  severity="success"
                   data-testid="with-commitments-stat"
                 />
-                <StatCard
-                  title="Available Now"
+                <SharedStatCard
+                  label="Available Now"
                   value={entities.filter((e: any) => e.isActive).length}
                   icon={Activity}
-                  iconColor="text-orange-600"
+                  severity="warning"
                   data-testid="available-now-stat"
                 />
-              </div>
+              </StatCardGrid>
 
       {/* Filters */}
       <Card>
@@ -293,12 +296,7 @@ export function EntitySelector({ onEntitySelect, showStats = true }: EntitySelec
                         <Badge className={getEntityTypeColor(entity.type)}>
                           {entity.type.replace('_', ' ')}
                         </Badge>
-                        <Badge 
-                          variant={entity.isActive ? "default" : "secondary"}
-                          className={entity.isActive ? "bg-green-100 text-green-800" : ""}
-                        >
-                          {entity.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
+                        <StatusBadge status={entity.isActive ? 'ONLINE' : 'OFFLINE'} domain="system" label={entity.isActive ? 'Active' : 'Inactive'} />
                       </div>
                     </div>
                     
@@ -405,9 +403,7 @@ export function EntitySelector({ onEntitySelect, showStats = true }: EntitySelec
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Status:</span>
-                    <Badge className={selectedEntity.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
-                      {selectedEntity.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
+                    <StatusBadge status={selectedEntity.isActive ? 'ONLINE' : 'OFFLINE'} domain="system" label={selectedEntity.isActive ? 'Active' : 'Inactive'} />
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Auto-approve:</span>
@@ -485,29 +481,6 @@ export function EntitySelector({ onEntitySelect, showStats = true }: EntitySelec
   )
 }
 
-// Helper Components
-interface StatCardProps {
-  title: string
-  value: number
-  icon: React.ComponentType<{ className?: string }>
-  iconColor?: string
-}
-
-function StatCard({ title, value, icon: Icon, iconColor = "text-gray-600" }: StatCardProps) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
-          </div>
-          <Icon className={cn("h-6 w-6", iconColor)} />
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
 
 interface StatItemProps {
   label: string

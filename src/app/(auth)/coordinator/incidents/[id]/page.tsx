@@ -12,7 +12,10 @@ import dynamic from 'next/dynamic';
 import { notFound } from 'next/navigation';
 import { useCoordinatorIncident, useIncidentAssessmentSummary } from '@/hooks/useCoordinatorIncident';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { 
@@ -52,13 +55,6 @@ interface IncidentDetailPageProps {
   };
 }
 
-// Priority styling
-const PRIORITY_STYLES = {
-  CRITICAL: 'bg-red-100 text-red-800 border-red-300',
-  HIGH: 'bg-orange-100 text-orange-800 border-orange-300',
-  MEDIUM: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  LOW: 'bg-green-100 text-green-800 border-green-300',
-} as const;
 
 export default function IncidentDetailPage({ params }: IncidentDetailPageProps) {
   const incidentId = params.id;
@@ -105,62 +101,39 @@ export default function IncidentDetailPage({ params }: IncidentDetailPageProps) 
           <p className="text-muted-foreground mt-1">{incidentData.description}</p>
         </div>
         <div className="flex gap-2">
-          <Badge 
-            variant="outline" 
-            className={PRIORITY_STYLES[incidentData.severity as keyof typeof PRIORITY_STYLES] || 'bg-gray-100 text-gray-800 border-gray-300'}
-          >
-            {incidentData.severity} Priority
-          </Badge>
+          <StatusBadge 
+            status={incidentData.severity} 
+            domain="severity" 
+            label={`${incidentData.severity} Priority`} 
+          />
           <Badge variant="outline">
             {incidentData.status}
           </Badge>
         </div>
       </div>
 
-      {/* Incident Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Assessments</p>
-                <p className="text-2xl font-bold">
-                  {summaryLoading ? '...' : assessmentSummary?.data?.totalAssessments || 0}
-                </p>
-              </div>
-              <FileText className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Affected Entities</p>
-                <p className="text-2xl font-bold">
-                  {summaryLoading ? '...' : assessmentSummary?.data?.totalEntities || 0}
-                </p>
-              </div>
-              <Users className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Critical Priority</p>
-                <p className="text-2xl font-bold">
-                  {summaryLoading ? '...' : assessmentSummary?.data?.priorityDistribution?.CRITICAL || 0}
-                </p>
-              </div>
-              <AlertTriangle className="h-8 w-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-
+      <StatCardGrid columns={4}>
+        <StatCard
+          label="Total Assessments"
+          value={summaryLoading ? '...' : assessmentSummary?.data?.totalAssessments || 0}
+          severity="info"
+          icon={FileText}
+          loading={summaryLoading}
+        />
+        <StatCard
+          label="Affected Entities"
+          value={summaryLoading ? '...' : assessmentSummary?.data?.totalEntities || 0}
+          severity="warning"
+          icon={Users}
+          loading={summaryLoading}
+        />
+        <StatCard
+          label="Critical Priority"
+          value={summaryLoading ? '...' : assessmentSummary?.data?.priorityDistribution?.CRITICAL || 0}
+          severity="critical"
+          icon={AlertTriangle}
+          loading={summaryLoading}
+        />
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -175,7 +148,7 @@ export default function IncidentDetailPage({ params }: IncidentDetailPageProps) 
             </p>
           </CardContent>
         </Card>
-      </div>
+      </StatCardGrid>
 
       {/* Priority Distribution */}
       <Card>
@@ -193,12 +166,10 @@ export default function IncidentDetailPage({ params }: IncidentDetailPageProps) 
               {Object.entries(assessmentSummary.data.priorityDistribution).map(([priority, count]) => (
                 <div key={priority} className="text-center">
                   <div className="text-2xl font-bold">{count as number}</div>
-                  <Badge 
-                    variant="outline" 
-                    className={PRIORITY_STYLES[priority as keyof typeof PRIORITY_STYLES]}
-                  >
-                    {priority}
-                  </Badge>
+                  <StatusBadge 
+                    status={priority} 
+                    domain="severity" 
+                  />
                 </div>
               ))}
             </div>

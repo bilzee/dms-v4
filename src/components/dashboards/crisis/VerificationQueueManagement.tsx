@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -156,69 +158,32 @@ export function VerificationQueueManagement({ className }: VerificationQueueMana
       </div>
 
       {/* Queue Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Clock className="h-4 w-4 text-amber-500" />
-              Pending Assessments
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{assessmentsData?.queueDepth?.total || 0}</div>
-            <div className="text-xs text-muted-foreground">
-              {assessmentsData?.queueDepth?.critical || 0} critical, {assessmentsData?.queueDepth?.high || 0} high
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <HeartHandshake className="h-4 w-4 text-blue-500" />
-              Response Queue
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">-</div>
-            <div className="text-xs text-muted-foreground">
-              See responses tab for details
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Activity className="h-4 w-4 text-green-500" />
-              Total Pending
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{combinedMetrics.totalPending}</div>
-            <div className="text-xs text-muted-foreground">
-              {combinedMetrics.critical} critical, {combinedMetrics.high} high priority
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-purple-500" />
-              Verification Rate
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {(combinedMetrics.verificationRate * 100).toFixed(1)}%
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Last 24 hours
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <StatCardGrid columns={4}>
+        <StatCard
+          label="Pending Assessments"
+          value={assessmentsData?.queueDepth?.total || 0}
+          severity="warning"
+          icon={Clock}
+        />
+        <StatCard
+          label="Response Queue"
+          value="-"
+          severity="warning"
+          icon={HeartHandshake}
+        />
+        <StatCard
+          label="Total Pending"
+          value={combinedMetrics.totalPending}
+          severity="warning"
+          icon={Activity}
+        />
+        <StatCard
+          label="Verification Rate"
+          value={`${(combinedMetrics.verificationRate * 100).toFixed(1)}%`}
+          severity="success"
+          icon={TrendingUp}
+        />
+      </StatCardGrid>
 
       {/* Main Queue Interface */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

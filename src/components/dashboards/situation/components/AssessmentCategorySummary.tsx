@@ -5,6 +5,7 @@ import { cn, formatNumber, formatArrayValue } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { getBadgeClasses } from '@/components/shared/StatusBadge';
 import { Calendar, User, AlertTriangle, CheckCircle, Info, AlertCircle } from 'lucide-react';
 import { GapIndicator } from './GapIndicator';
 import type { 
@@ -201,40 +202,18 @@ const fieldDefinitions = {
  * - No data state when assessment is missing
  */
 
-// Severity configuration for assessment-level badges (matches GapIndicator component)
-const getSeverityConfig = (severity: string) => {
-  switch (severity) {
-    case 'CRITICAL':
-      return {
-        badgeClass: 'bg-red-600 text-white border-2 border-red-300 animate-pulse',
-        icon: AlertTriangle,
-        iconClass: 'text-white'
-      };
-    case 'HIGH':
-      return {
-        badgeClass: 'bg-orange-600 text-white border-2 border-orange-300 animate-pulse',
-        icon: AlertCircle,
-        iconClass: 'text-white'
-      };
-    case 'MEDIUM':
-      return {
-        badgeClass: 'bg-yellow-600 text-white border-2 border-yellow-300',
-        icon: Info,
-        iconClass: 'text-white'
-      };
-    case 'LOW':
-      return {
-        badgeClass: 'bg-blue-600 text-white border-2 border-blue-300',
-        icon: Info,
-        iconClass: 'text-white'
-      };
-    default:
-      return {
-        badgeClass: 'bg-gray-600 text-white border-2 border-gray-300',
-        icon: Info,
-        iconClass: 'text-white'
-      };
-  }
+const severityIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  CRITICAL: AlertTriangle,
+  HIGH: AlertCircle,
+  MEDIUM: Info,
+  LOW: Info
+};
+
+const severityFlashMap: Record<string, string> = {
+  CRITICAL: 'animate-pulse',
+  HIGH: 'animate-pulse',
+  MEDIUM: '',
+  LOW: ''
 };
 export function AssessmentCategorySummary({
   category,
@@ -530,22 +509,22 @@ export function AssessmentCategorySummary({
             <div className="flex items-center gap-2">
               {gapAnalysis.hasGap ? (
                 (() => {
-                  const severityConfig = getSeverityConfig(gapAnalysis.severity);
-                  const IconComponent = severityConfig.icon;
+                  const IconComponent = severityIconMap[gapAnalysis.severity] || Info;
+                  const badgeClass = getBadgeClasses('severity', gapAnalysis.severity);
                   return (
                     <Badge 
-                      variant="default" 
-                      className={cn("text-xs font-bold", severityConfig.badgeClass)}
+                      variant="outline" 
+                      className={cn("text-xs font-bold", badgeClass, severityFlashMap[gapAnalysis.severity] || '')}
                     >
-                      <IconComponent className={cn("h-3 w-3 mr-1", severityConfig.iconClass)} />
+                      <IconComponent className="h-3 w-3 mr-1" />
                       {gapAnalysis.severity}
                     </Badge>
                   );
                 })()
               ) : (
                 <Badge 
-                  variant="default" 
-                  className="text-xs font-bold bg-green-600 text-white border-2 border-green-300"
+                  variant="outline" 
+                  className={cn("text-xs font-bold", getBadgeClasses('severity', 'LOW'))}
                 >
                   <CheckCircle className="h-3 w-3 mr-1" />
                   No Gaps

@@ -1,21 +1,21 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { getBadgeClasses } from '@/components/shared/StatusBadge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2, Save, RotateCcw, Users, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { apiGet, apiPut } from '@/lib/api'
 
-// New error handling components
 import { SafeDataLoader } from '@/components/shared/SafeDataLoader'
 import { EmptyState } from '@/components/shared/EmptyState'
 
-// Token utilities
 import { getAuthToken } from '@/lib/auth/token-utils'
 
 interface GapField {
@@ -44,19 +44,13 @@ interface GapFieldTableProps {
   assessmentType: string
 }
 
-const severityColors = {
-  LOW: 'bg-green-100 text-green-800 border-green-200',
-  MEDIUM: 'bg-yellow-100 text-yellow-800 border-yellow-200', 
-  HIGH: 'bg-orange-100 text-orange-800 border-orange-200',
-  CRITICAL: 'bg-red-100 text-red-800 border-red-200'
-}
-
 const severityOptions = [
   { value: 'LOW', label: 'Low Priority' },
   { value: 'MEDIUM', label: 'Medium Priority' },
   { value: 'HIGH', label: 'High Priority' }, 
   { value: 'CRITICAL', label: 'Critical Priority' }
 ]
+
 
 export function GapFieldTable({ assessmentType }: GapFieldTableProps) {
   const [selectedFields, setSelectedFields] = useState<string[]>([])
@@ -266,11 +260,11 @@ export function GapFieldTable({ assessmentType }: GapFieldTableProps) {
       {/* Gap Fields Table */}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="text-left p-4 font-medium text-sm text-gray-700">
+          <div className="relative w-full overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[48px]">
                     <Checkbox
                       checked={allSelected}
                       ref={(element) => {
@@ -278,47 +272,47 @@ export function GapFieldTable({ assessmentType }: GapFieldTableProps) {
                       }}
                       onCheckedChange={(checked) => handleSelectAll(gapFields, checked === true)}
                     />
-                  </th>
-                  <th className="text-left p-4 font-medium text-sm text-gray-700">Field Name</th>
-                  <th className="text-left p-4 font-medium text-sm text-gray-700">Current Severity</th>
-                  <th className="text-left p-4 font-medium text-sm text-gray-700">New Severity</th>
-                  <th className="text-left p-4 font-medium text-sm text-gray-700">Description</th>
-                  <th className="text-left p-4 font-medium text-sm text-gray-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHead>
+                  <TableHead>Field Name</TableHead>
+                  <TableHead>Current Severity</TableHead>
+                  <TableHead>New Severity</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="w-[64px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {gapFields?.map((field, index) => {
                   const isSelected = selectedFields.includes(field.id)
                   const hasPendingChange = pendingChanges[field.id]
                   const currentSeverity = hasPendingChange || field.severity
 
                   return (
-                    <tr 
+                    <TableRow 
                       key={field.id} 
-                      className={`border-b hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
+                      className={isSelected ? 'bg-muted' : undefined}
                     >
-                      <td className="p-4">
+                      <TableCell>
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={(checked) => handleSelectField(field.id, !!checked)}
                         />
-                      </td>
-                      <td className="p-4">
+                      </TableCell>
+                      <TableCell>
                         <div>
-                          <div className="font-medium text-sm text-gray-900">
+                          <div className="font-medium text-sm">
                             {field.displayName}
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-muted-foreground">
                             {field.fieldName}
                           </div>
                         </div>
-                      </td>
-                      <td className="p-4">
-                        <Badge className={severityColors[field.severity]}>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getBadgeClasses('severity', field.severity)}>
                           {field.severity}
                         </Badge>
-                      </td>
-                      <td className="p-4">
+                      </TableCell>
+                      <TableCell>
                         <Select 
                           value={currentSeverity} 
                           onValueChange={(value) => handleSeverityChange(field.id, value)}
@@ -329,20 +323,20 @@ export function GapFieldTable({ assessmentType }: GapFieldTableProps) {
                           <SelectContent>
                             {severityOptions.map(option => (
                               <SelectItem key={option.value} value={option.value}>
-                                <Badge className={severityColors[option.value as keyof typeof severityColors]}>
+                                <Badge className={getBadgeClasses('severity', option.value)}>
                                   {option.label}
                                 </Badge>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                      </td>
-                      <td className="p-4 max-w-xs">
-                        <div className="text-sm text-gray-600 truncate" title={field.description}>
+                      </TableCell>
+                      <TableCell className="max-w-xs">
+                        <div className="text-sm text-muted-foreground truncate" title={field.description}>
                           {field.description || 'No description available'}
                         </div>
-                      </td>
-                      <td className="p-4">
+                      </TableCell>
+                      <TableCell>
                         {hasPendingChange && (
                           <Button
                             size="sm"
@@ -356,12 +350,12 @@ export function GapFieldTable({ assessmentType }: GapFieldTableProps) {
                             )}
                           </Button>
                         )}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   )
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
           
           {!gapFields?.length && (

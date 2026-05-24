@@ -28,6 +28,7 @@ import { AssessmentSelector } from '@/components/response/AssessmentSelector'
 // Services and types
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet, apiPost, extractArray } from '@/lib/api'
+import { getDotColor } from '@/components/shared/StatusBadge'
 import { CommitmentService, type CommitmentItem } from '@/lib/services/commitment.service'
 import { ResponseService } from '@/lib/services/response.service'
 import { CreateDeliveredResponseInput } from '@/lib/validation/response'
@@ -484,25 +485,25 @@ export function DonorCommitmentImportForm({
                               <SelectContent>
                                 <SelectItem value="CRITICAL">
                                   <span className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                    <div className={`w-3 h-3 ${getDotColor('severity', 'CRITICAL')} rounded-full`}></div>
                                     Critical
                                   </span>
                                 </SelectItem>
                                 <SelectItem value="HIGH">
                                   <span className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                                    <div className={`w-3 h-3 ${getDotColor('severity', 'HIGH')} rounded-full`}></div>
                                     High
                                   </span>
                                 </SelectItem>
                                 <SelectItem value="MEDIUM">
                                   <span className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                    <div className={`w-3 h-3 ${getDotColor('severity', 'MEDIUM')} rounded-full`}></div>
                                     Medium
                                   </span>
                                 </SelectItem>
                                 <SelectItem value="LOW">
                                   <span className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                    <div className={`w-3 h-3 ${getDotColor('severity', 'LOW')} rounded-full`}></div>
                                     Low
                                   </span>
                                 </SelectItem>

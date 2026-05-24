@@ -14,6 +14,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 // New error handling components
 import { SafeDataLoader } from '@/components/shared/SafeDataLoader'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 
 import { 
   Building, 
@@ -213,56 +215,39 @@ export function DonorDashboard() {
                               </div>
 
                               {/* Quick Stats */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="dashboard-metrics-grid">
-                                <MetricCard
-                                  title="Assigned Entities"
+                              <StatCardGrid columns={4} data-testid="dashboard-metrics-grid">
+                                <StatCard
+                                  label="Assigned Entities"
                                   value={entitiesData?.summary?.totalAssigned || 0}
                                   icon={MapPin}
-                                  iconColor="text-blue-600"
-                                  description="Entities you can support"
+                                  severity="info"
                                   data-testid="assigned-entities-metric"
                                 />
                                 
-                                <MetricCard
-                                  title="Total Commitments"
+                                <StatCard
+                                  label="Total Commitments"
                                   value={donor?.metrics?.commitments?.total || 0}
                                   icon={Package}
-                                  iconColor="text-green-600"
-                                  description="Active commitments"
+                                  severity="success"
                                   data-testid="total-commitments-metric"
                                 />
                                 
-                                <MetricCard
-                                  title="Delivery Rate"
+                                <StatCard
+                                  label="Delivery Rate"
                                   value={`${donor?.metrics?.commitments?.deliveryRate || 0}%`}
                                   icon={TrendingUp}
-                                  iconColor="text-purple-600"
-                                  description="Fulfillment performance"
+                                  severity="success"
                                   data-testid="delivery-rate-metric"
                                 />
                                 
-                                <MetricCard
-                                  title="Total Responses"
+                                <StatCard
+                                  label="Total Responses"
                                   value={donor?.metrics?.responses?.total || 0}
                                   icon={Truck}
-                                  iconColor="text-orange-600"
-                                  description="Deliveries made"
+                                  severity="info"
                                   data-testid="total-responses-metric"
                                 />
-                                
-                                <MetricCard
-                                  title="Leaderboard Rank"
-                                  value={`#${leaderboardData?.rank || 'N/A'}`}
-                                  icon={Trophy}
-                                  iconColor="text-yellow-600"
-                                  description={
-                                    leaderboardData?.trend === 'up' ? '📈 Rising' :
-                                    leaderboardData?.trend === 'down' ? '📉 Declining' :
-                                    leaderboardData?.trend === 'stable' ? '➡️ Stable' : 'Ranking'
-                                  }
-                                  data-testid="leaderboard-rank-metric"
-                                />
-                              </div>
+                              </StatCardGrid>
 
                               {/* Main Content Tabs */}
                               <Tabs value={activeTab} onValueChange={setActiveTab} data-testid="dashboard-tabs">
@@ -663,33 +648,6 @@ export function DonorDashboard() {
   )
 }
 
-// Helper Components
-interface MetricCardProps {
-  title: string
-  value: string | number
-  icon: React.ComponentType<{ className?: string }>
-  iconColor?: string
-  description?: string
-}
-
-function MetricCard({ title, value, icon: Icon, iconColor = "text-gray-600", description, ...props }: MetricCardProps & { [key: string]: any }) {
-  return (
-    <Card {...props}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
-            {description && (
-              <p className="text-xs text-gray-500 mt-1">{description}</p>
-            )}
-          </div>
-          <Icon className={cn("h-6 w-6", iconColor)} />
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
 
 function DonorDashboardPage() {
   return (

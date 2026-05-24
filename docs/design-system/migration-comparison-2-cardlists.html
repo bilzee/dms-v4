@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRMS DataCardList Migration Comparison -- Card List Components</title>
+<style>
+/* ============================================================
+   CSS Custom Properties
+   ============================================================ */
+:root {
+  --bg: hsl(0 0% 100%);
+  --fg: hsl(222.2 84% 4.9%);
+  --card: hsl(0 0% 100%);
+  --card-fg: hsl(222.2 84% 4.9%);
+  --primary: hsl(221.2 83.2% 53.3%);
+  --primary-fg: hsl(210 40% 98%);
+  --secondary: hsl(210 40% 96%);
+  --secondary-fg: hsl(222.2 84% 4.9%);
+  --muted: hsl(210 40% 96%);
+  --muted-fg: hsl(215.4 16.3% 46.9%);
+  --border: hsl(214.3 31.8% 91.4%);
+  --radius: 0.5rem;
+  --destructive: hsl(0 84.2% 60.2%);
+
+  /* Tailwind semantic colors used in components */
+  --green-50: #f0fdf4;   --green-100: #dcfce7;  --green-200: #bbf7d0;  --green-500: #22c55e;  --green-600: #16a34a;  --green-800: #166534;
+  --red-50: #fef2f2;     --red-100: #fee2e2;    --red-200: #fecaca;    --red-500: #ef4444;    --red-600: #dc2626;    --red-800: #991b1b;
+  --amber-50: #fffbeb;   --amber-100: #fef3c7;  --amber-200: #fde68a;  --amber-500: #f59e0b;  --amber-600: #d97706;  --amber-800: #92400e;
+  --yellow-50: #fefce8;  --yellow-100: #fef9c3; --yellow-200: #fef08a; --yellow-500: #eab308; --yellow-600: #ca8a04; --yellow-800: #854d0e;
+  --blue-50: #eff6ff;    --blue-100: #dbeafe;   --blue-200: #bfdbfe;   --blue-500: #3b82f6;   --blue-600: #2563eb;   --blue-800: #1e40af;
+  --gray-50: #f9fafb;    --gray-100: #f3f4f6;   --gray-200: #e5e7eb;   --gray-500: #6b7280;   --gray-600: #4b5563;   --gray-800: #1f2937;
+  --orange-100: #ffedd5; --orange-800: #9a3412;
+
+  /* Doc chrome */
+  --nav-h: 52px;
+  --doc-bg: #fafafa;
+  --doc-border: #e5e7eb;
+}
+
+/* ============================================================
+   Reset + Base
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--fg);
+  background: var(--doc-bg);
+}
+
+/* ============================================================
+   Navigation
+   ============================================================ */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--nav-h);
+  background: var(--card);
+  border-bottom: 1px solid var(--doc-border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.nav-brand {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--primary);
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+}
+.nav-links {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.nav-links a {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted-fg);
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-links a:hover { background: var(--muted); color: var(--fg); }
+.nav-links a.active { background: var(--primary); color: var(--primary-fg); }
+.nav-links a.current { background: var(--secondary); color: var(--secondary-fg); font-weight: 600; }
+
+/* ============================================================
+   Page Layout
+   ============================================================ */
+.page {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px 24px 80px;
+}
+
+/* ============================================================
+   Comparison Section
+   ============================================================ */
+.comparison-section {
+  margin-bottom: 48px;
+}
+.comparison-section + .comparison-section {
+  padding-top: 32px;
+  border-top: 2px solid var(--doc-border);
+}
+
+.comparison-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+.comparison-source {
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  color: var(--muted-fg);
+  margin-bottom: 16px;
+}
+
+/* 2-column grid */
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* Column panels */
+.col-panel {
+  padding: 0;
+}
+.col-panel + .col-panel {
+  border-left: 1px solid var(--border);
+}
+
+.col-header {
+  padding: 12px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.col-header.current {
+  background: var(--gray-100);
+  color: var(--gray-600);
+  border-bottom: 2px solid var(--gray-200);
+}
+.col-header.target {
+  background: var(--primary);
+  color: var(--primary-fg);
+  border-bottom: 2px solid hsl(221.2 83.2% 43%);
+}
+
+.col-body {
+  padding: 16px 20px;
+  background: var(--card);
+}
+
+/* ============================================================
+   Shared Component Styles
+   ============================================================ */
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.badge svg { width: 12px; height: 12px; margin-right: 4px; }
+.badge-green { background: var(--green-100); color: var(--green-800); }
+.badge-red { background: var(--red-100); color: var(--red-800); }
+.badge-yellow { background: var(--yellow-100); color: var(--yellow-800); }
+.badge-blue { background: var(--blue-100); color: var(--blue-800); }
+.badge-gray { background: var(--gray-100); color: var(--gray-800); }
+.badge-orange { background: var(--orange-100); color: var(--orange-800); }
+.badge-destructive { background: var(--destructive); color: white; }
+.badge-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted-fg);
+}
+
+/* Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--fg);
+  transition: background 0.15s;
+}
+.btn:hover { background: var(--muted); }
+.btn svg { width: 14px; height: 14px; margin-right: 6px; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+.btn-sm svg { width: 12px; height: 12px; margin-right: 4px; }
+.btn-disabled {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ============================================================
+   CURRENT: Row-style cards (Comparison 1 & 3)
+   ============================================================ */
+.current-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: background 0.15s;
+  margin-bottom: 8px;
+  background: var(--card);
+}
+.current-row:hover { background: var(--gray-50); }
+.current-row:last-child { margin-bottom: 0; }
+
+.current-row-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.current-row-left .icon-wrap {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--muted);
+}
+.current-row-left .icon-wrap svg { width: 18px; height: 18px; color: var(--muted-fg); }
+
+.current-row-left .content h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.current-row-left .content .meta {
+  font-size: 12px;
+  color: var(--gray-600);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.current-row-left .content .meta-secondary {
+  font-size: 11px;
+  color: var(--gray-500);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 3px;
+}
+.current-row-left .content .meta svg,
+.current-row-left .content .meta-secondary svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.current-row-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.current-row-right .id-text {
+  font-size: 11px;
+  color: var(--muted-fg);
+  font-family: monospace;
+}
+
+/* ============================================================
+   CURRENT: Card-style boxes (Comparison 2)
+   ============================================================ */
+.current-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 10px;
+  background: var(--card);
+}
+.current-card:last-child { margin-bottom: 0; }
+
+.current-card-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.current-card-title h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.current-card-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  font-size: 13px;
+  color: var(--gray-600);
+}
+.current-card-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.current-card-meta-item svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--muted-fg); }
+
+.current-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.current-card-footer .id-text {
+  font-size: 12px;
+  color: var(--muted-fg);
+  font-family: monospace;
+}
+
+/* ============================================================
+   TARGET: DataCardList cards
+   ============================================================ */
+.data-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+.data-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.data-card:last-child { margin-bottom: 0; }
+
+/* Severity tints */
+.data-card.severity-critical { background: var(--red-50); border-left: 3px solid var(--red-500); }
+.data-card.severity-high { background: var(--amber-50); border-left: 3px solid var(--amber-500); }
+.data-card.severity-warning { background: var(--yellow-50); border-left: 3px solid var(--yellow-500); }
+.data-card.severity-success { background: var(--green-50); border-left: 3px solid var(--green-500); }
+.data-card.severity-info { background: var(--blue-50); border-left: 3px solid var(--blue-500); }
+
+.data-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+.data-card-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+.data-card-header-left .icon-wrap {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.8);
+}
+.data-card-header-left .icon-wrap svg { width: 18px; height: 18px; color: var(--primary); }
+
+.data-card-header-left .content h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.data-card-header-left .content .meta {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 6px 16px;
+  font-size: 12px;
+  color: var(--gray-600);
+}
+.data-card-header-left .content .meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.data-card-header-left .content .meta-item svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+.data-card-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.chevron-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted-fg);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.2s;
+}
+.chevron-btn:hover { background: var(--muted); }
+.chevron-btn.expanded { transform: rotate(180deg); }
+.chevron-btn svg { width: 14px; height: 14px; }
+
+/* Expanded content */
+.data-card-expanded {
+  border-top: 1px solid var(--border);
+  padding: 16px;
+  background: rgba(255,255,255,0.6);
+}
+.data-card-expanded h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 8px;
+}
+.data-card-expanded .detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 16px;
+}
+.data-card-expanded .detail-item {
+  font-size: 12px;
+  color: var(--gray-600);
+}
+.data-card-expanded .detail-item strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* Read-only indicator */
+.readonly-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-fg);
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: var(--muted);
+}
+.readonly-badge svg { width: 10px; height: 10px; }
+
+/* ============================================================
+   Differences Summary Box
+   ============================================================ */
+.diff-box {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  overflow: hidden;
+}
+.diff-box-header {
+  background: var(--muted);
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-fg);
+}
+.diff-box-body {
+  padding: 12px 16px;
+}
+.diff-box-body ul {
+  list-style: none;
+  padding: 0;
+}
+.diff-box-body li {
+  position: relative;
+  padding: 3px 0 3px 20px;
+  font-size: 13px;
+  color: var(--gray-600);
+  line-height: 1.5;
+}
+.diff-box-body li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--primary);
+}
+
+/* Inline SVG icons */
+.icon-inline {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+.icon-inline svg { width: 14px; height: 14px; }
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     NAVIGATION
+     ============================================================ -->
+<nav class="nav">
+  <div class="nav-brand">DRMS Design System</div>
+  <div class="nav-links">
+    <a href="stat-card-spec.html">StatCard Spec</a>
+    <a href="datalist-spec.html">DataList Spec</a>
+    <a href="datalist-spec.html">DataCardList</a>
+    <a class="current">Migration Comparison: Card Lists</a>
+  </div>
+</nav>
+
+<!-- ============================================================
+     PAGE
+     ============================================================ -->
+<div class="page">
+
+<!-- ============================================================
+     COMPARISON 1: Assessor Rapid Assessments
+     ============================================================ -->
+<section class="comparison-section" id="comparison-1">
+  <h2 class="comparison-title">Comparison 1: Assessor Rapid Assessments</h2>
+  <p class="comparison-source">src/app/(auth)/assessor/rapid-assessments/page.tsx</p>
+
+  <div class="comparison-grid">
+    <!-- LEFT: Current -->
+    <div class="col-panel">
+      <div class="col-header current">CURRENT -- Assessor Rapid Assessments</div>
+      <div class="col-body">
+
+        <!-- Row 1 -->
+        <div class="current-row">
+          <div class="current-row-left">
+            <div class="icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+            </div>
+            <div class="content">
+              <h3>
+                Rapid Assessment
+                <span class="badge badge-green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  VERIFIED
+                </span>
+                <span class="badge badge-red">HIGH</span>
+              </h3>
+              <div class="meta">
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                  Lagos Island, Lagos
+                </span>
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Dr. Sarah Chen
+                </span>
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                  15 May 2025
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="current-row-right">
+            <span class="id-text">Assessment ID: abc12345...</span>
+            <button class="btn btn-sm">View Details</button>
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="current-row">
+          <div class="current-row-left">
+            <div class="icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+            </div>
+            <div class="content">
+              <h3>
+                Rapid Assessment
+                <span class="badge badge-yellow">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+                  SUBMITTED
+                </span>
+                <span class="badge badge-red">CRITICAL</span>
+              </h3>
+              <div class="meta">
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                  Central, Abuja
+                </span>
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Ahmed Ibrahim
+                </span>
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                  20 May 2025
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="current-row-right">
+            <span class="id-text">Assessment ID: def67890...</span>
+            <button class="btn btn-sm">View Details</button>
+          </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="current-row">
+          <div class="current-row-left">
+            <div class="icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+            </div>
+            <div class="content">
+              <h3>
+                Rapid Assessment
+                <span class="badge badge-gray">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  DRAFT
+                </span>
+                <span class="badge badge-yellow">MEDIUM</span>
+              </h3>
+              <div class="meta">
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                  Municipal, Kano
+                </span>
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Mike Johnson
+                </span>
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                  22 May 2025
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="current-row-right">
+            <span class="id-text">Assessment ID: ghi11223...</span>
+            <button class="btn btn-sm">View Details</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: Target DataCardList -->
+    <div class="col-panel">
+      <div class="col-header target">TARGET -- DataCardList migration</div>
+      <div class="col-body">
+
+        <!-- DataCard 1 -- CRITICAL severity, expanded -->
+        <div class="data-card severity-critical">
+          <div class="data-card-header">
+            <div class="data-card-header-left">
+              <div class="icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+              </div>
+              <div class="content">
+                <h3>
+                  Rapid Assessment
+                  <span class="badge badge-green">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    VERIFIED
+                  </span>
+                  <span class="badge badge-orange">HIGH</span>
+                </h3>
+                <div class="meta">
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Lagos Island, Lagos
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Dr. Sarah Chen
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                    15 May 2025
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="data-card-header-right">
+              <span class="id-text" style="font-size:11px;color:var(--muted-fg);font-family:monospace;">abc12345...</span>
+              <button class="btn btn-sm">View Details</button>
+              <button class="chevron-btn expanded">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+            </div>
+          </div>
+          <!-- Expanded content -->
+          <div class="data-card-expanded">
+            <h4>Assessment Details</h4>
+            <div class="detail-grid">
+              <div class="detail-item"><strong>Type:</strong> HEALTH Assessment</div>
+              <div class="detail-item"><strong>Entity:</strong> Lagos Island</div>
+              <div class="detail-item"><strong>Priority:</strong> HIGH</div>
+              <div class="detail-item"><strong>Status:</strong> VERIFIED</div>
+              <div class="detail-item"><strong>Gap Count:</strong> 3 gaps identified</div>
+              <div class="detail-item"><strong>Assessor:</strong> Dr. Sarah Chen</div>
+            </div>
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);">
+              <p style="font-size: 12px; color: var(--gray-600); margin-bottom: 6px;"><strong>Description:</strong> Health infrastructure assessment for flood-affected communities in Lagos Island area.</p>
+              <p style="font-size: 12px; color: var(--gray-600);"><strong>Immediate Needs:</strong> Medical supplies, water purification, shelter for displaced families</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- DataCard 2 -- CRITICAL severity -->
+        <div class="data-card severity-critical">
+          <div class="data-card-header">
+            <div class="data-card-header-left">
+              <div class="icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+              </div>
+              <div class="content">
+                <h3>
+                  Rapid Assessment
+                  <span class="badge badge-yellow">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+                    SUBMITTED
+                  </span>
+                  <span class="badge badge-red">CRITICAL</span>
+                </h3>
+                <div class="meta">
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Central, Abuja
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Ahmed Ibrahim
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                    20 May 2025
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="data-card-header-right">
+              <span class="id-text" style="font-size:11px;color:var(--muted-fg);font-family:monospace;">def67890...</span>
+              <button class="btn btn-sm">View Details</button>
+              <button class="chevron-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DataCard 3 -- WARNING severity (MEDIUM) -->
+        <div class="data-card severity-warning">
+          <div class="data-card-header">
+            <div class="data-card-header-left">
+              <div class="icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+              </div>
+              <div class="content">
+                <h3>
+                  Rapid Assessment
+                  <span class="badge badge-gray">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    DRAFT
+                  </span>
+                  <span class="badge badge-yellow">MEDIUM</span>
+                </h3>
+                <div class="meta">
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Municipal, Kano
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Mike Johnson
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                    22 May 2025
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="data-card-header-right">
+              <span class="id-text" style="font-size:11px;color:var(--muted-fg);font-family:monospace;">ghi11223...</span>
+              <button class="btn btn-sm">View Details</button>
+              <button class="chevron-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Differences Summary -->
+  <div class="diff-box">
+    <div class="diff-box-header">Differences Summary</div>
+    <div class="diff-box-body">
+      <ul>
+        <li>Each card gets a <strong>severity tint background</strong> (CRITICAL = red-50, HIGH = amber-50, MEDIUM = yellow-50) with a <strong>colored left border</strong> for instant visual prioritization</li>
+        <li>Cards are <strong>expandable</strong> via a chevron button, revealing full assessment details (description, gap count, needs) without navigating away</li>
+        <li>Metadata rendered in a <strong>consistent 3-column grid</strong> inside each card instead of a free-flowing flex layout</li>
+        <li>Uniform card wrapper with <strong>shadow-sm, rounded-lg, border</strong> replaces the flat border-only row approach</li>
+        <li>Hover state uses <strong>shadow elevation</strong> instead of background color change for a more polished interaction pattern</li>
+        <li>Assessment ID moved to <strong>compact monospace format</strong> alongside the action buttons for cleaner alignment</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     COMPARISON 2: Donor Rapid Assessments (Read-only)
+     ============================================================ -->
+<section class="comparison-section" id="comparison-2">
+  <h2 class="comparison-title">Comparison 2: Donor Rapid Assessments (Read-only)</h2>
+  <p class="comparison-source">src/app/(auth)/donor/rapid-assessments/page.tsx</p>
+
+  <div class="comparison-grid">
+    <!-- LEFT: Current -->
+    <div class="col-panel">
+      <div class="col-header current">CURRENT -- Donor Rapid Assessments</div>
+      <div class="col-body">
+
+        <!-- Card 1 -->
+        <div class="current-card">
+          <div class="current-card-title">
+            <h3>INITIAL Assessment</h3>
+            <span class="badge badge-green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              VERIFIED
+            </span>
+            <span class="badge badge-red">HIGH</span>
+          </div>
+          <div class="current-card-meta">
+            <div class="current-card-meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              Lagos Island
+            </div>
+            <div class="current-card-meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Dr. Sarah Chen
+            </div>
+            <div class="current-card-meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+              15/05/2025
+            </div>
+          </div>
+          <div class="current-card-footer">
+            <span class="id-text">Assessment ID: abc12345...</span>
+            <button class="btn btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              View Details
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="current-card">
+          <div class="current-card-title">
+            <h3>DETAILED Assessment</h3>
+            <span class="badge badge-blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              PUBLISHED
+            </span>
+            <span class="badge badge-yellow">MEDIUM</span>
+          </div>
+          <div class="current-card-meta">
+            <div class="current-card-meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              Central, Abuja
+            </div>
+            <div class="current-card-meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Ahmed Ibrahim
+            </div>
+            <div class="current-card-meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+              20/05/2025
+            </div>
+          </div>
+          <div class="current-card-footer">
+            <span class="id-text">Assessment ID: def67890...</span>
+            <button class="btn btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              View Details
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: Target DataCardList -->
+    <div class="col-panel">
+      <div class="col-header target">TARGET -- DataCardList migration</div>
+      <div class="col-body">
+
+        <!-- DataCard 1 -- Donor read-only, VERIFIED+HIGH -->
+        <div class="data-card severity-high">
+          <div class="data-card-header">
+            <div class="data-card-header-left">
+              <div class="icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+              </div>
+              <div class="content">
+                <h3>
+                  INITIAL Assessment
+                  <span class="badge badge-green">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    VERIFIED
+                  </span>
+                  <span class="badge badge-orange">HIGH</span>
+                  <span class="readonly-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Read-only
+                  </span>
+                </h3>
+                <div class="meta">
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Lagos Island
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Dr. Sarah Chen
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                    15/05/2025
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="data-card-header-right">
+              <span class="id-text" style="font-size:11px;color:var(--muted-fg);font-family:monospace;">abc12345...</span>
+              <button class="btn btn-sm btn-disabled">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                View Details
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DataCard 2 -- Donor read-only, PUBLISHED+MEDIUM -->
+        <div class="data-card severity-warning">
+          <div class="data-card-header">
+            <div class="data-card-header-left">
+              <div class="icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+              </div>
+              <div class="content">
+                <h3>
+                  DETAILED Assessment
+                  <span class="badge badge-blue">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    PUBLISHED
+                  </span>
+                  <span class="badge badge-yellow">MEDIUM</span>
+                  <span class="readonly-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Read-only
+                  </span>
+                </h3>
+                <div class="meta">
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Central, Abuja
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Ahmed Ibrahim
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                    20/05/2025
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="data-card-header-right">
+              <span class="id-text" style="font-size:11px;color:var(--muted-fg);font-family:monospace;">def67890...</span>
+              <button class="btn btn-sm btn-disabled">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                View Details
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Differences Summary -->
+  <div class="diff-box">
+    <div class="diff-box-header">Differences Summary</div>
+    <div class="diff-box-body">
+      <ul>
+        <li>Added a <strong>read-only indicator badge</strong> to every card, clearly communicating the donor has no edit permissions</li>
+        <li>"View Details" button rendered as <strong>non-actionable (disabled state)</strong> to match the read-only access level of the donor role</li>
+        <li>Severity tinting based on <strong>verification status</strong> instead of priority: VERIFIED = success tint, PUBLISHED = info tint</li>
+        <li>Replaced the separate bordered-box-per-card pattern with a <strong>unified DataCardList card wrapper</strong> with consistent shadow and spacing</li>
+        <li>Metadata displayed in a <strong>3-column grid</strong> matching the assessor view for cross-role consistency</li>
+        <li>Removed the Card/CardHeader/CardContent wrapper overhead -- DataCardList handles card chrome internally</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     COMPARISON 3: Preliminary Assessments
+     ============================================================ -->
+<section class="comparison-section" id="comparison-3">
+  <h2 class="comparison-title">Comparison 3: Preliminary Assessments</h2>
+  <p class="comparison-source">src/app/(auth)/assessor/preliminary-assessment/page.tsx</p>
+
+  <div class="comparison-grid">
+    <!-- LEFT: Current -->
+    <div class="col-panel">
+      <div class="col-header current">CURRENT -- Preliminary Assessments</div>
+      <div class="col-body">
+
+        <!-- Row 1 -->
+        <div class="current-row">
+          <div class="current-row-left">
+            <div class="icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+            </div>
+            <div class="content">
+              <h3>
+                Preliminary Assessment
+                <span class="badge badge-green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  Submitted
+                </span>
+              </h3>
+              <div class="meta">
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                  Lagos Island, Unknown Ward
+                </span>
+                <span>
+                  Incident: FLOOD-Jun15, 2025
+                </span>
+              </div>
+              <div class="meta-secondary">
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                  5/15/2025 at 2:30 PM
+                </span>
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Dr. Sarah Chen
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="current-row-right">
+            <button class="btn btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              View Details
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="current-row">
+          <div class="current-row-left">
+            <div class="icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+            </div>
+            <div class="content">
+              <h3>
+                Preliminary Assessment
+                <span class="badge badge-green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  Submitted
+                </span>
+              </h3>
+              <div class="meta">
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                  Central, Ward 3
+                </span>
+                <span>
+                  Incident: FIRE-Jun20, 2025
+                </span>
+              </div>
+              <div class="meta-secondary">
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                  5/20/2025 at 10:15 AM
+                </span>
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Ahmed Ibrahim
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="current-row-right">
+            <button class="btn btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              View Details
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="current-row">
+          <div class="current-row-left">
+            <div class="icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+            </div>
+            <div class="content">
+              <h3>
+                Preliminary Assessment
+                <span class="badge badge-green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  Submitted
+                </span>
+              </h3>
+              <div class="meta">
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                  Municipal, Ward 7
+                </span>
+              </div>
+              <div class="meta-secondary">
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                  5/22/2025 at 4:45 PM
+                </span>
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Mike Johnson
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="current-row-right">
+            <button class="btn btn-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              View Details
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: Target DataCardList -->
+    <div class="col-panel">
+      <div class="col-header target">TARGET -- DataCardList migration</div>
+      <div class="col-body">
+
+        <!-- DataCard 1 -- All submitted, green tint -->
+        <div class="data-card severity-success">
+          <div class="data-card-header">
+            <div class="data-card-header-left">
+              <div class="icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+              </div>
+              <div class="content">
+                <h3>
+                  Preliminary Assessment
+                  <span class="badge badge-green">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Submitted
+                  </span>
+                </h3>
+                <div class="meta">
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Lagos Island, Unknown Ward
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                    5/15/2025 at 2:30 PM
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Dr. Sarah Chen
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="data-card-header-right">
+              <button class="btn btn-sm">View Details</button>
+              <button class="chevron-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DataCard 2 -->
+        <div class="data-card severity-success">
+          <div class="data-card-header">
+            <div class="data-card-header-left">
+              <div class="icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+              </div>
+              <div class="content">
+                <h3>
+                  Preliminary Assessment
+                  <span class="badge badge-green">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Submitted
+                  </span>
+                </h3>
+                <div class="meta">
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Central, Ward 3
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                    5/20/2025 at 10:15 AM
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Ahmed Ibrahim
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="data-card-header-right">
+              <button class="btn btn-sm">View Details</button>
+              <button class="chevron-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+            </div>
+          </div>
+          <!-- Expanded state showing incident details -->
+          <div class="data-card-expanded">
+            <h4>Incident Details</h4>
+            <div class="detail-grid">
+              <div class="detail-item"><strong>Incident:</strong> FIRE-Jun20, 2025</div>
+              <div class="detail-item"><strong>Location:</strong> Central, Ward 3</div>
+              <div class="detail-item"><strong>Reporting Agent:</strong> Ahmed Ibrahim</div>
+              <div class="detail-item"><strong>Assessment Date:</strong> 5/20/2025</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DataCard 3 -->
+        <div class="data-card severity-success">
+          <div class="data-card-header">
+            <div class="data-card-header-left">
+              <div class="icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+              </div>
+              <div class="content">
+                <h3>
+                  Preliminary Assessment
+                  <span class="badge badge-green">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Submitted
+                  </span>
+                </h3>
+                <div class="meta">
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Municipal, Ward 7
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                    5/22/2025 at 4:45 PM
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Mike Johnson
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="data-card-header-right">
+              <button class="btn btn-sm">View Details</button>
+              <button class="chevron-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Differences Summary -->
+  <div class="diff-box">
+    <div class="diff-box-header">Differences Summary</div>
+    <div class="diff-box-body">
+      <ul>
+        <li>All cards receive a <strong>uniform green (success) severity tint</strong> since preliminary assessments are always in Submitted status -- no mixed severity levels</li>
+        <li>Cards are <strong>expandable</strong> to reveal incident details (incident type, date, reporting agent) without requiring a page navigation</li>
+        <li>Metadata rendered in a <strong>consistent 3-column grid</strong> (location, date, assessor) replacing the two-line free-flow layout (meta + meta-secondary)</li>
+        <li>Standardized card wrapper with <strong>shadow-sm rounded-lg border</strong> replaces the flat bordered row approach</li>
+        <li>Incident reference (e.g., "FLOOD-Jun15, 2025") moved into the <strong>expanded details section</strong> to reduce visual noise in the collapsed card header</li>
+        <li>Consistent padding, typography, and icon sizing matches the other DataCardList instances across the application</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</div><!-- /.page -->
+
+</body>
+</html>

@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { getBadgeClasses } from '@/components/shared/StatusBadge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Loader2, Save, RotateCcw, AlertCircle, Info } from 'lucide-react'
@@ -29,12 +30,6 @@ interface SeverityThreshold {
 
 interface SeverityThresholdTableProps {
   impactType: string
-}
-
-const severityColors = {
-  MEDIUM: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  HIGH: 'bg-orange-100 text-orange-800 border-orange-200',
-  CRITICAL: 'bg-red-100 text-red-800 border-red-200'
 }
 
 const defaultThresholds: Record<string, SeverityThreshold[]> = {
@@ -236,7 +231,7 @@ export function SeverityThresholdTable({ impactType }: SeverityThresholdTablePro
                         <CardHeader className="pb-3">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <Badge className={`${severityColors[threshold.severityLevel]} border`}>
+                              <Badge className={`${getBadgeClasses('severity', threshold.severityLevel)} border`}>
                                 {threshold.severityLevel}
                               </Badge>
                               <div>

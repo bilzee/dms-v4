@@ -2,14 +2,18 @@
 
 import { useState, useEffect } from 'react'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { PlusCircle, Activity, FileText, Clock, CheckCircle, AlertTriangle, Filter, X, MessageSquare } from 'lucide-react'
+import { DataCardList, type ExpandedCardProps } from '@/components/shared/DataCardList'
+import { type SeverityLevel } from '@/lib/utils/status-colors'
+import { PlusCircle, Activity, FileText, Clock, CheckCircle, AlertTriangle, Filter, X, MessageSquare, XCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
@@ -246,6 +250,21 @@ export default function AssessorRapidAssessmentsPage() {
     return `${type}${subType}${date ? `-${date}` : ''}`
   }
 
+  const getAssessmentSeverity = (priority: string): SeverityLevel => {
+    switch (priority) {
+      case 'CRITICAL':
+        return 'critical'
+      case 'HIGH':
+        return 'high'
+      case 'MEDIUM':
+        return 'medium'
+      case 'LOW':
+        return 'low'
+      default:
+        return 'neutral'
+    }
+  }
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'HEALTH':
@@ -439,187 +458,92 @@ export default function AssessorRapidAssessmentsPage() {
           )}
         </Card>
 
-        {/* Statistics */}
-        <div className="grid gap-6 md:grid-cols-5">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Assessments</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{filteredAssessments.length}</div>
-              <p className="text-xs text-muted-foreground">
-                Filtered assessments
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Submitted</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {filteredAssessments.filter(a => a.status === 'SUBMITTED').length}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Submitted assessments
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Drafts</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {filteredAssessments.filter(a => a.status === 'DRAFT').length}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Draft assessments
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {filteredAssessments.filter(a => a.verificationStatus === 'REJECTED').length}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Rejected assessments
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Critical Gaps</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {filteredAssessments.reduce((sum, a) => {
-                  // Calculate gap count from gapAnalysis JSON or default to 0
-                  const gapCount = a.gapAnalysis ? Object.keys(a.gapAnalysis).length : 0
-                  return sum + gapCount
-                }, 0)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Total gaps identified
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <StatCardGrid columns={5} gap="lg">
+          <StatCard label="Total Assessments" value={filteredAssessments.length} severity="info" icon={FileText} />
+          <StatCard label="Submitted" value={filteredAssessments.filter(a => a.status === 'SUBMITTED').length} severity="success" icon={CheckCircle} />
+          <StatCard label="Drafts" value={filteredAssessments.filter(a => a.status === 'DRAFT').length} severity="warning" icon={Clock} />
+          <StatCard label="Rejected" value={filteredAssessments.filter(a => a.verificationStatus === 'REJECTED').length} severity="critical" icon={XCircle} />
+          <StatCard label="Critical Gaps" value={filteredAssessments.reduce((sum, a) => {
+            const gapCount = a.gapAnalysis ? Object.keys(a.gapAnalysis).length : 0
+            return sum + gapCount
+          }, 0)} severity="high" icon={AlertTriangle} />
+        </StatCardGrid>
 
-        {/* Assessments Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Assessments</CardTitle>
-            <CardDescription>
-              Your latest rapid assessment activities
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading assessments...</p>
-              </div>
-            ) : filteredAssessments.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">
-                  {assessments.length === 0 
-                    ? "No assessments found. Create your first assessment!" 
-                    : "No assessments match the current filters."
-                  }
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredAssessments.map((assessment) => (
-                  <div 
-                    key={assessment.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                    data-testid={`assessment-row-${assessment.rapidAssessmentType?.toLowerCase()}-${assessment.id}`}
-                  >
-                    <div className="flex items-center gap-4">
-                      {getTypeIcon(assessment.rapidAssessmentType)}
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium">{assessment.rapidAssessmentType} Assessment</h3>
-                          {getPriorityBadge(assessment.priority)}
-                        </div>
-                        <p className="text-sm text-gray-600">
-                          <span className="font-medium">Entity:</span> {assessment.entity?.name || 'Unknown Entity'}
-                          {assessment.incident && (
-                            <span className="ml-3">
-                              <span className="font-medium">Incident:</span> {formatIncidentDisplay(assessment.incident)}
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Created: {new Date(assessment.createdAt).toLocaleDateString()} at{' '}
-                          {new Date(assessment.createdAt).toLocaleTimeString()}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      {(() => {
-                        const gapCount = assessment.gapAnalysis ? Object.keys(assessment.gapAnalysis).length : 0
-                        return gapCount > 0 && (
-                          <Badge 
-                            variant="destructive" 
-                            data-testid={`gap-indicator-${assessment.id}`}
-                          >
-                            {gapCount} Gaps
-                          </Badge>
-                        )
-                      })()}
-                      {getStatusBadge(assessment)}
-                      
-                      {/* Show Edit and Reason buttons for rejected assessments */}
-                      {assessment.verificationStatus === 'REJECTED' && (
-                        <>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => router.push(`/assessor/rapid-assessments/${assessment.id}/edit`)}
-                            data-testid={`edit-${assessment.id}`}
-                          >
-                            Edit
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleShowReason(assessment)}
-                            data-testid={`reason-${assessment.id}`}
-                          >
-                            Reason
-                          </Button>
-                        </>
-                      )}
-                      
-                      <Link href={`/assessor/rapid-assessments/${assessment.id}`}>
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
-                      </Link>
-                    </div>
+        <DataCardList
+          title="Recent Assessments"
+          description="Your latest rapid assessment activities"
+          data={filteredAssessments}
+          loading={isLoading}
+          emptyMessage={assessments.length === 0 ? "No assessments found. Create your first assessment!" : "No assessments match the current filters."}
+          getSeverity={(a: any) => getAssessmentSeverity(a.priority)}
+          renderCard={(assessment: any, { isExpanded, toggleExpand }: ExpandedCardProps) => (
+            <div
+              className="flex items-center justify-between"
+              data-testid={`assessment-row-${assessment.rapidAssessmentType?.toLowerCase()}-${assessment.id}`}
+            >
+              <div className="flex items-center gap-4">
+                {getTypeIcon(assessment.rapidAssessmentType)}
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-medium">{assessment.rapidAssessmentType} Assessment</h3>
+                    {getPriorityBadge(assessment.priority)}
                   </div>
-                ))}
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">Entity:</span> {assessment.entity?.name || 'Unknown Entity'}
+                    {assessment.incident && (
+                      <span className="ml-3">
+                        <span className="font-medium">Incident:</span> {formatIncidentDisplay(assessment.incident)}
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Created: {new Date(assessment.createdAt).toLocaleDateString()} at{' '}
+                    {new Date(assessment.createdAt).toLocaleTimeString()}
+                  </p>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <div className="flex items-center gap-4">
+                {(() => {
+                  const gapCount = assessment.gapAnalysis ? Object.keys(assessment.gapAnalysis).length : 0
+                  return gapCount > 0 && (
+                    <Badge
+                      variant="destructive"
+                      data-testid={`gap-indicator-${assessment.id}`}
+                    >
+                      {gapCount} Gaps
+                    </Badge>
+                  )
+                })()}
+                {getStatusBadge(assessment)}
+                {assessment.verificationStatus === 'REJECTED' && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/assessor/rapid-assessments/${assessment.id}/edit`)}
+                      data-testid={`edit-${assessment.id}`}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleShowReason(assessment)}
+                      data-testid={`reason-${assessment.id}`}
+                    >
+                      Reason
+                    </Button>
+                  </>
+                )}
+                <Link href={`/assessor/rapid-assessments/${assessment.id}`}>
+                  <Button variant="outline" size="sm">
+                    View Details
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
+        />
 
         {/* Rejection Reason Dialog */}
         <Dialog open={showReasonDialog} onOpenChange={setShowReasonDialog}>

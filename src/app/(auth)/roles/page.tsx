@@ -4,18 +4,51 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
+import { DataTable, type ColumnDef, type RowAction } from '@/components/shared/DataList'
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { Edit, Plus, Trash2, Shield, Key, Users } from 'lucide-react'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useToast } from '@/components/ui/use-toast'
+
+const roleColumns: ColumnDef<Role>[] = [
+  { key: 'name', header: 'Role', render: (role) => <span className="font-medium">{role.name}</span> },
+  { key: 'description', header: 'Description' },
+  {
+    key: 'permissions',
+    header: 'Permissions',
+    render: (role) => (
+      <div className="flex flex-wrap gap-1">
+        {role.permissions.slice(0, 3).map((rp) => (
+          <Badge key={rp.permission.id} variant="outline" className="text-xs">
+            {rp.permission.name}
+          </Badge>
+        ))}
+        {role.permissions.length > 3 && (
+          <Badge variant="outline" className="text-xs">
+            +{role.permissions.length - 3} more
+          </Badge>
+        )}
+      </div>
+    ),
+  },
+  {
+    key: 'users',
+    header: 'Users',
+    render: (role) => role.userRoles?.length || 0,
+  },
+  {
+    key: 'createdAt',
+    header: 'Created',
+    render: (role) => new Date(role.createdAt).toLocaleDateString(),
+  },
+]
 
 interface Role {
   id: string
@@ -144,147 +177,60 @@ export default function RolesPage() {
           </div>
 
           {/* Role Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total Roles</p>
-                    <p className="text-2xl font-bold">{roles.length}</p>
-                  </div>
-                  <Shield className="h-6 w-6 text-blue-600" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Active Roles</p>
-                    <p className="text-2xl font-bold">{roles.filter(r => r.userRoles && r.userRoles.length > 0).length}</p>
-                  </div>
-                  <Users className="h-6 w-6 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total Permissions</p>
-                    <p className="text-2xl font-bold">{permissions.length}</p>
-                  </div>
-                  <Key className="h-6 w-6 text-purple-600" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total Users</p>
-                    <p className="text-2xl font-bold">{roles.reduce((sum, role) => sum + (role.userRoles?.length || 0), 0)}</p>
-                  </div>
-                  <Users className="h-6 w-6 text-orange-600" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <StatCardGrid columns={4}>
+            <StatCard
+              label="Total Roles"
+              value={roles.length}
+              severity="info"
+              icon={Shield}
+            />
+            <StatCard
+              label="Active Roles"
+              value={roles.filter(r => r.userRoles && r.userRoles.length > 0).length}
+              severity="success"
+              icon={Users}
+            />
+            <StatCard
+              label="Total Permissions"
+              value={permissions.length}
+              severity="neutral"
+              icon={Key}
+            />
+            <StatCard
+              label="Total Users"
+              value={roles.reduce((sum, role) => sum + (role.userRoles?.length || 0), 0)}
+              severity="info"
+              icon={Users}
+            />
+          </StatCardGrid>
 
           {/* Roles Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>System Roles</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!isHydrated ? (
-                <div className="space-y-2">
-                  <div className="animate-pulse">
-                    <div className="h-12 bg-gray-200 rounded"></div>
-                    <div className="h-12 bg-gray-200 rounded"></div>
-                    <div className="h-12 bg-gray-200 rounded"></div>
-                  </div>
-                </div>
-              ) : loading ? (
-                <div className="space-y-2">
-                  <div className="animate-pulse">
-                    <div className="h-12 bg-gray-200 rounded"></div>
-                    <div className="h-12 bg-gray-200 rounded"></div>
-                    <div className="h-12 bg-gray-200 rounded"></div>
-                  </div>
-                </div>
-              ) : roles.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No roles found. Create your first role to get started.</p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Permissions</TableHead>
-                      <TableHead>Users</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead className="w-[50px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {roles.map((role) => (
-                      <TableRow key={role.id}>
-                        <TableCell className="font-medium">{role.name}</TableCell>
-                        <TableCell>{role.description}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {role.permissions.slice(0, 3).map((rolePermission) => (
-                              <Badge key={rolePermission.permission.id} variant="outline" className="text-xs">
-                                {rolePermission.permission.name}
-                              </Badge>
-                            ))}
-                            {role.permissions.length > 3 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{role.permissions.length - 3} more
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>{role.userRoles?.length || 0}</TableCell>
-                        <TableCell>{new Date(role.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEditRole(role.id)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit Role
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setRoleToDelete(role)
-                                  setDeleteConfirmOpen(true)
-                                }}
-                                className="text-red-600"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete Role
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+          <DataTable
+            title="System Roles"
+            columns={roleColumns}
+            data={roles}
+            loading={!isHydrated || loading}
+            emptyMessage="No roles found. Create your first role to get started."
+            actions={[
+              {
+                label: 'Edit Role',
+                onClick: handleEditRole,
+                icon: Edit,
+              },
+              {
+                label: 'Delete Role',
+                onClick: (roleId: string) => {
+                  const role = roles.find(r => r.id === roleId)
+                  if (role) {
+                    setRoleToDelete(role)
+                    setDeleteConfirmOpen(true)
+                  }
+                },
+                icon: Trash2,
+                variant: 'destructive',
+              },
+            ]}
+          />
 
           {/* Delete Confirmation Dialog */}
           <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>

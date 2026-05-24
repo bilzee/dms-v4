@@ -3,8 +3,8 @@
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { getDotColor } from '@/components/shared/StatusBadge';
 import { Progress } from '@/components/ui/progress';
 import { exportGapAnalysisToCsv, validateGapAnalysisData } from '@/utils/export/gapAnalysisCsv';
 import { 
@@ -82,13 +82,6 @@ const assessmentTypeConfig = {
   }
 } as const;
 
-// Severity color mapping
-const severityColors = {
-  critical: 'bg-red-500',
-  high: 'bg-orange-500', 
-  medium: 'bg-yellow-500',
-  low: 'bg-green-500'
-} as const;
 
 /**
  * GapAnalysisSummary Component
@@ -269,7 +262,7 @@ export function GapAnalysisSummary({
             {/* High severity */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className={cn("w-3 h-3 rounded-full", severityColors.high)} />
+                <div className={cn("w-3 h-3 rounded-full", getDotColor('severity', 'HIGH'))} />
                 <span className="text-sm font-medium">High Priority</span>
               </div>
               <span className="text-sm text-gray-600">
@@ -284,7 +277,7 @@ export function GapAnalysisSummary({
             {/* Medium severity */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className={cn("w-3 h-3 rounded-full", severityColors.medium)} />
+                <div className={cn("w-3 h-3 rounded-full", getDotColor('severity', 'MEDIUM'))} />
                 <span className="text-sm font-medium">Medium Priority</span>
               </div>
               <span className="text-sm text-gray-600">
@@ -299,7 +292,7 @@ export function GapAnalysisSummary({
             {/* Low severity */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className={cn("w-3 h-3 rounded-full", severityColors.low)} />
+                <div className={cn("w-3 h-3 rounded-full", getDotColor('severity', 'LOW'))} />
                 <span className="text-sm font-medium">Low Priority</span>
               </div>
               <span className="text-sm text-gray-600">

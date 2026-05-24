@@ -2,7 +2,8 @@
 
 import { useAuth } from '@/hooks/useAuth'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -14,14 +15,14 @@ import {
   User, 
   AlertTriangle,
   CheckCircle,
-  Clock,
-  RefreshCw,
-  Filter
+  RefreshCw
 } from 'lucide-react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { apiGet, extractArray } from '@/lib/api'
 import { getVerificationStatusColor, getPriorityBadgeColor } from '@/lib/utils/priority-colors'
+import { DataCardList, type ExpandedCardProps } from '@/components/shared/DataCardList'
+import { type SeverityLevel } from '@/lib/utils/status-colors'
 
 export default function DonorAssessmentsPage() {
   const { user } = useAuth()
@@ -35,6 +36,23 @@ export default function DonorAssessmentsPage() {
   })
   const assessments = Array.isArray(assessmentsData) ? assessmentsData : []
   const error = queryError?.message || null
+
+  const getVerificationSeverity = (status: string): SeverityLevel => {
+    switch (status) {
+      case 'VERIFIED':
+        return 'success'
+      case 'AUTO_VERIFIED':
+        return 'success'
+      case 'PUBLISHED':
+        return 'info'
+      case 'SUBMITTED':
+        return 'warning'
+      case 'DRAFT':
+        return 'neutral'
+      default:
+        return 'neutral'
+    }
+  }
 
 
   if (loading) {
@@ -80,134 +98,66 @@ export default function DonorAssessmentsPage() {
           </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Assessments</p>
-                  <p className="text-2xl font-bold">{assessments.length}</p>
-                </div>
-                <FileText className="h-6 w-6 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
+        <StatCardGrid columns={4}>
+          <StatCard label="Total Assessments" value={assessments.length} severity="info" icon={FileText} />
+          <StatCard label="Verified" value={assessments.filter(a => a.verificationStatus === 'VERIFIED').length} severity="success" icon={CheckCircle} />
+          <StatCard label="High Priority" value={assessments.filter(a => a.priority === 'HIGH' || a.priority === 'CRITICAL').length} severity="high" icon={AlertTriangle} />
+          <StatCard label="Recent" value={assessments.filter(a => {
+            const assessmentDate = new Date(a.rapidAssessmentDate)
+            const weekAgo = new Date()
+            weekAgo.setDate(weekAgo.getDate() - 7)
+            return assessmentDate >= weekAgo
+          }).length} severity="info" icon={Calendar} />
+        </StatCardGrid>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Verified</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {assessments.filter(a => a.verificationStatus === 'VERIFIED').length}
-                  </p>
-                </div>
-                <CheckCircle className="h-6 w-6 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">High Priority</p>
-                  <p className="text-2xl font-bold text-orange-600">
-                    {assessments.filter(a => a.priority === 'HIGH' || a.priority === 'CRITICAL').length}
-                  </p>
-                </div>
-                <AlertTriangle className="h-6 w-6 text-orange-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Recent</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {assessments.filter(a => {
-                      const assessmentDate = new Date(a.rapidAssessmentDate)
-                      const weekAgo = new Date()
-                      weekAgo.setDate(weekAgo.getDate() - 7)
-                      return assessmentDate >= weekAgo
-                    }).length}
-                  </p>
-                </div>
-                <Calendar className="h-6 w-6 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Assessments List */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <FileText className="mr-2 h-5 w-5" />
-              Recent Assessments
-            </CardTitle>
-            <CardDescription>
-              View detailed disaster assessments across different regions
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {assessments.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No assessments available</p>
-                <p className="text-sm">Assessments will appear here once they are created by field assessors</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {assessments.map((assessment: any) => (
-                  <div key={assessment.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-lg">{assessment.rapidAssessmentType} Assessment</h3>
-                          <Badge className={getVerificationStatusColor(assessment.verificationStatus || assessment.status)}>
-                            {assessment.verificationStatus || assessment.status}
-                          </Badge>
-                          <Badge className={getPriorityBadgeColor(assessment.priority)}>
-                            {assessment.priority}
-                          </Badge>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4" />
-                            <span>{assessment.location}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            <span>{assessment.assessorName}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            <span>{new Date(assessment.rapidAssessmentDate).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                      </div>
+        <DataCardList
+          title="Recent Assessments"
+          description="View detailed disaster assessments across different regions"
+          data={assessments}
+          loading={false}
+          emptyMessage="No assessments available"
+          getSeverity={(a: any) => getVerificationSeverity(a.verificationStatus || a.status)}
+          renderCard={(assessment: any, { isExpanded, toggleExpand }: ExpandedCardProps) => (
+            <div className="space-y-3">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-semibold text-lg">{assessment.rapidAssessmentType} Assessment</h3>
+                    <Badge className={getVerificationStatusColor(assessment.verificationStatus || assessment.status)}>
+                      {assessment.verificationStatus || assessment.status}
+                    </Badge>
+                    <Badge className={getPriorityBadgeColor(assessment.priority)}>
+                      {assessment.priority}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>{assessment.location}</span>
                     </div>
-
-                    <div className="flex items-center justify-between pt-3 border-t">
-                      <p className="text-sm text-gray-600">
-                        Assessment ID: {assessment.id.slice(0, 8)}...
-                      </p>
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Details
-                      </Button>
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      <span>{assessment.assessorName}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      <span>{new Date(assessment.rapidAssessmentDate).toLocaleDateString()}</span>
                     </div>
                   </div>
-                ))}
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <div className="flex items-center justify-between pt-3 border-t">
+                <p className="text-sm text-gray-600">
+                  Assessment ID: {assessment.id.slice(0, 8)}...
+                </p>
+                <Button variant="outline" size="sm">
+                  <Eye className="h-4 w-4 mr-2" />
+                  View Details
+                </Button>
+              </div>
+            </div>
+          )}
+        />
 
         {/* Back to Dashboard */}
         <div className="text-center">

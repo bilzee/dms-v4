@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useDonorMetrics, useVerifiedBadgeDisplay, type DonorMetrics } from '@/hooks/useDonorMetrics';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -94,39 +96,39 @@ export function DonorMetricsDashboard() {
 
       {/* Overall Statistics */}
       {donorMetrics && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard
-            title="Total Donors"
+        <StatCardGrid columns={4}>
+          <StatCard
+            label="Total Donors"
             value={donorMetrics.overall.totalDonors}
             icon={Users}
-            iconColor="text-blue-600"
+            severity="info"
             loading={isLoading}
           />
           
-          <MetricCard
-            title="Total Commitments"
+          <StatCard
+            label="Total Commitments"
             value={donorMetrics.overall.totalCommitments}
             icon={HandHeart}
-            iconColor="text-green-600"
+            severity="success"
             loading={isLoading}
           />
           
-          <MetricCard
-            title="Verified Responses"
+          <StatCard
+            label="Verified Responses"
             value={donorMetrics.overall.totalVerifiedResponses}
             icon={CheckCircle}
-            iconColor="text-purple-600"
+            severity="success"
             loading={isLoading}
           />
           
-          <MetricCard
-            title="Average Verification Rate"
+          <StatCard
+            label="Average Verification Rate"
             value={`${(donorMetrics.overall.averageVerificationRate * 100).toFixed(1)}%`}
             icon={TrendingUp}
-            iconColor="text-orange-600"
+            severity="info"
             loading={isLoading}
           />
-        </div>
+        </StatCardGrid>
       )}
 
       {/* Main Content: Side by Side Layout */}
@@ -412,34 +414,6 @@ function DonorRow({ donor }: DonorRowProps) {
   );
 }
 
-// Helper Components
-interface MetricCardProps {
-  title: string;
-  value: string | number;
-  icon: React.ComponentType<{ className?: string }>;
-  iconColor?: string;
-  loading?: boolean;
-}
-
-function MetricCard({ title, value, icon: Icon, iconColor = "text-gray-600", loading }: MetricCardProps) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600">{title}</p>
-            {loading ? (
-              <div className="h-8 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
-            ) : (
-              <p className="text-2xl font-bold">{value}</p>
-            )}
-          </div>
-          <Icon className={cn("h-6 w-6", iconColor)} />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 function MetricRow({ 
   label, 

@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { 
   Calendar,
   Clock,
@@ -39,34 +39,19 @@ interface DurationInfo {
   inStatusHours: number;
 }
 
-// Status configuration
 const statusConfig = {
   ACTIVE: {
     label: 'Active',
-    variant: 'destructive' as const,
-    icon: AlertTriangle,
-    color: 'text-red-600 bg-red-50 border-red-200'
+    icon: AlertTriangle
   },
   CONTAINED: {
-    label: 'Contained', 
-    variant: 'secondary' as const,
-    icon: PauseCircle,
-    color: 'text-yellow-600 bg-yellow-50 border-yellow-200'
+    label: 'Contained',
+    icon: PauseCircle
   },
   RESOLVED: {
     label: 'Resolved',
-    variant: 'default' as const,
-    icon: CheckCircle,
-    color: 'text-green-600 bg-green-50 border-green-200'
+    icon: CheckCircle
   }
-};
-
-// Severity configuration
-const severityConfig = {
-  CRITICAL: { label: 'Critical', color: 'text-red-700 bg-red-100' },
-  HIGH: { label: 'High', color: 'text-orange-700 bg-orange-100' },
-  MEDIUM: { label: 'Medium', color: 'text-yellow-700 bg-yellow-100' },
-  LOW: { label: 'Low', color: 'text-blue-700 bg-blue-100' }
 };
 
 /**
@@ -136,7 +121,6 @@ export function IncidentSummary({
   }, [realTime, incident.createdAt, incident.updatedAt]);
 
   const statusInfo = statusConfig[incident.status];
-  const severityInfo = severityConfig[incident.severity];
   const StatusIcon = statusInfo.icon;
 
   return (
@@ -159,20 +143,19 @@ export function IncidentSummary({
           </div>
           
           <div className="flex items-center gap-2">
-            <Badge 
-              variant={statusInfo.variant}
-              className={cn("gap-1 text-xs h-5", statusInfo.color)}
-            >
-              <StatusIcon className="h-3 w-3" />
-              {statusInfo.label}
-            </Badge>
-            
-            <Badge 
-              variant="outline"
-              className={cn("gap-1 text-xs h-5", severityInfo.color)}
-            >
-              {severityInfo.label}
-            </Badge>
+            <StatusBadge
+              status={incident.status}
+              domain="incident"
+              icon={StatusIcon}
+              label={statusInfo.label}
+              className="text-xs h-5 gap-1"
+            />
+
+            <StatusBadge
+              status={incident.severity}
+              domain="severity"
+              className="text-xs h-5 gap-1"
+            />
             
             {realTime && (
               <div className="flex items-center gap-1 text-xs text-green-600">

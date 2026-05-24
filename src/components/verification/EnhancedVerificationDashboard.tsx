@@ -11,7 +11,10 @@ import { StatusIndicator } from './StatusIndicator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { 
   CheckCircle, 
   Clock, 
@@ -95,103 +98,71 @@ export function EnhancedVerificationDashboard() {
       </div>
 
       {/* Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Pending Assessments"
+      <StatCardGrid columns={4}>
+        <StatCard
+          label="Pending Assessments"
           value={metrics?.totalPending || 0}
           icon={FileText}
-          className="border-amber-200 bg-amber-50"
-          iconClassName="text-amber-600"
+          severity="warning"
           loading={metricsLoading}
         />
         
-        <MetricCard
-          title="Pending Responses"
+        <StatCard
+          label="Pending Responses"
           value={responseMetrics?.totalPending || 0}
           icon={HeartHandshake}
-          className="border-blue-200 bg-blue-50"
-          iconClassName="text-blue-600"
+          severity="info"
           loading={responseMetricsLoading}
         />
         
-        <MetricCard
-          title="Verified Today"
+        <StatCard
+          label="Verified Today"
           value={(metrics?.totalVerified || 0) + (responseMetrics?.totalVerified || 0)}
           icon={CheckCircle}
-          className="border-green-200 bg-green-50"
-          iconClassName="text-green-600"
+          severity="success"
           loading={metricsLoading || responseMetricsLoading}
         />
         
-        <MetricCard
-          title="Auto-Verified"
+        <StatCard
+          label="Auto-Verified"
           value={(metrics?.totalAutoVerified || 0) + (responseMetrics?.totalAutoVerified || 0)}
           icon={Shield}
-          className="border-purple-200 bg-purple-50"
-          iconClassName="text-purple-600"
+          severity="info"
           loading={metricsLoading || responseMetricsLoading}
         />
-      </div>
+      </StatCardGrid>
 
       {/* Performance Metrics */}
       {metrics && (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Assessment Verification Rate</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {(metrics.verificationRate * 100).toFixed(1)}%
-              </div>
-              <p className="text-xs text-muted-foreground">
-                of assessments approved
-              </p>
-            </CardContent>
-          </Card>
+        <StatCardGrid columns={4}>
+          <StatCard
+            label="Assessment Verification Rate"
+            value={`${(metrics.verificationRate * 100).toFixed(1)}%`}
+            severity="success"
+            variant="compact"
+          />
           
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Response Verification Rate</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {responseMetrics ? (responseMetrics.verificationRate * 100).toFixed(1) : 0.0}%
-              </div>
-              <p className="text-xs text-muted-foreground">
-                of responses approved
-              </p>
-            </CardContent>
-          </Card>
+          <StatCard
+            label="Response Verification Rate"
+            value={`${responseMetrics ? (responseMetrics.verificationRate * 100).toFixed(1) : 0.0}%`}
+            severity="success"
+            variant="compact"
+          />
           
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Avg Processing Time</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">
-                {Math.round(metrics.averageProcessingTime / 60)}m
-              </div>
-              <p className="text-xs text-muted-foreground">
-                average verification time
-              </p>
-            </CardContent>
-          </Card>
+          <StatCard
+            label="Avg Processing Time"
+            value={`${Math.round(metrics.averageProcessingTime / 60)}m`}
+            severity="info"
+            variant="compact"
+          />
           
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Rejection Rate</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {(metrics.rejectionRate * 100).toFixed(1)}%
-              </div>
-              <p className="text-xs text-muted-foreground">
-                of submissions rejected
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+          <StatCard
+            label="Rejection Rate"
+            value={`${(metrics.rejectionRate * 100).toFixed(1)}%`}
+            severity="critical"
+            variant="compact"
+          />
+        </StatCardGrid>
       )}
 
       {/* Main Content Tabs */}
@@ -361,16 +332,7 @@ export function EnhancedVerificationDashboard() {
                     <div>
                       <label className="text-sm font-medium text-gray-600">Priority</label>
                       <div className="mt-1">
-                        <Badge 
-                          className={cn(
-                            selectedAssessment.priority === 'CRITICAL' && 'bg-red-100 text-red-800 border-red-300',
-                            selectedAssessment.priority === 'HIGH' && 'bg-orange-100 text-orange-800 border-orange-300',
-                            selectedAssessment.priority === 'MEDIUM' && 'bg-yellow-100 text-yellow-800 border-yellow-300',
-                            selectedAssessment.priority === 'LOW' && 'bg-green-100 text-green-800 border-green-300'
-                          )}
-                        >
-                          {selectedAssessment.priority}
-                        </Badge>
+                        <StatusBadge status={selectedAssessment.priority} domain="severity" />
                       </div>
                     </div>
 
@@ -442,17 +404,7 @@ export function EnhancedVerificationDashboard() {
                     <div>
                       <label className="text-sm font-medium text-gray-600">Verification Status</label>
                       <div className="mt-1">
-                        <Badge 
-                          className={cn(
-                            'font-medium',
-                            selectedResponse.verificationStatus === 'VERIFIED' && 'bg-green-100 text-green-800',
-                            selectedResponse.verificationStatus === 'REJECTED' && 'bg-red-100 text-red-800',
-                            selectedResponse.verificationStatus === 'SUBMITTED' && 'bg-amber-100 text-amber-800',
-                            selectedResponse.verificationStatus === 'AUTO_VERIFIED' && 'bg-blue-100 text-blue-800'
-                          )}
-                        >
-                          {selectedResponse.verificationStatus.replace('_', ' ')}
-                        </Badge>
+                        <StatusBadge status={selectedResponse.verificationStatus} domain="verification" />
                       </div>
                     </div>
 
@@ -460,16 +412,7 @@ export function EnhancedVerificationDashboard() {
                     <div>
                       <label className="text-sm font-medium text-gray-600">Priority</label>
                       <div className="mt-1">
-                        <Badge 
-                          className={cn(
-                            selectedResponse.priority === 'CRITICAL' && 'bg-red-100 text-red-800 border-red-300',
-                            selectedResponse.priority === 'HIGH' && 'bg-orange-100 text-orange-800 border-orange-300',
-                            selectedResponse.priority === 'MEDIUM' && 'bg-yellow-100 text-yellow-800 border-yellow-300',
-                            selectedResponse.priority === 'LOW' && 'bg-green-100 text-green-800 border-green-300'
-                          )}
-                        >
-                          {selectedResponse.priority}
-                        </Badge>
+                        <StatusBadge status={selectedResponse.priority} domain="severity" />
                       </div>
                     </div>
 
@@ -590,39 +533,3 @@ export function EnhancedVerificationDashboard() {
   );
 }
 
-// Metric Card Component
-interface MetricCardProps {
-  title: string;
-  value: number;
-  icon: React.ComponentType<{ className?: string }>;
-  className?: string;
-  iconClassName?: string;
-  loading?: boolean;
-}
-
-function MetricCard({ 
-  title, 
-  value, 
-  icon: Icon, 
-  className, 
-  iconClassName, 
-  loading 
-}: MetricCardProps) {
-  return (
-    <Card className={cn(className)}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600">{title}</p>
-            {loading ? (
-              <div className="h-8 w-16 bg-gray-200 animate-pulse rounded mt-1"></div>
-            ) : (
-              <p className="text-2xl font-bold">{value.toLocaleString()}</p>
-            )}
-          </div>
-          <Icon className={cn('h-6 w-6', iconClassName)} />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}

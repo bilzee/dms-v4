@@ -39,6 +39,7 @@ import { ResponseService } from '@/lib/services/response-client.service'
 import { CreatePlannedResponseInput, CreateDeliveredResponseInput, ResponseItem } from '@/lib/validation/response'
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet, extractArray } from '@/lib/api'
+import { getDotColor } from '@/components/shared/StatusBadge'
 
 const ResponseItemSchema = z.object({
   name: z.string().min(1, 'Item name is required'),
@@ -698,25 +699,25 @@ export function ResponsePlanningForm({
                               <SelectContent>
                                 <SelectItem value="CRITICAL">
                                   <span className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                    <div className={`w-3 h-3 ${getDotColor('severity', 'CRITICAL')} rounded-full`}></div>
                                     Critical
                                   </span>
                                 </SelectItem>
                                 <SelectItem value="HIGH">
                                   <span className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                                    <div className={`w-3 h-3 ${getDotColor('severity', 'HIGH')} rounded-full`}></div>
                                     High
                                   </span>
                                 </SelectItem>
                                 <SelectItem value="MEDIUM">
                                   <span className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                    <div className={`w-3 h-3 ${getDotColor('severity', 'MEDIUM')} rounded-full`}></div>
                                     Medium
                                   </span>
                                 </SelectItem>
                                 <SelectItem value="LOW">
                                   <span className="flex items-center gap-2">
-                                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                    <div className={`w-3 h-3 ${getDotColor('severity', 'LOW')} rounded-full`}></div>
                                     Low
                                   </span>
                                 </SelectItem>
@@ -841,9 +842,9 @@ export function ResponsePlanningForm({
                                   <FormItem>
                                     <FormLabel className="text-sm">Quantity *</FormLabel>
                                     <FormControl>
-                                      <Input 
-                                        type="number" 
-                                        placeholder="0" 
+                                      <Input
+                                        type="number"
+                                        placeholder="0"
                                         min="1"
                                         {...field}
                                         onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
@@ -910,7 +911,7 @@ export function ResponsePlanningForm({
                         >
                           {isLoading ? 'Saving...' : 'Create Plan'}
                         </Button>
-                        
+
                         <Button
                           type="button"
                           variant="default"
@@ -920,7 +921,7 @@ export function ResponsePlanningForm({
                         >
                           {createDeliveredMutation.isPending ? 'Creating...' : 'Create Delivery Directly'}
                         </Button>
-                        
+
                         <Button
                           type="button"
                           variant="outline"
@@ -940,9 +941,9 @@ export function ResponsePlanningForm({
                         >
                           {isLoading ? 'Updating...' : 'Update Response'}
                         </Button>
-                        
+
                         <div></div>
-                        
+
                         <Button
                           type="button"
                           variant="outline"
@@ -962,9 +963,9 @@ export function ResponsePlanningForm({
                         >
                           {isLoading ? 'Saving...' : 'Update Plan'}
                         </Button>
-                        
+
                         <div></div>
-                        
+
                         <Button
                           type="button"
                           variant="outline"
@@ -1086,25 +1087,25 @@ export function ResponsePlanningForm({
                           <SelectContent>
                             <SelectItem value="CRITICAL">
                               <span className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <div className={`w-3 h-3 ${getDotColor('severity', 'CRITICAL')} rounded-full`}></div>
                                 Critical
                               </span>
                             </SelectItem>
                             <SelectItem value="HIGH">
                               <span className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                                <div className={`w-3 h-3 ${getDotColor('severity', 'HIGH')} rounded-full`}></div>
                                 High
                               </span>
                             </SelectItem>
                             <SelectItem value="MEDIUM">
                               <span className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                <div className={`w-3 h-3 ${getDotColor('severity', 'MEDIUM')} rounded-full`}></div>
                                 Medium
                               </span>
                             </SelectItem>
                             <SelectItem value="LOW">
                               <span className="flex items-center gap-2">
-                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <div className={`w-3 h-3 ${getDotColor('severity', 'LOW')} rounded-full`}></div>
                                 Low
                               </span>
                             </SelectItem>

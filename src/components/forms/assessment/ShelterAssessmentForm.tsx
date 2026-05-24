@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { GPSCapture } from '@/components/shared/GPSCapture'
 import { MediaField } from '@/components/shared/MediaField'
 import { EntitySelector } from '@/components/shared/EntitySelector'
@@ -305,8 +306,7 @@ export function ShelterAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Shelters Sufficient
-                          {!field.value && <Badge variant="destructive">Gap</Badge>}
-                          {field.value && <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>}
+                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                         </FormLabel>
                         <FormDescription>
                           Available shelters are sufficient for the affected population
@@ -331,8 +331,7 @@ export function ShelterAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Safe Structures
-                          {!field.value && <Badge variant="destructive">Gap</Badge>}
-                          {field.value && <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>}
+                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                         </FormLabel>
                         <FormDescription>
                           Existing shelters are structurally safe and secure
@@ -358,8 +357,7 @@ export function ShelterAssessmentForm({
                         <FormLabel className="flex items-center gap-2">
                           <Cloud className="h-4 w-4" />
                           Weather Protection
-                          {!field.value && <Badge variant="destructive">Gap</Badge>}
-                          {field.value && <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>}
+                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                         </FormLabel>
                         <FormDescription>
                           Shelters provide adequate protection from weather elements
@@ -385,7 +383,7 @@ export function ShelterAssessmentForm({
                         <FormLabel className="flex items-center gap-2">
                           <Users className="h-4 w-4" />
                           Overcrowding Issues
-                          {field.value && <Badge variant="destructive">Health Risk</Badge>}
+                          {field.value && <StatusBadge domain="assessment" status="PUBLIC_HEALTH_RISK" label="Health Risk" />}
                         </FormLabel>
                         <FormDescription>
                           Shelters are overcrowded beyond safe capacity

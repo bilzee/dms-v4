@@ -10,17 +10,21 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  ArrowLeft, 
-  Download, 
-  MapPin, 
-  Users, 
-  Calendar,
+import {
+  ArrowLeft,
+  Download,
+  MapPin,
+  Users,
   TrendingUp,
   AlertTriangle,
   FileText,
-  Activity
+  Activity,
+  UsersRound,
+  ShieldCheck,
+  ClipboardList,
+  Clock
 } from 'lucide-react'
+import { StatCard } from '@/components/shared/StatCard'
 
 import { EntityInsightsHeader } from '@/components/donor/EntityInsightsHeader'
 import { AssessmentViewer } from '@/components/donor/AssessmentViewer'
@@ -262,53 +266,53 @@ export default function EntityInsightsPage() {
               </Card>
 
               {/* Quick Stats */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Entity Overview
-                  </CardTitle>
-                  <CardDescription>
-                    Key metrics and population information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {demographics.demographics?.population && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Total Population</span>
-                        <span className="font-semibold">{demographics.demographics.population.toLocaleString()}</span>
-                      </div>
-                    )}
-                    
-                    {demographics.demographics?.vulnerableCount && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Vulnerable Population</span>
-                        <span className="font-semibold">{demographics.demographics.vulnerableCount.toLocaleString()}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Verified Assessments</span>
-                      <span className="font-semibold">{demographics.stats?.verifiedAssessments || 0}</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Active Commitments</span>
-                      <span className="font-semibold">{demographics.stats?.pendingCommitments || 0}</span>
-                    </div>
-                    
-                    {demographics.latestActivity?.lastAssessment && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Last Assessment</span>
-                        <span className="font-semibold">
-                          {new Date(demographics.latestActivity.lastAssessment).toLocaleDateString()}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {demographics.demographics?.population ? (
+                  <StatCard
+                    label="Total Population"
+                    value={demographics.demographics.population.toLocaleString()}
+                    severity="info"
+                    variant="compact"
+                    icon={Users}
+                  />
+                ) : null}
+
+                {demographics.demographics?.vulnerableCount ? (
+                  <StatCard
+                    label="Vulnerable Population"
+                    value={demographics.demographics.vulnerableCount.toLocaleString()}
+                    severity="warning"
+                    variant="compact"
+                    icon={UsersRound}
+                  />
+                ) : null}
+
+                <StatCard
+                  label="Verified Assessments"
+                  value={demographics.stats?.verifiedAssessments || 0}
+                  severity="success"
+                  variant="compact"
+                  icon={ShieldCheck}
+                />
+
+                <StatCard
+                  label="Active Commitments"
+                  value={demographics.stats?.pendingCommitments || 0}
+                  severity="medium"
+                  variant="compact"
+                  icon={ClipboardList}
+                />
+
+                {demographics.latestActivity?.lastAssessment && (
+                  <StatCard
+                    label="Last Assessment"
+                    value={new Date(demographics.latestActivity.lastAssessment).toLocaleDateString()}
+                    severity="neutral"
+                    variant="compact"
+                    icon={Clock}
+                  />
+                )}
+              </div>
             </div>
 
             {/* Critical Gaps Alert */}

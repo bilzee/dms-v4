@@ -3,8 +3,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Calendar } from '@/components/ui/calendar';
@@ -105,13 +108,6 @@ export default function EntityIncidentMapPage() {
     LOW: '#16a34a',
   } as const;
 
-  const PRIORITY_STYLES = {
-    CRITICAL: 'bg-red-100 text-red-800 border-red-300',
-    HIGH: 'bg-orange-100 text-orange-800 border-orange-300',
-    MEDIUM: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    LOW: 'bg-green-100 text-green-800 border-green-300',
-  } as const;
-
   if (incidentsLoading) {
     return (
       <div className="container mx-auto py-6">
@@ -179,12 +175,11 @@ export default function EntityIncidentMapPage() {
                   {incidents.map((incident) => (
                     <SelectItem key={incident.id} value={incident.id}>
                       <div className="flex items-center gap-2">
-                        <Badge 
-                          variant="outline" 
-                          className={PRIORITY_STYLES[incident.severity as keyof typeof PRIORITY_STYLES]}
-                        >
-                          {incident.type}
-                        </Badge>
+                        <StatusBadge 
+                          status={incident.severity} 
+                          domain="severity" 
+                          label={incident.type} 
+                        />
                         <span>{incident.description.substring(0, 40)}...</span>
                       </div>
                     </SelectItem>
@@ -303,12 +298,10 @@ export default function EntityIncidentMapPage() {
                     Created: {format(new Date(selectedIncident.createdAt), 'MMM dd, yyyy')}
                   </p>
                 </div>
-                <Badge 
-                  variant="outline" 
-                  className={PRIORITY_STYLES[selectedIncident.severity as keyof typeof PRIORITY_STYLES]}
-                >
-                  {selectedIncident.severity}
-                </Badge>
+                <StatusBadge 
+                  status={selectedIncident.severity} 
+                  domain="severity" 
+                />
               </div>
             </div>
           )}
@@ -317,49 +310,28 @@ export default function EntityIncidentMapPage() {
 
       {/* Incident Overview Cards */}
       {selectedIncident && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Assessments</p>
-                  <p className="text-2xl font-bold">
-                    {summaryLoading ? '...' : assessmentSummary?.totalAssessments || 0}
-                  </p>
-                </div>
-                <FileText className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Affected Entities</p>
-                  <p className="text-2xl font-bold">
-                    {summaryLoading ? '...' : assessmentSummary?.totalEntities || 0}
-                  </p>
-                </div>
-                <Users className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Critical Priority</p>
-                  <p className="text-2xl font-bold">
-                    {summaryLoading ? '...' : assessmentSummary?.priorityDistribution?.CRITICAL || 0}
-                  </p>
-                </div>
-                <AlertTriangle className="h-8 w-8 text-red-600" />
-              </div>
-            </CardContent>
-          </Card>
-
+        <StatCardGrid columns={4}>
+          <StatCard
+            label="Total Assessments"
+            value={summaryLoading ? '...' : assessmentSummary?.totalAssessments || 0}
+            severity="info"
+            icon={FileText}
+            loading={summaryLoading}
+          />
+          <StatCard
+            label="Affected Entities"
+            value={summaryLoading ? '...' : assessmentSummary?.totalEntities || 0}
+            severity="warning"
+            icon={Users}
+            loading={summaryLoading}
+          />
+          <StatCard
+            label="Critical Priority"
+            value={summaryLoading ? '...' : assessmentSummary?.priorityDistribution?.CRITICAL || 0}
+            severity="critical"
+            icon={AlertTriangle}
+            loading={summaryLoading}
+          />
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -374,7 +346,7 @@ export default function EntityIncidentMapPage() {
               </p>
             </CardContent>
           </Card>
-        </div>
+        </StatCardGrid>
       )}
 
       {/* Assessment Visualization Tabs */}

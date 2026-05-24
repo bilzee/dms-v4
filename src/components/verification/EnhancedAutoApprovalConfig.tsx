@@ -6,10 +6,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
@@ -452,70 +455,32 @@ export function EnhancedAutoApprovalConfig({
 
       {/* Summary metrics */}
       {!compactMode && configData?.summary && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">
-                    {shouldShowPagination ? 'Filtered Entities (Paginated)' : 'Filtered Entities'}
-                  </p>
-                  <p className="text-2xl font-bold">
-                    {filteredData.length}
-                    {shouldShowPagination && (
-                      <span className="text-sm font-normal text-gray-500 ml-2">
-                        (Page {currentPage + 1} of {totalPages})
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <MapPin className="h-6 w-6 text-gray-400" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Auto-Approval Enabled</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {filteredData.filter(e => e.enabled).length}
-                  </p>
-                </div>
-                <Shield className="h-6 w-6 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Manual Verification</p>
-                  <p className="text-2xl font-bold text-amber-600">
-                    {filteredData.filter(e => !e.enabled).length}
-                  </p>
-                </div>
-                <Settings className="h-6 w-6 text-amber-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Auto-Verified</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {filteredData.reduce((sum, e) => sum + (e.stats?.totalAutoVerified || 0), 0)}
-                  </p>
-                </div>
-                <CheckCircle className="h-6 w-6 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <StatCardGrid columns={4}>
+          <StatCard
+            label={shouldShowPagination ? 'Filtered Entities (Paginated)' : 'Filtered Entities'}
+            value={shouldShowPagination ? `${filteredData.length} (Page ${currentPage + 1} of ${totalPages})` : filteredData.length}
+            severity="info"
+            icon={MapPin}
+          />
+          <StatCard
+            label="Auto-Approval Enabled"
+            value={filteredData.filter(e => e.enabled).length}
+            severity="success"
+            icon={Shield}
+          />
+          <StatCard
+            label="Manual Verification"
+            value={filteredData.filter(e => !e.enabled).length}
+            severity="warning"
+            icon={Settings}
+          />
+          <StatCard
+            label="Total Auto-Verified"
+            value={filteredData.reduce((sum, e) => sum + (e.stats?.totalAutoVerified || 0), 0)}
+            severity="success"
+            icon={CheckCircle}
+          />
+        </StatCardGrid>
       )}
 
       {/* Conflict warnings */}
@@ -830,16 +795,7 @@ function EntityConfigCard({
               <div>
                 <Label className="font-medium text-gray-700">Max Priority</Label>
                 <div className="mt-1">
-                  <Badge 
-                    className={cn(
-                      entity.conditions.maxPriority === 'CRITICAL' && 'bg-red-100 text-red-800',
-                      entity.conditions.maxPriority === 'HIGH' && 'bg-orange-100 text-orange-800',
-                      entity.conditions.maxPriority === 'MEDIUM' && 'bg-yellow-100 text-yellow-800',
-                      entity.conditions.maxPriority === 'LOW' && 'bg-green-100 text-green-800'
-                    )}
-                  >
-                    {entity.conditions.maxPriority}
-                  </Badge>
+                  <StatusBadge status={entity.conditions.maxPriority} domain="severity" />
                 </div>
               </div>
               

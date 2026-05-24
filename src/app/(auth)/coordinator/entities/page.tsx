@@ -10,11 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Search, Users, MapPin, UserPlus, Trash2, Loader2, CheckCircle, UserCheck, AlertTriangle, Shield, User } from 'lucide-react';
+import { DataTable, type ColumnDef, type RowAction } from '@/components/shared/DataTable';
+import { Search, Users, MapPin, UserPlus, Trash2, Loader2, CheckCircle, AlertTriangle, Shield, User } from 'lucide-react';
 
 interface Entity {
   id: string;
@@ -433,61 +433,52 @@ function CoordinatorEntitiesPageContent() {
                     <div className="text-center p-8 text-muted-foreground">
                       Please select an entity above to view assigned users
                     </div>
-                  ) : isLoading ? (
-                    <div className="flex items-center justify-center p-8">
-                      <Loader2 className="h-8 w-8 animate-spin" />
-                      <span className="ml-2">Loading assigned users...</span>
-                    </div>
-                  ) : getAssignedUsers().length === 0 ? (
-                    <div className="text-center p-8 text-muted-foreground">
-                      No users assigned to this entity yet
-                    </div>
                   ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>User</TableHead>
-                          <TableHead>Roles</TableHead>
-                          <TableHead>Assigned Date</TableHead>
-                          <TableHead className="w-[100px]">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {getAssignedUsers().map((user) => (
-                          <TableRow key={user.id}>
-                            <TableCell>
-                              <div className="flex flex-col">
-                                <span className="font-medium">{user.name}</span>
-                                <span className="text-xs text-muted-foreground">{user.email}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-1">
-                                {users.find(u => u.id === user.id)?.roles
-                                  .filter(role => ['ASSESSOR', 'RESPONDER', 'DONOR'].includes(role.role.name))
-                                  .map((role) => (
-                                    <Badge key={role.role.id} variant="secondary" className="text-xs">
-                                      {role.role.name}
-                                    </Badge>
-                                  ))}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {new Date(user.assignedAt).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => deleteAssignment(user.assignmentId)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                    <DataTable
+                      data={getAssignedUsers().map(u => ({ ...u, id: u.assignmentId }))}
+                      loading={isLoading}
+                      emptyMessage="No users assigned to this entity yet"
+                      columns={[
+                        {
+                          key: 'name',
+                          header: 'User',
+                          render: (user: any) => (
+                            <div className="flex flex-col">
+                              <span className="font-medium">{user.name}</span>
+                              <span className="text-xs text-muted-foreground">{user.email}</span>
+                            </div>
+                          ),
+                        },
+                        {
+                          key: 'roles',
+                          header: 'Roles',
+                          render: (user: any) => (
+                            <div className="flex gap-1">
+                              {users.find(u => u.id === user.id)?.roles
+                                .filter(role => ['ASSESSOR', 'RESPONDER', 'DONOR'].includes(role.role.name))
+                                .map((role) => (
+                                  <Badge key={role.role.id} variant="secondary" className="text-xs">
+                                    {role.role.name}
+                                  </Badge>
+                                ))}
+                            </div>
+                          ),
+                        },
+                        {
+                          key: 'assignedAt',
+                          header: 'Assigned Date',
+                          render: (user: any) => new Date(user.assignedAt).toLocaleDateString(),
+                        },
+                      ]}
+                      actions={[
+                        {
+                          label: 'Remove',
+                          onClick: (assignmentId: string) => deleteAssignment(assignmentId),
+                          icon: Trash2,
+                          variant: 'destructive',
+                        },
+                      ]}
+                    />
                   )}
                 </div>
               </TabsContent>
@@ -497,58 +488,55 @@ function CoordinatorEntitiesPageContent() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">All Entity Assignments</h3>
                   
-                  {isLoading ? (
-                    <div className="flex items-center justify-center p-8">
-                      <Loader2 className="h-8 w-8 animate-spin" />
-                      <span className="ml-2">Loading assignments...</span>
-                    </div>
-                  ) : assignments.length === 0 ? (
-                    <div className="text-center p-8 text-muted-foreground">
-                      No assignments found. Use the &quot;Assign Users&quot; tab to create assignments.
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>User</TableHead>
-                          <TableHead>Entity</TableHead>
-                          <TableHead>Entity Type</TableHead>
-                          <TableHead>Location</TableHead>
-                          <TableHead>Assigned</TableHead>
-                          <TableHead className="w-[100px]">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {assignments.map((assignment) => (
-                          <TableRow key={assignment.id}>
-                            <TableCell>
-                              <div className="flex flex-col">
-                                <span className="font-medium">{assignment.user.name}</span>
-                                <span className="text-xs text-muted-foreground">{assignment.user.email}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-medium">{assignment.entity.name}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{assignment.entity.type}</Badge>
-                            </TableCell>
-                            <TableCell>{assignment.entity.location || 'N/A'}</TableCell>
-                            <TableCell>
-                              {new Date(assignment.assignedAt).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => deleteAssignment(assignment.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
+                  <DataTable
+                    data={assignments}
+                    loading={isLoading}
+                    emptyMessage={'No assignments found. Use the "Assign Users" tab to create assignments.'}
+                    columns={[
+                      {
+                        key: 'user.name',
+                        header: 'User',
+                        render: (assignment: any) => (
+                          <div className="flex flex-col">
+                            <span className="font-medium">{assignment.user.name}</span>
+                            <span className="text-xs text-muted-foreground">{assignment.user.email}</span>
+                          </div>
+                        ),
+                      },
+                      {
+                        key: 'entity.name',
+                        header: 'Entity',
+                        render: (assignment: any) => (
+                          <span className="font-medium">{assignment.entity.name}</span>
+                        ),
+                      },
+                      {
+                        key: 'entity.type',
+                        header: 'Entity Type',
+                        render: (assignment: any) => (
+                          <Badge variant="outline">{assignment.entity.type}</Badge>
+                        ),
+                      },
+                      {
+                        key: 'entity.location',
+                        header: 'Location',
+                        render: (assignment: any) => assignment.entity.location || 'N/A',
+                      },
+                      {
+                        key: 'assignedAt',
+                        header: 'Assigned',
+                        render: (assignment: any) => new Date(assignment.assignedAt).toLocaleDateString(),
+                      },
+                    ]}
+                    actions={[
+                      {
+                        label: 'Remove',
+                        onClick: (assignmentId: string) => deleteAssignment(assignmentId),
+                        icon: Trash2,
+                        variant: 'destructive',
+                      },
+                    ]}
+                  />
                 </div>
               </TabsContent>
             </Tabs>

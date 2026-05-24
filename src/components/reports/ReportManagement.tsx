@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge, getBadgeClasses } from '@/components/shared/StatusBadge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
@@ -67,20 +68,6 @@ interface ReportManagementProps {
 }
 
 // Status colors
-const getStatusColor = (status: ReportExecutionStatus): string => {
-  switch (status) {
-    case ReportExecutionStatus.PENDING:
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    case ReportExecutionStatus.RUNNING:
-      return 'bg-blue-100 text-blue-800 border-blue-200';
-    case ReportExecutionStatus.COMPLETED:
-      return 'bg-green-100 text-green-800 border-green-200';
-    case ReportExecutionStatus.FAILED:
-      return 'bg-red-100 text-red-800 border-red-200';
-    default:
-      return 'bg-gray-100 text-gray-800 border-gray-200';
-  }
-};
 
 const getStatusIcon = (status: ReportExecutionStatus) => {
   switch (status) {
@@ -452,7 +439,7 @@ export function ReportManagement({ className }: ReportManagementProps) {
                         {config.latestExecution && (
                           <div className={cn(
                             "p-3 rounded-lg border",
-                            getStatusColor(config.latestExecution.status)
+                            getBadgeClasses('report', config.latestExecution.status)
                           )}>
                             <div className="flex items-center gap-2">
                               {getStatusIcon(config.latestExecution.status)}
@@ -592,15 +579,12 @@ export function ReportManagement({ className }: ReportManagementProps) {
                               Created: {new Date(execution.createdAt).toLocaleString()}
                             </p>
                           </div>
-                          <div className={cn(
-                            "px-3 py-1 rounded-full text-sm font-medium",
-                            getStatusColor(execution.status)
-                          )}>
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(execution.status)}
-                              <span>{getStatusDescription(execution.status)}</span>
-                            </div>
-                          </div>
+                          <StatusBadge
+                            domain="report"
+                            status={execution.status}
+                            label={getStatusDescription(execution.status)}
+                            className="text-sm"
+                          />
                         </div>
 
                         {/* Progress for running executions */}

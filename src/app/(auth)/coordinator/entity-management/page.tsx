@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -222,65 +224,12 @@ export default function EntityManagementPage() {
 
         {/* Statistics Cards */}
         {entitiesData && (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Entities</CardTitle>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{entitiesData.items.length}</div>
-                <p className="text-xs text-muted-foreground">
-                  Across all types
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Entities</CardTitle>
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  {entitiesData.items.filter(e => e.isActive).length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Currently operational
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Auto-Approval Enabled</CardTitle>
-                <Settings className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
-                  {entitiesData.items.filter(e => e.autoApproveEnabled).length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  With auto-approval settings
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">With Coordinates</CardTitle>
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-purple-600">
-                  {entitiesData.items.filter(e => e.coordinates).length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Geo-located entities
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          <StatCardGrid columns={4} gap="lg">
+            <StatCard label="Total Entities" value={entitiesData.items.length} severity="info" icon={Building2} />
+            <StatCard label="Active Entities" value={entitiesData.items.filter(e => e.isActive).length} severity="success" icon={CheckCircle} />
+            <StatCard label="Auto-Approval Enabled" value={entitiesData.items.filter(e => e.autoApproveEnabled).length} severity="info" icon={Settings} />
+            <StatCard label="With Coordinates" value={entitiesData.items.filter(e => e.coordinates).length} severity="info" icon={MapPin} />
+          </StatCardGrid>
         )}
 
         {/* Filters */}

@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DRMS Migration Comparison 4 -- Complex / Expandable Components</title>
+  <style>
+    :root {
+      --bg: hsl(0 0% 100%);
+      --fg: hsl(222.2 84% 4.9%);
+      --card: hsl(0 0% 100%);
+      --card-fg: hsl(222.2 84% 4.9%);
+      --primary: hsl(221.2 83.2% 53.3%);
+      --primary-fg: hsl(210 40% 98%);
+      --secondary: hsl(210 40% 96%);
+      --secondary-fg: hsl(222.2 84% 4.9%);
+      --muted: hsl(210 40% 96%);
+      --muted-fg: hsl(215.4 16.3% 46.9%);
+      --border: hsl(214.3 31.8% 91.4%);
+      --radius: 0.5rem;
+      --destructive: hsl(0 84.2% 60.2%);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: hsl(210 40% 98%);
+      color: var(--fg);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Nav bar ──────────────────────────────────────────── */
+    .navbar {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      font-size: 0.9375rem;
+      color: var(--fg);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .navbar-links {
+      display: flex;
+      gap: 0.25rem;
+      list-style: none;
+      flex-wrap: wrap;
+    }
+
+    .navbar-links a {
+      font-size: 0.8125rem;
+      color: var(--muted-fg);
+      text-decoration: none;
+      padding: 0.375rem 0.75rem;
+      border-radius: var(--radius);
+      transition: background 0.15s ease, color 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .navbar-links a:hover {
+      background: var(--muted);
+      color: var(--fg);
+    }
+
+    .navbar-links a.active {
+      background: var(--primary);
+      color: var(--primary-fg);
+      font-weight: 600;
+    }
+
+    /* ── Container ────────────────────────────────────────── */
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* ── Page header ──────────────────────────────────────── */
+    .page-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding: 2rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--fg);
+      letter-spacing: -0.025em;
+      margin-bottom: 0.375rem;
+    }
+
+    .page-header p {
+      font-size: 0.875rem;
+      color: var(--muted-fg);
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* ── Comparison section ───────────────────────────────── */
+    .comparison-section {
+      margin-bottom: 3rem;
+    }
+
+    .comparison-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--fg);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .comparison-title .badge-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 9999px;
+      background: var(--primary);
+      color: var(--primary-fg);
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .comparison-subtitle {
+      font-size: 0.8125rem;
+      color: var(--muted-fg);
+      margin-bottom: 1.25rem;
+      font-family: "SF Mono", "Fira Code", monospace;
+    }
+
+    /* ── Side-by-side grid ────────────────────────────────── */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    /* ── Panel ────────────────────────────────────────────── */
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--card);
+    }
+
+    .panel-header {
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-header.left {
+      background: hsl(215 16% 92%);
+      color: hsl(215 16% 40%);
+    }
+
+    .panel-header.right {
+      background: var(--primary);
+      color: var(--primary-fg);
+    }
+
+    .panel-header .tag {
+      font-size: 0.625rem;
+      font-weight: 600;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      letter-spacing: 0.03em;
+    }
+
+    .panel-header.left .tag {
+      background: hsl(215 16% 82%);
+      color: hsl(215 16% 30%);
+    }
+
+    .panel-header.right .tag {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .panel-body {
+      padding: 1rem;
+    }
+
+    /* ── Shared component styles ──────────────────────────── */
+
+    /* Search bar */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      display: flex;
+      align-items: center;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.375rem 0.75rem;
+      flex: 1;
+      min-width: 160px;
+      font-size: 0.8125rem;
+      color: var(--muted-fg);
+    }
+
+    .search-input .icon {
+      margin-right: 0.5rem;
+      font-size: 0.75rem;
+      opacity: 0.5;
+    }
+
+    .filter-select {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.375rem 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--fg);
+      white-space: nowrap;
+    }
+
+    .filter-select::after {
+      content: " \25BC";
+      font-size: 0.5rem;
+      opacity: 0.5;
+    }
+
+    /* Card items */
+    .card-item {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 0.75rem;
+      background: var(--card);
+      overflow: hidden;
+      transition: box-shadow 0.15s ease;
+    }
+
+    .card-item:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-item.selected {
+      border-color: hsl(217 91% 73%);
+      box-shadow: 0 0 0 2px hsl(217 91% 60%);
+    }
+
+    .card-item-header {
+      padding: 0.875rem 1rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .card-item-title-group {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .card-item-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: 0.125rem;
+    }
+
+    .card-item-subtitle {
+      font-size: 0.75rem;
+      color: var(--muted-fg);
+    }
+
+    .card-item-meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--muted-fg);
+    }
+
+    .card-item-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .card-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .card-expanded-content {
+      border-top: 1px solid var(--border);
+      padding: 1rem;
+      background: hsl(210 40% 98%);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      white-space: nowrap;
+      line-height: 1.5;
+    }
+
+    .badge-critical {
+      background: hsl(0 86% 97%);
+      color: hsl(0 72% 34%);
+      border: 1px solid hsl(0 86% 90%);
+    }
+
+    .badge-high {
+      background: hsl(38 92% 95%);
+      color: hsl(25 80% 30%);
+      border: 1px solid hsl(38 92% 85%);
+    }
+
+    .badge-medium {
+      background: hsl(217 91% 97%);
+      color: hsl(217 80% 35%);
+      border: 1px solid hsl(217 91% 88%);
+    }
+
+    .badge-info {
+      background: hsl(217 91% 97%);
+      color: hsl(217 80% 35%);
+      border: 1px solid hsl(217 91% 88%);
+    }
+
+    .badge-auto {
+      background: hsl(217 91% 96%);
+      color: hsl(217 80% 42%);
+      border: 1px solid hsl(217 91% 86%);
+    }
+
+    .badge-active {
+      background: hsl(142 71% 95%);
+      color: hsl(142 64% 28%);
+      border: 1px solid hsl(142 71% 82%);
+    }
+
+    .badge-monitoring {
+      background: hsl(217 91% 96%);
+      color: hsl(217 80% 38%);
+      border: 1px solid hsl(217 91% 86%);
+    }
+
+    .badge-verified {
+      background: hsl(142 71% 95%);
+      color: hsl(142 64% 28%);
+      border: 1px solid hsl(142 71% 82%);
+    }
+
+    .badge-submitted {
+      background: hsl(38 92% 95%);
+      color: hsl(25 80% 30%);
+      border: 1px solid hsl(38 92% 85%);
+    }
+
+    .badge-delivered {
+      background: hsl(142 71% 95%);
+      color: hsl(142 64% 28%);
+      border: 1px solid hsl(142 71% 82%);
+    }
+
+    .badge-planned {
+      background: hsl(217 91% 96%);
+      color: hsl(217 80% 38%);
+      border: 1px solid hsl(217 91% 86%);
+    }
+
+    .badge-secondary {
+      background: var(--secondary);
+      color: var(--secondary-fg);
+      border: 1px solid var(--border);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--fg);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--primary-fg);
+      border-color: var(--primary);
+    }
+
+    .btn-destructive {
+      background: var(--destructive);
+      color: white;
+      border-color: var(--destructive);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .btn-outline {
+      background: var(--card);
+      border-color: var(--border);
+    }
+
+    /* Chevron icons */
+    .chevron {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.75rem;
+      color: var(--muted-fg);
+      transition: transform 0.15s ease;
+    }
+
+    .chevron-down {
+      transform: rotate(0deg);
+    }
+
+    .chevron-right {
+      transform: rotate(-90deg);
+    }
+
+    /* Detail grid */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      font-size: 0.8125rem;
+    }
+
+    .detail-grid .detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+
+    .detail-grid .detail-label {
+      font-size: 0.6875rem;
+      color: var(--muted-fg);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 600;
+    }
+
+    .detail-grid .detail-value {
+      color: var(--fg);
+      font-weight: 500;
+    }
+
+    /* Action buttons row */
+    .action-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8125rem;
+      color: var(--muted-fg);
+    }
+
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .pagination-controls .page-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--card);
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--fg);
+      cursor: pointer;
+    }
+
+    .pagination-controls .page-btn.active {
+      background: var(--primary);
+      color: var(--primary-fg);
+      border-color: var(--primary);
+    }
+
+    .pagination-controls .page-btn.nav {
+      font-size: 0.625rem;
+      color: var(--muted-fg);
+    }
+
+    /* ── Table styles ─────────────────────────────────────── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .data-table thead th {
+      background: var(--muted);
+      color: var(--muted-fg);
+      font-weight: 600;
+      text-align: left;
+      padding: 0.5rem 0.625rem;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      font-size: 0.75rem;
+    }
+
+    .data-table thead th:first-child {
+      border-radius: var(--radius) 0 0 0;
+    }
+
+    .data-table thead th:last-child {
+      border-radius: 0 var(--radius) 0 0;
+    }
+
+    .data-table tbody td {
+      padding: 0.5rem 0.625rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--fg);
+      vertical-align: top;
+      font-size: 0.8125rem;
+    }
+
+    .data-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tbody tr:hover {
+      background: hsl(210 40% 98%);
+    }
+
+    .data-table .expanded-detail td {
+      padding: 0;
+    }
+
+    .data-table .expanded-detail .expand-inner {
+      padding: 1rem;
+      background: hsl(210 40% 98%);
+      border-top: 1px solid var(--border);
+    }
+
+    /* Severity dots */
+    .severity-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 9999px;
+      margin-right: 0.375rem;
+      flex-shrink: 0;
+    }
+
+    .severity-dot.critical { background: hsl(0 72% 51%); }
+    .severity-dot.high { background: hsl(25 80% 50%); }
+    .severity-dot.medium { background: hsl(45 80% 50%); }
+
+    /* Linked items in expanded rows */
+    .linked-section {
+      margin-top: 0.75rem;
+    }
+
+    .linked-section h5 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: 0.375rem;
+    }
+
+    .linked-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.375rem 0.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      margin-bottom: 0.25rem;
+    }
+
+    /* ── Severity tint for DataCardList target ────────────── */
+    .card-item.severity-critical {
+      border-left: 3px solid hsl(0 72% 51%);
+      background: hsl(0 86% 99%);
+    }
+
+    .card-item.severity-high {
+      border-left: 3px solid hsl(25 80% 50%);
+      background: hsl(38 92% 99%);
+    }
+
+    .card-item.severity-info {
+      border-left: 3px solid hsl(217 80% 55%);
+      background: hsl(217 91% 99%);
+    }
+
+    /* ── DropdownMenu button ──────────────────────────────── */
+    .dropdown-trigger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--card);
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--muted-fg);
+      cursor: pointer;
+      letter-spacing: 0;
+    }
+
+    /* ── Differences summary box ──────────────────────────── */
+    .diff-summary {
+      margin-top: 1.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .diff-summary-header {
+      padding: 0.625rem 1rem;
+      background: hsl(210 40% 96%);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .diff-summary-body {
+      padding: 1rem;
+    }
+
+    .diff-summary ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .diff-summary li {
+      font-size: 0.8125rem;
+      color: var(--fg);
+      padding-left: 1.25rem;
+      position: relative;
+      line-height: 1.5;
+    }
+
+    .diff-summary li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 5px;
+      height: 5px;
+      border-radius: 9999px;
+    }
+
+    .diff-summary li.improvement::before {
+      background: hsl(142 64% 35%);
+    }
+
+    .diff-summary li.removal::before {
+      background: hsl(0 72% 51%);
+    }
+
+    .diff-summary li.change::before {
+      background: hsl(38 80% 50%);
+    }
+
+    /* ── Migration notes section ──────────────────────────── */
+    .migration-notes {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .migration-notes-header {
+      padding: 1rem 1.5rem;
+      background: var(--fg);
+      color: var(--primary-fg);
+      font-size: 1.125rem;
+      font-weight: 700;
+    }
+
+    .migration-notes-body {
+      padding: 1.5rem;
+    }
+
+    .note-block {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .note-block:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .note-block h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--fg);
+      margin-bottom: 0.75rem;
+    }
+
+    .note-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .note-card {
+      padding: 0.875rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .note-card .note-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted-fg);
+      margin-bottom: 0.375rem;
+    }
+
+    .note-card .note-value {
+      font-size: 0.875rem;
+      color: var(--fg);
+      line-height: 1.6;
+    }
+
+    .note-card .note-value code {
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 0.75rem;
+      background: var(--muted);
+      padding: 0.125rem 0.375rem;
+      border-radius: 0.25rem;
+      color: var(--primary);
+    }
+
+    .risk-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .risk-moderate {
+      background: hsl(38 92% 95%);
+      color: hsl(25 80% 30%);
+      border: 1px solid hsl(38 92% 85%);
+    }
+
+    .risk-high {
+      background: hsl(0 86% 97%);
+      color: hsl(0 72% 34%);
+      border: 1px solid hsl(0 86% 90%);
+    }
+
+    .recommendation {
+      background: hsl(217 91% 97%);
+      border: 1px solid hsl(217 91% 88%);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+      color: hsl(217 80% 35%);
+      margin-top: 0.75rem;
+    }
+
+    .recommendation strong {
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    /* ── Filter bar for tables ────────────────────────────── */
+    .filter-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .filter-group-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--muted-fg);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .filter-select-sm {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.375rem 0.625rem;
+      font-size: 0.8125rem;
+      color: var(--fg);
+      min-width: 100px;
+    }
+
+    .filter-select-sm::after {
+      content: " \25BC";
+      font-size: 0.5rem;
+      opacity: 0.5;
+    }
+
+    /* ── Target DataTable SearchToolbar style ─────────────── */
+    .search-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 0.75rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 0.75rem;
+    }
+
+    .search-toolbar .search-field {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      font-size: 0.8125rem;
+      color: var(--muted-fg);
+    }
+
+    .search-toolbar .search-field .icon {
+      margin-right: 0.5rem;
+    }
+
+    .search-toolbar .toolbar-divider {
+      width: 1px;
+      height: 1.25rem;
+      background: var(--border);
+    }
+
+    .search-toolbar .toolbar-filter {
+      background: var(--secondary);
+      border: none;
+      border-radius: 0.375rem;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      color: var(--fg);
+      white-space: nowrap;
+    }
+
+    /* ── Responsive ───────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+      }
+      .note-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════
+       NAV BAR
+       ═══════════════════════════════════════════════════════ -->
+  <nav class="navbar">
+    <a href="migration-comparison-index.html" class="navbar-brand">DRMS Migration Comparisons</a>
+    <ul class="navbar-links">
+      <li><a href="migration-comparison-1-tables.html">1. Tables</a></li>
+      <li><a href="migration-comparison-2-cardlists.html">2. Card Lists</a></li>
+      <li><a href="migration-comparison-3-cardgrids.html">3. Card Grids</a></li>
+      <li><a href="migration-comparison-4-complex.html" class="active">4. Complex / Expandable</a></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+
+    <!-- ═══════════════════════════════════════════════════════
+         PAGE HEADER
+         ═══════════════════════════════════════════════════════ -->
+    <div class="page-header">
+      <h1>Complex / Expandable Component Migration</h1>
+      <p>Side-by-side comparison of the two most complex components: VerificationQueue (expandable cards) and IncidentManagement (expandable table rows) vs. their DataCardList and DataTable equivalents.</p>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         COMPARISON 1: Verification Queue
+         ═══════════════════════════════════════════════════════ -->
+    <section class="comparison-section">
+      <h2 class="comparison-title">
+        <span class="badge-num">1</span>
+        Verification Queue (Expandable Cards)
+      </h2>
+      <div class="comparison-subtitle">
+        src/components/verification/VerificationQueue.tsx &rarr; DataCardList with expandable + getSeverity
+      </div>
+
+      <div class="comparison-grid">
+
+        <!-- ─── LEFT: Current Implementation ────────────── -->
+        <div class="panel">
+          <div class="panel-header left">
+            CURRENT &mdash; VerificationQueue
+            <span class="tag">~375 lines</span>
+          </div>
+          <div class="panel-body">
+
+            <!-- Search + filters -->
+            <div class="search-bar">
+              <div class="search-input">
+                <span class="icon">&#128269;</span> Search assessments...
+              </div>
+              <div class="filter-select">Status: All</div>
+              <button class="btn btn-sm btn-outline">&#8635;</button>
+            </div>
+
+            <!-- Card 1: EXPANDED + SELECTED -->
+            <div class="card-item selected">
+              <div class="card-item-header">
+                <div class="card-item-title-group">
+                  <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                    <span class="card-item-title">Rapid Assessment - Lagos Flood</span>
+                    <span class="badge badge-auto">Auto-Approve Eligible</span>
+                  </div>
+                  <div class="card-item-subtitle">Initial Assessment</div>
+                  <div class="card-item-meta">
+                    <span>&#128100; Dr. Sarah Chen</span>
+                    <span>&#128205; Lagos Island</span>
+                    <span>&#128197; 2 hours ago</span>
+                  </div>
+                </div>
+                <div class="card-item-actions">
+                  <span class="badge badge-critical">CRITICAL</span>
+                  <span class="chevron chevron-down">&#9660;</span>
+                </div>
+              </div>
+
+              <!-- Expanded section -->
+              <div class="card-expanded-content">
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value">SUBMITTED</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Assessment Type</span>
+                    <span class="detail-value">INITIAL</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Location</span>
+                    <span class="detail-value">Lagos Island, Lagos</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Assessor</span>
+                    <span class="detail-value">Dr. Sarah Chen</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Date</span>
+                    <span class="detail-value">15/05/2025</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Priority Score</span>
+                    <span class="detail-value">92/100</span>
+                  </div>
+                </div>
+                <div class="action-row">
+                  <button class="btn btn-primary btn-sm">Approve</button>
+                  <button class="btn btn-destructive btn-sm">Reject</button>
+                  <button class="btn btn-outline btn-sm">Request Review</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: COLLAPSED -->
+            <div class="card-item">
+              <div class="card-item-header">
+                <div class="card-item-title-group">
+                  <div class="card-item-title">Rapid Assessment - Abuja Fire</div>
+                  <div class="card-item-subtitle">Initial Assessment</div>
+                  <div class="card-item-meta">
+                    <span>&#128100; Ahmed Ibrahim</span>
+                    <span>&#128205; Central, Abuja</span>
+                    <span>&#128197; 5 hours ago</span>
+                  </div>
+                </div>
+                <div class="card-item-actions">
+                  <span class="badge badge-high">HIGH</span>
+                  <span class="chevron chevron-right">&#9660;</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3: COLLAPSED -->
+            <div class="card-item">
+              <div class="card-item-header">
+                <div class="card-item-title-group">
+                  <div class="card-item-title">Rapid Assessment - Kano Distribution</div>
+                  <div class="card-item-subtitle">Initial Assessment</div>
+                  <div class="card-item-meta">
+                    <span>&#128100; Mike Johnson</span>
+                    <span>&#128205; Municipal, Kano</span>
+                    <span>&#128197; 1 day ago</span>
+                  </div>
+                </div>
+                <div class="card-item-actions">
+                  <span class="badge badge-medium">MEDIUM</span>
+                  <span class="chevron chevron-right">&#9660;</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+              <span>Showing 1&ndash;3 of 15</span>
+              <div class="pagination-controls">
+                <span class="page-btn nav">&lsaquo;</span>
+                <span class="page-btn active">1</span>
+                <span class="page-btn">2</span>
+                <span class="page-btn">3</span>
+                <span class="page-btn nav">&rsaquo;</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ─── RIGHT: Target DataCardList ──────────────── -->
+        <div class="panel">
+          <div class="panel-header right">
+            TARGET &mdash; DataCardList Migration
+            <span class="tag">expandable + getSeverity</span>
+          </div>
+          <div class="panel-body">
+
+            <!-- SearchToolbar integrated -->
+            <div class="search-toolbar">
+              <div class="search-field">
+                <span class="icon">&#128269;</span> Search assessments...
+              </div>
+              <div class="toolbar-divider"></div>
+              <span class="toolbar-filter">Priority: All</span>
+              <span class="toolbar-filter">Status: All</span>
+            </div>
+
+            <!-- Card 1: EXPANDED with severity tint -->
+            <div class="card-item selected severity-critical">
+              <div class="card-item-header">
+                <div class="card-item-title-group">
+                  <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                    <span class="card-item-title">Rapid Assessment - Lagos Flood</span>
+                    <span class="badge badge-auto">Auto-Approve Eligible</span>
+                  </div>
+                  <div class="card-item-subtitle">Initial Assessment</div>
+                  <div class="card-item-meta">
+                    <span>&#128100; Dr. Sarah Chen</span>
+                    <span>&#128205; Lagos Island</span>
+                    <span>&#128197; 2 hours ago</span>
+                  </div>
+                </div>
+                <div class="card-item-actions">
+                  <span class="badge badge-critical">CRITICAL</span>
+                  <span class="chevron chevron-down" style="background: hsl(0 86% 92%); border-radius: 0.25rem;">&#9660;</span>
+                </div>
+              </div>
+
+              <!-- Expanded via renderExpanded -->
+              <div class="card-expanded-content" style="background: hsl(0 86% 97%);">
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value">SUBMITTED</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Assessment Type</span>
+                    <span class="detail-value">INITIAL</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Location</span>
+                    <span class="detail-value">Lagos Island, Lagos</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Assessor</span>
+                    <span class="detail-value">Dr. Sarah Chen</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Date</span>
+                    <span class="detail-value">15/05/2025</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Priority Score</span>
+                    <span class="detail-value">92/100</span>
+                  </div>
+                </div>
+                <div class="action-row">
+                  <button class="btn btn-primary btn-sm">Approve</button>
+                  <button class="btn btn-destructive btn-sm">Reject</button>
+                  <button class="btn btn-outline btn-sm">Request Review</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: COLLAPSED with HIGH severity tint -->
+            <div class="card-item severity-high">
+              <div class="card-item-header">
+                <div class="card-item-title-group">
+                  <div class="card-item-title">Rapid Assessment - Abuja Fire</div>
+                  <div class="card-item-subtitle">Initial Assessment</div>
+                  <div class="card-item-meta">
+                    <span>&#128100; Ahmed Ibrahim</span>
+                    <span>&#128205; Central, Abuja</span>
+                    <span>&#128197; 5 hours ago</span>
+                  </div>
+                </div>
+                <div class="card-item-actions">
+                  <span class="badge badge-high">HIGH</span>
+                  <span class="chevron chevron-right" style="background: hsl(38 92% 90%); border-radius: 0.25rem;">&#9660;</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3: COLLAPSED with MEDIUM severity tint -->
+            <div class="card-item severity-info">
+              <div class="card-item-header">
+                <div class="card-item-title-group">
+                  <div class="card-item-title">Rapid Assessment - Kano Distribution</div>
+                  <div class="card-item-subtitle">Initial Assessment</div>
+                  <div class="card-item-meta">
+                    <span>&#128100; Mike Johnson</span>
+                    <span>&#128205; Municipal, Kano</span>
+                    <span>&#128197; 1 day ago</span>
+                  </div>
+                </div>
+                <div class="card-item-actions">
+                  <span class="badge badge-medium">MEDIUM</span>
+                  <span class="chevron chevron-right" style="background: hsl(217 91% 92%); border-radius: 0.25rem;">&#9660;</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- PaginationBar component -->
+            <div class="pagination" style="border-top: 2px solid var(--border);">
+              <span>Showing 1&ndash;3 of 15</span>
+              <div class="pagination-controls">
+                <span class="page-btn nav">&lsaquo;</span>
+                <span class="page-btn active">1</span>
+                <span class="page-btn">2</span>
+                <span class="page-btn">3</span>
+                <span class="page-btn nav">&rsaquo;</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Differences Summary -->
+      <div class="diff-summary">
+        <div class="diff-summary-header">&#9881; Differences Summary &mdash; VerificationQueue</div>
+        <div class="diff-summary-body">
+          <ul>
+            <li class="improvement"><strong>Severity tint provides instant visual priority cue.</strong> Each card gets a left-border color and background tint based on <code>getSeverity()</code> (CRITICAL = red, HIGH = amber, MEDIUM = blue). The current implementation has no visual differentiation until you read the badge.</li>
+            <li class="improvement"><strong>Unified expand/collapse behavior.</strong> DataCardList manages expanded state internally via <code>expandable=true</code> with <code>renderExpanded</code>. The current component manually tracks <code>expandedItems: Set&lt;string&gt;</code> with a toggle handler.</li>
+            <li class="improvement"><strong>Consistent card padding and spacing.</strong> All cards follow the same internal layout contract from DataCardList, eliminating ad-hoc <code>cn()</code> class merging per card.</li>
+            <li class="improvement"><strong>Standard SearchToolbar integration.</strong> Search + filters are composed in a single toolbar row rather than a custom flex layout with individual <code>Select</code> and <code>Input</code> components.</li>
+            <li class="improvement"><strong>Standard PaginationBar component.</strong> Replaces the hand-built "Showing X-Y of Z" + Previous/Next buttons with a consistent <code>&lt;PaginationBar /&gt;</code>.</li>
+            <li class="change"><strong>Selected state preserved.</strong> The <code>ring-2 ring-blue-500</code> highlight from the current implementation maps directly to DataCardList's built-in selection support.</li>
+            <li class="removal"><strong>Removed inline styling and manual <code>cn()</code> calls</strong> for per-card padding, hover shadow, and transition classes -- all handled by the DataCardList container.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         COMPARISON 2: Incident Management
+         ═══════════════════════════════════════════════════════ -->
+    <section class="comparison-section">
+      <h2 class="comparison-title">
+        <span class="badge-num">2</span>
+        Incident Management (Expandable Table Rows)
+      </h2>
+      <div class="comparison-subtitle">
+        src/components/coordinator/IncidentManagement.tsx &rarr; DataTable with expandable + SearchToolbar + FilterConfig
+      </div>
+
+      <div class="comparison-grid">
+
+        <!-- ─── LEFT: Current Implementation ────────────── -->
+        <div class="panel">
+          <div class="panel-header left">
+            CURRENT &mdash; IncidentManagement
+            <span class="tag">~960 lines</span>
+          </div>
+          <div class="panel-body">
+
+            <!-- Filters section -->
+            <div class="filter-bar">
+              <div class="filter-group">
+                <span class="filter-group-label">Search</span>
+                <div class="search-input" style="min-width: 120px;">
+                  <span class="icon">&#128269;</span> Search by location...
+                </div>
+              </div>
+              <div class="filter-group">
+                <span class="filter-group-label">Type</span>
+                <div class="filter-select-sm">All &#9662;</div>
+              </div>
+              <div class="filter-group">
+                <span class="filter-group-label">Status</span>
+                <div class="filter-select-sm">All &#9662;</div>
+              </div>
+              <div class="filter-group">
+                <span class="filter-group-label">Severity</span>
+                <div class="filter-select-sm">All &#9662;</div>
+              </div>
+              <div class="filter-group">
+                <span class="filter-group-label">Date</span>
+                <div class="filter-select-sm">All &#9662;</div>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width: 28px;"></th>
+                  <th>#</th>
+                  <th>Incident</th>
+                  <th>Type</th>
+                  <th>Location</th>
+                  <th>Severity</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Row 1: EXPANDED -->
+                <tr style="background: hsl(210 40% 98%);">
+                  <td><span class="chevron chevron-down" style="background: hsl(210 40% 92%); border-radius: 0.25rem;">&#9660;</span></td>
+                  <td style="font-weight: 600; font-size: 0.75rem; color: var(--muted-fg);">INC-001</td>
+                  <td style="font-weight: 600;">Lagos Flood 2025</td>
+                  <td>FLOOD</td>
+                  <td>Lagos Island, Lagos</td>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 0.25rem;">
+                      <span class="severity-dot critical"></span>
+                      <span class="badge badge-critical">CRITICAL</span>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-active">ACTIVE</span></td>
+                  <td>15/05/2025</td>
+                  <td>
+                    <div style="display: flex; gap: 0.25rem;">
+                      <span class="dropdown-trigger" title="Edit">&#8942;</span>
+                      <span class="dropdown-trigger" title="Delete" style="color: var(--destructive);">&#8942;</span>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Expanded detail row -->
+                <tr>
+                  <td colspan="9" style="padding: 0;">
+                    <div class="expand-inner" style="background: hsl(210 40% 97%); padding: 1rem 1.25rem;">
+                      <!-- 2-col details -->
+                      <div class="detail-grid" style="margin-bottom: 1rem;">
+                        <div class="detail-item">
+                          <span class="detail-label">Description</span>
+                          <span class="detail-value">Major flooding in Lagos Island area affecting 5000+ residents</span>
+                        </div>
+                        <div class="detail-item">
+                          <span class="detail-label">Reported By</span>
+                          <span class="detail-value">Dr. Sarah Chen</span>
+                        </div>
+                        <div class="detail-item">
+                          <span class="detail-label">Affected Population</span>
+                          <span class="detail-value">5,200 people</span>
+                        </div>
+                        <div class="detail-item">
+                          <span class="detail-label">Casualties</span>
+                          <span class="detail-value" style="color: hsl(0 72% 40%);">12 reported</span>
+                        </div>
+                      </div>
+
+                      <!-- Linked Assessments -->
+                      <div class="linked-section">
+                        <h5>Linked Assessments</h5>
+                        <div class="linked-item">
+                          <span>RA-001: Initial Assessment</span>
+                          <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="badge badge-verified" style="font-size: 0.625rem;">VERIFIED</span>
+                            <span style="color: var(--muted-fg);">15/05/2025</span>
+                          </div>
+                        </div>
+                        <div class="linked-item">
+                          <span>RA-002: Detailed Assessment</span>
+                          <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="badge badge-submitted" style="font-size: 0.625rem;">SUBMITTED</span>
+                            <span style="color: var(--muted-fg);">16/05/2025</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Linked Responses -->
+                      <div class="linked-section">
+                        <h5>Linked Responses</h5>
+                        <div class="linked-item">
+                          <span>RES-001: HEALTH Response</span>
+                          <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="badge badge-delivered" style="font-size: 0.625rem;">DELIVERED</span>
+                            <span style="color: var(--muted-fg);">18/05/2025</span>
+                          </div>
+                        </div>
+                        <div class="linked-item">
+                          <span>RES-002: WASH Response</span>
+                          <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="badge badge-planned" style="font-size: 0.625rem;">PLANNED</span>
+                            <span style="color: var(--muted-fg);">25/05/2025</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Row 2: COLLAPSED -->
+                <tr>
+                  <td><span class="chevron chevron-right">&#9660;</span></td>
+                  <td style="font-weight: 600; font-size: 0.75rem; color: var(--muted-fg);">INC-002</td>
+                  <td style="font-weight: 600;">Abuja Fire Outbreak</td>
+                  <td>FIRE</td>
+                  <td>Central, Abuja</td>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 0.25rem;">
+                      <span class="severity-dot high"></span>
+                      <span class="badge badge-high">HIGH</span>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-active">ACTIVE</span></td>
+                  <td>20/05/2025</td>
+                  <td>
+                    <div style="display: flex; gap: 0.25rem;">
+                      <span class="dropdown-trigger" title="Edit">&#8942;</span>
+                      <span class="dropdown-trigger" title="Delete" style="color: var(--destructive);">&#8942;</span>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Row 3: COLLAPSED -->
+                <tr>
+                  <td><span class="chevron chevron-right">&#9660;</span></td>
+                  <td style="font-weight: 600; font-size: 0.75rem; color: var(--muted-fg);">INC-003</td>
+                  <td style="font-weight: 600;">Kano IDP Crisis</td>
+                  <td>DISPLACEMENT</td>
+                  <td>Municipal, Kano</td>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 0.25rem;">
+                      <span class="severity-dot medium"></span>
+                      <span class="badge badge-medium">MEDIUM</span>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-monitoring">MONITORING</span></td>
+                  <td>22/05/2025</td>
+                  <td>
+                    <div style="flex; gap: 0.25rem;">
+                      <span class="dropdown-trigger" title="Edit">&#8942;</span>
+                      <span class="dropdown-trigger" title="Delete" style="color: var(--destructive);">&#8942;</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+        </div>
+
+        <!-- ─── RIGHT: Target DataTable ──────────────────── -->
+        <div class="panel">
+          <div class="panel-header right">
+            TARGET &mdash; DataTable Migration
+            <span class="tag">expandable + actions</span>
+          </div>
+          <div class="panel-body">
+
+            <!-- SearchToolbar with integrated filters -->
+            <div class="search-toolbar">
+              <div class="search-field">
+                <span class="icon">&#128269;</span> Search incidents...
+              </div>
+              <div class="toolbar-divider"></div>
+              <span class="toolbar-filter">Type: All</span>
+              <span class="toolbar-filter">Status: All</span>
+              <span class="toolbar-filter">Severity: All</span>
+              <span class="toolbar-filter">Date: All</span>
+            </div>
+
+            <!-- DataTable -->
+            <table class="data-table" style="border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;">
+              <thead>
+                <tr>
+                  <th style="width: 28px;"></th>
+                  <th>#</th>
+                  <th>Incident</th>
+                  <th>Type</th>
+                  <th>Location</th>
+                  <th>Severity</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Row 1: EXPANDED via renderExpanded -->
+                <tr style="background: hsl(210 40% 98%);">
+                  <td><span class="chevron chevron-down" style="background: var(--primary); color: white; border-radius: 0.25rem;">&#9660;</span></td>
+                  <td style="font-weight: 600; font-size: 0.75rem; color: var(--muted-fg);">INC-001</td>
+                  <td style="font-weight: 600;">Lagos Flood 2025</td>
+                  <td>FLOOD</td>
+                  <td>Lagos Island, Lagos</td>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 0.25rem;">
+                      <span class="severity-dot critical"></span>
+                      <span class="badge badge-critical">CRITICAL</span>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-active">ACTIVE</span></td>
+                  <td>15/05/2025</td>
+                  <td>
+                    <div style="display: flex; gap: 0.25rem; align-items: center;">
+                      <span class="dropdown-trigger" title="Edit">&#8942;</span>
+                      <span class="dropdown-trigger" title="Delete" style="color: var(--destructive);">&#8942;</span>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Expanded detail via renderExpanded -->
+                <tr>
+                  <td colspan="9" style="padding: 0;">
+                    <div style="background: hsl(217 91% 97%); padding: 1rem 1.25rem; border-top: 2px solid var(--primary);">
+                      <!-- 2-col details -->
+                      <div class="detail-grid" style="margin-bottom: 1rem;">
+                        <div class="detail-item">
+                          <span class="detail-label">Description</span>
+                          <span class="detail-value">Major flooding in Lagos Island area affecting 5000+ residents</span>
+                        </div>
+                        <div class="detail-item">
+                          <span class="detail-label">Reported By</span>
+                          <span class="detail-value">Dr. Sarah Chen</span>
+                        </div>
+                        <div class="detail-item">
+                          <span class="detail-label">Affected Population</span>
+                          <span class="detail-value">5,200 people</span>
+                        </div>
+                        <div class="detail-item">
+                          <span class="detail-label">Casualties</span>
+                          <span class="detail-value" style="color: hsl(0 72% 40%);">12 reported</span>
+                        </div>
+                      </div>
+
+                      <!-- Linked Assessments -->
+                      <div class="linked-section">
+                        <h5>Linked Assessments</h5>
+                        <div class="linked-item">
+                          <span>RA-001: Initial Assessment</span>
+                          <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="badge badge-verified" style="font-size: 0.625rem;">VERIFIED</span>
+                            <span style="color: var(--muted-fg);">15/05/2025</span>
+                          </div>
+                        </div>
+                        <div class="linked-item">
+                          <span>RA-002: Detailed Assessment</span>
+                          <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="badge badge-submitted" style="font-size: 0.625rem;">SUBMITTED</span>
+                            <span style="color: var(--muted-fg);">16/05/2025</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Linked Responses -->
+                      <div class="linked-section">
+                        <h5>Linked Responses</h5>
+                        <div class="linked-item">
+                          <span>RES-001: HEALTH Response</span>
+                          <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="badge badge-delivered" style="font-size: 0.625rem;">DELIVERED</span>
+                            <span style="color: var(--muted-fg);">18/05/2025</span>
+                          </div>
+                        </div>
+                        <div class="linked-item">
+                          <span>RES-002: WASH Response</span>
+                          <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="badge badge-planned" style="font-size: 0.625rem;">PLANNED</span>
+                            <span style="color: var(--muted-fg);">25/05/2025</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Row 2: COLLAPSED -->
+                <tr>
+                  <td><span class="chevron chevron-right">&#9660;</span></td>
+                  <td style="font-weight: 600; font-size: 0.75rem; color: var(--muted-fg);">INC-002</td>
+                  <td style="font-weight: 600;">Abuja Fire Outbreak</td>
+                  <td>FIRE</td>
+                  <td>Central, Abuja</td>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 0.25rem;">
+                      <span class="severity-dot high"></span>
+                      <span class="badge badge-high">HIGH</span>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-active">ACTIVE</span></td>
+                  <td>20/05/2025</td>
+                  <td>
+                    <div style="display: flex; gap: 0.25rem; align-items: center;">
+                      <span class="dropdown-trigger" title="Edit">&#8942;</span>
+                      <span class="dropdown-trigger" title="Delete" style="color: var(--destructive);">&#8942;</span>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Row 3: COLLAPSED -->
+                <tr>
+                  <td><span class="chevron chevron-right">&#9660;</span></td>
+                  <td style="font-weight: 600; font-size: 0.75rem; color: var(--muted-fg);">INC-003</td>
+                  <td style="font-weight: 600;">Kano IDP Crisis</td>
+                  <td>DISPLACEMENT</td>
+                  <td>Municipal, Kano</td>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 0.25rem;">
+                      <span class="severity-dot medium"></span>
+                      <span class="badge badge-medium">MEDIUM</span>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-monitoring">MONITORING</span></td>
+                  <td>22/05/2025</td>
+                  <td>
+                    <div style="display: flex; gap: 0.25rem; align-items: center;">
+                      <span class="dropdown-trigger" title="Edit">&#8942;</span>
+                      <span class="dropdown-trigger" title="Delete" style="color: var(--destructive);">&#8942;</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Differences Summary -->
+      <div class="diff-summary">
+        <div class="diff-summary-header">&#9881; Differences Summary &mdash; IncidentManagement</div>
+        <div class="diff-summary-body">
+          <ul>
+            <li class="improvement"><strong>Unified SearchToolbar with FilterConfigs.</strong> The current component has a dedicated Card with a 4-column grid for filters. DataTable replaces this with a single <code>&lt;SearchToolbar&gt;</code> row plus declarative <code>FilterConfig[]</code> definitions (type, status, severity, date).</li>
+            <li class="improvement"><strong>Expandable rows via ColumnDef.</strong> Instead of manual <code>expandedRows: Set&lt;string&gt;</code> state and <code>colSpan</code> detail rows, DataTable uses <code>expandable=true</code> with a <code>renderExpanded</code> callback that receives the row data.</li>
+            <li class="improvement"><strong>Row actions via DropdownMenu.</strong> The current inline Edit/Delete buttons are replaced by <code>actions=[{label:"Edit", ...}, {label:"Delete", destructive:true}]</code> rendered as a standard DropdownMenu in the last column.</li>
+            <li class="improvement"><strong>Expanded section gets a branded top border.</strong> The target uses a primary-colored top border on the expanded detail panel, giving visual consistency with the chevron toggle state.</li>
+            <li class="change"><strong>SafeDataLoader retained externally.</strong> The DataTable itself handles loading/empty/error states, but the parent SafeDataLoader pattern for nested queries (incidents + incident types) stays in the parent component.</li>
+            <li class="change"><strong>Dialog triggers remain in parent.</strong> Link/unlink assessment dialogs are too specialized for DataTable. They remain as parent-level Dialog components triggered from within <code>renderExpanded</code>.</li>
+            <li class="removal"><strong>Removed ~300 lines of filter UI, pagination, and empty-state handling</strong> that DataTable now provides out of the box.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         COMPLEX MIGRATION NOTES
+         ═══════════════════════════════════════════════════════ -->
+    <section class="comparison-section">
+      <div class="migration-notes">
+        <div class="migration-notes-header">Complex Migration Notes</div>
+        <div class="migration-notes-body">
+
+          <!-- VerificationQueue -->
+          <div class="note-block">
+            <h3>VerificationQueue &mdash; <code style="font-family: 'SF Mono', monospace; font-size: 0.8125rem; font-weight: 400;">DataCardList</code> migration</h3>
+            <div class="note-grid">
+              <div class="note-card">
+                <div class="note-label">Current State</div>
+                <div class="note-value">
+                  ~375 lines. Uses <code>useVerificationQueue</code> and <code>useVerificationFilters</code> custom hooks. Manual <code>expandedItems: Set&lt;string&gt;</code> state. Inline <code>cn()</code> class merging for selection and hover states. Hand-built pagination with <code>currentPage</code> state. Separate <code>AssessmentQueueItem</code> sub-component (110+ lines).
+                </div>
+              </div>
+              <div class="note-card">
+                <div class="note-label">Target Migration</div>
+                <div class="note-value">
+                  Would use <code>&lt;DataCardList&gt;</code> with <code>getSeverity</code> (maps CRITICAL/HIGH/MEDIUM to severity tints), <code>expandable=true</code> with <code>renderExpanded</code>, <code>&lt;SearchToolbar&gt;</code> for search + status filter, and <code>&lt;PaginationBar&gt;</code>. The <code>AssessmentQueueItem</code> sub-component is eliminated entirely.
+                </div>
+              </div>
+              <div class="note-card">
+                <div class="note-label">Estimated Reduction</div>
+                <div class="note-value" style="font-size: 1.25rem; font-weight: 700; color: hsl(142 64% 35%);">
+                  ~40% fewer lines (~225 lines)
+                </div>
+              </div>
+              <div class="note-card">
+                <div class="note-label">Risk Level</div>
+                <div class="note-value">
+                  <span class="risk-tag risk-moderate">Moderate</span>
+                  <div style="margin-top: 0.5rem; font-size: 0.8125rem; color: var(--muted-fg);">
+                    Custom hooks (<code>useVerificationQueue</code>, <code>useVerificationFilters</code>) need refactoring, but the render logic simplifies significantly. The selection ring highlight and <code>onAssessmentSelect</code> callback map cleanly to DataCardList props.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- IncidentManagement -->
+          <div class="note-block">
+            <h3>IncidentManagement &mdash; <code style="font-family: 'SF Mono', monospace; font-size: 0.8125rem; font-weight: 400;">DataTable</code> migration</h3>
+            <div class="note-grid">
+              <div class="note-card">
+                <div class="note-label">Current State</div>
+                <div class="note-value">
+                  ~960 lines. Nested <code>&lt;SafeDataLoader&gt;</code> wrappers (incidents + incident types). Complex filter section with 6+ filter inputs in a Card. shadcn <code>&lt;Table&gt;</code> with manual <code>expandedRows: Set&lt;string&gt;</code> state. Expand panel shows linked assessments + linked responses + details. Dialog triggers for link/unlink assessments. Status mutation via <code>useMutation</code>.
+                </div>
+              </div>
+              <div class="note-card">
+                <div class="note-label">Target Migration</div>
+                <div class="note-value">
+                  Would use <code>&lt;DataTable&gt;</code> with <code>expandable=true</code> + <code>renderExpanded</code>, <code>&lt;SearchToolbar&gt;</code> with 6 <code>FilterConfig</code> entries, and <code>actions=[Edit, Delete (destructive)]</code>. The expanded section includes linked data inline. SafeDataLoader stays as parent wrapper.
+                </div>
+              </div>
+              <div class="note-card">
+                <div class="note-label">Estimated Reduction</div>
+                <div class="note-value" style="font-size: 1.25rem; font-weight: 700; color: hsl(38 80% 40%);">
+                  ~30% fewer lines (~670 lines)
+                </div>
+              </div>
+              <div class="note-card">
+                <div class="note-label">Risk Level</div>
+                <div class="note-value">
+                  <span class="risk-tag risk-high">High</span>
+                  <div style="margin-top: 0.5rem; font-size: 0.8125rem; color: var(--muted-fg);">
+                    Complex dialogs (link/unlink assessments) with checkbox selection, async data fetching inside expand panels, and nested <code>SafeDataLoader</code> composition. The <code>useMutation</code> for status changes and <code>router.push</code> for navigation add coupling.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="recommendation">
+              <strong>Recommendation:</strong>
+              Migrate the table/list rendering only; keep dialog logic in the parent component. Extract <code>handleLinkAssessmentClick</code>, <code>handleUnlinkAssessment</code>, and <code>handleLinkSelectedAssessments</code> into a custom <code>useIncidentAssessmentLinking</code> hook that the parent owns. The DataTable <code>renderExpanded</code> callback can trigger parent-level dialog opens via a callback prop pattern. This keeps the DataTable migration scope bounded while preserving the complex interaction logic.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

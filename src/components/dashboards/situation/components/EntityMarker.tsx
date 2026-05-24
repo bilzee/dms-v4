@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { getBadgeClasses, getDotColor } from '@/components/shared/StatusBadge';
 import { 
   MapPin, 
   Hospital, 
@@ -52,13 +53,12 @@ const ENTITY_TYPE_ICONS = {
   STATE: MapPin
 } as const;
 
-// Color mapping for severity levels
-const SEVERITY_COLORS = {
+const SEVERITY_HEX_COLORS: Record<string, string> = {
   CRITICAL: '#dc2626',
   HIGH: '#ea580c',
   MEDIUM: '#ca8a04',
   LOW: '#16a34a'
-} as const;
+};
 
 // Memoized icon cache to improve performance
 const iconCache = new Map<string, Icon | DivIcon>();
@@ -72,7 +72,7 @@ const createEntityIcon = (entity: EntityLocation, isSelected: boolean, showDonor
   }
 
   const severity = entity.gapSummary.severity;
-  const color = SEVERITY_COLORS[severity];
+  const color = SEVERITY_HEX_COLORS[severity];
   const IconComponent = ENTITY_TYPE_ICONS[entity.type as keyof typeof ENTITY_TYPE_ICONS] || MapPin;
   
   // Count donor assignments for overlay indicator
@@ -80,13 +80,14 @@ const createEntityIcon = (entity: EntityLocation, isSelected: boolean, showDonor
   
   // Get background color class based on severity
   const getSeverityClasses = (sev: string) => {
-    switch (sev.toLowerCase()) {
-      case 'critical': return 'bg-red-600 border-red-700 shadow-red-300';
-      case 'high': return 'bg-orange-600 border-orange-700 shadow-orange-300';
-      case 'medium': return 'bg-yellow-600 border-yellow-700 shadow-yellow-300';
-      case 'low': return 'bg-green-600 border-green-700 shadow-green-300';
-      default: return 'bg-gray-600 border-gray-700';
-    }
+    const dot = getDotColor('severity', sev);
+    const sevMap: Record<string, string> = {
+      CRITICAL: 'bg-red-600 border-red-700 shadow-red-300',
+      HIGH: 'bg-orange-600 border-orange-700 shadow-orange-300',
+      MEDIUM: 'bg-yellow-600 border-yellow-700 shadow-yellow-300',
+      LOW: 'bg-green-600 border-green-700 shadow-green-300'
+    };
+    return sevMap[sev] || 'bg-gray-600 border-gray-700';
   };
   
   // Create SVG for the entity type icon
@@ -186,8 +187,8 @@ const EntityPopup = memo<{ entity: EntityLocation; onMoreInfo?: () => void }>(fu
             {entity.type}
           </Badge>
           <Badge 
-            variant={entity.gapSummary.severity === 'CRITICAL' || entity.gapSummary.severity === 'HIGH' ? 'destructive' : 'secondary'}
-            className="text-xs"
+            variant="outline"
+            className={cn("text-xs", getBadgeClasses('severity', entity.gapSummary.severity))}
           >
             {entity.gapSummary.severity}
           </Badge>
@@ -195,17 +196,14 @@ const EntityPopup = memo<{ entity: EntityLocation; onMoreInfo?: () => void }>(fu
         
         {/* Gap Summary */}
         <div className={cn(
-          "p-3 rounded-lg",
-          entity.gapSummary.severity === 'CRITICAL' ? "bg-red-50 border border-red-200" :
-          entity.gapSummary.severity === 'HIGH' ? "bg-orange-50 border border-orange-200" :
-          entity.gapSummary.severity === 'MEDIUM' ? "bg-yellow-50 border border-yellow-200" :
-          "bg-green-50 border border-green-200"
+          "p-3 rounded-lg border",
+          getBadgeClasses('severity', entity.gapSummary.severity).replace(/text-\S+/g, '').replace(/border-\S+/g, '').trim()
         )}>
           <div className="flex items-center gap-2 mb-2">
             <h4 className="text-sm font-medium">Gap Analysis</h4>
             <Badge 
-              variant={entity.gapSummary.severity === 'CRITICAL' || entity.gapSummary.severity === 'HIGH' ? 'destructive' : 'secondary'}
-              className="text-xs"
+              variant="outline"
+              className={cn("text-xs", getBadgeClasses('severity', entity.gapSummary.severity))}
             >
               {entity.gapSummary.severity}
             </Badge>

@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { GPSCapture } from '@/components/shared/GPSCapture'
 import { MediaField } from '@/components/shared/MediaField'
@@ -333,11 +334,7 @@ export function HealthAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Functional Clinic
-                          {field.value ? (
-                            <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>
-                          ) : (
-                            <Badge variant="destructive">Gap</Badge>
-                          )}
+                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                         </FormLabel>
                         <FormDescription>
                           At least one functional healthcare facility exists
@@ -363,11 +360,7 @@ export function HealthAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Emergency Services
-                          {field.value ? (
-                            <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>
-                          ) : (
-                            <Badge variant="destructive">Gap</Badge>
-                          )}
+                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                         </FormLabel>
                         <FormDescription>
                           Emergency medical services are available
@@ -486,11 +479,7 @@ export function HealthAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Trained Staff
-                          {field.value ? (
-                            <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>
-                          ) : (
-                            <Badge variant="destructive">Gap</Badge>
-                          )}
+                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                         </FormLabel>
                         <FormDescription>
                           Sufficient trained medical staff available
@@ -516,11 +505,7 @@ export function HealthAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Medicine Supply
-                          {field.value ? (
-                            <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>
-                          ) : (
-                            <Badge variant="destructive">Gap</Badge>
-                          )}
+                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                         </FormLabel>
                         <FormDescription>
                           Essential medicines are available
@@ -546,11 +531,7 @@ export function HealthAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Medical Supplies
-                          {field.value ? (
-                            <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>
-                          ) : (
-                            <Badge variant="destructive">Gap</Badge>
-                          )}
+                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                         </FormLabel>
                         <FormDescription>
                           Medical equipment and supplies available
@@ -576,11 +557,7 @@ export function HealthAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Maternal & Child Services
-                          {field.value ? (
-                            <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">No Gap</Badge>
-                          ) : (
-                            <Badge variant="destructive">Gap</Badge>
-                          )}
+                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
                         </FormLabel>
                         <FormDescription>
                           Maternal and child health services available

@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { apiGet } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
@@ -21,6 +22,7 @@ import {
   Eye,
   AlertTriangle
 } from 'lucide-react'
+import { StatCard } from '@/components/shared/StatCard'
 
 interface AssessmentViewerProps {
   entityId: string
@@ -78,13 +80,6 @@ const ASSESSMENT_CATEGORIES = [
   { value: 'POPULATION', label: 'Population' }
 ]
 
-const STATUS_COLORS = {
-  'VERIFIED': 'bg-green-100 text-green-800',
-  'AUTO_VERIFIED': 'bg-blue-100 text-blue-800',
-  'SUBMITTED': 'bg-yellow-100 text-yellow-800',
-  'DRAFT': 'bg-gray-100 text-gray-800',
-  'REJECTED': 'bg-red-100 text-red-800'
-}
 
 export function AssessmentViewer({ entityId }: AssessmentViewerProps) {
   const [filters, setFilters] = useState({
@@ -207,22 +202,10 @@ export function AssessmentViewer({ entityId }: AssessmentViewerProps) {
         <CardContent>
           {/* Summary Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold">{summary.totalAssessments}</p>
-              <p className="text-sm text-gray-600">Total Assessments</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">{summary.verifiedAssessments}</p>
-              <p className="text-sm text-gray-600">Verified</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold">{summary.categories.length}</p>
-              <p className="text-sm text-gray-600">Categories</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold">{pagination.total}</p>
-              <p className="text-sm text-gray-600">Total Records</p>
-            </div>
+            <StatCard label="Total Assessments" value={summary.totalAssessments} severity="info" variant="centered" />
+            <StatCard label="Verified" value={summary.verifiedAssessments} severity="success" variant="centered" />
+            <StatCard label="Categories" value={summary.categories.length} severity="info" variant="centered" />
+            <StatCard label="Total Records" value={pagination.total} severity="neutral" variant="centered" />
           </div>
 
           {/* Filters */}
@@ -396,7 +379,6 @@ function AssessmentCard({ assessment, isExpanded, onToggleExpansion }: Assessmen
   }
 
   const assessmentData = formatAssessmentData(assessment.data)
-  const statusColor = STATUS_COLORS[assessment.status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'
 
   return (
     <div className="border rounded-lg p-4 space-y-3">
@@ -404,7 +386,7 @@ function AssessmentCard({ assessment, isExpanded, onToggleExpansion }: Assessmen
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Badge variant="outline">{assessment.type}</Badge>
-          <Badge className={statusColor}>{assessment.status}</Badge>
+          <StatusBadge domain="verification" status={assessment.status} />
           <div className="text-sm text-gray-600">
             <Calendar className="inline h-3 w-3 mr-1" />
             {new Date(assessment.date).toLocaleDateString()}

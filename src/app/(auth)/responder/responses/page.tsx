@@ -8,7 +8,10 @@ import Link from 'next/link'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -178,73 +181,13 @@ function ResponderResponsesPageContent() {
               </div>
             </div>
 
-            {/* Statistics */}
-            <div className="grid gap-4 md:grid-cols-5">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Responses</CardTitle>
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{total}</div>
-                  <p className="text-xs text-muted-foreground">
-                    All assigned responses
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Planned</CardTitle>
-                  <Clock className="h-4 w-4 text-blue-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">{plannedCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Ready for delivery
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Awaiting Verification</CardTitle>
-                  <AlertTriangle className="h-4 w-4 text-orange-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-orange-600">{awaitingVerificationCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Delivered, pending verification
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Verified</CardTitle>
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">{verifiedCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Successfully completed
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-                  <X className="h-4 w-4 text-red-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-red-600">{rejectedCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Require attention
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+            <StatCardGrid columns={5}>
+              <StatCard label="Total Responses" value={total} severity="info" icon={Package} />
+              <StatCard label="Planned" value={plannedCount} severity="info" icon={Clock} />
+              <StatCard label="Awaiting Verification" value={awaitingVerificationCount} severity="warning" icon={AlertTriangle} />
+              <StatCard label="Verified" value={verifiedCount} severity="success" icon={CheckCircle} />
+              <StatCard label="Rejected" value={rejectedCount} severity="critical" icon={X} />
+            </StatCardGrid>
 
             {/* Filters */}
             <Card>
@@ -339,21 +282,11 @@ function ResponderResponsesPageContent() {
                                 {response.status}
                               </Badge>
                               {response.verificationStatus && (
-                                <Badge variant={
-                                  response.verificationStatus === 'VERIFIED' ? 'default' :
-                                  response.verificationStatus === 'AUTO_VERIFIED' ? 'default' :
-                                  response.verificationStatus === 'REJECTED' ? 'destructive' :
-                                  response.verificationStatus === 'SUBMITTED' ? 'secondary' :
-                                  'outline'
-                                } className={
-                                  response.verificationStatus === 'VERIFIED' ? 'bg-green-100 text-green-800 border-green-200' :
-                                  response.verificationStatus === 'AUTO_VERIFIED' ? 'bg-green-100 text-green-800 border-green-200' :
-                                  response.verificationStatus === 'REJECTED' ? 'bg-red-100 text-red-800 border-red-200' :
-                                  response.verificationStatus === 'SUBMITTED' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                                  ''
-                                }>
-                                  {response.verificationStatus.replace('_', ' ')}
-                                </Badge>
+                                <StatusBadge
+                                  status={response.verificationStatus}
+                                  domain="verification"
+                                  size="sm"
+                                />
                               )}
                             </div>
                             <p className="text-sm text-gray-600">

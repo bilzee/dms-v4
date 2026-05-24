@@ -6,6 +6,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -522,55 +524,32 @@ export function ConfigurationAuditHistory({
 
       {/* Summary metrics */}
       {auditData?.summary && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Entries</p>
-                  <p className="text-2xl font-bold">{auditData.summary.totalEntries}</p>
-                </div>
-                <History className="h-6 w-6 text-gray-400" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Unique Users</p>
-                  <p className="text-2xl font-bold text-blue-600">{auditData.summary.uniqueUsers}</p>
-                </div>
-                <User className="h-6 w-6 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Configuration Changes</p>
-                  <p className="text-2xl font-bold text-green-600">{auditData.summary.configurationChanges}</p>
-                </div>
-                <Settings className="h-6 w-6 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Bulk Operations</p>
-                  <p className="text-2xl font-bold text-purple-600">{auditData.summary.bulkOperations}</p>
-                </div>
-                <History className="h-6 w-6 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <StatCardGrid columns={4}>
+          <StatCard
+            label="Total Entries"
+            value={auditData.summary.totalEntries}
+            severity="info"
+            icon={History}
+          />
+          <StatCard
+            label="Unique Users"
+            value={auditData.summary.uniqueUsers}
+            severity="info"
+            icon={User}
+          />
+          <StatCard
+            label="Configuration Changes"
+            value={auditData.summary.configurationChanges}
+            severity="info"
+            icon={Settings}
+          />
+          <StatCard
+            label="Bulk Operations"
+            value={auditData.summary.bulkOperations}
+            severity="info"
+            icon={History}
+          />
+        </StatCardGrid>
       )}
 
       {/* Audit entries */}

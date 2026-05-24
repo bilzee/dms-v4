@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { apiGet } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { getBadgeClasses } from '@/components/shared/StatusBadge';
 import {
   FileText,
   Shield,
@@ -55,47 +56,11 @@ const assessmentTypeConfig: Record<string, {
   'LOGISTICS': { icon: Truck, color: 'text-yellow-600', label: 'Logistics' }
 };
 
-/**
- * Get severity badge styling
- */
-const getSeverityBadge = (severity?: string) => {
-  switch (severity) {
-    case 'CRITICAL':
-      return { 
-        label: 'Critical', 
-        variant: 'destructive' as const,
-        className: 'bg-red-600 text-white border-red-600 hover:bg-red-700',
-        shouldFlash: true
-      };
-    case 'HIGH':
-      return { 
-        label: 'High', 
-        variant: 'destructive' as const,
-        className: 'bg-orange-600 text-white border-orange-600 hover:bg-orange-700',
-        shouldFlash: true
-      };
-    case 'MEDIUM':
-      return { 
-        label: 'Medium', 
-        variant: 'secondary' as const,
-        className: 'bg-yellow-600 text-white border-yellow-600 hover:bg-yellow-700',
-        shouldFlash: false
-      };
-    case 'LOW':
-      return { 
-        label: 'Low', 
-        variant: 'secondary' as const,
-        className: 'bg-green-600 text-white border-green-600 hover:bg-green-700',
-        shouldFlash: false
-      };
-    default:
-      return { 
-        label: 'Unknown', 
-        variant: 'secondary' as const,
-        className: 'bg-gray-600 text-white border-gray-600',
-        shouldFlash: false
-      };
-  }
+const shouldFlashMap: Record<string, boolean> = {
+  CRITICAL: true,
+  HIGH: true,
+  MEDIUM: false,
+  LOW: false
 };
 
 /**
@@ -297,7 +262,8 @@ export function CompactAssessmentTile({ incidentId, className }: CompactAssessme
             };
             const Icon = config.icon;
             const completion = getCompletionPercentage(assessment.verified, assessment.total);
-            const severityBadge = getSeverityBadge(assessment.severity);
+            const severityBadgeClasses = assessment.severity ? getBadgeClasses('severity', assessment.severity) : '';
+            const shouldFlash = assessment.severity ? (shouldFlashMap[assessment.severity] ?? false) : false;
             
             return (
               <div key={assessment.type} className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors relative">
@@ -309,15 +275,15 @@ export function CompactAssessmentTile({ incidentId, className }: CompactAssessme
                   {assessment.severity && (
                     <div className="relative">
                       <Badge 
-                        variant={severityBadge.variant} 
+                        variant="outline"
                         className={cn(
                           "text-xs border transition-all duration-300 gap-1", 
-                          severityBadge.className,
-                          severityBadge.shouldFlash && "animate-pulse"
+                          severityBadgeClasses,
+                          shouldFlash && "animate-pulse"
                         )}
                       >
                         <AlertTriangle className="h-2.5 w-2.5" />
-                        {severityBadge.label}
+                        {assessment.severity}
                       </Badge>
                     </div>
                   )}
