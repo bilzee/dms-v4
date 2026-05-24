@@ -15,7 +15,7 @@ import { DataTable, type ColumnDef, type RowAction } from '@/components/shared/D
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { Edit, Plus, Trash2, Shield, Key, Users } from 'lucide-react'
-import { useToast } from '@/components/ui/use-toast'
+import { toast } from 'sonner'
 
 const roleColumns: ColumnDef<Role>[] = [
   { key: 'name', header: 'Role', render: (role) => <span className="font-medium">{role.name}</span> },
@@ -88,8 +88,6 @@ export default function RolesPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null)
   const { hasPermission } = useAuth()
-  const { toast } = useToast()
-
   
   // Fetch roles and permissions from backend
   const fetchRoles = async () => {
@@ -256,10 +254,10 @@ export default function RolesPage() {
                         setRoleToDelete(null)
                         fetchRoles()
                       } else {
-                        toast({ title: 'Error', description: res.error || 'Failed to delete role', variant: 'destructive' })
+                        toast.error(res.error || 'Failed to delete role')
                       }
                     } catch {
-                      toast({ title: 'Error', description: 'Failed to delete role', variant: 'destructive' })
+                      toast.error('Failed to delete role')
                     }
                   }}
                 >
@@ -305,7 +303,6 @@ function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
     role?.permissions?.map(rp => rp.permission.code) || []
   )
   const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
   // Fetch permissions for the form
   React.useEffect(() => {
     apiGet('/api/v1/permissions')
@@ -341,7 +338,7 @@ function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
       }
     } catch (error) {
       console.error('Error saving role:', error)
-      toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to save role', variant: 'destructive' })
+      toast.error(error instanceof Error ? error.message : 'Failed to save role')
     } finally {
       setIsLoading(false)
     }

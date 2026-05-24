@@ -18,6 +18,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { GapIndicator } from './GapIndicator';
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 
 interface GapAnalysisSummaryProps {
   incidentId: string;
@@ -170,11 +171,7 @@ export function GapAnalysisSummary({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="h-4 bg-gray-200 rounded animate-pulse" />
-            <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
-            <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2" />
-          </div>
+          <ContentSkeleton variant="card" />
         </CardContent>
       </Card>
     );

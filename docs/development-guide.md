@@ -240,7 +240,11 @@ src/components/
   reports/          # Report generation components
   response/         # Response management components
   settings/         # Settings and configuration components
-  shared/           # Shared/common components (RoleBasedRoute, etc.)
+  shared/           # Unified design system component layer
+                    StatCard, StatusBadge, FormCard, FormActionBar,
+                    FilterPanel, FilterBar, ContentSkeleton, ErrorAlert,
+                    ProgressBar, DataTable, DataCardList, DataCardGrid,
+                    SafeDataLoader, EmptyState, RoleBasedRoute, AppShell
   testing/          # Test utility components
   ui/               # Base UI primitives (Radix-based)
   verification/     # Verification workflow components
@@ -418,6 +422,63 @@ The application provides offline-first capabilities through dedicated hooks and 
 - Records created while offline are marked with `isOfflineCreated: true`.
 - Offline data is stored using Dexie (IndexedDB) via services like `delivery-offline.service.ts` and `response-offline.service.ts`.
 - The sync store (`src/stores/sync.store.ts`) manages the synchronization queue and conflict resolution.
+
+### Design System Patterns
+
+The application uses a unified design system layer in `src/components/shared/`. When building new features, prefer these components over creating ad-hoc solutions:
+
+**Forms**: Use `FormCard` + `FormActionBar` instead of raw Card + Button combos.
+```tsx
+<FormCard title="Create Entity" variant="default" columns={2}>
+  <form onSubmit={handleSubmit(onSubmit)}>
+    <FormCard.Section title="Details">...</FormCard.Section>
+    <FormActionBar submitLabel="Create" loading={isSubmitting} onCancel={() => reset()} />
+  </form>
+</FormCard>
+```
+
+**Metrics**: Use `StatCard` + `StatCardGrid` instead of custom metric cards.
+```tsx
+<StatCardGrid>
+  <StatCard title="Total Users" value={42} variant="default" trend={{ value: 12, direction: 'up' }} />
+  <StatCard title="Errors" value={3} variant="danger" />
+</StatCardGrid>
+```
+
+**Status Indicators**: Use `StatusBadge` with domain-aware colors from `status-colors.ts`.
+```tsx
+<StatusBadge domain="verification" status="VERIFIED" />
+<StatusBadge domain="commitment" status="COMPLETE" />
+```
+
+**Loading States**: Use `ContentSkeleton` instead of `animate-pulse` divs.
+```tsx
+{isLoading ? <ContentSkeleton variant="table" rows={5} /> : <MyTable data={data} />}
+```
+
+**Error States**: Use `ErrorAlert` instead of custom error divs.
+```tsx
+{error && <ErrorAlert title="Failed to load" message={error.message} onRetry={refetch} />}
+```
+
+**Charts**: Use `chart-config.ts` for colors (not hardcoded RGB) and `chart-registration.ts` for Chart.js setup.
+```tsx
+import { CHART_COLORS, getChartColor, getDefaultChartOptions } from '@/lib/utils/chart-config'
+import '@/lib/utils/chart-registration'
+// Use: getChartColor(CHART_COLORS.blue) instead of 'rgba(59, 130, 246, 0.8)'
+```
+
+**Toast Notifications**: Use Sonner (not Radix Toast).
+```tsx
+import { toast } from 'sonner'
+toast.success('Saved successfully')
+toast.error('Failed to save')
+```
+
+**Progress Bars**: Use `ProgressBar` instead of custom CSS.
+```tsx
+<ProgressBar value={75} variant="success" showLabel />
+```
 
 ---
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useConflicts } from '@/hooks/useConflicts';
 import { ConflictApiResponse, ConflictDisplayGroup, ConflictFilters } from '@/types/conflict';
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 
 interface ConflictLogProps {
   className?: string;
@@ -138,14 +139,7 @@ export const ConflictLog = ({ className = '', compact = false }: ConflictLogProp
   if (loading && conflicts.length === 0) {
     return (
       <div className={`bg-white rounded-lg border border-gray-200 p-6 ${className}`}>
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-12 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </div>
+        <ContentSkeleton variant="list" count={3} />
       </div>
     );
   }

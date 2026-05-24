@@ -23,6 +23,7 @@ import {
   ArrowDownRight,
   Minus
 } from 'lucide-react';
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 
 // Types for aggregate metrics data
 interface AggregateMetricsProps {
@@ -145,22 +146,8 @@ export function AggregateMetrics({ incidentId, className }: AggregateMetricsProp
             Loading Operational Metrics...
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 gap-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="p-3 rounded-lg border border-gray-200 bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-gray-200 h-4 w-4 animate-pulse" />
-                    <div className="space-y-1">
-                      <div className="h-4 bg-gray-300 rounded w-24 animate-pulse" />
-                      <div className="h-3 bg-gray-300 rounded w-16 animate-pulse" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+        <CardContent>
+          <ContentSkeleton variant="metric" count={3} />
         </CardContent>
       </Card>
     );

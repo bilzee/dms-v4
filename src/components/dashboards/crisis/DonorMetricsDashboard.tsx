@@ -23,6 +23,7 @@ import {
   Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 
 
 export function DonorMetricsDashboard() {
@@ -218,13 +219,8 @@ export function DonorMetricsDashboard() {
               </CardHeader>
               <CardContent>
                 {isLoading ? (
-                  <div className="p-4 border rounded-lg animate-pulse">
-                    <div className="h-4 bg-gray-200 rounded w-48 mb-2"></div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      <div className="h-3 bg-gray-200 rounded"></div>
-                      <div className="h-3 bg-gray-200 rounded"></div>
-                      <div className="h-3 bg-gray-200 rounded"></div>
-                    </div>
+                  <div className="p-4 border rounded-lg">
+                    <ContentSkeleton variant="card" />
                   </div>
                 ) : (
                   <div>

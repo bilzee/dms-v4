@@ -29,11 +29,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPrioritySolidColor, getVerificationStatusColor, verificationPrioritySolidColors, verificationStatusBadgeColors } from '@/lib/utils/priority-colors';
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 import { useVerificationQueue, useVerificationFilters } from '@/hooks/useVerification';
 import { useRealTimeVerification, useConnectionStatus, useVerificationMetrics } from '@/hooks/useRealTimeVerification';
 import { ConnectionStatusIndicator } from '@/components/verification/ConnectionStatusIndicator';
 import { ResponseVerificationQueue } from '@/components/dashboards/crisis/ResponseVerificationQueue';
-import { QueueFilters, FilterSummary } from '@/components/verification/QueueFilters';
+import { QueueFiltersV2, FilterSummary, getDefaultFilters } from '@/components/verification/QueueFiltersV2';
 import { VerificationActions } from '@/components/verification/VerificationActions';
 import { VerificationAnalytics } from '@/components/verification/VerificationAnalytics';
 import type { VerificationQueueItem } from '@/types/verification';
@@ -44,9 +45,10 @@ interface VerificationQueueManagementProps {
 
 export function VerificationQueueManagement({ className }: VerificationQueueManagementProps) {
   const [activeTab, setActiveTab] = useState('assessments');
-  const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedItem, setSelectedItem] = useState<VerificationQueueItem | null>(null);
+  const [assessmentFilters, setAssessmentFilters] = useState(() => getDefaultFilters('assessments'));
+  const [responseFilters, setResponseFilters] = useState(() => getDefaultFilters('responses'));
 
   // Use the working authentication-enabled hooks for assessments
   const {
@@ -103,18 +105,25 @@ export function VerificationQueueManagement({ className }: VerificationQueueMana
     manualRefresh();
   };
 
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
-    // Trigger search with debounce
-    const timeoutId = setTimeout(() => {
-      if (activeTab === 'assessments') {
-        // Update assessment filters with search
-      } else {
-        // Update delivery filters with search
-      }
-    }, 500);
+  const handleAssessmentFiltersChange = (newFilters: Partial<typeof assessmentFilters>) => {
+    setAssessmentFilters(prev => ({ ...prev, ...newFilters }));
+  };
 
-    return () => clearTimeout(timeoutId);
+  const handleResponseFiltersChange = (newFilters: Partial<typeof responseFilters>) => {
+    setResponseFilters(prev => ({ ...prev, ...newFilters }));
+  };
+
+  const handleClearAssessmentFilters = () => {
+    setAssessmentFilters(getDefaultFilters('assessments'));
+  };
+
+  const handleClearResponseFilters = () => {
+    setResponseFilters(getDefaultFilters('responses'));
+  };
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setShowFilters(false);
   };
 
   const formatWaitTime = (minutes: number) => {
@@ -186,7 +195,7 @@ export function VerificationQueueManagement({ className }: VerificationQueueMana
       </StatCardGrid>
 
       {/* Main Queue Interface */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
         <div className="flex items-center justify-between">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="assessments" className="flex items-center gap-2">
@@ -209,18 +218,8 @@ export function VerificationQueueManagement({ className }: VerificationQueueMana
           </TabsList>
 
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="pl-10 w-64"
-              />
-            </div>
-            
             <Button
-              variant="outline"
+              variant={showFilters ? 'default' : 'outline'}
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-2"
             >
@@ -231,9 +230,15 @@ export function VerificationQueueManagement({ className }: VerificationQueueMana
         </div>
 
         <TabsContent value="assessments" className="space-y-4">
-          {/* Filters temporarily disabled to prevent authentication errors */}
-          {/* FilterSummary and QueueFilters components rely on verification store */}
-          
+          <QueueFiltersV2
+            type="assessments"
+            filters={assessmentFilters}
+            onFiltersChange={handleAssessmentFiltersChange}
+            onClear={handleClearAssessmentFilters}
+            visible={showFilters}
+            onClose={() => setShowFilters(false)}
+            loading={assessmentsLoading}
+          />
           <AssessmentQueueContent
             assessments={assessmentsData?.data || []}
             loading={assessmentsLoading}
@@ -243,13 +248,20 @@ export function VerificationQueueManagement({ className }: VerificationQueueMana
             metrics={assessmentsData?.metrics}
             selectedItem={selectedItem}
             setSelectedItem={setSelectedItem}
-            showFilters={showFilters}
             onRefresh={refetchAssessments}
           />
         </TabsContent>
 
         <TabsContent value="responses" className="space-y-4">
-          <ResponseVerificationQueue />
+          <QueueFiltersV2
+            type="responses"
+            filters={responseFilters}
+            onFiltersChange={handleResponseFiltersChange}
+            onClear={handleClearResponseFilters}
+            visible={showFilters}
+            onClose={() => setShowFilters(false)}
+          />
+          <ResponseVerificationQueue filters={responseFilters} />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
@@ -270,7 +282,6 @@ function AssessmentQueueContent({
   metrics,
   selectedItem,
   setSelectedItem,
-  showFilters,
   onRefresh
 }: {
   assessments: VerificationQueueItem[];
@@ -281,7 +292,6 @@ function AssessmentQueueContent({
   metrics: any;
   selectedItem: VerificationQueueItem | null;
   setSelectedItem: (item: VerificationQueueItem | null) => void;
-  showFilters: boolean;
   onRefresh?: () => void;
 }) {
   if (error) {
@@ -299,24 +309,19 @@ function AssessmentQueueContent({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Assessment Verification Queue</CardTitle>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Assessment Verification Queue</CardTitle>
             <CardDescription>
               {queueDepth?.total || 0} assessments pending verification
             </CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="space-y-4">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="h-20 bg-gray-200 rounded-lg"></div>
-                  </div>
-                ))}
-              </div>
+              <ContentSkeleton variant="list" count={5} />
             ) : assessments.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <CheckCircle className="h-12 w-12 mx-auto mb-4" />
@@ -337,6 +342,7 @@ function AssessmentQueueContent({
             )}
           </CardContent>
         </Card>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -407,13 +413,7 @@ function DeliveryQueueContent({
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="space-y-4">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="h-20 bg-gray-200 rounded-lg"></div>
-                  </div>
-                ))}
-              </div>
+              <ContentSkeleton variant="list" count={5} />
             ) : deliveries.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <CheckCircle className="h-12 w-12 mx-auto mb-4" />

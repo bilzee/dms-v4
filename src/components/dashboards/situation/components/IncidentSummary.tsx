@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { ProgressBar } from '@/components/shared/ProgressBar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { 
@@ -215,18 +216,14 @@ export function IncidentSummary({
               <span className="text-xs text-gray-500">Progress</span>
               <span className="text-xs text-gray-400">{durationInfo.totalDays} days</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-1.5">
-              <div 
-                className={cn(
-                  "h-1.5 rounded-full transition-all duration-500",
-                  incident.status === 'ACTIVE' ? 'bg-red-500' :
-                  incident.status === 'CONTAINED' ? 'bg-yellow-500' : 'bg-green-500'
-                )}
-                style={{ 
-                  width: `${Math.min(100, (durationInfo.totalDays / 30) * 100)}%` 
-                }}
-              />
-            </div>
+            <ProgressBar
+              value={Math.min(100, (durationInfo.totalDays / 30) * 100)}
+              variant={
+                incident.status === 'ACTIVE' ? 'danger' :
+                incident.status === 'CONTAINED' ? 'warning' : 'success'
+              }
+              size="sm"
+            />
           </div>
         )}
 

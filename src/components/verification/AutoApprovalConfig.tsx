@@ -40,6 +40,7 @@ import {
   MapPin
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 import { apiGet, apiPut } from '@/lib/api';
 import type { AutoApprovalConfig } from '@/types/verification';
 
@@ -351,24 +352,7 @@ export function AutoApprovalConfig({ className }: AutoApprovalConfigProps) {
       {/* Entity configurations */}
       <div className="space-y-4">
         {isLoading ? (
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <Card key={i}>
-                <CardContent className="p-4">
-                  <div className="animate-pulse">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="h-4 bg-gray-200 rounded w-48"></div>
-                      <div className="h-6 bg-gray-200 rounded w-16"></div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-3 bg-gray-200 rounded w-full"></div>
-                      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <ContentSkeleton variant="card" count={5} className="space-y-4" />
         ) : configData?.data?.length === 0 ? (
           <Card>
             <CardContent className="p-8">

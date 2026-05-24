@@ -3,18 +3,11 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { verificationPriorityBadgeColors, responseStatusBadgeColors } from '@/lib/utils/priority-colors';
-import { useResponseVerificationQueue, useResponseVerificationFilters, useVerifyResponse, useRejectResponse } from '@/hooks/useResponseVerification';
+import { useResponseVerificationQueue, useVerifyResponse, useRejectResponse } from '@/hooks/useResponseVerification';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -42,25 +35,29 @@ import {
   Package
 } from 'lucide-react';
 import type { ResponseVerificationQueueItem } from '@/types/response-verification';
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 
 interface ResponseVerificationQueueProps {
   className?: string;
   onResponseSelect?: (response: ResponseVerificationQueueItem) => void;
   selectedResponseId?: string;
+  filters?: any;
 }
 
 export function ResponseVerificationQueue({ 
   className, 
   onResponseSelect,
-  selectedResponseId 
+  selectedResponseId,
+  filters: parentFilters
 }: ResponseVerificationQueueProps) {
-  const { filters, updateFilter, clearFilters } = useResponseVerificationFilters();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [rejectingResponse, setRejectingResponse] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [rejectNotes, setRejectNotes] = useState('');
+
+  const searchFromParent = parentFilters?.search || '';
 
   const { 
     data: queueData, 
@@ -69,7 +66,9 @@ export function ResponseVerificationQueue({
     refetch,
     isFetching 
   } = useResponseVerificationQueue({
-    ...filters,
+    verificationStatus: parentFilters?.status?.[0],
+    responseType: parentFilters?.responseType?.[0],
+    priority: parentFilters?.priority?.[0],
     page: currentPage,
     limit: 10
   });
@@ -121,12 +120,13 @@ export function ResponseVerificationQueue({
     }
   };
 
-  // Filter responses by search term
+  const effectiveSearch = searchFromParent || searchTerm;
+
   const filteredResponses = queueData?.data?.filter(response => 
-    response.entity.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    response.responder.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    response.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (response.donor?.name && response.donor.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    response.entity.name.toLowerCase().includes(effectiveSearch.toLowerCase()) ||
+    response.responder.name.toLowerCase().includes(effectiveSearch.toLowerCase()) ||
+    response.type.toLowerCase().includes(effectiveSearch.toLowerCase()) ||
+    (response.donor?.name && response.donor.name.toLowerCase().includes(effectiveSearch.toLowerCase()))
   ) || [];
 
   if (error) {
@@ -152,7 +152,7 @@ export function ResponseVerificationQueue({
   return (
     <div className={cn('space-y-4', className)} data-testid="response-verification-queue">
       {/* Header with filters and search */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between" data-testid="verification-filters">
+      <div className="flex items-center justify-between" data-testid="verification-filters">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">Response Verification Queue</h2>
           {queueData?.pagination && (
@@ -162,8 +162,8 @@ export function ResponseVerificationQueue({
           )}
         </div>
         
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
+        <div className="flex items-center gap-2">
+          <div className="relative w-64">
             <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
               placeholder="Search responses..."
@@ -172,65 +172,6 @@ export function ResponseVerificationQueue({
               className="pl-10"
             />
           </div>
-          
-          <Select
-            value={filters.verificationStatus || 'all'}
-            onValueChange={(value) => updateFilter('verificationStatus', value === 'all' ? undefined : value)}
-          >
-            <SelectTrigger className="w-40" data-testid="status-filter">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="SUBMITTED">Pending</SelectItem>
-              <SelectItem value="VERIFIED">Verified</SelectItem>
-              <SelectItem value="AUTO_VERIFIED">Auto-Verified</SelectItem>
-              <SelectItem value="REJECTED">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          {/* Response Type Filter */}
-          <Select
-            value={filters.responseType || 'all'}
-            onValueChange={(value) => updateFilter('responseType', value === 'all' ? undefined : value)}
-          >
-            <SelectTrigger className="w-40" data-testid="response-type-filter">
-              <SelectValue placeholder="Response Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="HEALTH">Health</SelectItem>
-              <SelectItem value="WASH">WASH</SelectItem>
-              <SelectItem value="SHELTER">Shelter</SelectItem>
-              <SelectItem value="FOOD">Food</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          {/* Priority Filter */}
-          <Select
-            value={filters.priority || 'all'}
-            onValueChange={(value) => updateFilter('priority', value === 'all' ? undefined : value)}
-          >
-            <SelectTrigger className="w-40" data-testid="priority-filter">
-              <SelectValue placeholder="Priority" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Priorities</SelectItem>
-              <SelectItem value="CRITICAL">Critical</SelectItem>
-              <SelectItem value="HIGH">High</SelectItem>
-              <SelectItem value="MEDIUM">Medium</SelectItem>
-              <SelectItem value="LOW">Low</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          {/* Entity Filter */}
-          <Input
-            placeholder="Filter by entity..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-48"
-            data-testid="entity-filter"
-          />
           
           <Button
             variant="outline"
@@ -246,22 +187,7 @@ export function ResponseVerificationQueue({
       {/* Queue items */}
       <div className="space-y-3" data-testid="response-queue-table">
         {isLoading ? (
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <Card key={i} className="p-4">
-                <div className="animate-pulse">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="h-4 bg-gray-200 rounded w-48"></div>
-                    <div className="h-6 bg-gray-200 rounded w-24"></div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-3 bg-gray-200 rounded w-full"></div>
-                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+          <ContentSkeleton variant="card" count={5} />
         ) : filteredResponses.length === 0 ? (
           <Card className="p-8">
             <div className="text-center">
@@ -270,20 +196,17 @@ export function ResponseVerificationQueue({
                 No responses found
               </h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm || Object.keys(filters).length > 1
-                  ? 'Try adjusting your search or filters'
+                {searchTerm
+                  ? 'Try adjusting your search or use the filters panel'
                   : 'No responses are currently pending verification'
                 }
               </p>
-              {(searchTerm || Object.keys(filters).length > 1) && (
+              {searchTerm && (
                 <Button 
                   variant="outline" 
-                  onClick={() => {
-                    setSearchTerm('');
-                    clearFilters();
-                  }}
+                  onClick={() => setSearchTerm('')}
                 >
-                  Clear Filters
+                  Clear Search
                 </Button>
               )}
             </div>

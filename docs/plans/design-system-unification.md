@@ -599,9 +599,9 @@ src/components/ui/use-toast.ts          (Phase 7)
 | Phase 0: Foundation | COMPLETE | status-colors.ts expanded, severity color maps added |
 | Phase 1: StatCard | COMPLETE | StatCard + StatCardGrid built, 36 files migrated |
 | Phase 2: StatusBadge | COMPLETE | StatusBadge component built, 20 files migrated, 7 domains |
-| Phase 3: DataList | IN PROGRESS | Steps 3.1-3.4 complete. Migrated roles/page.tsx (DataTable), GapFieldTable.tsx (shadcn Table). Deferred complex migrations (IncidentManagement, VerificationQueue, etc.) — already use shadcn Table, low ROI for wrapper migration |
-| Phase 4: FilterPanel | NOT STARTED | Design spec pending review |
-| Phase 5: FormCard | NOT STARTED | Design spec pending review |
-| Phase 6: Loading/Error | NOT STARTED | |
-| Phase 7: Toast | NOT STARTED | Quick win, independent |
-| Phase 8: Charts | NOT STARTED | |
+| Phase 3: DataList | PARTIAL | Steps 3.1-3.4 complete. Migrated roles/page.tsx, GapFieldTable.tsx. Deferred complex migrations (IncidentManagement, VerificationQueue, etc.) — already use shadcn Table, low ROI |
+| Phase 4: FilterPanel | COMPLETE | FilterPanel + FilterBar + useFilters hook + QueueFiltersV2 built. Migrated admin/users (FilterBar), coordinator/verification Assessment+Response tabs (FilterPanel with QueueFiltersV2). Standardized both verification tabs to use unified filter system |
+| Phase 5: FormCard | COMPLETE | FormCard + FormActionBar components built. 20 forms migrated (5 initial + 6 assessment + 9 response/delivery/profile/edit). Spec: `docs/design-system/formcard-spec.html` |
+| Phase 6: Loading/Error | COMPLETE | ContentSkeleton (5 variants) + ErrorAlert components built. Enhanced error.tsx boundaries with shadcn Button. 23 files migrated from animate-pulse. All remaining animate-pulse are legitimate inline indicators. Spec: `docs/design-system/loading-error-spec.html` |
+| Phase 7: Toast | COMPLETE | Standardized on Sonner. Migrated 2 Radix files (roles, donor/reports), deleted 3 Radix toast files, updated layout.tsx. Spec: `docs/design-system/toast-system-spec.html` |
+| Phase 8: Charts | COMPLETE | chart-config.ts + chart-registration.ts + ProgressBar component built. Migrated 2 Chart.js components (DonorPerformance, PeerComparison) to centralized colors with dark mode. 8 CSS progress bars migrated to ProgressBar across 6 files. Spec: `docs/design-system/charts-spec.html` |

@@ -10,6 +10,8 @@ import { v4 as uuidv4 } from 'uuid'
 // UI components
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormCard } from '@/components/shared/FormCard'
+import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -325,96 +327,80 @@ export function DeliveryConfirmationForm({
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+      <FormCard
+        title="Confirm Delivery"
+        description="Document the actual delivery of planned aid items"
+        columns={2}
+      >
+        {/* Header Controls */}
+        <div className="md:col-span-2 flex items-center justify-end gap-2 mb-2">
+          {isOnline ? (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <Wifi className="h-3 w-3" />
+              Online
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="flex items-center gap-1">
+              <WifiOff className="h-3 w-3" />
+              Offline
+            </Badge>
+          )}
+          <Dialog open={showPreview} onOpenChange={setShowPreview}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Eye className="h-4 w-4 mr-2" />
+                Preview
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Delivery Confirmation Preview</DialogTitle>
+                <DialogDescription>
+                  Review the delivery information before confirming
+                </DialogDescription>
+              </DialogHeader>
+              <DeliveryPreview 
+                response={response!}
+                formData={form.getValues()}
+                gpsLocation={gpsLocation}
+                locationCaptureTime={locationCaptureTime}
+                mediaAttachmentIds={mediaAttachments.map(m => m.id)}
+              />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowPreview(false)}>
+                  Close
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Response Information */}
+        {response && (
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 rounded-lg border p-4">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Confirm Delivery
-              </CardTitle>
-              <CardDescription>
-                Document the actual delivery of planned aid items
-              </CardDescription>
+              <label className="text-sm font-medium text-gray-500">Entity</label>
+              <p className="font-medium">{response.entity?.name || 'N/A'}</p>
             </div>
-            <div className="flex items-center gap-2">
-              {isOnline ? (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <Wifi className="h-3 w-3" />
-                  Online
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <WifiOff className="h-3 w-3" />
-                  Offline
-                </Badge>
-              )}
-              <Dialog open={showPreview} onOpenChange={setShowPreview}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Eye className="h-4 w-4 mr-2" />
-                    Preview
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Delivery Confirmation Preview</DialogTitle>
-                    <DialogDescription>
-                      Review the delivery information before confirming
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DeliveryPreview 
-                    response={response!}
-                    formData={form.getValues()}
-                    gpsLocation={gpsLocation}
-                    locationCaptureTime={locationCaptureTime}
-                    mediaAttachmentIds={mediaAttachments.map(m => m.id)}
-                  />
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowPreview(false)}>
-                      Close
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+            <div>
+              <label className="text-sm font-medium text-gray-500">Assessment Type</label>
+              <p className="font-medium">{response.assessment?.rapidAssessmentType || 'N/A'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">Priority</label>
+              <Badge variant={getPriorityVariant(response.priority)}>
+                {response.priority}
+              </Badge>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">Planned Date</label>
+              <p className="font-medium">
+                {new Date(response.plannedDate).toLocaleDateString()}
+              </p>
             </div>
           </div>
-        </CardHeader>
-      </Card>
-
-      {/* Response Information */}
-      {response && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Response Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Entity</label>
-                <p className="font-medium">{response.entity?.name || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Assessment Type</label>
-                <p className="font-medium">{response.assessment?.rapidAssessmentType || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Priority</label>
-                <Badge variant={getPriorityVariant(response.priority)}>
-                  {response.priority}
-                </Badge>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Planned Date</label>
-                <p className="font-medium">
-                  {new Date(response.plannedDate).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        )}
+      </FormCard>
 
       {/* Delivery Confirmation Form */}
       <Form {...form}>
@@ -670,35 +656,13 @@ export function DeliveryConfirmationForm({
           )}
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-4">
-            {onCancel && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
-                disabled={confirmDeliveryMutation.isPending}
-              >
-                Cancel
-              </Button>
-            )}
-            <Button
-              type="submit"
-              disabled={confirmDeliveryMutation.isPending || !gpsLocation || fields.length === 0}
-              className="flex items-center gap-2"
-            >
-              {confirmDeliveryMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Confirming...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-4 w-4" />
-                  Confirm Delivery
-                </>
-              )}
-            </Button>
-          </div>
+          <FormActionBar
+            onCancel={onCancel}
+            submitLabel="Confirm Delivery"
+            loading={confirmDeliveryMutation.isPending}
+            disabled={confirmDeliveryMutation.isPending || !gpsLocation || fields.length === 0}
+            variant="bordered"
+          />
         </form>
       </Form>
     </div>

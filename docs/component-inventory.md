@@ -1,6 +1,6 @@
 # Disaster Response Management System -- Component Inventory
 
-**Last updated:** 2026-05-18
+**Last updated:** 2026-05-24
 
 ---
 
@@ -23,12 +23,13 @@ The Disaster Response Management System (DRMS) frontend is built on a layered Re
 
 | Metric                          | Count |
 |---------------------------------|-------|
-| Total component files           | 177   |
+| Total component files           | 193   |
 | Component categories            | 17    |
 | shadcn/ui design system files   | 29    |
-| Application component files     | 148   |
+| Application component files     | 164   |
 | Page route files                | 59    |
 | Role groups (route groups)      | 6     |
+| Design system utility files     | 4     |
 
 ### Component Distribution by Category
 
@@ -38,7 +39,7 @@ The Disaster Response Management System (DRMS) frontend is built on a layered Re
 | dashboards/       | 41    | Dashboard assemblies and sub-components    |
 | donor/            | 20    | Donor portal components                    |
 | forms/            | 18    | Domain-specific form components            |
-| shared/           | 17    | Cross-cutting reusable components          |
+| shared/           | 32    | Cross-cutting reusable components          |
 | verification/     | 12    | Verification and approval system           |
 | coordinator/      | 5     | Coordinator tooling components             |
 | auth/             | 3     | Authentication form components             |
@@ -319,9 +320,11 @@ Components for the verification workflow, including queue management, auto-appro
 
 ---
 
-### 3.8 shared/ (17 files) -- Reusable Components
+### 3.8 shared/ (32 files) -- Reusable Components
 
 Cross-cutting reusable components used across multiple domain areas. These components have no domain-specific business logic and can be composed freely.
+
+#### Original Shared Components (17 files)
 
 | Component              | File                          | Description                                          |
 |------------------------|-------------------------------|------------------------------------------------------|
@@ -342,6 +345,28 @@ Cross-cutting reusable components used across multiple domain areas. These compo
 | RoleBasedRoute         | `RoleBasedRoute.tsx`          | Route guard that checks user role permissions        |
 | ThemeToggle            | `ThemeToggle.tsx`             | Dark/light theme switch button                       |
 | SyncQueue              | `SyncQueue.tsx`               | Display of pending offline sync operations           |
+
+#### Design System Shared Components (15 files)
+
+These components were introduced as part of the design system unification effort, providing standardized patterns for loading states, error handling, filtering, data display, and form layout.
+
+| Component              | File                          | Description                                          |
+|------------------------|-------------------------------|------------------------------------------------------|
+| ContentSkeleton        | `ContentSkeleton.tsx`         | Loading state skeleton presets (card, table, list, metric, form) |
+| ErrorAlert             | `ErrorAlert.tsx`              | Error display component with title, message, and retry button |
+| FilterBar              | `FilterBar.tsx`               | Active filter chips display with clear functionality |
+| FilterPanel            | `FilterPanel.tsx`             | Collapsible filter configuration panel               |
+| FormActionBar          | `FormActionBar.tsx`           | Form action bar with submit/cancel buttons, loading state |
+| FormCard               | `FormCard.tsx`                | Standardized form container with title, description, column layout |
+| ProgressBar            | `ProgressBar.tsx`             | Progress indicator with 5 variants and 3 sizes, dark mode support |
+| StatCard               | `StatCard.tsx`                | Metric display card with 4 variants and trend indicators |
+| StatCardGrid           | `StatCardGrid.tsx`            | Responsive grid layout for StatCard components       |
+| StatusBadge            | `StatusBadge.tsx`             | Domain-aware status indicator with centralized color mapping |
+| DataCardList           | `DataCardList.tsx`            | Card list layout component with selection            |
+| DataCardGrid           | `DataCardGrid.tsx`            | Responsive card grid layout component                |
+| DataTable              | `DataTable.tsx`               | Data table with sorting, filtering, pagination       |
+| DataList               | `DataList.tsx`                | Generic data list component with selection support   |
+| SearchToolbar          | `SearchToolbar.tsx`           | Search input toolbar with debounce and clear support |
 
 ---
 
@@ -427,6 +452,19 @@ Administrative settings components for configuring gap analysis parameters.
 | Component                      | File                                      | Description                                      |
 |--------------------------------|-------------------------------------------|--------------------------------------------------|
 | LivingDocumentationDashboard   | `living-documentation-dashboard.tsx`      | Dashboard displaying living test documentation   |
+
+---
+
+### 3.17 Design System Utilities (4 files)
+
+Utility modules that support the design system shared components with centralized configuration, color mapping, and chart defaults. These live under `src/lib/utils/`.
+
+| Utility              | File                        | Description                                                |
+|----------------------|-----------------------------|------------------------------------------------------------|
+| status-colors        | `status-colors.ts`          | Centralized status-to-color mapping for all domain statuses |
+| design-tokens        | `design-tokens.ts`          | Design token constants (spacing, typography, shadows)      |
+| chart-config         | `chart-config.ts`           | Chart.js centralized color palette and default options     |
+| chart-registration   | `chart-registration.ts`     | Single-point Chart.js module registration                  |
 
 ---
 
@@ -556,13 +594,15 @@ Additional shared authenticated routes:
 
 ## 5. Reusable vs. Domain Components
 
-### Reusable Components (34 files)
+### Reusable Components (54 files)
 
 Reusable components are designed for use across multiple feature areas. They contain minimal business logic and accept configuration through props.
 
 **Design System Primitives (29 files):** All `src/components/ui/*` components.
 
-**Cross-Cutting Shared (17 files):** All `src/components/shared/*` components.
+**Cross-Cutting Shared (32 files):** All `src/components/shared/*` components (17 original + 15 design system additions).
+
+**Design System Utilities (4 files):** `src/lib/utils/status-colors.ts`, `design-tokens.ts`, `chart-config.ts`, and `chart-registration.ts`.
 
 **Export Utilities (2 files):** `src/components/dashboards/shared/exports/ExportModal.tsx` and `ExportButton.tsx`.
 

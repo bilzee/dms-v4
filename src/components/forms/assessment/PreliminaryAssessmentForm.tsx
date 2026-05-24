@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormCard } from '@/components/shared/FormCard'
+import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
@@ -261,19 +263,12 @@ export function PreliminaryAssessmentForm({
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-        {/* Header Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              Preliminary Disaster Assessment
-            </CardTitle>
-            <CardDescription>
-              Initial assessment of disaster impact and affected areas
-            </CardDescription>
-          </CardHeader>
-        </Card>
+      <form onSubmit={handleSubmit(handleFormSubmit)}>
+        <FormCard
+          title="Preliminary Assessment"
+          description="Initial assessment of disaster impact and affected areas"
+          columns={2}
+        >
 
         {/* Reporting Information */}
         <Card>
@@ -680,41 +675,28 @@ export function PreliminaryAssessmentForm({
           </CardContent>
         </Card>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 justify-between">
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleSaveDraft}
-              disabled={disabled || !isDirty}
-              className="flex items-center gap-2"
-            >
-              <Save className="h-4 w-4" />
-              Save Draft
-            </Button>
-            
-            {onCancel && (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={onCancel}
-                disabled={disabled}
-              >
-                Cancel
-              </Button>
-            )}
-          </div>
-
+        </FormCard>
+        <FormActionBar
+          onCancel={onCancel}
+          cancelLabel="Cancel"
+          onSubmit={() => handleSubmit(handleFormSubmit)()}
+          submitLabel={isLoading ? 'Submitting...' : 'Submit Assessment'}
+          loading={isLoading}
+          disabled={disabled || isLoading}
+          align="between"
+          variant="default"
+        >
           <Button
-            type="submit"
-            disabled={disabled || isLoading}
+            type="button"
+            variant="outline"
+            onClick={handleSaveDraft}
+            disabled={disabled || !isDirty}
             className="flex items-center gap-2"
           >
-            <Send className="h-4 w-4" />
-            {isLoading ? 'Submitting...' : 'Submit Assessment'}
+            <Save className="h-4 w-4" />
+            Save Draft
           </Button>
-        </div>
+        </FormActionBar>
       </form>
 
       {/* Map Selector Dialog */}

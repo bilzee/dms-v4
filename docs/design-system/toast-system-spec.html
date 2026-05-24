@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRMS Toast System -- Design Specification</title>
+<style>
+/* ============================================================
+   CSS Custom Properties -- sourced from globals.css HSL tokens
+   ============================================================ */
+:root {
+  /* Light mode (shadcn default) */
+  --bg: hsl(0 0% 100%);
+  --fg: hsl(222.2 84% 4.9%);
+  --card: hsl(0 0% 100%);
+  --card-fg: hsl(222.2 84% 4.9%);
+  --primary: hsl(221.2 83.2% 53.3%);
+  --primary-fg: hsl(210 40% 98%);
+  --secondary: hsl(210 40% 96%);
+  --secondary-fg: hsl(222.2 84% 4.9%);
+  --muted: hsl(210 40% 96%);
+  --muted-fg: hsl(215.4 16.3% 46.9%);
+  --accent: hsl(210 40% 96%);
+  --accent-fg: hsl(222.2 84% 4.9%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-fg: hsl(210 40% 98%);
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: hsl(214.3 31.8% 91.4%);
+  --ring: hsl(221.2 83.2% 53.3%);
+  --radius: 0.5rem;
+
+  /* Semantic colors for toast types */
+  --green-50: #f0fdf4;  --green-100: #dcfce7;  --green-200: #bbf7d0;  --green-500: #22c55e;  --green-600: #16a34a;  --green-700: #15803d;
+  --blue-50: #eff6ff;   --blue-100: #dbeafe;   --blue-200: #bfdbfe;   --blue-500: #3b82f6;   --blue-600: #2563eb;   --blue-700: #1d4ed8;
+  --red-50: #fef2f2;    --red-100: #fee2e2;    --red-200: #fecaca;    --red-500: #ef4444;    --red-600: #dc2626;    --red-700: #b91c1c;
+  --amber-50: #fffbeb;  --amber-100: #fef3c7;  --amber-200: #fde68a;  --amber-500: #f59e0b;  --amber-600: #d97706;  --amber-700: #b45309;
+
+  /* Doc chrome */
+  --sidebar-w: 260px;
+  --topbar-h: 56px;
+  --content-max: 1100px;
+  --doc-bg: #fafafa;
+  --doc-border: #e5e7eb;
+}
+
+/* Dark mode */
+.dark {
+  --bg: hsl(224 71% 4%);
+  --fg: hsl(213 31% 91%);
+  --card: hsl(224 71% 4%);
+  --card-fg: hsl(213 31% 91%);
+  --primary: hsl(210 40% 98%);
+  --primary-fg: hsl(222.2 84% 4.9%);
+  --secondary: hsl(215 28% 17%);
+  --secondary-fg: hsl(210 40% 98%);
+  --muted: hsl(215 28% 17%);
+  --muted-fg: hsl(217.9 10.6% 64.9%);
+  --accent: hsl(215 28% 17%);
+  --accent-fg: hsl(210 40% 98%);
+  --destructive: hsl(0 63% 31%);
+  --destructive-fg: hsl(210 40% 98%);
+  --border: hsl(215 28% 17%);
+  --input: hsl(215 28% 17%);
+  --ring: hsl(216 12% 83.9%);
+
+  --doc-bg: #0b0f1a;
+  --doc-border: #1e293b;
+}
+
+/* ============================================================
+   Reset + Base
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--fg);
+  background: var(--doc-bg);
+}
+
+/* ============================================================
+   Layout
+   ============================================================ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--topbar-h);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+}
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.topbar-title { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; color: var(--fg); }
+.topbar-badge {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 2px 8px; border-radius: 4px;
+  background: var(--primary); color: var(--primary-fg);
+}
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-version { font-size: 12px; color: var(--muted-fg); font-family: 'SF Mono', 'Cascadia Code', monospace; }
+
+.sidebar {
+  position: fixed; top: var(--topbar-h); left: 0; bottom: 0; z-index: 90;
+  width: var(--sidebar-w);
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 24px 0;
+}
+.sidebar-section { margin-bottom: 24px; }
+.sidebar-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted-fg); padding: 0 20px; margin-bottom: 8px;
+}
+.sidebar a {
+  display: block; padding: 6px 20px; font-size: 13px; font-weight: 500;
+  color: var(--muted-fg); text-decoration: none; transition: all 0.15s;
+  border-left: 2px solid transparent;
+}
+.sidebar a:hover { color: var(--fg); background: var(--muted); }
+.sidebar a.active { color: var(--primary); border-left-color: var(--primary); background: hsl(221.2 83.2% 53.3% / 0.06); }
+
+.main {
+  margin-left: var(--sidebar-w);
+  margin-top: var(--topbar-h);
+  padding: 40px 48px 80px;
+  max-width: calc(var(--sidebar-w) + var(--content-max) + 96px);
+}
+
+/* ============================================================
+   Typography
+   ============================================================ */
+h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 8px; }
+h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.3; margin-bottom: 16px; padding-top: 48px; border-top: 1px solid var(--border); }
+h2:first-of-type { border-top: none; }
+h3 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.4; margin-bottom: 12px; }
+p { margin-bottom: 12px; color: var(--muted-fg); max-width: 72ch; }
+.subtitle { font-size: 17px; color: var(--muted-fg); margin-bottom: 32px; }
+
+/* ============================================================
+   Design Tokens
+   ============================================================ */
+.token-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+.token-chip {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--border);
+  font-size: 13px; font-family: 'SF Mono', 'Cascadia Code', monospace;
+}
+.token-swatch { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; }
+
+/* ============================================================
+   Variant Badge
+   ============================================================ */
+.variant-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  background: hsl(221.2 83.2% 53.3% / 0.1); color: hsl(221.2 83.2% 53.3%);
+  margin-bottom: 16px;
+}
+.variant-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+.variant-badge.sonner { background: hsl(142 71% 45% / 0.1); color: hsl(142 71% 45%); }
+.variant-badge.radix { background: hsl(0 84% 60% / 0.1); color: hsl(0 84% 60%); }
+.variant-badge.decision { background: hsl(142 71% 45% / 0.1); color: hsl(142 71% 45%); }
+
+/* ============================================================
+   Rule Cards
+   ============================================================ */
+.rules-grid { display: grid; gap: 12px; margin: 16px 0 32px; }
+.rule {
+  display: flex; gap: 16px; padding: 16px 20px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+}
+.rule-icon {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--muted); color: var(--muted-fg); font-size: 16px;
+}
+.rule-body h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.rule-body p { font-size: 13px; margin-bottom: 0; }
+
+/* ============================================================
+   Mockup Cards -- realistic CSS toast renderings
+   ============================================================ */
+.mockup-container {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 20px 0 32px;
+  position: relative;
+}
+.mockup-container.dark-bg {
+  background: hsl(224 71% 4%);
+}
+
+/* Sonner toast mockup */
+.toast-mockup {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  max-width: 380px;
+  position: relative;
+  font-size: 14px;
+}
+.toast-mockup + .toast-mockup { margin-top: 10px; }
+
+.toast-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+.toast-icon svg { width: 12px; height: 12px; }
+
+.toast-icon.success { background: var(--green-100); color: var(--green-700); }
+.toast-icon.error   { background: var(--red-100);   color: var(--red-700); }
+.toast-icon.warning { background: var(--amber-100); color: var(--amber-700); }
+.toast-icon.info    { background: var(--blue-100);  color: var(--blue-700); }
+.toast-icon.loading { background: var(--blue-100);  color: var(--blue-600); }
+
+.toast-content { flex: 1; min-width: 0; }
+.toast-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--fg);
+  line-height: 1.3;
+}
+.toast-description {
+  font-size: 13px;
+  color: var(--muted-fg);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-fg);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  margin-top: 1px;
+}
+.toast-close svg { width: 14px; height: 14px; }
+
+.toast-action {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  cursor: pointer;
+  margin-top: 8px;
+}
+.toast-action:hover { background: var(--muted); }
+
+/* Toast type accents via left border */
+.toast-mockup.success { border-left: 3px solid var(--green-500); }
+.toast-mockup.error   { border-left: 3px solid var(--red-500); }
+.toast-mockup.warning { border-left: 3px solid var(--amber-500); }
+.toast-mockup.info    { border-left: 3px solid var(--blue-500); }
+.toast-mockup.loading { border-left: 3px solid var(--blue-500); }
+
+/* Spinner animation */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spinner {
+  width: 12px; height: 12px;
+  border: 2px solid var(--blue-100);
+  border-top-color: var(--blue-600);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Radix toast mockup (old system) */
+.toast-radix {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  max-width: 380px;
+  font-size: 14px;
+}
+.toast-radix.destructive {
+  border-color: var(--destructive);
+  background: hsl(0 84.2% 60.2% / 0.05);
+}
+.toast-radix .toast-title { font-weight: 600; font-size: 14px; color: var(--fg); }
+.toast-radix .toast-description { font-size: 13px; color: var(--muted-fg); margin-top: 2px; }
+
+/* Grid layout for showcases */
+.mockup-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+.mockup-grid-1 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  max-width: 420px;
+}
+
+@media (max-width: 900px) {
+  .mockup-grid-2 { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   Code Blocks
+   ============================================================ */
+.code-block {
+  background: hsl(224 71% 4%);
+  color: hsl(213 31% 91%);
+  border-radius: 10px;
+  padding: 20px 24px;
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: auto;
+  margin: 16px 0 24px;
+  border: 1px solid #1e293b;
+}
+.code-block .kw  { color: #c084fc; }
+.code-block .str { color: #86efac; }
+.code-block .typ { color: #67e8f9; }
+.code-block .cm  { color: #64748b; font-style: italic; }
+.code-block .fn  { color: #fbbf24; }
+.code-block .pr  { color: #f9a8d4; }
+.code-block .num { color: #fb923c; }
+.code-block .del { color: #f87171; text-decoration: line-through; opacity: 0.7; }
+.code-block .add { color: #86efac; }
+
+/* Tailwind class display */
+.tw-classes {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: 'SF Mono', 'Cascadia Code', monospace;
+  font-size: 12px;
+  color: var(--muted-fg);
+  margin: 8px 0 16px;
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.tw-class {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--secondary);
+  color: var(--secondary-fg);
+  font-size: 12px;
+}
+
+/* ============================================================
+   API Table
+   ============================================================ */
+.api-table {
+  width: 100%; border-collapse: collapse; font-size: 14px;
+  margin: 16px 0 32px;
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.api-table th {
+  text-align: left; padding: 10px 16px; background: var(--muted); font-weight: 600;
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-fg);
+  border-bottom: 1px solid var(--border);
+}
+.api-table td {
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+}
+.api-table tr:last-child td { border-bottom: none; }
+.api-table code {
+  font-family: 'SF Mono', 'Cascadia Code', monospace; font-size: 12px;
+  background: var(--muted); padding: 2px 6px; border-radius: 4px;
+}
+
+/* ============================================================
+   Migration Table
+   ============================================================ */
+.migration-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+  margin: 16px 0 32px;
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.migration-table th {
+  text-align: left; padding: 10px 14px; background: var(--muted); font-weight: 600;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-fg);
+  border-bottom: 1px solid var(--border);
+}
+.migration-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top;
+}
+.migration-table tr:last-child td { border-bottom: none; }
+.migration-table code {
+  font-family: 'SF Mono', 'Cascadia Code', monospace; font-size: 11px;
+  background: var(--muted); padding: 2px 5px; border-radius: 3px;
+  white-space: nowrap;
+}
+.migration-table .file { color: var(--primary); font-weight: 500; }
+
+/* ============================================================
+   Section numbering / labels
+   ============================================================ */
+.section-number {
+  display: inline-block;
+  font-size: 12px; font-weight: 700;
+  color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+/* ============================================================
+   Dark mode toggle
+   ============================================================ */
+.theme-toggle {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--muted); border: 1px solid var(--border); border-radius: 8px;
+  padding: 4px 12px; cursor: pointer; user-select: none;
+  font-size: 12px; font-weight: 600; color: var(--muted-fg);
+  transition: all 0.2s;
+}
+.theme-toggle:hover { background: var(--accent); }
+.theme-toggle .toggle-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--primary);
+}
+
+/* ============================================================
+   Separator
+   ============================================================ */
+.sep { height: 1px; background: var(--border); margin: 40px 0; }
+
+/* ============================================================
+   Dark mode toast overrides
+   ============================================================ */
+.dark .toast-mockup { box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+.dark .toast-radix  { box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+
+/* ============================================================
+   Position diagram
+   ============================================================ */
+.position-diagram {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  max-width: 560px;
+  margin: 0 auto;
+}
+.position-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr auto;
+  gap: 0;
+  min-height: 200px;
+  position: relative;
+}
+.position-label {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--muted);
+  color: var(--muted-fg);
+  text-align: center;
+  border: 1px dashed var(--border);
+}
+.position-label.active {
+  background: hsl(221.2 83.2% 53.3% / 0.12);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  font-weight: 700;
+}
+.position-middle {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-fg);
+  font-size: 13px;
+  font-style: italic;
+  min-height: 80px;
+}
+
+/* ============================================================
+   Decision card
+   ============================================================ */
+.decision-card {
+  background: hsl(142 71% 45% / 0.04);
+  border: 1px solid hsl(142 71% 45% / 0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 20px 0 32px;
+}
+.decision-card h3 {
+  color: hsl(142 71% 45%);
+  margin-bottom: 8px;
+}
+
+/* ============================================================
+   Step cards
+   ============================================================ */
+.step-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin: 16px 0 24px;
+}
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-fg);
+  font-size: 13px;
+  font-weight: 700;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+.step-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.step-header h4 { font-size: 16px; font-weight: 600; margin-bottom: 0; }
+
+/* Delete file list */
+.delete-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+.delete-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  font-family: 'SF Mono', 'Cascadia Code', monospace;
+  font-size: 13px;
+  background: hsl(0 84% 60% / 0.04);
+  border: 1px solid hsl(0 84% 60% / 0.1);
+  color: var(--red-600);
+}
+.delete-list li svg { flex-shrink: 0; }
+
+/* ============================================================
+   Grid helper mockup
+   ============================================================ */
+.grid-helper-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted-fg); margin-bottom: 12px;
+}
+
+/* ============================================================
+   Summary stats
+   ============================================================ */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin: 20px 0 32px;
+}
+.summary-stat {
+  text-align: center;
+  padding: 16px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.summary-stat .stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.summary-stat .stat-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-fg);
+}
+.summary-stat.green .stat-value  { color: var(--green-600); }
+.summary-stat.red .stat-value    { color: var(--red-600); }
+.summary-stat.blue .stat-value   { color: var(--blue-600); }
+.summary-stat.amber .stat-value  { color: var(--amber-600); }
+
+@media (max-width: 900px) {
+  .summary-grid { grid-template-columns: repeat(3, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     Top Bar
+     ============================================================ -->
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-title">DRMS Toast System -- Design Specification</span>
+    <span class="topbar-badge">Phase 7</span>
+  </div>
+  <div class="topbar-right">
+    <span class="topbar-version">v1.0.0 -- 2025-05-24</span>
+    <div class="theme-toggle" onclick="document.body.classList.toggle('dark')">
+      <span class="toggle-dot"></span>
+      Light / Dark
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     Sidebar Navigation
+     ============================================================ -->
+<nav class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Overview</div>
+    <a href="#overview">Current State</a>
+    <a href="#decision">Decision</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Reference</div>
+    <a href="#sonner-api">Sonner API</a>
+    <a href="#patterns">Patterns</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Visual</div>
+    <a href="#mockups">Mockups</a>
+    <a href="#before-after">Before / After</a>
+    <a href="#positions">Positions</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Implementation</div>
+    <a href="#migration">Migration Map</a>
+    <a href="#steps">Migration Steps</a>
+    <a href="#summary">Summary</a>
+  </div>
+</nav>
+
+<!-- ============================================================
+     Main Content
+     ============================================================ -->
+<main class="main">
+
+<!-- ===========================
+     Section 1: Current State
+     =========================== -->
+<div id="overview"></div>
+<span class="section-number">Section 01</span>
+<h1>Toast System Consolidation</h1>
+<p class="subtitle">Standardize on a single toast library (Sonner) to replace the current dual-system approach. Two toast implementations coexist today -- Sonner (14 files) and Radix UI Toast via shadcn (2 files). This spec documents the migration to a single, unified system.</p>
+
+<h3>Current State: Dual System</h3>
+<p>The DRMS codebase currently uses two incompatible toast notification systems. This creates inconsistency in appearance, behavior, and API surface across the application.</p>
+
+<div class="mockup-grid-2" style="margin: 20px 0 32px;">
+
+  <!-- System A -->
+  <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:20px;">
+    <span class="variant-badge radix">System A: Radix UI Toast (shadcn)</span>
+    <table style="width:100%;font-size:13px;border-collapse:collapse;">
+      <tr><td style="padding:4px 0;color:var(--muted-fg);font-weight:600;">Files</td><td style="padding:4px 0;"><code>toast.tsx</code>, <code>use-toast.ts</code>, <code>toaster.tsx</code></td></tr>
+      <tr><td style="padding:4px 0;color:var(--muted-fg);font-weight:600;">Package</td><td style="padding:4px 0;"><code>@radix-ui/react-toast</code></td></tr>
+      <tr><td style="padding:4px 0;color:var(--muted-fg);font-weight:600;">Usage</td><td style="padding:4px 0;">2 files</td></tr>
+      <tr><td style="padding:4px 0;color:var(--muted-fg);font-weight:600;">Mount</td><td style="padding:4px 0;"><code>src/app/layout.tsx</code></td></tr>
+      <tr><td style="padding:4px 0;color:var(--muted-fg);font-weight:600;">Pattern</td><td style="padding:4px 0;font-family:'SF Mono','Cascadia Code',monospace;font-size:12px;">const { toast } = useToast()<br>toast({ title, variant })</td></tr>
+    </table>
+  </div>
+
+  <!-- System B -->
+  <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:20px;">
+    <span class="variant-badge sonner">System B: Sonner</span>
+    <table style="width:100%;font-size:13px;border-collapse:collapse;">
+      <tr><td style="padding:4px 0;color:var(--muted-fg);font-weight:600;">Files</td><td style="padding:4px 0;">14 component files</td></tr>
+      <tr><td style="padding:4px 0;color:var(--muted-fg);font-weight:600;">Package</td><td style="padding:4px 0;"><code>sonner ^2.0.7</code></td></tr>
+      <tr><td style="padding:4px 0;color:var(--muted-fg);font-weight:600;">Usage</td><td style="padding:4px 0;">14 files</td></tr>
+      <tr><td style="padding:4px 0;color:var(--muted-fg);font-weight:600;">Mount</td><td style="padding:4px 0;">Auto-portal (no Toaster mounted)</td></tr>
+      <tr><td style="padding:4px 0;color:var(--muted-fg);font-weight:600;">Pattern</td><td style="padding:4px 0;font-family:'SF Mono','Cascadia Code',monospace;font-size:12px;">import { toast } from 'sonner'<br>toast.success(msg)</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 2: Decision
+     =========================== -->
+<div id="decision"></div>
+<span class="section-number">Section 02</span>
+<h2>Decision: Standardize on Sonner</h2>
+
+<div class="decision-card">
+  <h3>Verdict: Migrate all toast calls to Sonner, remove Radix toast</h3>
+  <p style="margin-bottom:0;color:var(--fg);max-width:none;">Sonner is already the majority system (14 vs 2 files) and shadcn/ui itself now recommends Sonner over the Radix toast component. The migration involves only 2 trivial call-site changes and 3 file deletions.</p>
+</div>
+
+<div class="rules-grid">
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>1. Sonner is the majority system</h4>
+      <p>14 files already use Sonner vs only 2 using Radix. Migrating 2 files is far cheaper than migrating 14.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>2. Simpler API surface</h4>
+      <p><code>toast.success(msg)</code> vs <code>useToast()</code> + <code>toast({ title, variant })</code>. No hooks, no context, no provider -- just import and call.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>3. Rich type support built-in</h4>
+      <p>Native <code>toast.success()</code>, <code>toast.error()</code>, <code>toast.warning()</code>, <code>toast.info()</code>, <code>toast.promise()</code> -- no custom variant mapping needed.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>4. Better UX out of the box</h4>
+      <p>Built-in stacking, auto-dismiss, swipe-to-close, and promise tracking. No custom implementation needed.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>5. shadcn/ui recommends Sonner</h4>
+      <p>The shadcn/ui project itself now recommends Sonner over the Radix toast component. Aligning with upstream reduces maintenance burden.</p>
+    </div>
+  </div>
+
+</div><!-- rules-grid -->
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 3: Sonner API
+     =========================== -->
+<div id="sonner-api"></div>
+<span class="section-number">Section 03</span>
+<h2>Sonner API Reference</h2>
+
+<h3>Function Signatures</h3>
+
+<div class="code-block"><span class="cm">// Basic types</span>
+<span class="fn">toast</span>.<span class="fn">success</span>(<span class="pr">title</span>: <span class="typ">string</span>, <span class="pr">options</span>?: <span class="typ">ExternalToast</span>) <span class="kw">=></span> <span class="typ">string | number</span>
+<span class="fn">toast</span>.<span class="fn">error</span>(<span class="pr">title</span>: <span class="typ">string</span>, <span class="pr">options</span>?: <span class="typ">ExternalToast</span>)   <span class="kw">=></span> <span class="typ">string | number</span>
+<span class="fn">toast</span>.<span class="fn">warning</span>(<span class="pr">title</span>: <span class="typ">string</span>, <span class="pr">options</span>?: <span class="typ">ExternalToast</span>) <span class="kw">=></span> <span class="typ">string | number</span>
+<span class="fn">toast</span>.<span class="fn">info</span>(<span class="pr">title</span>: <span class="typ">string</span>, <span class="pr">options</span>?: <span class="typ">ExternalToast</span>)    <span class="kw">=></span> <span class="typ">string | number</span>
+<span class="fn">toast</span>.<span class="fn">loading</span>(<span class="pr">title</span>: <span class="typ">string</span>, <span class="pr">options</span>?: <span class="typ">ExternalToast</span>) <span class="kw">=></span> <span class="typ">string | number</span>
+<span class="fn">toast</span>.<span class="fn">dismiss</span>(<span class="pr">id</span>?: <span class="typ">string | number</span>)                   <span class="kw">=></span> <span class="typ">void</span>
+
+<span class="cm">// Promise tracking (auto loading -> success/error)</span>
+<span class="fn">toast</span>.<span class="fn">promise</span>(
+  <span class="pr">promise</span>: <span class="typ">Promise</span>&lt;<span class="typ">T</span>&gt;,
+  <span class="pr">opts</span>: {
+    <span class="pr">loading</span>: <span class="typ">string</span>
+    <span class="pr">success</span>: <span class="typ">string</span> | ((<span class="pr">data</span>: <span class="typ">T</span>) <span class="kw">=></span> <span class="typ">string</span>)
+    <span class="pr">error</span>:   <span class="typ">string</span> | ((<span class="pr">err</span>: <span class="typ">Error</span>) <span class="kw">=></span> <span class="typ">string</span>)
+  }
+)</div>
+
+<h3>Options Object</h3>
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Option</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>description</code></td>
+      <td><code>string</code></td>
+      <td>-</td>
+      <td>Subtitle text displayed below the title.</td>
+    </tr>
+    <tr>
+      <td><code>duration</code></td>
+      <td><code>number</code></td>
+      <td><code>4000</code></td>
+      <td>Auto-dismiss in ms. Use <code>Infinity</code> for persistent toasts.</td>
+    </tr>
+    <tr>
+      <td><code>position</code></td>
+      <td><code>string</code></td>
+      <td><code>'top-right'</code></td>
+      <td>Override global position for this specific toast.</td>
+    </tr>
+    <tr>
+      <td><code>dismissible</code></td>
+      <td><code>boolean</code></td>
+      <td><code>true</code></td>
+      <td>Allow manual dismiss via swipe or close button.</td>
+    </tr>
+    <tr>
+      <td><code>action</code></td>
+      <td><code>{ label, onClick }</code></td>
+      <td>-</td>
+      <td>Action button rendered inside the toast.</td>
+    </tr>
+    <tr>
+      <td><code>cancel</code></td>
+      <td><code>{ label, onClick }</code></td>
+      <td>-</td>
+      <td>Cancel button rendered inside the toast.</td>
+    </tr>
+    <tr>
+      <td><code>id</code></td>
+      <td><code>string</code></td>
+      <td>auto</td>
+      <td>Custom ID for updating or dismissing an existing toast.</td>
+    </tr>
+    <tr>
+      <td><code>icon</code></td>
+      <td><code>ReactNode</code></td>
+      <td>auto</td>
+      <td>Custom icon to replace the default type icon.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Toaster Configuration</h3>
+
+<div class="code-block"><span class="cm">// Mount in layout.tsx (replace Radix Toaster)</span>
+<span class="kw">import</span> { <span class="fn">Toaster</span> } <span class="kw">from</span> <span class="str">'sonner'</span>
+
+<span class="kw">&lt;</span><span class="fn">Toaster</span>
+  <span class="pr">richColors</span>           <span class="cm">{/* auto-colors based on type */}</span>
+  <span class="pr">position</span>=<span class="str">"top-right"</span>
+  <span class="pr">duration</span>={<span class="num">4000</span>}
+  <span class="pr">closeButton</span>          <span class="cm">{/* X button on each toast */}</span>
+  <span class="pr">toastOptions</span>={{
+    <span class="pr">className</span>: <span class="str">'...'</span>   <span class="cm">{/* custom overrides */}</span>
+  }}
+<span class="kw">/&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 4: Patterns
+     =========================== -->
+<div id="patterns"></div>
+<span class="section-number">Section 04</span>
+<h2>Standardized Toast Patterns</h2>
+
+<h3>Pattern 1: Success Feedback</h3>
+<p>Use after successful CRUD operations -- record creation, updates, deletions.</p>
+
+<div class="code-block"><span class="cm">// Simple success</span>
+<span class="fn">toast</span>.<span class="fn">success</span>(<span class="str">'Commitment created successfully'</span>)
+
+<span class="cm">// Success with description</span>
+<span class="fn">toast</span>.<span class="fn">success</span>(<span class="str">'Profile updated'</span>, {
+  <span class="pr">description</span>: <span class="str">'Your changes have been saved'</span>
+})</div>
+
+<h3>Pattern 2: Error Feedback</h3>
+<p>Use after failed API calls, validation errors, or unexpected exceptions.</p>
+
+<div class="code-block"><span class="cm">// Simple error</span>
+<span class="fn">toast</span>.<span class="fn">error</span>(<span class="str">'Failed to create commitment'</span>)
+
+<span class="cm">// Error with description</span>
+<span class="fn">toast</span>.<span class="fn">error</span>(<span class="str">'Sync failed'</span>, {
+  <span class="pr">description</span>: <span class="str">'Check your connection and try again'</span>
+})</div>
+
+<h3>Pattern 3: Warning</h3>
+<p>Use for non-blocking issues, degraded functionality, or important notices.</p>
+
+<div class="code-block"><span class="fn">toast</span>.<span class="fn">warning</span>(<span class="str">'Connection lost'</span>, {
+  <span class="pr">description</span>: <span class="str">'Changes will be saved locally'</span>,
+  <span class="pr">duration</span>: <span class="num">5000</span>
+})</div>
+
+<h3>Pattern 4: Promise (Async with Progress)</h3>
+<p>Use for long-running operations with automatic loading, success, and error states.</p>
+
+<div class="code-block"><span class="fn">toast</span>.<span class="fn">promise</span>(
+  <span class="fn">saveData</span>(),
+  {
+    <span class="pr">loading</span>: <span class="str">'Saving changes...'</span>,
+    <span class="pr">success</span>: <span class="str">'Changes saved'</span>,
+    <span class="pr">error</span>: <span class="str">'Failed to save'</span>
+  }
+)</div>
+
+<h3>Pattern 5: With Action Button</h3>
+<p>Use for undo operations, retry suggestions, or secondary actions.</p>
+
+<div class="code-block"><span class="fn">toast</span>.<span class="fn">error</span>(<span class="str">'Delete failed'</span>, {
+  <span class="pr">action</span>: {
+    <span class="pr">label</span>: <span class="str">'Retry'</span>,
+    <span class="pr">onClick</span>: () <span class="kw">=></span> <span class="fn">handleDelete</span>()
+  }
+})</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 5: Mockups
+     =========================== -->
+<div id="mockups"></div>
+<span class="section-number">Section 05</span>
+<h2>Visual Mockups</h2>
+<p>Rendered representations of Sonner toast notifications as they appear in the application. Each mockup shows the toast with its type-specific icon, color accent, and layout.</p>
+
+<!-- 1. Success -->
+<h3>Success Toast</h3>
+
+<div class="mockup-container" style="display:flex;justify-content:flex-end;">
+  <div style="width:100%;max-width:400px;">
+    <div class="toast-mockup success">
+      <div class="toast-icon success">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="toast-content">
+        <div class="toast-title">Commitment created successfully</div>
+      </div>
+      <div class="toast-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Error -->
+<h3>Error Toast</h3>
+
+<div class="mockup-container" style="display:flex;justify-content:flex-end;">
+  <div style="width:100%;max-width:400px;">
+    <div class="toast-mockup error">
+      <div class="toast-icon error">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+      <div class="toast-content">
+        <div class="toast-title">Failed to save changes</div>
+        <div class="toast-description">The server returned an unexpected error. Please try again.</div>
+      </div>
+      <div class="toast-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Warning -->
+<h3>Warning Toast</h3>
+
+<div class="mockup-container" style="display:flex;justify-content:flex-end;">
+  <div style="width:100%;max-width:400px;">
+    <div class="toast-mockup warning">
+      <div class="toast-icon warning">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="toast-content">
+        <div class="toast-title">Connection lost</div>
+        <div class="toast-description">Changes will be saved locally until connection is restored.</div>
+      </div>
+      <div class="toast-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. Info -->
+<h3>Info Toast</h3>
+
+<div class="mockup-container" style="display:flex;justify-content:flex-end;">
+  <div style="width:100%;max-width:400px;">
+    <div class="toast-mockup info">
+      <div class="toast-icon info">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      </div>
+      <div class="toast-content">
+        <div class="toast-title">Report is ready to download</div>
+      </div>
+      <div class="toast-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. Promise loading -->
+<h3>Promise Toast -- Loading State</h3>
+
+<div class="mockup-container" style="display:flex;justify-content:flex-end;">
+  <div style="width:100%;max-width:400px;">
+    <div class="toast-mockup loading">
+      <div class="toast-icon loading">
+        <div class="spinner"></div>
+      </div>
+      <div class="toast-content">
+        <div class="toast-title">Saving changes...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 6. Promise success -->
+<h3>Promise Toast -- Success State</h3>
+
+<div class="mockup-container" style="display:flex;justify-content:flex-end;">
+  <div style="width:100%;max-width:400px;">
+    <div class="toast-mockup success">
+      <div class="toast-icon success">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="toast-content">
+        <div class="toast-title">Changes saved</div>
+      </div>
+      <div class="toast-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. With action -->
+<h3>Toast with Action Button</h3>
+
+<div class="mockup-container" style="display:flex;justify-content:flex-end;">
+  <div style="width:100%;max-width:400px;">
+    <div class="toast-mockup error">
+      <div class="toast-icon error">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+      <div class="toast-content">
+        <div class="toast-title">Delete failed</div>
+        <div class="toast-description">The record could not be removed.</div>
+        <div class="toast-action">Retry</div>
+      </div>
+      <div class="toast-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 8. Stacked -->
+<h3>Stacked Toasts (Multiple Notifications)</h3>
+
+<div class="mockup-container" style="display:flex;justify-content:flex-end;">
+  <div style="width:100%;max-width:400px;">
+    <!-- Toast 3 (bottom/back) -->
+    <div class="toast-mockup error" style="transform:scale(0.96);opacity:0.7;margin-left:8px;margin-right:-8px;">
+      <div class="toast-icon error">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+      <div class="toast-content">
+        <div class="toast-title">Sync failed</div>
+        <div class="toast-description">Connection timed out.</div>
+      </div>
+    </div>
+    <!-- Toast 2 (middle) -->
+    <div class="toast-mockup warning" style="transform:scale(0.98);opacity:0.85;margin-left:4px;margin-right:-4px;">
+      <div class="toast-icon warning">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="toast-content">
+        <div class="toast-title">Connection lost</div>
+        <div class="toast-description">Working in offline mode.</div>
+      </div>
+    </div>
+    <!-- Toast 1 (top/front) -->
+    <div class="toast-mockup success">
+      <div class="toast-icon success">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="toast-content">
+        <div class="toast-title">Profile updated</div>
+      </div>
+      <div class="toast-close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 5b: Before / After
+     =========================== -->
+<div id="before-after"></div>
+<span class="section-number">Section 06</span>
+<h2>Before / After Comparison</h2>
+<p>Side-by-side comparison of the Radix toast (being removed) versus the Sonner toast (standardized).</p>
+
+<div class="mockup-container">
+  <div class="mockup-grid-2">
+
+    <!-- Before: Radix -->
+    <div>
+      <div class="grid-helper-label">Before: Radix UI Toast</div>
+      <div class="toast-radix destructive">
+        <div class="toast-content">
+          <div class="toast-title">Error</div>
+          <div class="toast-description">Failed to delete role</div>
+        </div>
+      </div>
+      <div class="code-block" style="margin-top:12px;font-size:12px;"><span class="del"><span class="kw">const</span> { <span class="fn">toast</span> } = <span class="fn">useToast</span>()</span>
+<span class="del"><span class="fn">toast</span>({</span>
+<span class="del">  <span class="pr">title</span>: <span class="str">'Error'</span>,</span>
+<span class="del">  <span class="pr">description</span>: <span class="str">'Failed to delete role'</span>,</span>
+<span class="del">  <span class="pr">variant</span>: <span class="str">'destructive'</span></span>
+<span class="del">})</span></div>
+    </div>
+
+    <!-- After: Sonner -->
+    <div>
+      <div class="grid-helper-label">After: Sonner</div>
+      <div class="toast-mockup error">
+        <div class="toast-icon error">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+        <div class="toast-content">
+          <div class="toast-title">Failed to delete role</div>
+        </div>
+        <div class="toast-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </div>
+      </div>
+      <div class="code-block" style="margin-top:12px;font-size:12px;"><span class="add"><span class="kw">import</span> { <span class="fn">toast</span> } <span class="kw">from</span> <span class="str">'sonner'</span></span>
+
+<span class="add"><span class="fn">toast</span>.<span class="fn">error</span>(<span class="str">'Failed to delete role'</span>)</span></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 5c: Positions
+     =========================== -->
+<div id="positions"></div>
+<h2>Toaster Position Diagram</h2>
+<p>Sonner supports 6 position options. The chosen position for DRMS is <strong>top-right</strong>, highlighted below.</p>
+
+<div class="mockup-container">
+  <div class="position-diagram">
+    <div class="position-grid">
+      <div class="position-label">top-left</div>
+      <div class="position-label active">top-right (selected)</div>
+      <div class="position-middle">Application Content Area</div>
+      <div class="position-label">bottom-left</div>
+      <div class="position-label">bottom-right</div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:16px;justify-content:center;">
+      <div class="position-label" style="flex:1;">top-center</div>
+      <div class="position-label" style="flex:1;">bottom-center</div>
+    </div>
+  </div>
+</div>
+
+<div class="tw-classes">
+  <span class="tw-class">position="top-right"</span>
+  <span class="tw-class">richColors</span>
+  <span class="tw-class">closeButton</span>
+  <span class="tw-class">duration={4000}</span>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 6: Migration Map
+     =========================== -->
+<div id="migration"></div>
+<span class="section-number">Section 07</span>
+<h2>Migration Map</h2>
+
+<h3>Sonner Calls (No Changes Required)</h3>
+<p>These 14 files already use Sonner and require zero modifications. They continue working as-is after the Radix Toaster is removed from layout.tsx.</p>
+
+<table class="migration-table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>File</th>
+      <th>Call Pattern</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td class="file">BackgroundSyncProvider.tsx</td>
+      <td><code>toast.success/error/warning</code></td>
+      <td>With description + duration</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td class="file">ConfigurationAuditHistory.tsx</td>
+      <td><code>toast.success/error</code></td>
+      <td>Simple</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td class="file">AutoApprovalConfig.tsx</td>
+      <td><code>toast.success/error</code></td>
+      <td>Simple</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td class="file">EnhancedAutoApprovalConfig.tsx</td>
+      <td><code>toast.success/error</code></td>
+      <td>Simple</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td class="file">useVerification.ts</td>
+      <td><code>toast.success/error</code></td>
+      <td>Simple</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td class="file">EntityDonorAssignment.tsx</td>
+      <td><code>toast.success/error</code></td>
+      <td>With description</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td class="file">DonorRegistrationForm.tsx</td>
+      <td><code>toast.success/error</code></td>
+      <td>Simple</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td class="file">CommitmentDashboard.tsx</td>
+      <td><code>toast.success</code></td>
+      <td>Simple</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td class="file">DonorProfile.tsx</td>
+      <td><code>toast.success/error</code></td>
+      <td>Simple</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td class="file">CommitmentStatusTracker.tsx</td>
+      <td><code>toast.success/error</code></td>
+      <td>Simple</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td class="file">CommitmentForm.tsx</td>
+      <td><code>toast.success/error</code></td>
+      <td>Simple</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td class="file">SeverityThresholdTable.tsx</td>
+      <td><code>toast.success/error</code></td>
+      <td>Simple</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td class="file">GapFieldTable.tsx</td>
+      <td><code>toast.success/error</code></td>
+      <td>Simple</td>
+    </tr>
+    <tr>
+      <td>14</td>
+      <td class="file">admin/donors/[id]/edit/page.tsx</td>
+      <td><code>toast.success/error</code></td>
+      <td>Simple</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Radix Calls (Must Migrate to Sonner)</h3>
+<p>Only 2 files need their toast calls updated from Radix pattern to Sonner pattern.</p>
+
+<table class="migration-table">
+  <thead>
+    <tr>
+      <th>File</th>
+      <th>Current (Radix)</th>
+      <th>Target (Sonner)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="file">roles/page.tsx</td>
+      <td><code>useToast()</code> + <code>toast({ title, variant: 'destructive' })</code></td>
+      <td><code>toast.error('Failed to delete role')</code></td>
+    </tr>
+    <tr>
+      <td class="file">donor/reports/page.tsx</td>
+      <td><code>useToast()</code> + <code>toast({ title, variant: 'destructive' })</code></td>
+      <td><code>toast.error('Failed to generate report')</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Files to Delete</h3>
+<p>These 3 files become dead code after the migration and should be removed entirely.</p>
+
+<ul class="delete-list">
+  <li>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+    src/components/ui/toast.tsx
+  </li>
+  <li>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+    src/components/ui/use-toast.ts
+  </li>
+  <li>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+    src/components/ui/toaster.tsx
+  </li>
+</ul>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 7: Migration Steps
+     =========================== -->
+<div id="steps"></div>
+<span class="section-number">Section 08</span>
+<h2>Migration Steps</h2>
+
+<!-- Step 1 -->
+<div class="step-card">
+  <div class="step-header">
+    <span class="step-number">1</span>
+    <h4>Mount Sonner Toaster in layout.tsx</h4>
+  </div>
+  <p>Replace the Radix <code>&lt;Toaster /&gt;</code> in <code>src/app/layout.tsx</code> with Sonner's <code>&lt;Toaster /&gt;</code>.</p>
+  <div class="code-block"><span class="cm">// src/app/layout.tsx</span>
+
+<span class="del"><span class="kw">import</span> { <span class="fn">Toaster</span> } <span class="kw">from</span> <span class="str">'@/components/ui/toaster'</span></span>
+<span class="add"><span class="kw">import</span> { <span class="fn">Toaster</span> } <span class="kw">from</span> <span class="str">'sonner'</span></span>
+
+<span class="cm">// Inside the layout return:</span>
+<span class="del"><span class="kw">&lt;</span><span class="fn">Toaster</span> <span class="kw">/&gt;</span></span>
+<span class="add"><span class="kw">&lt;</span><span class="fn">Toaster</span> <span class="pr">richColors</span> <span class="pr">position</span>=<span class="str">"top-right"</span> <span class="pr">closeButton</span> <span class="kw">/&gt;</span></span></div>
+</div>
+
+<!-- Step 2 -->
+<div class="step-card">
+  <div class="step-header">
+    <span class="step-number">2</span>
+    <h4>Migrate roles/page.tsx</h4>
+  </div>
+  <p>Replace <code>useToast</code> hook with direct Sonner import. The toast call changes from an object signature to a typed method.</p>
+  <div class="code-block"><span class="cm">// src/app/(auth)/admin/roles/page.tsx</span>
+
+<span class="del"><span class="kw">import</span> { <span class="fn">useToast</span> } <span class="kw">from</span> <span class="str">'@/components/ui/use-toast'</span></span>
+<span class="add"><span class="kw">import</span> { <span class="fn">toast</span> } <span class="kw">from</span> <span class="str">'sonner'</span></span>
+
+<span class="cm">// Inside the component:</span>
+<span class="del"><span class="kw">const</span> { <span class="fn">toast</span> } = <span class="fn">useToast</span>()</span>
+
+<span class="cm">// Replace the toast call:</span>
+<span class="del"><span class="fn">toast</span>({ <span class="pr">title</span>: <span class="str">'Error'</span>, <span class="pr">description</span>: <span class="str">'Failed to delete role'</span>, <span class="pr">variant</span>: <span class="str">'destructive'</span> })</span>
+<span class="add"><span class="fn">toast</span>.<span class="fn">error</span>(<span class="str">'Failed to delete role'</span>)</span></div>
+</div>
+
+<!-- Step 3 -->
+<div class="step-card">
+  <div class="step-header">
+    <span class="step-number">3</span>
+    <h4>Migrate donor/reports/page.tsx</h4>
+  </div>
+  <p>Same pattern as Step 2. Replace the hook-based toast with a direct Sonner call.</p>
+  <div class="code-block"><span class="cm">// src/app/(auth)/donor/reports/page.tsx</span>
+
+<span class="del"><span class="kw">import</span> { <span class="fn">useToast</span> } <span class="kw">from</span> <span class="str">'@/components/ui/use-toast'</span></span>
+<span class="add"><span class="kw">import</span> { <span class="fn">toast</span> } <span class="kw">from</span> <span class="str">'sonner'</span></span>
+
+<span class="cm">// Inside the component:</span>
+<span class="del"><span class="kw">const</span> { <span class="fn">toast</span> } = <span class="fn">useToast</span>()</span>
+
+<span class="cm">// Replace the toast call:</span>
+<span class="del"><span class="fn">toast</span>({ <span class="pr">title</span>: <span class="str">'Error'</span>, <span class="pr">description</span>: <span class="str">'...'</span>, <span class="pr">variant</span>: <span class="str">'destructive'</span> })</span>
+<span class="add"><span class="fn">toast</span>.<span class="fn">error</span>(<span class="str">'Failed to generate report'</span>)</span></div>
+</div>
+
+<!-- Step 4 -->
+<div class="step-card">
+  <div class="step-header">
+    <span class="step-number">4</span>
+    <h4>Delete Radix toast files</h4>
+  </div>
+  <p>Remove the now-unused Radix toast component files. If no other package depends on <code>@radix-ui/react-toast</code>, remove it from package.json as well.</p>
+  <div class="code-block"><span class="cm"># Delete files</span>
+<span class="fn">rm</span> src/components/ui/toast.tsx
+<span class="fn">rm</span> src/components/ui/use-toast.ts
+<span class="fn">rm</span> src/components/ui/toaster.tsx
+
+<span class="cm"># Optionally remove unused dependency</span>
+<span class="fn">npm</span> uninstall @radix-ui/react-toast</div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 8: Summary
+     =========================== -->
+<div id="summary"></div>
+<span class="section-number">Section 09</span>
+<h2>Summary</h2>
+
+<div class="summary-grid">
+  <div class="summary-stat green">
+    <div class="stat-value">14</div>
+    <div class="stat-label">Files unchanged<br>(already Sonner)</div>
+  </div>
+  <div class="summary-stat amber">
+    <div class="stat-value">2</div>
+    <div class="stat-label">Files to migrate<br>(Radix to Sonner)</div>
+  </div>
+  <div class="summary-stat red">
+    <div class="stat-value">3</div>
+    <div class="stat-label">Files to delete<br>(Radix toast)</div>
+  </div>
+  <div class="summary-stat blue">
+    <div class="stat-value">1</div>
+    <div class="stat-label">File to modify<br>(layout.tsx)</div>
+  </div>
+  <div class="summary-stat green">
+    <div class="stat-value">30m</div>
+    <div class="stat-label">Estimated effort<br>risk: VERY LOW</div>
+  </div>
+</div>
+
+<h3>Migration Checklist</h3>
+
+<div class="rules-grid">
+  <div class="rule">
+    <div class="rule-icon" style="background:hsl(142 71% 45% / 0.1);color:var(--green-600);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>1. Install and mount Sonner Toaster</h4>
+      <p>Add <code>&lt;Toaster richColors position="top-right" closeButton /&gt;</code> to <code>layout.tsx</code>, replacing the Radix <code>&lt;Toaster /&gt;</code>.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon" style="background:hsl(38 92% 50% / 0.1);color:var(--amber-600);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>2. Update roles/page.tsx</h4>
+      <p>Replace <code>useToast()</code> with <code>import { toast } from 'sonner'</code>. Change <code>toast({ title, variant })</code> to <code>toast.error(msg)</code>.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon" style="background:hsl(38 92% 50% / 0.1);color:var(--amber-600);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>3. Update donor/reports/page.tsx</h4>
+      <p>Same pattern as above. Replace Radix hook with Sonner direct call.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon" style="background:hsl(0 84% 60% / 0.1);color:var(--red-600);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>4. Delete Radix toast files</h4>
+      <p>Remove <code>toast.tsx</code>, <code>use-toast.ts</code>, <code>toaster.tsx</code>. Optionally remove <code>@radix-ui/react-toast</code> dependency.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon" style="background:hsl(221.2 83.2% 53.3% / 0.1);color:var(--primary);">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>5. Verify and test</h4>
+      <p>Test all toast-triggering flows: CRUD operations, sync failures, form submissions, configuration saves. Confirm visual consistency across all pages.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="sep"></div>
+<p style="font-size:13px;text-align:center;padding:24px 0;">
+  DRMS Design System -- Toast System Specification v1.0.0<br>
+  Phase 7 -- 2025-05-24 &middot; For stakeholder review
+</p>
+
+</main>
+
+<!-- ============================================================
+     Sidebar active state script
+     ============================================================ -->
+<script>
+(function() {
+  const links = document.querySelectorAll('.sidebar a');
+  const sections = [];
+
+  links.forEach(link => {
+    const href = link.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      const el = document.getElementById(href.slice(1));
+      if (el) sections.push({ link, el });
+    }
+  });
+
+  function update() {
+    const scrollY = window.scrollY + 120;
+    let current = sections[0];
+    sections.forEach(s => {
+      if (s.el.offsetTop <= scrollY) current = s;
+    });
+    links.forEach(l => l.classList.remove('active'));
+    if (current) current.link.classList.add('active');
+  }
+
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+</script>
+
+</body>
+</html>

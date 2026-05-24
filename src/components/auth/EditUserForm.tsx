@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button } from '@/components/ui/button'
+
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
+import { FormCard } from '@/components/shared/FormCard'
+import { FormActionBar } from '@/components/shared/FormActionBar'
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet, apiPut } from '@/lib/api'
 
@@ -253,15 +255,12 @@ export function EditUserForm({ user, isAdmin, onSuccess, onCancel }: EditUserFor
   }
 
   return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle>{isAdmin ? 'Edit User' : 'Edit Profile'}</CardTitle>
-        <CardDescription>
-          {isAdmin ? 'Update user information and role assignments' : 'Update your profile information'}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <FormCard
+      title={isAdmin ? 'Edit User' : 'Edit Profile'}
+      description={isAdmin ? 'Update user information and role assignments' : 'Update your profile information'}
+      className="w-full max-w-2xl"
+    >
+        <form onSubmit={handleSubmit(onSubmit)}>
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -451,27 +450,14 @@ export function EditUserForm({ user, isAdmin, onSuccess, onCancel }: EditUserFor
             </>
           )}
 
-          <div className="flex gap-2">
-            <Button 
-              type="submit" 
-              className="flex-1" 
-              disabled={isSubmitting || !isDirty}
-            >
-              {isSubmitting ? 'Updating...' : 'Update User'}
-            </Button>
-            {onCancel && (
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={onCancel}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-            )}
-          </div>
+          <FormActionBar
+            onCancel={onCancel}
+            submitLabel={isSubmitting ? 'Updating...' : 'Update User'}
+            loading={isSubmitting}
+            disabled={isSubmitting || !isDirty}
+            variant="bordered"
+          />
         </form>
-      </CardContent>
-    </Card>
+    </FormCard>
   )
 }

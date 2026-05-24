@@ -9,6 +9,8 @@ import { z } from 'zod'
 // UI components
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormCard } from '@/components/shared/FormCard'
+import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -254,17 +256,11 @@ export function DonorCommitmentImportForm({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            Import from Donor Commitment
-          </CardTitle>
-          <CardDescription>
-            Select a donor commitment to auto-populate response details with available items.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <FormCard
+        title="Import from Donor Commitment"
+        description="Select a donor commitment to auto-populate response details with available items."
+        variant="dialog"
+      >
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -600,33 +596,19 @@ export function DonorCommitmentImportForm({
 
                     <FormMessage>{form.formState.errors.items?.message}</FormMessage>
 
-                    <div className="flex gap-3 pt-4">
-                      <Button
-                        type="submit"
-                        disabled={importMutation.isPending || selectedItems.length === 0}
-                        className="flex-1"
-                      >
-                        {importMutation.isPending ? 'Importing...' : 'Preview Import'}
-                      </Button>
-                      
-                      {onCancel && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={onCancel}
-                          disabled={importMutation.isPending}
-                        >
-                          Cancel
-                        </Button>
-                      )}
-                    </div>
+                    <FormActionBar
+                      onCancel={onCancel}
+                      submitLabel="Preview Import"
+                      loading={importMutation.isPending}
+                      disabled={importMutation.isPending || selectedItems.length === 0}
+                      variant="default"
+                    />
                   </form>
                 </Form>
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
+      </FormCard>
 
       {/* Preview Dialog */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>

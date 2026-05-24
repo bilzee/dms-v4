@@ -67,13 +67,13 @@ Custom report builder with support for PDF, CSV, and Excel export formats. Inclu
 |---|---|
 | **Framework** | Next.js 14 (App Router) |
 | **Language** | TypeScript 5.5 |
-| **UI** | React 18 + Tailwind CSS + Radix UI/shadcn |
+| **UI** | React 18 + Tailwind CSS + Radix UI/shadcn + Sonner (toasts) |
 | **State Management** | Zustand + TanStack React Query |
 | **Database** | PostgreSQL + Prisma ORM |
 | **Authentication** | NextAuth.js (JWT) |
 | **Offline Storage** | PWA + Dexie (IndexedDB) |
 | **Maps** | Leaflet |
-| **Charts** | Chart.js |
+| **Charts** | Chart.js (centralized configuration via `chart-config.ts`) |
 | **Testing** | Playwright + Jest |
 
 ---
@@ -86,7 +86,8 @@ The application follows a monolithic Next.js full-stack architecture using a lay
 - **Design Pattern**: Layered component-based architecture
 - **API Layer**: 128 REST endpoints, versioned at `/api/v1/`
 - **Data Layer**: 27 database models, 15 enumerations
-- **UI Layer**: 177 components across 59 pages, organized into 6 role-based groups
+- **UI Layer**: 193 components across 59 pages, organized into 6 role-based groups
+- **Design System**: Unified component layer (StatCard, FormCard, StatusBadge, FilterPanel, etc.) providing consistent UI patterns
 - **State Layer**: 9 Zustand stores, 24 custom hooks
 - **Service Layer**: 23 backend services
 
@@ -98,7 +99,7 @@ The application follows a monolithic Next.js full-stack architecture using a lay
 |---|---|
 | API Endpoints | 128 |
 | Database Models | 27 |
-| UI Components | 177 |
+| UI Components | 193 |
 | Pages | 59 |
 | Custom Hooks | 24 |
 | Backend Services | 23 |

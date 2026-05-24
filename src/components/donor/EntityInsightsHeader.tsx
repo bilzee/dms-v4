@@ -13,6 +13,7 @@ import {
   Package,
   AlertTriangle
 } from 'lucide-react'
+import { ProgressBar } from '@/components/shared/ProgressBar'
 
 interface EntityDemographics {
   id: string
@@ -133,12 +134,7 @@ export function EntityInsightsHeader({ demographics }: EntityInsightsHeaderProps
                   <span>Vulnerable:</span>
                   <span className="font-medium">{demo.vulnerableCount.toLocaleString()}</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-orange-500 h-2 rounded-full" 
-                    style={{ width: `${vulnerabilityPercentage}%` }}
-                  ></div>
-                </div>
+                <ProgressBar value={vulnerabilityPercentage} variant="warning" size="sm" />
                 <p className="text-xs text-gray-500">{vulnerabilityPercentage}% vulnerable</p>
               </div>
             )}

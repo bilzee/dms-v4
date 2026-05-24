@@ -24,6 +24,7 @@ import { Plus, Package, MapPin, AlertTriangle, CheckCircle2, Clock, Truck, XCirc
 
 // Components
 import { CommitmentForm } from './CommitmentForm'
+import { ProgressBar } from '@/components/shared/ProgressBar'
 
 // Types
 import { DonorCommitment } from '@/types/commitment'
@@ -423,12 +424,7 @@ export function CommitmentDashboard({ donorId, preSelectedEntityId }: Commitment
                           <span>Delivery Progress</span>
                           <span>{commitment.deliveredQuantity} / {commitment.totalCommittedQuantity}</span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full" 
-                            style={{ width: `${(commitment.deliveredQuantity / commitment.totalCommittedQuantity) * 100}%` }}
-                          />
-                        </div>
+                        <ProgressBar value={(commitment.deliveredQuantity / commitment.totalCommittedQuantity) * 100} variant="default" size="sm" />
                       </div>
                     )}
                   </CardContent>

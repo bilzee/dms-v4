@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRMS Loading &amp; Error States -- Design Specification</title>
+<style>
+/* ============================================================
+   CSS Custom Properties -- sourced from globals.css HSL tokens
+   ============================================================ */
+:root {
+  --bg: hsl(0 0% 100%);
+  --fg: hsl(222.2 84% 4.9%);
+  --card: hsl(0 0% 100%);
+  --card-fg: hsl(222.2 84% 4.9%);
+  --primary: hsl(221.2 83.2% 53.3%);
+  --primary-fg: hsl(210 40% 98%);
+  --secondary: hsl(210 40% 96%);
+  --secondary-fg: hsl(222.2 84% 4.9%);
+  --muted: hsl(210 40% 96%);
+  --muted-fg: hsl(215.4 16.3% 46.9%);
+  --accent: hsl(210 40% 96%);
+  --accent-fg: hsl(222.2 84% 4.9%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-fg: hsl(210 40% 98%);
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: hsl(214.3 31.8% 91.4%);
+  --ring: hsl(221.2 83.2% 53.3%);
+  --radius: 0.5rem;
+  --amber-50: #fffbeb; --amber-100: #fef3c7; --amber-500: #f59e0b; --amber-600: #d97706;
+  --green-50: #f0fdf4; --green-100: #dcfce7; --green-500: #22c55e; --green-600: #16a34a;
+  --blue-50: #eff6ff;  --blue-100: #dbeafe;  --blue-500: #3b82f6;  --blue-600: #2563eb;
+  --red-50: #fef2f2;   --red-100: #fee2e2;   --red-500: #ef4444;   --red-600: #dc2626;
+  --orange-500: #f97316; --orange-600: #ea580c;
+  --sidebar-w: 260px; --topbar-h: 56px; --content-max: 1100px;
+  --doc-bg: #fafafa; --doc-border: #e5e7eb;
+}
+.dark {
+  --bg: hsl(224 71% 4%); --fg: hsl(213 31% 91%);
+  --card: hsl(224 71% 4%); --card-fg: hsl(213 31% 91%);
+  --primary: hsl(210 40% 98%); --primary-fg: hsl(222.2 84% 4.9%);
+  --secondary: hsl(215 28% 17%); --secondary-fg: hsl(210 40% 98%);
+  --muted: hsl(215 28% 17%); --muted-fg: hsl(217.9 10.6% 64.9%);
+  --accent: hsl(215 28% 17%); --accent-fg: hsl(210 40% 98%);
+  --destructive: hsl(0 63% 31%); --destructive-fg: hsl(210 40% 98%);
+  --border: hsl(215 28% 17%); --input: hsl(215 28% 17%);
+  --ring: hsl(216 12% 83.9%);
+  --doc-bg: #0b0f1a; --doc-border: #1e293b;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 15px; line-height: 1.6; color: var(--fg); background: var(--doc-bg);
+}
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: var(--topbar-h);
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+}
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.topbar-title { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; color: var(--fg); }
+.topbar-badge {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 2px 8px; border-radius: 4px; background: var(--primary); color: var(--primary-fg);
+}
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-version { font-size: 12px; color: var(--muted-fg); font-family: 'SF Mono', 'Cascadia Code', monospace; }
+.sidebar {
+  position: fixed; top: var(--topbar-h); left: 0; bottom: 0; z-index: 90;
+  width: var(--sidebar-w); background: var(--bg); border-right: 1px solid var(--border);
+  overflow-y: auto; padding: 24px 0;
+}
+.sidebar-section { margin-bottom: 24px; }
+.sidebar-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted-fg); padding: 0 20px; margin-bottom: 8px;
+}
+.sidebar a {
+  display: block; padding: 6px 20px; font-size: 13px; font-weight: 500;
+  color: var(--muted-fg); text-decoration: none; transition: all 0.15s;
+  border-left: 2px solid transparent;
+}
+.sidebar a:hover { color: var(--fg); background: var(--muted); }
+.sidebar a.active { color: var(--primary); border-left-color: var(--primary); background: hsl(221.2 83.2% 53.3% / 0.06); }
+.main {
+  margin-left: var(--sidebar-w); margin-top: var(--topbar-h);
+  padding: 40px 48px 80px; max-width: calc(var(--sidebar-w) + var(--content-max) + 96px);
+}
+h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 8px; }
+h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.3; margin-bottom: 16px; padding-top: 48px; border-top: 1px solid var(--border); }
+h2:first-of-type { border-top: none; }
+h3 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.4; margin-bottom: 12px; }
+p { margin-bottom: 12px; color: var(--muted-fg); max-width: 72ch; }
+.subtitle { font-size: 17px; color: var(--muted-fg); margin-bottom: 32px; }
+.token-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+.token-chip {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--border); font-size: 13px;
+  font-family: 'SF Mono', 'Cascadia Code', monospace;
+}
+.token-swatch { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; }
+.variant-badge {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 20px;
+  font-size: 12px; font-weight: 600; background: hsl(221.2 83.2% 53.3% / 0.1); color: hsl(221.2 83.2% 53.3%);
+  margin-bottom: 16px;
+}
+.variant-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.variant-badge.error-badge { background: hsl(0 84.2% 60.2% / 0.1); color: hsl(0 84.2% 60.2%); }
+.variant-badge.loading-badge { background: hsl(38 92% 50% / 0.1); color: hsl(38 92% 50%); }
+.rules-grid { display: grid; gap: 12px; margin: 16px 0 32px; }
+.rule {
+  display: flex; gap: 16px; padding: 16px 20px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+}
+.rule-icon {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--muted); color: var(--muted-fg); font-size: 16px;
+}
+.rule-body h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.rule-body p { font-size: 13px; margin-bottom: 0; }
+.mockup-container {
+  background: var(--muted); border: 1px solid var(--border); border-radius: 12px;
+  padding: 32px; margin: 20px 0 32px;
+}
+.mockup-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.mockup-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.mockup-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.mockup-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+@media (max-width: 900px) {
+  .mockup-grid-4, .mockup-grid-5 { grid-template-columns: repeat(2, 1fr); }
+  .mockup-grid-3 { grid-template-columns: 1fr; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--muted) 25%, hsl(210 40% 96% / 0.6) 50%, var(--muted) 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s ease-in-out infinite; border-radius: 4px;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skeleton-line { height: 14px; margin-bottom: 8px; }
+.skeleton-line.w-1-2 { width: 50%; } .skeleton-line.w-1-3 { width: 33%; }
+.skeleton-line.w-2-3 { width: 66%; } .skeleton-line.w-3-4 { width: 75%; }
+.skeleton-line.w-full { width: 100%; }
+.skeleton-heading { height: 28px; width: 40%; margin-bottom: 12px; }
+.dark .skeleton {
+  background: linear-gradient(90deg, hsl(215 28% 17%) 25%, hsl(215 28% 22%) 50%, hsl(215 28% 17%) 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s ease-in-out infinite;
+}
+.spinner {
+  display: inline-block; border: 3px solid var(--border); border-top-color: var(--primary);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+.spinner-sm { width: 16px; height: 16px; border-width: 2px; }
+.spinner-md { width: 32px; height: 32px; border-width: 3px; }
+.spinner-lg { width: 48px; height: 48px; border-width: 4px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.content-skeleton-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px;
+}
+.content-skeleton-table {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+}
+.cs-table-header {
+  display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--muted);
+}
+.cs-table-row {
+  display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border);
+}
+.cs-table-row:last-child { border-bottom: none; }
+.cs-table-cell { height: 14px; border-radius: 4px; }
+.content-skeleton-list { display: flex; flex-direction: column; gap: 12px; }
+.cs-list-item {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.cs-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
+.content-skeleton-metric {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px;
+}
+.content-skeleton-form {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px;
+}
+.cs-form-field { margin-bottom: 16px; }
+.cs-form-label { height: 12px; width: 30%; margin-bottom: 8px; }
+.cs-form-input { height: 36px; width: 100%; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 8px 16px; border-radius: var(--radius); font-size: 14px; font-weight: 500;
+  border: 1px solid transparent; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.btn-primary { background: var(--primary); color: var(--primary-fg); }
+.btn-primary:hover { opacity: 0.9; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-outline { background: var(--bg); color: var(--fg); border-color: var(--border); }
+.btn-outline:hover { background: var(--muted); }
+.btn-ghost { background: transparent; color: var(--primary); border-color: transparent; text-decoration: underline; font-size: 13px; padding: 4px 8px; }
+.btn-ghost:hover { opacity: 0.8; }
+.alert {
+  display: flex; gap: 12px; padding: 16px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--bg);
+}
+.alert-destructive { border-color: hsl(0 84.2% 60.2% / 0.3); background: hsl(0 84.2% 60.2% / 0.05); }
+.alert-warning { border-color: hsl(38 92% 50% / 0.3); background: hsl(38 92% 50% / 0.05); }
+.alert-icon { flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+.alert-icon svg { width: 20px; height: 20px; }
+.alert-destructive .alert-icon { color: var(--destructive); }
+.alert-warning .alert-icon { color: var(--orange-600); }
+.alert-body { flex: 1; }
+.alert-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; color: var(--fg); }
+.alert-message { font-size: 13px; color: var(--muted-fg); margin-bottom: 12px; }
+.alert-actions { display: flex; gap: 8px; }
+.dark .alert-destructive { border-color: hsl(0 63% 31% / 0.4); background: hsl(0 63% 31% / 0.08); }
+.dark .alert-warning { border-color: hsl(38 92% 50% / 0.2); background: hsl(38 92% 50% / 0.08); }
+.toast-mockup {
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px;
+  background: var(--bg); border: 1px solid hsl(0 84.2% 60.2% / 0.3); border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 360px; position: relative;
+}
+.toast-mockup .toast-icon { flex-shrink: 0; color: var(--destructive); }
+.toast-mockup .toast-icon svg { width: 18px; height: 18px; }
+.toast-mockup .toast-body { flex: 1; }
+.toast-mockup .toast-title { font-size: 13px; font-weight: 600; color: var(--fg); }
+.toast-mockup .toast-msg { font-size: 12px; color: var(--muted-fg); }
+.toast-mockup .toast-close { position: absolute; top: 8px; right: 8px; width: 16px; height: 16px; color: var(--muted-fg); cursor: pointer; }
+.dark .toast-mockup { border-color: hsl(0 63% 31% / 0.4); background: hsl(224 71% 4%); }
+.error-page {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 64px 32px; min-height: 400px;
+}
+.error-page-icon {
+  width: 64px; height: 64px; border-radius: 50%; background: hsl(0 84.2% 60.2% / 0.1);
+  display: flex; align-items: center; justify-content: center; margin-bottom: 24px; color: var(--destructive);
+}
+.error-page-icon svg { width: 32px; height: 32px; }
+.error-page-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; color: var(--fg); }
+.error-page-message { font-size: 15px; color: var(--muted-fg); max-width: 400px; margin-bottom: 24px; }
+.error-page-actions { display: flex; gap: 12px; align-items: center; }
+.dark .error-page-icon { background: hsl(0 63% 31% / 0.15); }
+.comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 16px 0 32px; }
+.comparison-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted-fg); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.comparison-label.bad { color: var(--red-600); }
+.comparison-label.good { color: var(--green-600); }
+.comparison-label .dot { width: 6px; height: 6px; border-radius: 50%; }
+.comparison-label.bad .dot { background: var(--red-600); }
+.comparison-label.good .dot { background: var(--green-600); }
+.comparison-panel {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px;
+}
+.comparison-panel.before { border-color: hsl(0 84.2% 60.2% / 0.3); }
+.comparison-panel.after { border-color: hsl(142 71% 45% / 0.3); }
+.sdl-states { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.sdl-state {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 24px 20px; text-align: center; min-height: 220px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.sdl-state-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted-fg); margin-bottom: 16px;
+}
+.sdl-countdown { font-size: 13px; color: var(--muted-fg); margin-top: 8px; font-family: 'SF Mono', 'Cascadia Code', monospace; }
+@media (max-width: 900px) {
+  .sdl-states { grid-template-columns: repeat(2, 1fr); }
+  .comparison-grid { grid-template-columns: 1fr; }
+}
+.code-block {
+  background: hsl(224 71% 4%); color: hsl(213 31% 91%); border-radius: 10px;
+  padding: 20px 24px; font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 13px; line-height: 1.7; overflow-x: auto; margin: 16px 0 24px; border: 1px solid #1e293b;
+}
+.code-block .kw { color: #c084fc; } .code-block .str { color: #86efac; }
+.code-block .typ { color: #67e8f9; } .code-block .cm { color: #64748b; font-style: italic; }
+.code-block .fn { color: #fbbf24; } .code-block .pr { color: #f9a8d4; }
+.code-block .num { color: #fb923c; }
+.tw-classes {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 16px; font-family: 'SF Mono', 'Cascadia Code', monospace;
+  font-size: 12px; color: var(--muted-fg); margin: 8px 0 16px;
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.tw-class {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  background: var(--secondary); color: var(--secondary-fg); font-size: 12px;
+}
+.api-table, .inventory-table, .migration-table {
+  width: 100%; border-collapse: collapse; font-size: 14px;
+  margin: 16px 0 32px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.api-table th, .inventory-table th, .migration-table th {
+  text-align: left; padding: 10px 16px; background: var(--muted); font-weight: 600;
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-fg);
+  border-bottom: 1px solid var(--border);
+}
+.api-table td, .inventory-table td, .migration-table td {
+  padding: 10px 16px; border-bottom: 1px solid var(--border); vertical-align: top;
+}
+.api-table tr:last-child td, .inventory-table tr:last-child td, .migration-table tr:last-child td { border-bottom: none; }
+.api-table code, .inventory-table code, .migration-table code {
+  font-family: 'SF Mono', 'Cascadia Code', monospace; font-size: 12px;
+  background: var(--muted); padding: 2px 6px; border-radius: 4px;
+}
+.migration-table code { font-size: 11px; }
+.migration-table .file { color: var(--primary); font-weight: 500; }
+.inventory-table .count { font-weight: 700; color: var(--primary); font-family: 'SF Mono', 'Cascadia Code', monospace; }
+.section-number {
+  display: inline-block; font-size: 12px; font-weight: 700;
+  color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;
+}
+.theme-toggle {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--muted); border: 1px solid var(--border); border-radius: 8px;
+  padding: 4px 12px; cursor: pointer; user-select: none;
+  font-size: 12px; font-weight: 600; color: var(--muted-fg); transition: all 0.2s;
+}
+.theme-toggle:hover { background: var(--accent); }
+.theme-toggle .toggle-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+.sep { height: 1px; background: var(--border); margin: 40px 0; }
+.tier-label {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 6px; background: var(--primary); color: var(--primary-fg);
+  font-size: 12px; font-weight: 700; margin-right: 8px;
+}
+.research-card {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px 20px; margin-bottom: 12px;
+}
+.research-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.research-card p { font-size: 13px; margin: 0; }
+.research-card .source { font-size: 11px; color: var(--primary); font-weight: 500; margin-top: 6px; }
+.summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0 32px; }
+.summary-stat {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 20px; text-align: center;
+}
+.summary-stat .stat-value { font-size: 32px; font-weight: 800; color: var(--primary); }
+.summary-stat .stat-label { font-size: 13px; color: var(--muted-fg); margin-top: 4px; }
+@media (max-width: 900px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     Top Bar
+     ============================================================ -->
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-title">DRMS Loading &amp; Error States</span>
+    <span class="topbar-badge">Phase 6</span>
+  </div>
+  <div class="topbar-right">
+    <span class="topbar-version">v1.0.0 -- 2025-05-24</span>
+    <div class="theme-toggle" onclick="document.body.classList.toggle('dark')">
+      <span class="toggle-dot"></span>
+      Light / Dark
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     Sidebar Navigation
+     ============================================================ -->
+<nav class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Overview</div>
+    <a href="#overview">Introduction</a>
+    <a href="#research">Research</a>
+    <a href="#principles">Design Principles</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Inventory</div>
+    <a href="#inventory-loading">Loading Patterns</a>
+    <a href="#inventory-error">Error Patterns</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Unified Approach</div>
+    <a href="#loading-tiers">Loading Tiers</a>
+    <a href="#error-tiers">Error Tiers</a>
+    <a href="#empty-states">Empty States</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Mockups</div>
+    <a href="#mockup-loading-t1">Full-Page Spinner</a>
+    <a href="#mockup-loading-t2">Content Skeletons</a>
+    <a href="#mockup-loading-t3">Button Loading</a>
+    <a href="#mockup-error-t1">Full-Page Error</a>
+    <a href="#mockup-error-t2">Content-Area Error</a>
+    <a href="#mockup-error-t3">Toast Error</a>
+    <a href="#mockup-sdl">SafeDataLoader</a>
+    <a href="#mockup-comparison">Before / After</a>
+    <a href="#mockup-empty">Empty State</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Reference</div>
+    <a href="#api">Component API</a>
+    <a href="#migration">Migration Map</a>
+    <a href="#summary">Summary</a>
+  </div>
+</nav>
+
+<!-- ============================================================
+     Main Content
+     ============================================================ -->
+<main class="main">
+
+<!-- ===========================
+     Section 1: Overview
+     =========================== -->
+<div id="overview"></div>
+<span class="section-number">Section 01</span>
+<h1>Loading &amp; Error State Unification</h1>
+<p class="subtitle">A systematic approach to loading, error, and empty states across the DRMS application. Three tiers for loading, three tiers for errors, one canonical implementation per pattern.</p>
+
+<h3>Problem Statement</h3>
+<p>DRMS currently has at least six different loading patterns and four different error patterns spread across 90+ locations. Hand-crafted <code>animate-pulse</code> divs, inconsistent spinner placements, and ad-hoc error cards create a fragmented user experience and significant maintenance overhead.</p>
+
+<h3>Scope</h3>
+<p>This specification defines the unified loading and error state system for Phase 6 of the DRMS Design System. It covers three tiers of loading indicators (full-page, content-area, inline), three tiers of error handling (full-page, content-area, toast), and references the existing empty state component.</p>
+
+<div class="token-grid">
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--muted)"></div>
+    <span>--muted (skeleton)</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--primary)"></div>
+    <span>--primary (spinner)</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--destructive)"></div>
+    <span>--destructive (error)</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--border)"></div>
+    <span>--border (outlines)</span>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 2: Research
+     =========================== -->
+<div id="research"></div>
+<span class="section-number">Section 02</span>
+<h2>Research Sources</h2>
+<p>Loading and error states are not merely decorative -- they directly affect perceived performance and user trust. The following research informs the design decisions in this specification.</p>
+
+<div class="research-card">
+  <h4>Skeleton Loading Patterns</h4>
+  <p>Facebook pioneered the skeleton screen concept in 2013, showing wireframe placeholders instead of spinners. Luke Wroblewski documented that skeleton screens feel 30% faster than spinners because they prime the user for the content layout that will appear.</p>
+  <div class="source">Source: Luke Wroblewski, "Mobile Design Details: Inline Spinners vs Skeleton Screens"</div>
+</div>
+
+<div class="research-card">
+  <h4>NN/g Response Time Limits</h4>
+  <p>Three critical thresholds: 0.1s feels instant (no feedback needed), 1s keeps user flow (subtle indicator), 10s loses attention (explicit progress required). These thresholds map directly to our 3-tier loading system.</p>
+  <div class="source">Source: Nielsen Norman Group, "Response Times: The 3 Important Limits"</div>
+</div>
+
+<div class="research-card">
+  <h4>Material Design Progress Indicators</h4>
+  <p>Google's Material Design defines linear progress bars for deterministic operations and circular indicators for indeterminate loading. Skeleton shapes (rectangles and circles) represent the content that will load.</p>
+  <div class="source">Source: Material Design 3, Progress Indicators</div>
+</div>
+
+<div class="research-card">
+  <h4>Ant Design Skeleton Component</h4>
+  <p>Ant Design provides a <code>Skeleton</code> component with pre-built shapes for avatars, paragraphs, buttons, inputs, and images. The <code>active</code> prop enables shimmer animation. This pattern inspired our <code>ContentSkeleton</code> presets.</p>
+  <div class="source">Source: Ant Design 5.x, Skeleton Component</div>
+</div>
+
+<div class="research-card">
+  <h4>Shopify Polaris Loading / Empty / Error States</h4>
+  <p>Shopify Polaris separates loading, empty, and error into distinct components with clear guidelines: skeleton loading for initial page loads, spinner for inline actions, and structured empty states with calls to action.</p>
+  <div class="source">Source: Shopify Polaris, Loading &amp; Empty State Patterns</div>
+</div>
+
+<div class="research-card">
+  <h4>Carbon Design System -- Loading &amp; Inline Notification</h4>
+  <p>IBM's Carbon Design System uses inline loading states (small spinner + text), skeleton placeholders, and a four-variant notification system (info, success, warning, error) that maps well to our error tier approach.</p>
+  <div class="source">Source: Carbon Design System, Loading &amp; Inline Notification</div>
+</div>
+
+<div class="research-card">
+  <h4>Apple HIG -- Loading &amp; Content Views</h4>
+  <p>Apple's Human Interface Guidelines recommend using progress indicators for operations longer than a few seconds, and designing empty states that educate and guide users toward their first action.</p>
+  <div class="source">Source: Apple HIG, Loading &amp; Content Views</div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 3: Design Principles
+     =========================== -->
+<div id="principles"></div>
+<span class="section-number">Section 03</span>
+<h2>Design Principles</h2>
+
+<div class="rules-grid">
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>1. Context-appropriate loading</h4>
+      <p>Full-page spinner for route transitions. Skeleton shapes for content areas. Inline spinners for button/async actions. Never use a full-page spinner when only a section is loading.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>2. Progressive loading feedback</h4>
+      <p><strong>0--300ms:</strong> no indicator needed (feels instant). <strong>300ms--1s:</strong> subtle skeleton shapes. <strong>1s+:</strong> skeleton with progress text ("Loading dashboard..."). <strong>10s+:</strong> explicit progress bar with percentage or estimated time.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>3. Recoverable error states</h4>
+      <p>Every error state must offer a clear next action: retry the operation, navigate back, or contact support. Never show an error without a path forward. Error messages should be human-readable, not raw API responses.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>4. One canonical implementation per pattern</h4>
+      <p>No more ad-hoc <code>animate-pulse</code> divs or copy-pasted error cards. Every loading pattern maps to one component. Every error pattern maps to one component. Variations are handled through props, not duplicate implementations.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 4: Pattern Inventory -- Loading
+     =========================== -->
+<div id="inventory-loading"></div>
+<span class="section-number">Section 04</span>
+<h2>Current Pattern Inventory: Loading</h2>
+<p>Audit of all loading patterns currently in the DRMS codebase. Six distinct patterns were identified across 90+ file locations.</p>
+
+<table class="inventory-table">
+  <thead>
+    <tr>
+      <th>Pattern</th>
+      <th>Count</th>
+      <th>Files</th>
+      <th>Style</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>A: Inline animate-pulse divs</strong></td>
+      <td class="count">35+</td>
+      <td>Most pages/components</td>
+      <td>Hand-crafted skeleton divs with <code>animate-pulse bg-muted</code></td>
+    </tr>
+    <tr>
+      <td><strong>B: shadcn Skeleton component</strong></td>
+      <td class="count">20+</td>
+      <td>Donor components, shared components</td>
+      <td><code>&lt;Skeleton className="..."&gt;</code> from shadcn/ui</td>
+    </tr>
+    <tr>
+      <td><strong>C: Loader2 spinner</strong></td>
+      <td class="count">20+</td>
+      <td>Buttons, sections, dropdowns</td>
+      <td><code>&lt;Loader2 className="animate-spin" /&gt;</code> from Lucide</td>
+    </tr>
+    <tr>
+      <td><strong>D: SafeDataLoader</strong></td>
+      <td class="count">13</td>
+      <td>Data-fetching wrappers</td>
+      <td>Render-prop with retry, loading/error/empty states</td>
+    </tr>
+    <tr>
+      <td><strong>E: StatCard loading prop</strong></td>
+      <td class="count">Built-in</td>
+      <td>StatCard instances</td>
+      <td>Variant-aware skeleton built into the component</td>
+    </tr>
+    <tr>
+      <td><strong>F: DataTable loading prop</strong></td>
+      <td class="count">Built-in</td>
+      <td>DataTable instances</td>
+      <td>Row skeleton grid built into the component</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Loading Pattern Observations</h3>
+<p>Pattern A (35+ files with hand-crafted animate-pulse divs) is the largest migration target. These are inconsistent in spacing, sizing, and animation style. Pattern B is better but still has no standardized presets. Patterns E and F are already unified and require no changes.</p>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 5: Pattern Inventory -- Error
+     =========================== -->
+<div id="inventory-error"></div>
+<span class="section-number">Section 05</span>
+<h2>Current Pattern Inventory: Error</h2>
+
+<table class="inventory-table">
+  <thead>
+    <tr>
+      <th>Pattern</th>
+      <th>Count</th>
+      <th>Files</th>
+      <th>Style</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>A: Alert variant="destructive"</strong></td>
+      <td class="count">90+</td>
+      <td>Forms, pages, components</td>
+      <td>Standard shadcn Alert with destructive styling</td>
+    </tr>
+    <tr>
+      <td><strong>B: Next.js error.tsx boundaries</strong></td>
+      <td class="count">2</td>
+      <td>Root + auth layout</td>
+      <td>Custom styled error page with raw <code>&lt;button&gt;</code></td>
+    </tr>
+    <tr>
+      <td><strong>C: SafeDataLoader error state</strong></td>
+      <td class="count">Built-in</td>
+      <td>Data-fetching wrappers</td>
+      <td>Network vs generic error distinction + retry button</td>
+    </tr>
+    <tr>
+      <td><strong>D: Badge variant="destructive"</strong></td>
+      <td class="count">15+</td>
+      <td>Assessment forms, dashboards</td>
+      <td>Severity indicators using shadcn Badge</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Error Pattern Observations</h3>
+<p>Pattern A (90+ Alert variant="destructive" instances) is the primary migration target. These are mostly consistent in appearance but lack a standardized retry mechanism and error categorization. Pattern B needs enhancement to use shadcn Button instead of raw HTML buttons, and should include navigation links.</p>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 6: Unified Approach -- Loading Tiers
+     =========================== -->
+<div id="loading-tiers"></div>
+<span class="section-number">Section 06</span>
+<h2>Loading States: 3-Tier System</h2>
+
+<h3><span class="tier-label">1</span> Tier 1: Full-Page Loading</h3>
+<p>Route transitions, initial data load. The entire content area shows a single loading indicator.</p>
+<ul style="margin-bottom:16px;padding-left:24px;color:var(--muted-fg);font-size:14px;">
+  <li><strong>Component:</strong> <code>SafeDataLoader</code> (enhanced)</li>
+  <li><strong>Visual:</strong> Centered <code>Loader2</code> spinner (h-8 w-8) + loading message text</li>
+  <li><strong>Enhancement:</strong> Add <code>skeleton</code> prop to SafeDataLoader that renders skeleton shapes instead of spinner when context requires it</li>
+  <li><strong>Use:</strong> Page-level wrapping for data-dependent pages</li>
+</ul>
+
+<div class="code-block"><span class="cm">// Tier 1: Full-page loading via SafeDataLoader</span>
+<span class="kw">&lt;</span><span class="fn">SafeDataLoader</span>
+  <span class="pr">query</span>={<span class="fn">useDashboardData</span>()}
+  <span class="pr">loadingMessage</span>=<span class="str">"Loading dashboard..."</span>
+  <span class="pr">skeleton</span>=<span class="str">"card"</span>  <span class="cm">// NEW: optional skeleton preset</span>
+<span class="kw">&gt;</span>
+  {(data) =&gt; <span class="kw">&lt;</span><span class="fn">DashboardContent</span> <span class="pr">data</span>={data} <span class="kw">/&gt;</span>}
+<span class="kw">&lt;/</span><span class="fn">SafeDataLoader</span><span class="kw">&gt;</span></div>
+
+<h3><span class="tier-label">2</span> Tier 2: Content-Area Loading</h3>
+<p>Cards, panels, sections within a page. Only the loading section shows a skeleton; the rest of the page remains interactive.</p>
+<ul style="margin-bottom:16px;padding-left:24px;color:var(--muted-fg);font-size:14px;">
+  <li><strong>Component:</strong> <code>ContentSkeleton</code> (new) -- wraps shadcn <code>&lt;Skeleton&gt;</code></li>
+  <li><strong>Visual:</strong> animate-pulse rounded-md bg-muted shapes</li>
+  <li><strong>Presets:</strong> card, table, list, metric, form</li>
+  <li><strong>Use:</strong> Inside components, replacing all 35+ ad-hoc animate-pulse divs</li>
+</ul>
+
+<div class="code-block"><span class="cm">// Tier 2: Content-area skeleton presets</span>
+<span class="kw">&lt;</span><span class="fn">ContentSkeleton</span> <span class="pr">variant</span>=<span class="str">"card"</span> <span class="kw">/&gt;</span>
+<span class="kw">&lt;</span><span class="fn">ContentSkeleton</span> <span class="pr">variant</span>=<span class="str">"table"</span> <span class="pr">rows</span>={<span class="num">5</span>} <span class="pr">cols</span>={<span class="num">4</span>} <span class="kw">/&gt;</span>
+<span class="kw">&lt;</span><span class="fn">ContentSkeleton</span> <span class="pr">variant</span>=<span class="str">"list"</span> <span class="pr">count</span>={<span class="num">3</span>} <span class="kw">/&gt;</span>
+<span class="kw">&lt;</span><span class="fn">ContentSkeleton</span> <span class="pr">variant</span>=<span class="str">"metric"</span> <span class="pr">count</span>={<span class="num">4</span>} <span class="kw">/&gt;</span>
+<span class="kw">&lt;</span><span class="fn">ContentSkeleton</span> <span class="pr">variant</span>=<span class="str">"form"</span> <span class="kw">/&gt;</span></div>
+
+<h3><span class="tier-label">3</span> Tier 3: Inline Loading</h3>
+<p>Buttons, small async actions. A spinner replaces the button icon while the action is in progress.</p>
+<ul style="margin-bottom:16px;padding-left:24px;color:var(--muted-fg);font-size:14px;">
+  <li><strong>Component:</strong> <code>&lt;Loader2 className="h-4 w-4 animate-spin" /&gt;</code></li>
+  <li><strong>Convention:</strong> Always paired with a text change ("Saving..." vs "Save")</li>
+  <li><strong>Use:</strong> Form submit buttons, inline save actions</li>
+</ul>
+
+<div class="code-block"><span class="cm">// Tier 3: Button loading convention</span>
+<span class="kw">&lt;</span><span class="fn">Button</span> <span class="pr">disabled</span>={isSubmitting}&gt;
+  {isSubmitting ? (
+    <span class="kw">&lt;&gt;</span>
+      <span class="kw">&lt;</span><span class="fn">Loader2</span> <span class="pr">className</span>=<span class="str">"mr-2 h-4 w-4 animate-spin"</span> <span class="kw">/&gt;</span>
+      Saving...
+    <span class="kw">&lt;/&gt;</span>
+  ) : (
+    "Save"
+  )}
+<span class="kw">&lt;/</span><span class="fn">Button</span><span class="kw">&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 7: Unified Approach -- Error Tiers
+     =========================== -->
+<div id="error-tiers"></div>
+<span class="section-number">Section 07</span>
+<h2>Error States: 3-Tier System</h2>
+
+<h3><span class="tier-label">1</span> Tier 1: Full-Page Error</h3>
+<p>Critical failures where no data is available. The entire page shows an error state with recovery actions.</p>
+<ul style="margin-bottom:16px;padding-left:24px;color:var(--muted-fg);font-size:14px;">
+  <li><strong>Component:</strong> Enhanced <code>error.tsx</code> boundaries</li>
+  <li><strong>Visual:</strong> Centered error icon + title + description + "Try Again" button + navigation link</li>
+  <li><strong>Enhancement:</strong> Use shadcn Button (not raw <code>&lt;button&gt;</code>), add "Go to Dashboard" navigation link</li>
+  <li><strong>Use:</strong> Route-level error boundaries</li>
+</ul>
+
+<h3><span class="tier-label">2</span> Tier 2: Content-Area Error</h3>
+<p>Component-level failure where the rest of the page still works. An inline error alert with retry capability.</p>
+<ul style="margin-bottom:16px;padding-left:24px;color:var(--muted-fg);font-size:14px;">
+  <li><strong>Component:</strong> <code>ErrorAlert</code> (new) -- wraps shadcn <code>&lt;Alert variant="destructive"&gt;</code></li>
+  <li><strong>Visual:</strong> AlertTriangle icon + title + message + optional Retry button</li>
+  <li><strong>Use:</strong> Inline within components, form-level errors</li>
+</ul>
+
+<div class="code-block"><span class="cm">// Tier 2: Content-area error alert</span>
+<span class="kw">&lt;</span><span class="fn">ErrorAlert</span>
+  <span class="pr">title</span>=<span class="str">"Failed to load data"</span>
+  <span class="pr">message</span>={error.message}
+  <span class="pr">onRetry</span>={refetch}
+  <span class="pr">variant</span>=<span class="str">"destructive"</span>
+<span class="kw">/&gt;</span></div>
+
+<h3><span class="tier-label">3</span> Tier 3: Toast Error</h3>
+<p>Transient failures from background operations that do not block the UI.</p>
+<ul style="margin-bottom:16px;padding-left:24px;color:var(--muted-fg);font-size:14px;">
+  <li><strong>Component:</strong> <code>toast.error()</code> from Sonner</li>
+  <li><strong>Visual:</strong> Red-themed toast with error icon, auto-dismiss after 5s</li>
+  <li><strong>Use:</strong> API call failures that don't block the UI (save failures, sync errors)</li>
+</ul>
+
+<div class="code-block"><span class="cm">// Tier 3: Toast error</span>
+<span class="fn">toast.error</span>(<span class="str">"Failed to save changes"</span>, {
+  <span class="pr">description</span>: <span class="str">"Your changes were not saved. Please try again."</span>,
+});</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 8: Empty States
+     =========================== -->
+<div id="empty-states"></div>
+<span class="section-number">Section 08</span>
+<h2>Empty States (Reference)</h2>
+<p>Empty states are already unified via the existing <code>&lt;EmptyState&gt;</code> component. No changes are needed. The component accepts <code>icon</code>, <code>title</code>, <code>description</code>, and optional <code>action</code> props. It is used consistently across the application.</p>
+
+<div class="code-block"><span class="cm">// Existing EmptyState -- no changes needed</span>
+<span class="kw">&lt;</span><span class="fn">EmptyState</span>
+  <span class="pr">icon</span>={<span class="typ">Inbox</span>}
+  <span class="pr">title</span>=<span class="str">"No commitments found"</span>
+  <span class="pr">description</span>=<span class="str">"Get started by creating your first commitment."</span>
+  <span class="pr">action</span>={<span class="kw">&lt;</span><span class="fn">Button</span><span class="kw">&gt;</span>Create Commitment<span class="kw">&lt;/</span><span class="fn">Button</span><span class="kw">&gt;</span>}
+<span class="kw">/&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Mockup: Loading Tier 1 -- Full-Page Spinner
+     =========================== -->
+<div id="mockup-loading-t1"></div>
+<span class="section-number">Section 09 -- Mockups</span>
+<h2>Mockup: Full-Page Spinner (Tier 1)</h2>
+<span class="variant-badge loading-badge">Loading Tier 1</span>
+<p>Centered spinner with loading message. Used by SafeDataLoader for page-level data loading. The entire content area shows this state until data is available.</p>
+
+<div class="mockup-container" style="min-height:340px;display:flex;align-items:center;justify-content:center;">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+    <div class="spinner spinner-lg"></div>
+    <div style="font-size:15px;font-weight:500;color:var(--muted-fg);">Loading dashboard...</div>
+    <div style="font-size:12px;color:var(--muted-fg);opacity:0.7;">This should not take more than a few seconds</div>
+  </div>
+</div>
+
+<div class="tw-classes">
+  <span class="tw-class">flex</span>
+  <span class="tw-class">items-center</span>
+  <span class="tw-class">justify-center</span>
+  <span class="tw-class">min-h-[400px]</span>
+  <span class="tw-class">flex-col</span>
+  <span class="tw-class">gap-4</span>
+</div>
+
+<div class="code-block"><span class="cm">// Full-page loading state (SafeDataLoader default)</span>
+<span class="kw">&lt;</span><span class="fn">SafeDataLoader</span> <span class="pr">query</span>={query} <span class="pr">loadingMessage</span>=<span class="str">"Loading dashboard..."</span><span class="kw">&gt;</span>
+  {(data) =&gt; <span class="kw">&lt;</span><span class="fn">DashboardContent</span> <span class="pr">data</span>={data} <span class="kw">/&gt;</span>}
+<span class="kw">&lt;/</span><span class="fn">SafeDataLoader</span><span class="kw">&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Mockup: Loading Tier 2 -- Content Skeletons
+     =========================== -->
+<div id="mockup-loading-t2"></div>
+<h2>Mockup: Content Skeletons (Tier 2)</h2>
+<span class="variant-badge loading-badge">Loading Tier 2</span>
+<p>Five ContentSkeleton presets replace all 35+ ad-hoc animate-pulse divs. Each preset renders a shape matching the content that will eventually appear.</p>
+
+<h3 style="margin-top:24px;">Card Variant</h3>
+<div class="mockup-container">
+  <div style="max-width:320px;">
+    <div class="content-skeleton-card">
+      <div class="skeleton skeleton-line w-2-3" style="height:14px;"></div>
+      <div class="skeleton skeleton-heading" style="margin-top:12px;"></div>
+      <div class="skeleton skeleton-line w-full" style="height:12px;margin-top:12px;"></div>
+      <div class="skeleton skeleton-line w-3-4" style="height:12px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="code-block"><span class="kw">&lt;</span><span class="fn">ContentSkeleton</span> <span class="pr">variant</span>=<span class="str">"card"</span> <span class="kw">/&gt;</span></div>
+
+<h3>Table Variant (3 rows, 4 cols)</h3>
+<div class="mockup-container">
+  <div class="content-skeleton-table">
+    <div class="cs-table-header">
+      <div class="skeleton cs-table-cell" style="width:20%;"></div>
+      <div class="skeleton cs-table-cell" style="width:25%;"></div>
+      <div class="skeleton cs-table-cell" style="width:30%;"></div>
+      <div class="skeleton cs-table-cell" style="width:15%;"></div>
+    </div>
+    <div class="cs-table-row">
+      <div class="skeleton cs-table-cell" style="width:20%;"></div>
+      <div class="skeleton cs-table-cell" style="width:25%;"></div>
+      <div class="skeleton cs-table-cell" style="width:30%;"></div>
+      <div class="skeleton cs-table-cell" style="width:15%;"></div>
+    </div>
+    <div class="cs-table-row">
+      <div class="skeleton cs-table-cell" style="width:18%;"></div>
+      <div class="skeleton cs-table-cell" style="width:22%;"></div>
+      <div class="skeleton cs-table-cell" style="width:28%;"></div>
+      <div class="skeleton cs-table-cell" style="width:12%;"></div>
+    </div>
+    <div class="cs-table-row">
+      <div class="skeleton cs-table-cell" style="width:20%;"></div>
+      <div class="skeleton cs-table-cell" style="width:25%;"></div>
+      <div class="skeleton cs-table-cell" style="width:30%;"></div>
+      <div class="skeleton cs-table-cell" style="width:15%;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="code-block"><span class="kw">&lt;</span><span class="fn">ContentSkeleton</span> <span class="pr">variant</span>=<span class="str">"table"</span> <span class="pr">rows</span>={<span class="num">3</span>} <span class="pr">cols</span>={<span class="num">4</span>} <span class="kw">/&gt;</span></div>
+
+<h3>List Variant (3 items)</h3>
+<div class="mockup-container">
+  <div class="content-skeleton-list">
+    <div class="cs-list-item">
+      <div class="skeleton cs-avatar"></div>
+      <div style="flex:1;">
+        <div class="skeleton skeleton-line w-2-3"></div>
+        <div class="skeleton skeleton-line w-1-3" style="height:10px;"></div>
+      </div>
+    </div>
+    <div class="cs-list-item">
+      <div class="skeleton cs-avatar"></div>
+      <div style="flex:1;">
+        <div class="skeleton skeleton-line w-1-2"></div>
+        <div class="skeleton skeleton-line w-1-4" style="height:10px;"></div>
+      </div>
+    </div>
+    <div class="cs-list-item">
+      <div class="skeleton cs-avatar"></div>
+      <div style="flex:1;">
+        <div class="skeleton skeleton-line w-3-4"></div>
+        <div class="skeleton skeleton-line w-1-3" style="height:10px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="code-block"><span class="kw">&lt;</span><span class="fn">ContentSkeleton</span> <span class="pr">variant</span>=<span class="str">"list"</span> <span class="pr">count</span>={<span class="num">3</span>} <span class="kw">/&gt;</span></div>
+
+<h3>Metric Variant (4 stat cards)</h3>
+<div class="mockup-container">
+  <div class="mockup-grid-4">
+    <div class="content-skeleton-metric">
+      <div class="skeleton skeleton-line w-2-3" style="height:12px;"></div>
+      <div class="skeleton" style="height:24px;width:50%;margin-top:10px;"></div>
+    </div>
+    <div class="content-skeleton-metric">
+      <div class="skeleton skeleton-line w-1-2" style="height:12px;"></div>
+      <div class="skeleton" style="height:24px;width:40%;margin-top:10px;"></div>
+    </div>
+    <div class="content-skeleton-metric">
+      <div class="skeleton skeleton-line w-3-4" style="height:12px;"></div>
+      <div class="skeleton" style="height:24px;width:55%;margin-top:10px;"></div>
+    </div>
+    <div class="content-skeleton-metric">
+      <div class="skeleton skeleton-line w-1-3" style="height:12px;"></div>
+      <div class="skeleton" style="height:24px;width:45%;margin-top:10px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="code-block"><span class="kw">&lt;</span><span class="fn">ContentSkeleton</span> <span class="pr">variant</span>=<span class="str">"metric"</span> <span class="pr">count</span>={<span class="num">4</span>} <span class="kw">/&gt;</span></div>
+
+<h3>Form Variant</h3>
+<div class="mockup-container">
+  <div style="max-width:480px;">
+    <div class="content-skeleton-form">
+      <div class="skeleton skeleton-heading" style="width:35%;"></div>
+      <div class="cs-form-field">
+        <div class="skeleton cs-form-label"></div>
+        <div class="skeleton cs-form-input"></div>
+      </div>
+      <div class="cs-form-field">
+        <div class="skeleton cs-form-label" style="width:25%;"></div>
+        <div class="skeleton cs-form-input"></div>
+      </div>
+      <div class="cs-form-field">
+        <div class="skeleton cs-form-label" style="width:40%;"></div>
+        <div class="skeleton cs-form-input" style="height:80px;"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <div class="skeleton" style="height:36px;width:100px;border-radius:var(--radius);"></div>
+        <div class="skeleton" style="height:36px;width:80px;border-radius:var(--radius);"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="code-block"><span class="kw">&lt;</span><span class="fn">ContentSkeleton</span> <span class="pr">variant</span>=<span class="str">"form"</span> <span class="kw">/&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Mockup: Loading Tier 3 -- Button Loading
+     =========================== -->
+<div id="mockup-loading-t3"></div>
+<h2>Mockup: Button Loading States (Tier 3)</h2>
+<span class="variant-badge loading-badge">Loading Tier 3</span>
+<p>Three states shown side-by-side: normal button, disabled button with spinner, and loading-state button with "Saving..." text. The convention is: <strong>always pair the spinner with a text change</strong>.</p>
+
+<div class="mockup-container">
+  <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+    <!-- Normal -->
+    <div style="text-align:center;">
+      <div class="btn btn-primary" style="margin-bottom:8px;">
+        Save Changes
+      </div>
+      <div style="font-size:11px;color:var(--muted-fg);">Normal state</div>
+    </div>
+
+    <!-- Disabled with spinner -->
+    <div style="text-align:center;">
+      <div class="btn btn-primary" style="margin-bottom:8px;opacity:0.5;cursor:not-allowed;">
+        <div class="spinner spinner-sm" style="border-top-color:var(--primary-fg);"></div>
+        Saving...
+      </div>
+      <div style="font-size:11px;color:var(--muted-fg);">Loading state</div>
+    </div>
+
+    <!-- Another example: Delete -->
+    <div style="text-align:center;">
+      <div class="btn btn-outline" style="margin-bottom:8px;border-color:var(--destructive);color:var(--destructive);">
+        Delete
+      </div>
+      <div style="font-size:11px;color:var(--muted-fg);">Destructive normal</div>
+    </div>
+
+    <div style="text-align:center;">
+      <div class="btn btn-outline" style="margin-bottom:8px;border-color:var(--destructive);color:var(--destructive);opacity:0.5;cursor:not-allowed;">
+        <div class="spinner spinner-sm" style="border-top-color:var(--destructive);border-color:hsl(0 84.2% 60.2% / 0.3);"></div>
+        Deleting...
+      </div>
+      <div style="font-size:11px;color:var(--muted-fg);">Destructive loading</div>
+    </div>
+  </div>
+</div>
+
+<div class="code-block"><span class="cm">// Standard button loading convention</span>
+<span class="kw">&lt;</span><span class="fn">Button</span> <span class="pr">disabled</span>={isSubmitting}&gt;
+  {isSubmitting ? (
+    <span class="kw">&lt;&gt;</span>
+      <span class="kw">&lt;</span><span class="fn">Loader2</span> <span class="pr">className</span>=<span class="str">"mr-2 h-4 w-4 animate-spin"</span> <span class="kw">/&gt;</span>
+      Saving...
+    <span class="kw">&lt;/&gt;</span>
+  ) : "Save Changes"}
+<span class="kw">&lt;/</span><span class="fn">Button</span><span class="kw">&gt;</span>
+
+<span class="cm">// Destructive button loading convention</span>
+<span class="kw">&lt;</span><span class="fn">Button</span> <span class="pr">variant</span>=<span class="str">"outline"</span> <span class="pr">disabled</span>={isDeleting}
+  <span class="pr">className</span>=<span class="str">"border-destructive text-destructive"</span><span class="kw">&gt;</span>
+  {isDeleting ? (
+    <span class="kw">&lt;&gt;</span>
+      <span class="kw">&lt;</span><span class="fn">Loader2</span> <span class="pr">className</span>=<span class="str">"mr-2 h-4 w-4 animate-spin"</span> <span class="kw">/&gt;</span>
+      Deleting...
+    <span class="kw">&lt;/&gt;</span>
+  ) : "Delete"}
+<span class="kw">&lt;/</span><span class="fn">Button</span><span class="kw">&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Mockup: Error Tier 1 -- Full-Page Error
+     =========================== -->
+<div id="mockup-error-t1"></div>
+<h2>Mockup: Full-Page Error (Tier 1)</h2>
+<span class="variant-badge error-badge">Error Tier 1</span>
+<p>Enhanced error boundary page with icon, title, descriptive message, "Try Again" button using shadcn Button, and a "Go to Dashboard" navigation link. Used in <code>error.tsx</code> boundaries.</p>
+
+<div class="mockup-container" style="min-height:400px;">
+  <div class="error-page">
+    <div class="error-page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div class="error-page-title">Something went wrong</div>
+    <div class="error-page-message">We encountered an unexpected error while loading this page. This has been logged and our team has been notified.</div>
+    <div class="error-page-actions">
+      <div class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Try Again
+      </div>
+      <div class="btn btn-ghost">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Go to Dashboard
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="code-block"><span class="cm">// Enhanced error.tsx boundary</span>
+<span class="str">"use client"</span>;
+
+<span class="kw">export default function</span> <span class="fn">Error</span>({
+  <span class="pr">error</span>,
+  <span class="pr">reset</span>,
+}: {
+  <span class="pr">error</span>: <span class="typ">Error</span> &amp; { <span class="pr">digest</span>?: <span class="typ">string</span> };
+  <span class="pr">reset</span>: () =&gt; <span class="typ">void</span>;
+}) {
+  <span class="kw">return</span> (
+    <span class="kw">&lt;</span><span class="fn">div</span> <span class="pr">className</span>=<span class="str">"error-page"</span><span class="kw">&gt;</span>
+      <span class="kw">&lt;</span><span class="fn">AlertTriangle</span> /&gt;
+      <span class="kw">&lt;</span><span class="fn">h2</span><span class="kw">&gt;</span>Something went wrong<span class="kw">&lt;/</span><span class="fn">h2</span><span class="kw">&gt;</span>
+      <span class="kw">&lt;</span><span class="fn">p</span><span class="kw">&gt;</span>{error.message}<span class="kw">&lt;/</span><span class="fn">p</span><span class="kw">&gt;</span>
+      <span class="kw">&lt;</span><span class="fn">Button</span> <span class="pr">onClick</span>={reset}<span class="kw">&gt;</span>Try Again<span class="kw">&lt;/</span><span class="fn">Button</span><span class="kw">&gt;</span>
+      <span class="kw">&lt;</span><span class="fn">Link</span> <span class="pr">href</span>=<span class="str">"/"</span><span class="kw">&gt;</span>Go to Dashboard<span class="kw">&lt;/</span><span class="fn">Link</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;/</span><span class="fn">div</span><span class="kw">&gt;</span>
+  );
+}</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Mockup: Error Tier 2 -- Content-Area Error
+     =========================== -->
+<div id="mockup-error-t2"></div>
+<h2>Mockup: Content-Area Error (Tier 2)</h2>
+<span class="variant-badge error-badge">Error Tier 2</span>
+<p>ErrorAlert component with AlertTriangle icon, error title, descriptive message, and Retry button. Displayed inline within a page section without disrupting the rest of the layout.</p>
+
+<div class="mockup-container">
+  <div style="max-width:560px;">
+    <div class="alert alert-destructive">
+      <div class="alert-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="alert-body">
+        <div class="alert-title">Failed to load verification queue</div>
+        <div class="alert-message">Unable to fetch pending verification items. The server may be temporarily unavailable. Please try again.</div>
+        <div class="alert-actions">
+          <div class="btn btn-outline" style="font-size:13px;padding:6px 12px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Retry
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top:24px;">Warning Variant</h3>
+<div class="mockup-container">
+  <div style="max-width:560px;">
+    <div class="alert alert-warning">
+      <div class="alert-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div class="alert-body">
+        <div class="alert-title">Data may be stale</div>
+        <div class="alert-message">The last sync was over 30 minutes ago. Some information may be outdated.</div>
+        <div class="alert-actions">
+          <div class="btn btn-outline" style="font-size:13px;padding:6px 12px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Sync Now
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="code-block"><span class="cm">// ErrorAlert usage</span>
+<span class="kw">&lt;</span><span class="fn">ErrorAlert</span>
+  <span class="pr">title</span>=<span class="str">"Failed to load verification queue"</span>
+  <span class="pr">message</span>=<span class="str">"Unable to fetch pending items. Please try again."</span>
+  <span class="pr">onRetry</span>={() =&gt; <span class="fn">refetch</span>()}
+  <span class="pr">variant</span>=<span class="str">"destructive"</span>
+<span class="kw">/&gt;</span>
+
+<span class="cm">// Warning variant</span>
+<span class="kw">&lt;</span><span class="fn">ErrorAlert</span>
+  <span class="pr">title</span>=<span class="str">"Data may be stale"</span>
+  <span class="pr">message</span>=<span class="str">"The last sync was over 30 minutes ago."</span>
+  <span class="pr">onRetry</span>={() =&gt; <span class="fn">syncNow</span>()}
+  <span class="pr">variant</span>=<span class="str">"warning"</span>
+<span class="kw">/&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Mockup: Error Tier 3 -- Toast Error
+     =========================== -->
+<div id="mockup-error-t3"></div>
+<h2>Mockup: Toast Error (Tier 3)</h2>
+<span class="variant-badge error-badge">Error Tier 3</span>
+<p>Sonner toast with error styling. Used for transient failures that don't block the UI: save errors, sync failures, permission denied notifications. Auto-dismisses after 5 seconds.</p>
+
+<div class="mockup-container" style="display:flex;align-items:center;justify-content:center;min-height:180px;">
+  <div class="toast-mockup">
+    <div class="toast-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    </div>
+    <div class="toast-body">
+      <div class="toast-title">Failed to save changes</div>
+      <div class="toast-msg">Your changes were not saved. Please try again.</div>
+    </div>
+    <div class="toast-close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    </div>
+  </div>
+</div>
+
+<div class="code-block"><span class="cm">// Toast error via Sonner</span>
+<span class="kw">import</span> { <span class="fn">toast</span> } <span class="kw">from</span> <span class="str">"sonner"</span>;
+
+<span class="cm">// Simple error toast</span>
+<span class="fn">toast.error</span>(<span class="str">"Failed to save changes"</span>);
+
+<span class="cm">// With description</span>
+<span class="fn">toast.error</span>(<span class="str">"Failed to save changes"</span>, {
+  <span class="pr">description</span>: <span class="str">"Your changes were not saved. Please try again."</span>,
+});
+
+<span class="cm">// With action button</span>
+<span class="fn">toast.error</span>(<span class="str">"Sync failed"</span>, {
+  <span class="pr">description</span>: <span class="str">"Background data sync encountered an error."</span>,
+  <span class="pr">action</span>: {
+    <span class="pr">label</span>: <span class="str">"Retry"</span>,
+    <span class="pr">onClick</span>: () =&gt; <span class="fn">retrySync</span>(),
+  },
+});</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Mockup: SafeDataLoader All States
+     =========================== -->
+<div id="mockup-sdl"></div>
+<h2>Mockup: SafeDataLoader States</h2>
+<p>All four states of the enhanced SafeDataLoader component: loading, error, empty, and success with retry countdown capability.</p>
+
+<div class="mockup-container">
+  <div class="sdl-states">
+    <!-- Loading -->
+    <div class="sdl-state">
+      <div class="sdl-state-label">Loading</div>
+      <div class="spinner spinner-md" style="margin-bottom:12px;"></div>
+      <div style="font-size:14px;color:var(--muted-fg);">Loading data...</div>
+    </div>
+
+    <!-- Error -->
+    <div class="sdl-state">
+      <div class="sdl-state-label">Error</div>
+      <div style="width:40px;height:40px;border-radius:50%;background:hsl(0 84.2% 60.2% / 0.1);display:flex;align-items:center;justify-content:center;color:var(--destructive);margin-bottom:12px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div style="font-size:14px;font-weight:600;color:var(--fg);margin-bottom:4px;">Network Error</div>
+      <div style="font-size:12px;color:var(--muted-fg);margin-bottom:12px;">Unable to reach the server</div>
+      <div class="btn btn-outline" style="font-size:12px;padding:4px 12px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Retry
+      </div>
+    </div>
+
+    <!-- Empty -->
+    <div class="sdl-state">
+      <div class="sdl-state-label">Empty</div>
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--muted);display:flex;align-items:center;justify-content:center;color:var(--muted-fg);margin-bottom:12px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+      </div>
+      <div style="font-size:14px;font-weight:600;color:var(--fg);margin-bottom:4px;">No data found</div>
+      <div style="font-size:12px;color:var(--muted-fg);">There are no items to display</div>
+    </div>
+
+    <!-- Data with retry countdown -->
+    <div class="sdl-state">
+      <div class="sdl-state-label">Data (with retry)</div>
+      <div style="width:40px;height:40px;border-radius:50%;background:hsl(142 71% 45% / 0.1);display:flex;align-items:center;justify-content:center;color:var(--green-600);margin-bottom:12px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div style="font-size:14px;font-weight:600;color:var(--fg);margin-bottom:4px;">Data loaded</div>
+      <div class="sdl-countdown">Auto-refresh in 28s</div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Mockup: Before / After Comparison
+     =========================== -->
+<div id="mockup-comparison"></div>
+<h2>Before / After Comparison</h2>
+<p>The most common migration pattern: replacing ad-hoc animate-pulse divs with the standardized ContentSkeleton component.</p>
+
+<div class="comparison-grid">
+  <!-- BEFORE -->
+  <div>
+    <div class="comparison-label bad">
+      <span class="dot"></span>
+      Before: Ad-hoc animate-pulse (current)
+    </div>
+    <div class="comparison-panel before">
+      <div style="background:var(--muted);border-radius:4px;height:14px;width:60%;margin-bottom:10px;opacity:0.6;animation:shimmer 2s ease-in-out infinite;"></div>
+      <div style="background:var(--muted);border-radius:4px;height:14px;width:80%;margin-bottom:10px;opacity:0.4;animation:shimmer 2s ease-in-out infinite;"></div>
+      <div style="background:var(--muted);border-radius:4px;height:14px;width:45%;opacity:0.5;animation:shimmer 2s ease-in-out infinite;"></div>
+      <div style="margin-top:16px;display:flex;gap:8px;">
+        <div style="background:var(--muted);border-radius:4px;height:14px;flex:1;opacity:0.3;animation:shimmer 2s ease-in-out infinite;"></div>
+        <div style="background:var(--muted);border-radius:4px;height:14px;width:80px;opacity:0.4;animation:shimmer 2s ease-in-out infinite;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AFTER -->
+  <div>
+    <div class="comparison-label good">
+      <span class="dot"></span>
+      After: ContentSkeleton (unified)
+    </div>
+    <div class="comparison-panel after">
+      <div class="content-skeleton-card">
+        <div class="skeleton skeleton-line w-2-3" style="height:14px;"></div>
+        <div class="skeleton skeleton-line w-3-4" style="height:14px;"></div>
+        <div class="skeleton skeleton-line" style="width:45%;"></div>
+        <div style="margin-top:16px;display:flex;gap:8px;">
+          <div class="skeleton" style="flex:1;height:14px;"></div>
+          <div class="skeleton" style="width:80px;height:14px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="code-block"><span class="cm">// BEFORE: Hand-crafted, inconsistent (found in 35+ files)</span>
+<span class="kw">&lt;</span><span class="fn">div</span> <span class="pr">className</span>=<span class="str">"animate-pulse space-y-3"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="fn">div</span> <span class="pr">className</span>=<span class="str">"h-4 bg-muted rounded w-3/5"</span> <span class="kw">/&gt;</span>
+  <span class="kw">&lt;</span><span class="fn">div</span> <span class="pr">className</span>=<span class="str">"h-4 bg-muted rounded w-4/5"</span> <span class="kw">/&gt;</span>
+  <span class="kw">&lt;</span><span class="fn">div</span> <span class="pr">className</span>=<span class="str">"h-4 bg-muted rounded w-2/5"</span> <span class="kw">/&gt;</span>
+<span class="kw">&lt;/</span><span class="fn">div</span><span class="kw">&gt;</span>
+
+<span class="cm">// AFTER: Standardized ContentSkeleton</span>
+<span class="kw">&lt;</span><span class="fn">ContentSkeleton</span> <span class="pr">variant</span>=<span class="str">"card"</span> <span class="kw">/&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Mockup: Empty State (Reference)
+     =========================== -->
+<div id="mockup-empty"></div>
+<h2>Empty State (Reference)</h2>
+<p>Already unified via the <code>&lt;EmptyState&gt;</code> component. No changes needed. Shown here for completeness alongside loading and error states.</p>
+
+<div class="mockup-container" style="display:flex;align-items:center;justify-content:center;min-height:280px;">
+  <div style="text-align:center;">
+    <div style="width:48px;height:48px;border-radius:50%;background:var(--muted);display:flex;align-items:center;justify-content:center;color:var(--muted-fg);margin:0 auto 16px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+    </div>
+    <div style="font-size:16px;font-weight:600;color:var(--fg);margin-bottom:4px;">No commitments found</div>
+    <div style="font-size:14px;color:var(--muted-fg);margin-bottom:16px;max-width:300px;">Get started by creating your first commitment to an entity in need.</div>
+    <div class="btn btn-primary" style="display:inline-flex;">
+      Create Commitment
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section: Component API
+     =========================== -->
+<div id="api"></div>
+<span class="section-number">Section 10</span>
+<h2>Component API</h2>
+
+<h3>ContentSkeleton</h3>
+<div class="code-block"><span class="kw">interface</span> <span class="typ">ContentSkeletonProps</span> {
+  <span class="pr">variant</span>: <span class="str">'card'</span> | <span class="str">'table'</span> | <span class="str">'list'</span> | <span class="str">'metric'</span> | <span class="str">'form'</span>;
+  <span class="pr">rows</span>?: <span class="typ">number</span>;
+  <span class="pr">cols</span>?: <span class="typ">number</span>;
+  <span class="pr">count</span>?: <span class="typ">number</span>;
+  <span class="pr">className</span>?: <span class="typ">string</span>;
+}</div>
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Prop</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>variant</code></td>
+      <td><code>'card' | 'table' | 'list' | 'metric' | 'form'</code></td>
+      <td>--</td>
+      <td>Skeleton shape preset. Required.</td>
+    </tr>
+    <tr>
+      <td><code>rows</code></td>
+      <td><code>number</code></td>
+      <td><code>3</code></td>
+      <td>Row count for table variant.</td>
+    </tr>
+    <tr>
+      <td><code>cols</code></td>
+      <td><code>number</code></td>
+      <td><code>4</code></td>
+      <td>Column count for table variant.</td>
+    </tr>
+    <tr>
+      <td><code>count</code></td>
+      <td><code>number</code></td>
+      <td><code>3</code></td>
+      <td>Item count for metric/list variants.</td>
+    </tr>
+    <tr>
+      <td><code>className</code></td>
+      <td><code>string</code></td>
+      <td><code>undefined</code></td>
+      <td>Additional CSS classes merged via <code>cn()</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>ErrorAlert</h3>
+<div class="code-block"><span class="kw">interface</span> <span class="typ">ErrorAlertProps</span> {
+  <span class="pr">title</span>: <span class="typ">string</span>;
+  <span class="pr">message</span>?: <span class="typ">string</span>;
+  <span class="pr">onRetry</span>?: () =&gt; <span class="typ">void</span>;
+  <span class="pr">variant</span>?: <span class="str">'destructive'</span> | <span class="str">'warning'</span>;
+  <span class="pr">className</span>?: <span class="typ">string</span>;
+}</div>
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Prop</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>title</code></td>
+      <td><code>string</code></td>
+      <td><code>'Error'</code></td>
+      <td>Alert title. Always visible.</td>
+    </tr>
+    <tr>
+      <td><code>message</code></td>
+      <td><code>string</code></td>
+      <td><code>undefined</code></td>
+      <td>Error description displayed below the title.</td>
+    </tr>
+    <tr>
+      <td><code>onRetry</code></td>
+      <td><code>() =&gt; void</code></td>
+      <td><code>undefined</code></td>
+      <td>Retry callback. When provided, shows a "Retry" button.</td>
+    </tr>
+    <tr>
+      <td><code>variant</code></td>
+      <td><code>'destructive' | 'warning'</code></td>
+      <td><code>'destructive'</code></td>
+      <td>Alert color scheme. Destructive = red, warning = amber.</td>
+    </tr>
+    <tr>
+      <td><code>className</code></td>
+      <td><code>string</code></td>
+      <td><code>undefined</code></td>
+      <td>Additional CSS classes merged via <code>cn()</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>SafeDataLoader Enhancement</h3>
+<div class="code-block"><span class="cm">// New props added to existing SafeDataLoader</span>
+<span class="kw">interface</span> <span class="typ">SafeDataLoaderProps</span>&lt;<span class="typ">T</span>&gt; {
+  <span class="pr">query</span>: <span class="typ">UseQueryResult</span>&lt;<span class="typ">T</span>&gt;;
+  <span class="pr">children</span>: (data: <span class="typ">T</span>) =&gt; <span class="typ">React.ReactNode</span>;
+  <span class="pr">loadingMessage</span>?: <span class="typ">string</span>;         <span class="cm">// "Loading..." (default)</span>
+  <span class="pr">skeleton</span>?: <span class="typ">ContentSkeletonVariant</span>; <span class="cm">// NEW: optional skeleton preset</span>
+  <span class="pr">emptyTitle</span>?: <span class="typ">string</span>;
+  <span class="pr">emptyDescription</span>?: <span class="typ">string</span>;
+  <span class="pr">retryDelay</span>?: <span class="typ">number</span>;            <span class="cm">// NEW: auto-retry countdown (seconds)</span>
+}</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section: Migration Map
+     =========================== -->
+<div id="migration"></div>
+<span class="section-number">Section 11</span>
+<h2>Migration Map</h2>
+
+<h3>Loading Pattern Migration</h3>
+<table class="migration-table">
+  <thead>
+    <tr>
+      <th>Current Pattern</th>
+      <th>Target</th>
+      <th>Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="file">Ad-hoc animate-pulse divs</td>
+      <td><code>ContentSkeleton</code> presets or shadcn <code>Skeleton</code></td>
+      <td><strong>35+</strong></td>
+    </tr>
+    <tr>
+      <td class="file">SafeDataLoader (13 files)</td>
+      <td>Enhanced SafeDataLoader with <code>skeleton</code> prop</td>
+      <td><strong>13</strong></td>
+    </tr>
+    <tr>
+      <td class="file">StatCard loading</td>
+      <td>Keep as-is (already unified)</td>
+      <td><strong>0 changes</strong></td>
+    </tr>
+    <tr>
+      <td class="file">DataTable loading</td>
+      <td>Keep as-is (already unified)</td>
+      <td><strong>0 changes</strong></td>
+    </tr>
+    <tr>
+      <td class="file">Loader2 spinners in buttons</td>
+      <td>Standardize loading text convention</td>
+      <td><strong>15+</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Error Pattern Migration</h3>
+<table class="migration-table">
+  <thead>
+    <tr>
+      <th>Current Pattern</th>
+      <th>Target</th>
+      <th>Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="file">Alert variant="destructive" inline</td>
+      <td><code>ErrorAlert</code> wrapper component</td>
+      <td><strong>90+</strong></td>
+    </tr>
+    <tr>
+      <td class="file">error.tsx plain button</td>
+      <td>shadcn Button + navigation links</td>
+      <td><strong>2</strong></td>
+    </tr>
+    <tr>
+      <td class="file">SafeDataLoader error</td>
+      <td>Keep as-is (already good)</td>
+      <td><strong>0 changes</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>File Structure</h3>
+<div class="code-block"><span class="cm">// New files to create</span>
+src/components/shared/<span class="fn">ContentSkeleton.tsx</span>    <span class="cm">(~120 lines)</span>
+src/components/shared/<span class="fn">ErrorAlert.tsx</span>          <span class="cm">(~80 lines)</span>
+
+<span class="cm">// Existing files to enhance</span>
+src/components/shared/<span class="fn">SafeDataLoader.tsx</span>      <span class="cm">(add skeleton + retryDelay props)</span>
+src/app/<span class="fn">error.tsx</span>                             <span class="cm">(enhance with Button + Link)</span>
+src/app/(auth)/<span class="fn">error.tsx</span>                      <span class="cm">(enhance with Button + Link)</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section: Summary
+     =========================== -->
+<div id="summary"></div>
+<span class="section-number">Section 12</span>
+<h2>Summary</h2>
+
+<div class="summary-grid">
+  <div class="summary-stat">
+    <div class="stat-value">50+</div>
+    <div class="stat-label">Loading patterns to migrate</div>
+  </div>
+  <div class="summary-stat">
+    <div class="stat-value">92+</div>
+    <div class="stat-label">Error patterns to migrate</div>
+  </div>
+  <div class="summary-stat">
+    <div class="stat-value">2</div>
+    <div class="stat-label">New components</div>
+  </div>
+  <div class="summary-stat">
+    <div class="stat-value">3</div>
+    <div class="stat-label">Files to enhance</div>
+  </div>
+</div>
+
+<h3>Estimated Effort</h3>
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Task</th>
+      <th>Effort</th>
+      <th>Priority</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Create <code>ContentSkeleton.tsx</code></td>
+      <td>~2 hours</td>
+      <td>High</td>
+    </tr>
+    <tr>
+      <td>Create <code>ErrorAlert.tsx</code></td>
+      <td>~1 hour</td>
+      <td>High</td>
+    </tr>
+    <tr>
+      <td>Enhance <code>SafeDataLoader</code></td>
+      <td>~1 hour</td>
+      <td>High</td>
+    </tr>
+    <tr>
+      <td>Enhance <code>error.tsx</code> boundaries (x2)</td>
+      <td>~30 minutes</td>
+      <td>Medium</td>
+    </tr>
+    <tr>
+      <td>Migrate 35+ animate-pulse files</td>
+      <td>~4-6 hours</td>
+      <td>Medium (incremental)</td>
+    </tr>
+    <tr>
+      <td>Migrate 90+ Alert destructive files</td>
+      <td>~6-8 hours</td>
+      <td>Medium (incremental)</td>
+    </tr>
+    <tr>
+      <td>Standardize 15+ button loading patterns</td>
+      <td>~1-2 hours</td>
+      <td>Low</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The ContentSkeleton and ErrorAlert components can be built and deployed first. The migration of existing files can proceed incrementally -- old patterns continue to work while new ones are adopted file by file. No breaking changes are required.</p>
+
+<!-- Footer -->
+<div class="sep"></div>
+<p style="font-size:13px;text-align:center;padding:24px 0;">
+  DRMS Design System -- Loading &amp; Error States Specification v1.0.0<br>
+  Phase 6 &middot; Generated 2025-05-24 &middot; For stakeholder review
+</p>
+
+</main>
+
+<!-- ============================================================
+     Sidebar active state script
+     ============================================================ -->
+<script>
+(function() {
+  const links = document.querySelectorAll('.sidebar a');
+  const sections = [];
+
+  links.forEach(link => {
+    const href = link.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      const el = document.getElementById(href.slice(1));
+      if (el) sections.push({ link, el });
+    }
+  });
+
+  function update() {
+    const scrollY = window.scrollY + 120;
+    let current = sections[0];
+    sections.forEach(s => {
+      if (s.el.offsetTop <= scrollY) current = s;
+    });
+    links.forEach(l => l.classList.remove('active'));
+    if (current) current.link.classList.add('active');
+  }
+
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+</script>
+
+</body>
+</html>

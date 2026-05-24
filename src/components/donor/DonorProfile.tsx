@@ -11,6 +11,8 @@ import { toast } from 'sonner'
 // UI components
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormCard } from '@/components/shared/FormCard'
+import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -29,6 +31,7 @@ import { User, Building, Mail, Phone, Edit2, Save, X, Upload, CheckCircle, Alert
 import { DonorProfileUpdateInput } from '@/lib/validation/donor'
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet, apiPatch } from '@/lib/api'
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
 
 // Validation schema
 const DonorProfileFormSchema = z.object({
@@ -145,17 +148,10 @@ export function DonorProfile({ donorId }: DonorProfileProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <div className="animate-pulse">
-                <div className="h-6 bg-gray-200 rounded w-1/3 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-              </div>
+              <ContentSkeleton variant="card" />
             </CardHeader>
             <CardContent>
-              <div className="space-y-4 animate-pulse">
-                <div className="h-10 bg-gray-200 rounded"></div>
-                <div className="h-10 bg-gray-200 rounded"></div>
-                <div className="h-10 bg-gray-200 rounded"></div>
-              </div>
+              <ContentSkeleton variant="form" />
             </CardContent>
           </Card>
         </div>
@@ -228,32 +224,23 @@ export function DonorProfile({ donorId }: DonorProfileProps) {
                     Edit Profile
                   </Button>
                 ) : (
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={handleCancel}
-                      disabled={updateProfileMutation.isPending}
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Cancel
-                    </Button>
-                    <Button 
-                      size="sm"
-                      onClick={form.handleSubmit(onSubmit)}
-                      disabled={updateProfileMutation.isPending}
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      Save
-                    </Button>
-                  </div>
+                  <FormActionBar
+                    onCancel={handleCancel}
+                    submitLabel="Save"
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    loading={updateProfileMutation.isPending}
+                    disabled={updateProfileMutation.isPending}
+                    variant="default"
+                    className="pt-0"
+                  />
                 )}
               </div>
             </CardHeader>
             <CardContent>
               {isEditing ? (
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormCard variant="compact" columns={2}>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormField
                       control={form.control}
                       name="name"
@@ -323,6 +310,7 @@ export function DonorProfile({ donorId }: DonorProfileProps) {
                     </div>
                   </form>
                 </Form>
+                </FormCard>
               ) : (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

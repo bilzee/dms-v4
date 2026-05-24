@@ -11,20 +11,21 @@ import { toast } from 'sonner'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { FormCard } from '@/components/shared/FormCard'
+import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
-import { 
-  Building2, 
+import {
+  Building2,
   User,
   ArrowLeft,
-  Save,
-  AlertCircle,
-  Loader2
+  AlertCircle
 } from 'lucide-react'
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
 
 // Form validation schema
 const EditDonorFormSchema = z.object({
@@ -141,10 +142,7 @@ export default function EditDonorPage() {
     return (
       <RoleBasedRoute requiredRoles={['ADMIN']} fallbackPath="/dashboard">
         <div className="container mx-auto py-8">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-300 rounded w-1/4"></div>
-            <div className="h-96 bg-gray-300 rounded"></div>
-          </div>
+          <ContentSkeleton variant="form" />
         </div>
       </RoleBasedRoute>
     )
@@ -207,20 +205,10 @@ export default function EditDonorPage() {
         )}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <FormCard columns={2}>
               {/* Organization Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5" />
-                    Organization Information
-                  </CardTitle>
-                  <CardDescription>
-                    Update organization details and contact information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              <FormCard.Section title="Organization Information" description="Update organization details and contact information">
                   <FormField
                     control={form.control}
                     name="name"
@@ -308,21 +296,10 @@ export default function EditDonorPage() {
                       </FormItem>
                     )}
                   />
-                </CardContent>
-              </Card>
+              </FormCard.Section>
 
               {/* User Account Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Linked User Account
-                  </CardTitle>
-                  <CardDescription>
-                    Update the linked user account details
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              <FormCard.Section title="Linked User Account" description="Update the linked user account details">
                   <FormField
                     control={form.control}
                     name="userCredentials.name"
@@ -379,32 +356,17 @@ export default function EditDonorPage() {
                       Password changes must be done through the user&apos;s profile settings.
                     </AlertDescription>
                   </Alert>
-                </CardContent>
-              </Card>
-            </div>
+              </FormCard.Section>
+            </FormCard>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-3">
-              <Button type="submit" disabled={saving}>
-                {saving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Saving Changes...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
-              
-              <Link href={`/admin/donors/${donorId}`}>
-                <Button type="button" variant="outline" disabled={saving}>
-                  Cancel
-                </Button>
-              </Link>
-            </div>
+            <FormActionBar
+              onCancel={() => router.push(`/admin/donors/${donorId}`)}
+              submitLabel="Save Changes"
+              loading={saving}
+              disabled={saving}
+              variant="bordered"
+            />
           </form>
         </Form>
       </div>

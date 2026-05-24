@@ -14,6 +14,7 @@ import {
   Users
 } from 'lucide-react';
 import { apiGet, extractArray } from '@/lib/api';
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 
 interface TopDonorsProps {
   incidentId?: string;
@@ -69,17 +70,8 @@ export function TopDonorsSection({ incidentId, className }: TopDonorsProps) {
             Loading Top Donors...
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200">
-              <div className="h-8 w-8 bg-gray-200 rounded-full animate-pulse" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 bg-gray-300 rounded w-24 animate-pulse" />
-                <div className="h-3 bg-gray-300 rounded w-16 animate-pulse" />
-              </div>
-              <div className="h-6 bg-gray-300 rounded w-12 animate-pulse" />
-            </div>
-          ))}
+        <CardContent>
+          <ContentSkeleton variant="list" count={3} />
         </CardContent>
       </Card>
     );

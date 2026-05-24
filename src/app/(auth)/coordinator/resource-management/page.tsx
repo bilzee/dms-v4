@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Package, ArrowLeft, Settings, TrendingUp, Users } from 'lucide-react';
 import Link from 'next/link';
 import { ResourceManagement } from '@/components/dashboards/crisis/ResourceManagement';
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 
 export default function ResourceDonationManagement() {
   const { currentRole } = useAuth();
@@ -23,10 +24,7 @@ export default function ResourceDonationManagement() {
   if (!isClient) {
     return (
       <div className="container mx-auto p-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-        </div>
+        <ContentSkeleton variant="card" />
       </div>
     );
   }

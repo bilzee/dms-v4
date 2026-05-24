@@ -143,9 +143,9 @@ export function LeaderboardDisplay({
       {(leaderboardData, isLoading, error, retry) => {
         // Filter rankings based on search term
         const getFilteredRankings = () => {
-          if (!leaderboardData?.data?.rankings) return [];
+          if (!leaderboardData?.rankings) return [];
           
-          let filtered = leaderboardData.data.rankings;
+          let filtered = leaderboardData.rankings;
           
           if (searchTerm) {
             const search = searchTerm.toLowerCase();
@@ -159,7 +159,7 @@ export function LeaderboardDisplay({
         };
 
         const filteredRankings = getFilteredRankings();
-        const metadata = leaderboardData?.data?.metadata;
+        const metadata = leaderboardData?.metadata;
 
         return (
           <Card className={cn("w-full", className)}>

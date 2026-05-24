@@ -328,7 +328,7 @@ Request validation is performed using **Zod schemas** that define the expected s
 
 ### 6.1 Component Inventory
 
-The application comprises **177 component files** organized into **17 categories** and **59 page files** distributed across **6 role-based route groups**.
+The application comprises **190+ component files** organized into **17 categories** and **59 page files** distributed across **6 role-based route groups**.
 
 ### 6.2 Component Organization
 
@@ -339,14 +339,31 @@ components/
     input.tsx
     dialog.tsx
     ...
+  shared/                -- Unified design system component layer
+    StatCard.tsx         -- Metric display card (4 variants)
+    StatCardGrid.tsx     -- Responsive grid for StatCards
+    StatusBadge.tsx      -- Domain-aware status indicators
+    FormCard.tsx         -- Standardized form container (3 variants)
+    FormActionBar.tsx    -- Form action buttons (submit/cancel)
+    FilterPanel.tsx      -- Collapsible filter configuration
+    FilterBar.tsx        -- Active filter chips display
+    ContentSkeleton.tsx  -- Loading state skeletons (5 presets)
+    ErrorAlert.tsx       -- Error display with retry
+    ProgressBar.tsx      -- Progress indicator (5 variants, 3 sizes)
+    DataCardList.tsx     -- Card list layout component
+    DataCardGrid.tsx     -- Responsive card grid component
+    DataTable.tsx        -- Table with sorting/filtering
+    SafeDataLoader.tsx   -- Error-safe data fetching wrapper
+    EmptyState.tsx       -- Empty state displays
+    RoleBasedRoute.tsx   -- Role-based route guard
+    AppShell.tsx         -- Main application shell layout
   forms/                 -- Form components with validation
     assessment-forms/
     entity-forms/
     incident-forms/
-  dashboard/             -- Dashboard panels and widgets
-    incident-overview-panel.tsx
-    entity-assessment-panel.tsx
-    gap-analysis-panel.tsx
+  dashboards/            -- Dashboard panels and widgets
+    crisis/              -- Crisis management dashboards
+    situation/           -- Situation awareness dashboards
   maps/                  -- Map visualization components
     interactive-map.tsx
     gap-analysis-map.tsx
@@ -355,9 +372,15 @@ components/
     offline-indicator.tsx
     sync-indicator.tsx
     sync-queue.tsx
-  charts/                -- Data visualization components
   layout/                -- Layout and navigation components
-  shared/                -- Cross-cutting shared components
+```
+
+```
+lib/utils/
+  status-colors.ts       -- Centralized status-to-color mapping
+  design-tokens.ts       -- Design token constants
+  chart-config.ts        -- Chart.js centralized colors and options
+  chart-registration.ts  -- Single Chart.js module registration
 ```
 
 ### 6.3 Page Organization
@@ -392,19 +415,74 @@ app/
 
 ### 6.4 Design System
 
-The UI is built on the **shadcn/ui design system**, which combines Radix UI primitives with Tailwind CSS styling. Key characteristics:
+The UI is built on a **unified design system** layered on top of shadcn/ui, combining Radix UI primitives with Tailwind CSS styling and a centralized token system.
+
+#### Foundation Layer
 
 - **Accessibility**: All components meet WCAG 2.1 AA standards through Radix UI primitives.
-- **Consistency**: Shared design tokens for colors, spacing, typography, and shadows.
+- **Consistency**: Centralized design tokens (`status-colors.ts`, `design-tokens.ts`) ensure uniform colors, spacing, typography, and shadows.
 - **Composability**: Small, focused components that compose into larger interfaces.
-- **Theme Support**: CSS custom properties for light and dark theme variants.
+- **Theme Support**: CSS custom properties for light and dark theme variants, with chart colors adapting to theme via `chart-config.ts`.
 - **Responsive**: Mobile-first responsive design with breakpoints for field tablet and desktop use.
+- **Toast System**: Sonner for notifications (replaces Radix Toast), configured with `richColors`, `position="top-right"`, `closeButton`, and `duration={4000}`.
+
+#### Component Families
+
+| Family | Components | Purpose |
+|--------|-----------|----------|
+| Data Display | StatCard, StatCardGrid, StatusBadge, ProgressBar | Metrics, status indicators, progress |
+| Forms | FormCard, FormActionBar | Standardized form containers and actions |
+| Filtering | FilterPanel, FilterBar, DataTable | Data filtering and tabular display |
+| Layout | DataCardList, DataCardGrid, DataTable | Responsive list/grid/table layouts |
+| Loading/Error | ContentSkeleton, ErrorAlert, SafeDataLoader | Loading, error, and empty states |
+| Charts | chart-config.ts, chart-registration.ts | Centralized Chart.js configuration |
+
+#### Design Tokens
+
+- **Status Colors**: Domain-aware color mapping (e.g., verification statuses, commitment statuses, priority levels) via `status-colors.ts`
+- **Chart Colors**: Semantic color palette (primary, success, warning, danger, neutral) with dark mode support via `chart-config.ts`
+- **Component Variants**: Consistent variant systems (e.g., StatCard has 4 variants, ProgressBar has 5 variants and 3 sizes, FormCard has 3 variants)
 
 ### 6.5 Key Component Patterns
 
-**Form Components with Zod Validation:**
+**Form Components with FormCard:**
 
-Forms use React Hook Form with Zod schemas for runtime validation. Each form component defines its validation schema co-located with the form UI, ensuring type safety from the database schema through the API to the form fields.
+Forms use `FormCard` as their container (replacing raw Card usage) with `FormActionBar` for submit/cancel actions. This provides consistent form layout, title/description headers, and 2-column grid support. Forms still use React Hook Form with Zod schemas for runtime validation.
+
+Example:
+```tsx
+<FormCard title="Create Entity" description="..." variant="default" columns={2}>
+  <form onSubmit={handleSubmit(onSubmit)}>
+    {/* form fields */}
+    <FormActionBar submitLabel="Create" loading={isSubmitting} />
+  </form>
+</FormCard>
+```
+
+**Loading States with ContentSkeleton:**
+
+Pages use `ContentSkeleton` with 5 presets (card, table, list, metric, form) instead of raw `animate-pulse` divs. This ensures consistent loading states across the application.
+
+Example:
+```tsx
+{isLoading ? <ContentSkeleton variant="table" rows={5} /> : <DataTable ... />}
+```
+
+**Error Handling with ErrorAlert:**
+
+Pages use `ErrorAlert` for error states with optional retry button, replacing inline error divs.
+
+**Status Indicators with StatusBadge:**
+
+Domain-aware status display using `StatusBadge` with centralized color mapping from `status-colors.ts`. Supports verification statuses, commitment statuses, priority levels, and more.
+
+**Metrics Display with StatCard:**
+
+Dashboard metrics use `StatCard` with 4 variants (default, success, warning, danger), optional trend indicators, and `StatCardGrid` for responsive layout.
+
+**Charts with Centralized Configuration:**
+
+Chart.js components use `chart-config.ts` for colors (with dark mode support) and `chart-registration.ts` for single-point module registration. Use `getChartColor()` and `getChartBgColor()` instead of hardcoded RGB values.
 
 **Dashboard Panels:**
 

@@ -11,7 +11,9 @@ import { useRouter } from 'next/navigation'
 
 // UI components
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+
+import { FormCard } from '@/components/shared/FormCard'
+import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -256,17 +258,11 @@ export function DonorRegistrationForm({ onSuccess, onCancel }: DonorRegistration
         <Progress value={(currentStep / totalSteps) * 100} className="h-2" data-testid="registration-progress-bar" />
       </div>
 
-      <Card data-testid="donor-registration-card">
-        <CardHeader>
-          <CardTitle className="flex items-center" data-testid="donor-registration-form-title">
-            <Building className="mr-2 h-6 w-6" />
-            Donor Registration
-          </CardTitle>
-          <CardDescription data-testid="registration-form-description">
-            Register your organization to start contributing to disaster response efforts
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <FormCard
+        title="Donor Registration"
+        description="Register your organization to start contributing to disaster response efforts"
+        data-testid="donor-registration-card"
+      >
           {/* Error Alert */}
           {errorMessage && (
             <Alert variant="destructive" className="mb-6" data-testid="registration-error-alert">
@@ -556,54 +552,32 @@ export function DonorRegistrationForm({ onSuccess, onCancel }: DonorRegistration
               )}
 
               {/* Navigation Buttons */}
-              <div className="flex justify-between pt-6" data-testid="registration-navigation">
-                <div>
-                  {currentStep > 1 && (
-                    <Button 
-                      data-testid="registration-previous-button"
-                      type="button" 
-                      variant="outline"
-                      onClick={handlePrevious}
-                      disabled={registrationMutation.isPending}
-                    >
-                      Previous
-                    </Button>
-                  )}
-                </div>
-                
-                <div className="flex space-x-2">
-                  {onCancel && (
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={onCancel}
-                      disabled={registrationMutation.isPending}
-                    >
-                      Cancel
-                    </Button>
-                  )}
-                  
-                  <Button 
-                    data-testid="registration-next-button"
-                    type="button"
-                    onClick={handleNext}
+              <FormActionBar
+                onCancel={onCancel}
+                cancelLabel="Cancel"
+                submitLabel={registrationMutation.isPending ? 'Registering...' : currentStep === totalSteps ? 'Complete Registration' : 'Next'}
+                onSubmit={handleNext}
+                loading={registrationMutation.isPending}
+                disabled={registrationMutation.isPending}
+                align="between"
+                variant="default"
+                data-testid="registration-navigation"
+              >
+                {currentStep > 1 && (
+                  <Button
+                    data-testid="registration-previous-button"
+                    type="button" 
+                    variant="outline"
+                    onClick={handlePrevious}
                     disabled={registrationMutation.isPending}
-                    className="min-w-24"
                   >
-                    {registrationMutation.isPending ? (
-                      'Registering...'
-                    ) : currentStep === totalSteps ? (
-                      'Complete Registration'
-                    ) : (
-                      'Next'
-                    )}
+                    Previous
                   </Button>
-                </div>
-              </div>
+                )}
+              </FormActionBar>
             </div>
           </Form>
-        </CardContent>
-      </Card>
+      </FormCard>
 
       {/* Registration Info */}
       <Alert>

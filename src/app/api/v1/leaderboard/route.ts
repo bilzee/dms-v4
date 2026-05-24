@@ -64,18 +64,13 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     const entityFilter = {};
 
     // Fetch donors with comprehensive metrics data
+    // Note: We don't require donors to have commitments in the date range at the top level.
+    // Instead, we fetch all active donors and let the metrics calculation handle empty data.
+    // This ensures new donors or donors with only responses still appear on the leaderboard.
     const donorsWithMetrics = await prisma.donor.findMany({
       where: {
         isActive: true,
         ...entityFilter,
-        commitments: {
-          some: {
-            commitmentDate: {
-              gte: startDate,
-              lte: now
-            }
-          }
-        }
       },
       select: {
         id: true,

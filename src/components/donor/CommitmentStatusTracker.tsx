@@ -9,6 +9,8 @@ import { apiPatch } from '@/lib/api'
 // UI components
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormCard } from '@/components/shared/FormCard'
+import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -307,16 +309,13 @@ export function CommitmentStatusTracker({
 
       {/* Status Update Form */}
       {canEditStatus && isUpdating && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Update Commitment Status</CardTitle>
-            <CardDescription>
-              Update the delivery status and quantity for this commitment
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <FormCard
+          title="Update Commitment Status"
+          description="Update the delivery status and quantity for this commitment"
+          variant="compact"
+        >
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(onSubmit)}>
                 <FormField
                   control={form.control}
                   name="status"
@@ -398,39 +397,19 @@ export function CommitmentStatusTracker({
                   )}
                 />
 
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsUpdating(false)
-                      form.reset()
-                    }}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    {updateStatusMutation.isPending ? (
-                      <>
-                        <AlertTriangle className="h-4 w-4 mr-2 animate-spin" />
-                        Updating...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 mr-2" />
-                        Update Status
-                      </>
-                    )}
-                  </Button>
-                </div>
+                <FormActionBar
+                  onCancel={() => {
+                    setIsUpdating(false)
+                    form.reset()
+                  }}
+                  submitLabel="Update Status"
+                  loading={updateStatusMutation.isPending}
+                  disabled={updateStatusMutation.isPending}
+                  variant="default"
+                />
               </form>
             </Form>
-          </CardContent>
-        </Card>
+        </FormCard>
       )}
     </div>
   )

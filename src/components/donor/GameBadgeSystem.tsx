@@ -31,6 +31,7 @@ import {
   X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ProgressBar } from '@/components/shared/ProgressBar';
 import type { BadgeType } from '@/types/gamification';
 
 interface GameBadgeSystemProps {
@@ -386,12 +387,7 @@ export function GameBadgeSystem({
             {showProgress && (
               <div className="space-y-2">
                 <h4 className="font-semibold">Progress</h4>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: '100%' }}
-                  />
-                </div>
+                <ProgressBar value={100} variant="success" size="sm" />
                 <p className="text-xs text-green-600">Achievement Unlocked!</p>
               </div>
             )}
@@ -496,12 +492,7 @@ export function BadgeProgress({
         )}
       </div>
       
-      <div className="w-full bg-gray-200 rounded-full h-2">
-        <div 
-          className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
+      <ProgressBar value={percentage} variant="gradient" size="sm" />
       
       {currentBadges.length === totalPossibleBadges && (
         <div className="text-center">

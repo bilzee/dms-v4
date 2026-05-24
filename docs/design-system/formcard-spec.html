@@ -1,0 +1,2277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRMS FormCard -- Design Specification</title>
+<style>
+/* ============================================================
+   CSS Custom Properties -- sourced from globals.css HSL tokens
+   ============================================================ */
+:root {
+  /* Light mode (shadcn default) */
+  --bg: hsl(0 0% 100%);
+  --fg: hsl(222.2 84% 4.9%);
+  --card: hsl(0 0% 100%);
+  --card-fg: hsl(222.2 84% 4.9%);
+  --primary: hsl(221.2 83.2% 53.3%);
+  --primary-fg: hsl(210 40% 98%);
+  --secondary: hsl(210 40% 96%);
+  --secondary-fg: hsl(222.2 84% 4.9%);
+  --muted: hsl(210 40% 96%);
+  --muted-fg: hsl(215.4 16.3% 46.9%);
+  --accent: hsl(210 40% 96%);
+  --accent-fg: hsl(222.2 84% 4.9%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-fg: hsl(210 40% 98%);
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: hsl(214.3 31.8% 91.4%);
+  --ring: hsl(221.2 83.2% 53.3%);
+  --radius: 0.5rem;
+
+  /* Semantic colors */
+  --amber-50: #fffbeb;  --amber-100: #fef3c7;  --amber-500: #f59e0b;  --amber-600: #d97706;
+  --green-50: #f0fdf4;  --green-100: #dcfce7;  --green-500: #22c55e;  --green-600: #16a34a;
+  --blue-50: #eff6ff;   --blue-100: #dbeafe;   --blue-500: #3b82f6;   --blue-600: #2563eb;
+  --red-50: #fef2f2;    --red-100: #fee2e2;    --red-500: #ef4444;    --red-600: #dc2626;
+  --purple-50: #faf5ff; --purple-100: #f3e8ff; --purple-500: #a855f7; --purple-600: #9333ea;
+  --emerald-500: #10b981; --emerald-600: #059669;
+
+  /* Doc chrome */
+  --sidebar-w: 260px;
+  --topbar-h: 56px;
+  --content-max: 1100px;
+  --doc-bg: #fafafa;
+  --doc-border: #e5e7eb;
+}
+
+/* Dark mode */
+.dark {
+  --bg: hsl(224 71% 4%);
+  --fg: hsl(213 31% 91%);
+  --card: hsl(224 71% 4%);
+  --card-fg: hsl(213 31% 91%);
+  --primary: hsl(210 40% 98%);
+  --primary-fg: hsl(222.2 84% 4.9%);
+  --secondary: hsl(215 28% 17%);
+  --secondary-fg: hsl(210 40% 98%);
+  --muted: hsl(215 28% 17%);
+  --muted-fg: hsl(217.9 10.6% 64.9%);
+  --accent: hsl(215 28% 17%);
+  --accent-fg: hsl(210 40% 98%);
+  --destructive: hsl(0 63% 31%);
+  --destructive-fg: hsl(210 40% 98%);
+  --border: hsl(215 28% 17%);
+  --input: hsl(215 28% 17%);
+  --ring: hsl(216 12% 83.9%);
+  --doc-bg: #0b0f1a;
+  --doc-border: #1e293b;
+}
+
+/* ============================================================
+   Reset + Base
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--fg);
+  background: var(--doc-bg);
+}
+
+/* ============================================================
+   Layout
+   ============================================================ */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--topbar-h);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+}
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.topbar-title { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; color: var(--fg); }
+.topbar-badge {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 2px 8px; border-radius: 4px;
+  background: var(--primary); color: var(--primary-fg);
+}
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-version { font-size: 12px; color: var(--muted-fg); font-family: 'SF Mono', 'Cascadia Code', monospace; }
+
+.sidebar {
+  position: fixed; top: var(--topbar-h); left: 0; bottom: 0; z-index: 90;
+  width: var(--sidebar-w);
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 24px 0;
+}
+.sidebar-section { margin-bottom: 24px; }
+.sidebar-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted-fg); padding: 0 20px; margin-bottom: 8px;
+}
+.sidebar a {
+  display: block; padding: 6px 20px; font-size: 13px; font-weight: 500;
+  color: var(--muted-fg); text-decoration: none; transition: all 0.15s;
+  border-left: 2px solid transparent;
+}
+.sidebar a:hover { color: var(--fg); background: var(--muted); }
+.sidebar a.active { color: var(--primary); border-left-color: var(--primary); background: hsl(221.2 83.2% 53.3% / 0.06); }
+
+.main {
+  margin-left: var(--sidebar-w);
+  margin-top: var(--topbar-h);
+  padding: 40px 48px 80px;
+  max-width: calc(var(--sidebar-w) + var(--content-max) + 96px);
+}
+
+/* ============================================================
+   Typography
+   ============================================================ */
+h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 8px; }
+h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.3; margin-bottom: 16px; padding-top: 48px; border-top: 1px solid var(--border); }
+h2:first-of-type { border-top: none; }
+h3 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.4; margin-bottom: 12px; }
+p { margin-bottom: 12px; color: var(--muted-fg); max-width: 72ch; }
+.subtitle { font-size: 17px; color: var(--muted-fg); margin-bottom: 32px; }
+
+/* ============================================================
+   Design Tokens
+   ============================================================ */
+.token-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+.token-chip {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--border);
+  font-size: 13px; font-family: 'SF Mono', 'Cascadia Code', monospace;
+}
+.token-swatch { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; }
+
+/* ============================================================
+   Variant Badge
+   ============================================================ */
+.variant-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  background: hsl(221.2 83.2% 53.3% / 0.1); color: hsl(221.2 83.2% 53.3%);
+  margin-bottom: 16px;
+}
+.variant-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+.variant-badge.green { background: hsl(142 71% 45% / 0.1); color: hsl(142 71% 45%); }
+.variant-badge.amber { background: hsl(38 92% 50% / 0.1); color: hsl(38 92% 50%); }
+.variant-badge.red   { background: hsl(0 84% 60% / 0.1); color: hsl(0 84% 60%); }
+
+/* ============================================================
+   Rule Cards
+   ============================================================ */
+.rules-grid { display: grid; gap: 12px; margin: 16px 0 32px; }
+.rule {
+  display: flex; gap: 16px; padding: 16px 20px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+}
+.rule-icon {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--muted); color: var(--muted-fg); font-size: 16px;
+}
+.rule-body h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.rule-body p { font-size: 13px; margin-bottom: 0; }
+
+/* ============================================================
+   Mockup Cards -- realistic CSS renderings
+   ============================================================ */
+.mockup-container {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 20px 0 32px;
+}
+.mockup-container.dark-bg {
+  background: hsl(224 71% 4%);
+}
+
+/* FormCard mockup base */
+.form-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+.form-card .card-header {
+  padding: 24px 24px 0 24px;
+}
+.form-card .card-title {
+  font-size: 18px; font-weight: 600; letter-spacing: -0.01em;
+  color: var(--card-fg); margin-bottom: 4px; line-height: 1.3;
+}
+.form-card .card-description {
+  font-size: 14px; color: var(--muted-fg); margin-bottom: 0;
+}
+.form-card .card-content {
+  padding: 24px;
+}
+.form-card .card-content-compact {
+  padding: 16px;
+}
+.form-card .card-content-dialog {
+  padding: 16px 24px;
+}
+
+/* Form fields inside cards */
+.form-field {
+  margin-bottom: 20px;
+}
+.form-field:last-child { margin-bottom: 0; }
+.form-label {
+  display: block;
+  font-size: 14px; font-weight: 500;
+  color: var(--card-fg);
+  margin-bottom: 6px;
+}
+.form-label .required {
+  color: var(--red-500);
+  margin-left: 2px;
+}
+.form-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: var(--card-fg);
+  background: var(--bg);
+  border: 1px solid var(--input);
+  border-radius: calc(var(--radius) - 2px);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+}
+.form-input:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px hsl(221.2 83.2% 53.3% / 0.15);
+}
+.form-input::placeholder {
+  color: var(--muted-fg);
+  font-size: 14px;
+}
+.form-input.error {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 2px hsl(0 84.2% 60.2% / 0.15);
+}
+.form-select {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: var(--card-fg);
+  background: var(--bg);
+  border: 1px solid var(--input);
+  border-radius: calc(var(--radius) - 2px);
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.form-select:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px hsl(221.2 83.2% 53.3% / 0.15);
+}
+.form-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--card-fg);
+  background: var(--bg);
+  border: 1px solid var(--input);
+  border-radius: calc(var(--radius) - 2px);
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+.form-textarea:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px hsl(221.2 83.2% 53.3% / 0.15);
+}
+.form-error-msg {
+  font-size: 12px;
+  color: var(--destructive);
+  margin-top: 4px;
+}
+.form-hint {
+  font-size: 12px;
+  color: var(--muted-fg);
+  margin-top: 4px;
+}
+
+/* FormActionBar */
+.form-action-bar {
+  padding: 16px 24px 24px 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  align-items: center;
+}
+.form-action-bar.bordered {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin: 0 24px;
+  padding-left: 0;
+  padding-right: 0;
+  padding-bottom: 24px;
+}
+.form-action-bar.align-start { justify-content: flex-start; }
+.form-action-bar.align-between { justify-content: space-between; }
+.form-action-bar.align-end { justify-content: flex-end; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 14px; font-weight: 500;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  line-height: 1;
+  height: 36px;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-fg);
+}
+.btn-primary:hover { opacity: 0.9; }
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-outline {
+  background: var(--bg);
+  color: var(--card-fg);
+  border-color: var(--input);
+}
+.btn-outline:hover { background: var(--muted); }
+.btn-destructive {
+  background: var(--destructive);
+  color: var(--destructive-fg);
+}
+.btn-destructive:hover { opacity: 0.9; }
+.btn-ghost {
+  background: transparent;
+  color: var(--muted-fg);
+}
+.btn-ghost:hover { background: var(--muted); color: var(--card-fg); }
+
+/* Spinner */
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* FormCard Section */
+.form-section {
+  padding: 0 24px;
+  margin-top: 24px;
+}
+.form-section:first-of-type { margin-top: 0; }
+.form-section-title {
+  font-size: 16px; font-weight: 600; color: var(--card-fg);
+  margin-bottom: 4px; letter-spacing: -0.01em;
+}
+.form-section-desc {
+  font-size: 13px; color: var(--muted-fg); margin-bottom: 16px;
+}
+
+/* FormCard Divider */
+.form-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 24px;
+}
+
+/* Form field grid */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 20px;
+}
+
+/* Wizard step indicator */
+.wizard-steps {
+  display: flex;
+  padding: 0 24px;
+  margin-bottom: 8px;
+}
+.wizard-step {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  position: relative;
+}
+.wizard-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -8px;
+  width: calc(100% - 28px);
+  left: 28px;
+  height: 2px;
+  background: var(--border);
+  transform: translateY(-50%);
+}
+.wizard-step.completed:not(:last-child)::after {
+  background: var(--primary);
+}
+.wizard-step-dot {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600;
+  background: var(--muted);
+  color: var(--muted-fg);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.wizard-step.active .wizard-step-dot {
+  background: var(--primary);
+  color: var(--primary-fg);
+}
+.wizard-step.completed .wizard-step-dot {
+  background: var(--primary);
+  color: var(--primary-fg);
+}
+.wizard-step-label {
+  font-size: 13px; font-weight: 500; color: var(--muted-fg);
+  white-space: nowrap;
+}
+.wizard-step.active .wizard-step-label { color: var(--card-fg); font-weight: 600; }
+.wizard-step.completed .wizard-step-label { color: var(--card-fg); }
+
+/* Dialog mockup */
+.dialog-overlay {
+  position: relative;
+  background: rgba(0,0,0,0.4);
+  border-radius: 12px;
+  padding: 80px 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dialog-content {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+  width: 100%;
+  max-width: 480px;
+  overflow: hidden;
+}
+
+/* Before/After comparison */
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 20px 0 32px;
+}
+.comparison-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted-fg); margin-bottom: 8px;
+}
+.comparison-before {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  opacity: 0.7;
+}
+.comparison-after {
+  background: var(--muted);
+  border: 1px solid var(--primary);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 0 0 1px hsl(221.2 83.2% 53.3% / 0.2);
+}
+
+/* Decision tree */
+.decision-tree {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  font-family: 'SF Mono', 'Cascadia Code', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted-fg);
+  margin: 16px 0 32px;
+}
+.decision-tree .dt-q { color: var(--amber-600); font-weight: 600; }
+.decision-tree .dt-y { color: var(--green-600); font-weight: 600; }
+.decision-tree .dt-n { color: var(--blue-500); }
+.decision-tree .dt-r { color: var(--primary); font-weight: 600; }
+.decision-tree .dt-indent { padding-left: 24px; }
+.decision-tree .dt-indent2 { padding-left: 48px; }
+
+/* ============================================================
+   Code Blocks
+   ============================================================ */
+.code-block {
+  background: hsl(224 71% 4%);
+  color: hsl(213 31% 91%);
+  border-radius: 10px;
+  padding: 20px 24px;
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: auto;
+  margin: 16px 0 24px;
+  border: 1px solid #1e293b;
+}
+.code-block .kw  { color: #c084fc; }
+.code-block .str { color: #86efac; }
+.code-block .typ { color: #67e8f9; }
+.code-block .cm  { color: #64748b; font-style: italic; }
+.code-block .fn  { color: #fbbf24; }
+.code-block .pr  { color: #f9a8d4; }
+.code-block .num { color: #fb923c; }
+
+/* Tailwind class display */
+.tw-classes {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: 'SF Mono', 'Cascadia Code', monospace;
+  font-size: 12px;
+  color: var(--muted-fg);
+  margin: 8px 0 16px;
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.tw-class {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--secondary);
+  color: var(--secondary-fg);
+  font-size: 12px;
+}
+
+/* ============================================================
+   API Table
+   ============================================================ */
+.api-table {
+  width: 100%; border-collapse: collapse; font-size: 14px;
+  margin: 16px 0 32px;
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.api-table th {
+  text-align: left; padding: 10px 16px; background: var(--muted); font-weight: 600;
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-fg);
+  border-bottom: 1px solid var(--border);
+}
+.api-table td {
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+}
+.api-table tr:last-child td { border-bottom: none; }
+.api-table code {
+  font-family: 'SF Mono', 'Cascadia Code', monospace; font-size: 12px;
+  background: var(--muted); padding: 2px 6px; border-radius: 4px;
+}
+
+/* ============================================================
+   Migration Table
+   ============================================================ */
+.migration-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+  margin: 16px 0 32px;
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.migration-table th {
+  text-align: left; padding: 10px 14px; background: var(--muted); font-weight: 600;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-fg);
+  border-bottom: 1px solid var(--border);
+}
+.migration-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top;
+}
+.migration-table tr:last-child td { border-bottom: none; }
+.migration-table code {
+  font-family: 'SF Mono', 'Cascadia Code', monospace; font-size: 11px;
+  background: var(--muted); padding: 2px 5px; border-radius: 3px;
+  white-space: nowrap;
+}
+.migration-table .file { color: var(--primary); font-weight: 500; }
+
+/* ============================================================
+   Section numbering / labels
+   ============================================================ */
+.section-number {
+  display: inline-block;
+  font-size: 12px; font-weight: 700;
+  color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+/* ============================================================
+   Dark mode toggle
+   ============================================================ */
+.theme-toggle {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--muted); border: 1px solid var(--border); border-radius: 8px;
+  padding: 4px 12px; cursor: pointer; user-select: none;
+  font-size: 12px; font-weight: 600; color: var(--muted-fg);
+  transition: all 0.2s;
+}
+.theme-toggle:hover { background: var(--accent); }
+.theme-toggle .toggle-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--primary);
+}
+
+/* ============================================================
+   Separator
+   ============================================================ */
+.sep { height: 1px; background: var(--border); margin: 40px 0; }
+
+/* ============================================================
+   Dark mode overrides
+   ============================================================ */
+.dark .form-card { box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.dark .dialog-overlay { background: rgba(0,0,0,0.6); }
+
+/* ============================================================
+   Grid helpers
+   ============================================================ */
+.grid-helper-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted-fg); margin-bottom: 12px;
+}
+
+/* Research source pills */
+.source-pill {
+  display: inline-flex;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--muted);
+  color: var(--muted-fg);
+  margin: 4px 4px 4px 0;
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 900px) {
+  .comparison-grid { grid-template-columns: 1fr; }
+  .form-grid-2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     Top Bar
+     ============================================================ -->
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-title">DRMS FormCard -- Design Specification</span>
+    <span class="topbar-badge">Phase 5</span>
+  </div>
+  <div class="topbar-right">
+    <span class="topbar-version">v1.0.0 -- 2025-05-24</span>
+    <div class="theme-toggle" onclick="document.body.classList.toggle('dark')">
+      <span class="toggle-dot"></span>
+      Light / Dark
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     Sidebar Navigation
+     ============================================================ -->
+<nav class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Research</div>
+    <a href="#research">Research Sources</a>
+    <a href="#principles">Design Principles</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Components</div>
+    <a href="#formcard">FormCard</a>
+    <a href="#formactionbar">FormActionBar</a>
+    <a href="#formwizard">FormWizard</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Variant Logic</div>
+    <a href="#variant-logic">Decision Tree</a>
+    <a href="#variant-default">Default Variant</a>
+    <a href="#variant-compact">Compact Variant</a>
+    <a href="#variant-dialog">Dialog Variant</a>
+    <a href="#variant-columns">2-Column Layout</a>
+    <a href="#variant-sections">FormCard.Section</a>
+    <a href="#variant-wizard">Wizard Mockup</a>
+    <a href="#variant-actionbar">ActionBar Variants</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Mockups</div>
+    <a href="#before-after">Before / After</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Reference</div>
+    <a href="#api-formcard">FormCard API</a>
+    <a href="#api-actionbar">FormActionBar API</a>
+    <a href="#api-wizard">FormWizard API</a>
+    <a href="#migration">Migration Map</a>
+  </div>
+</nav>
+
+<!-- ============================================================
+     Main Content
+     ============================================================ -->
+<main class="main">
+
+<!-- ===========================
+     Section 1: Research Sources
+     =========================== -->
+<div id="research"></div>
+<span class="section-number">Section 01</span>
+<h1>FormCard Component Family</h1>
+<p class="subtitle">Unified form wrapper, action bar, and wizard components for all DRMS data entry forms. Three components to replace 22+ ad-hoc form patterns across the codebase.</p>
+
+<h3>Research Sources</h3>
+<p>The following design systems and guidelines were studied to inform the FormCard component family:</p>
+
+<div style="display:flex;flex-wrap:wrap;margin:12px 0 24px;">
+  <span class="source-pill">Material Design Forms</span>
+  <span class="source-pill">Ant Design Form Patterns</span>
+  <span class="source-pill">Salesforce Lightning Record Edit Forms</span>
+  <span class="source-pill">Apple HIG Data Entry</span>
+  <span class="source-pill">NN/g Form Design Best Practices</span>
+  <span class="source-pill">Carbon Design System Forms</span>
+</div>
+
+<div class="token-grid">
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--card);border-color:var(--border)"></div>
+    <span>--card</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--border)"></div>
+    <span>--border</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--input)"></div>
+    <span>--input</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--primary)"></div>
+    <span>--primary</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--muted-fg)"></div>
+    <span>--muted-fg</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--destructive)"></div>
+    <span>--destructive</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--radius);border:1px solid var(--border)"></div>
+    <span>--radius: 0.5rem</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--ring)"></div>
+    <span>--ring</span>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 2: Design Principles
+     =========================== -->
+<div id="principles"></div>
+<span class="section-number">Section 02</span>
+<h2>Design Principles</h2>
+
+<div class="rules-grid">
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Consistent chrome, flexible content</h4>
+      <p>FormCard provides the wrapper -- card, title, description, action bar. The consumer provides the fields. The card shell is always the same; the fields are always custom. This separation ensures every form looks like it belongs to the same system without constraining field layout.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Standardized action patterns</h4>
+      <p>Every form ends with the same Cancel + Submit button placement, sizing, and spacing. The action bar is always at the bottom, always right-aligned, always with a 12px gap. Custom buttons (Delete, Save Draft) slot in between via <code>children</code>.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Field approach unification</h4>
+      <p>Standardize on shadcn FormField approach: <code>react-hook-form</code> + <code>zod</code> + <code>FormField/FormItem/FormLabel/FormControl/FormMessage</code>. FormCard does not dictate field internals -- it wraps them. But every new form should use this stack.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Progressive disclosure</h4>
+      <p>Multi-step forms get a standard wizard wrapper (FormWizard). Simple forms get FormCard. Complex forms with many fields use FormCard.Section to group related fields. Each level adds complexity only when needed.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Responsive layout</h4>
+      <p>Forms adapt from single-column (mobile) to two-column (desktop) via a simple <code>columns</code> prop. The grid uses <code>grid-template-columns: 1fr 1fr</code> at <code>md</code> breakpoint and <code>1fr</code> below. Field spacing: <code>space-y-6</code> for default, <code>space-y-4</code> for compact.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 3: FormCard
+     =========================== -->
+<div id="formcard"></div>
+<span class="section-number">Section 03</span>
+<h2>FormCard</h2>
+<p>Wraps a form in a Card with standardized header, spacing, and action bar. The consumer provides <code>FormField</code> children. FormCard handles the chrome.</p>
+
+<div class="code-block"><span class="kw">interface</span> <span class="typ">FormCardProps</span> {
+  <span class="pr">title</span>: <span class="typ">string</span>
+  <span class="pr">description</span>?: <span class="typ">string</span>
+  <span class="pr">variant</span>?: <span class="str">"default"</span> | <span class="str">"compact"</span> | <span class="str">"dialog"</span>
+  <span class="pr">columns</span>?: <span class="num">1</span> | <span class="num">2</span>
+  <span class="pr">className</span>?: <span class="typ">string</span>
+  <span class="pr">children</span>: <span class="typ">React.ReactNode</span>
+}
+
+<span class="cm">// Sub-components</span>
+<span class="typ">FormCard.Header</span>  <span class="cm">// Override header content</span>
+<span class="typ">FormCard.Section</span> <span class="cm">// Field group with title + description</span>
+<span class="typ">FormCard.Divider</span> <span class="cm">// Visual separator between groups</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 4: FormActionBar
+     =========================== -->
+<div id="formactionbar"></div>
+<span class="section-number">Section 04</span>
+<h2>FormActionBar</h2>
+<p>Standardized action buttons at the bottom of every form. Renders Cancel (outline) + Submit (primary) with consistent sizing, spacing, and loading state.</p>
+
+<div class="code-block"><span class="kw">interface</span> <span class="typ">FormActionBarProps</span> {
+  <span class="pr">onCancel</span>?: () => <span class="typ">void</span>
+  <span class="pr">cancelLabel</span>?: <span class="typ">string</span>            <span class="cm">// default "Cancel"</span>
+  <span class="pr">onSubmit</span>?: () => <span class="typ">void</span>
+  <span class="pr">submitLabel</span>?: <span class="typ">string</span>            <span class="cm">// default "Submit"</span>
+  <span class="pr">loading</span>?: <span class="typ">boolean</span>
+  <span class="pr">disabled</span>?: <span class="typ">boolean</span>
+  <span class="pr">align</span>?: <span class="str">"end"</span> | <span class="str">"between"</span> | <span class="str">"start"</span>  <span class="cm">// default "end"</span>
+  <span class="pr">variant</span>?: <span class="str">"default"</span> | <span class="str">"bordered"</span>
+  <span class="pr">children</span>?: <span class="typ">React.ReactNode</span>  <span class="cm">// Custom buttons (Delete, Save Draft)</span>
+}</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 5: FormWizard
+     =========================== -->
+<div id="formwizard"></div>
+<span class="section-number">Section 05</span>
+<h2>FormWizard</h2>
+<p>Wraps multi-step forms with a step indicator at the top and Previous/Next navigation via FormActionBar. Used for DonorRegistration, ExportModal, and similar multi-step workflows.</p>
+
+<div class="code-block"><span class="kw">interface</span> <span class="typ">FormWizardProps</span> {
+  <span class="pr">steps</span>: { <span class="pr">title</span>: <span class="typ">string</span>; <span class="pr">description</span>?: <span class="typ">string</span> }[]
+  <span class="pr">currentStep</span>: <span class="typ">number</span>
+  <span class="pr">onStepChange</span>: (<span class="pr">step</span>: <span class="typ">number</span>) => <span class="typ">void</span>
+  <span class="pr">children</span>: <span class="typ">React.ReactNode</span>
+}</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 6: Variant Selection Logic
+     =========================== -->
+<div id="variant-logic"></div>
+<span class="section-number">Section 06</span>
+<h2>Variant Selection Logic</h2>
+<p>When adding or migrating a form, follow this decision tree to determine the correct FormCard variant and wrapper:</p>
+
+<div class="decision-tree">
+  <span class="dt-q">Is the form inside a Dialog/Modal?</span><br>
+  <span class="dt-y">YES</span> &rarr; <span class="dt-r">FormCard variant="dialog"</span> (compact padding)<br>
+  <span class="dt-n">NO</span> &darr;<br><br>
+  <span class="dt-indent dt-q">Is the form multi-step (wizard)?</span><br>
+  <span class="dt-indent"><span class="dt-y">YES</span> &rarr; <span class="dt-r">FormWizard</span> wrapping <span class="dt-r">FormCard</span> variants</span><br>
+  <span class="dt-indent"><span class="dt-n">NO</span> &darr;</span><br><br>
+  <span class="dt-indent2 dt-q">Is the form a simple inline edit (few fields, embedded)?</span><br>
+  <span class="dt-indent2"><span class="dt-y">YES</span> &rarr; <span class="dt-r">FormCard variant="compact"</span></span><br>
+  <span class="dt-indent2"><span class="dt-n">NO</span> &rarr; <span class="dt-r">FormCard variant="default"</span></span>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 7: Default Variant
+     =========================== -->
+<div id="variant-default"></div>
+<span class="section-number">Section 07</span>
+<h2>Variant: Default</h2>
+<span class="variant-badge">default</span>
+<p>Standard form card with <code>p-6</code> (24px) content padding. Card header has title and optional description. Fields use <code>space-y-6</code> (24px) vertical spacing. FormActionBar at the bottom with Cancel + Submit. This is the workhorse variant used for most page-level forms.</p>
+
+<div class="mockup-container">
+  <div style="max-width:560px;">
+    <div class="form-card">
+      <div class="card-header">
+        <div class="card-title">Create Entity</div>
+        <div class="card-description">Add a new affected entity to the system.</div>
+      </div>
+      <div class="card-content">
+        <div style="display:grid;gap:20px;">
+          <!-- Name -->
+          <div class="form-field">
+            <label class="form-label">Name<span class="required">*</span></label>
+            <input type="text" class="form-input" placeholder="Enter entity name" value="">
+          </div>
+          <!-- Type -->
+          <div class="form-field">
+            <label class="form-label">Type<span class="required">*</span></label>
+            <select class="form-select">
+              <option value="">Select entity type</option>
+              <option>Refugee Camp</option>
+              <option>Temporary Shelter</option>
+              <option>Community Center</option>
+              <option>Hospital</option>
+            </select>
+          </div>
+          <!-- Location -->
+          <div class="form-field">
+            <label class="form-label">Location</label>
+            <input type="text" class="form-input" placeholder="City, Region, Country">
+          </div>
+          <!-- Lat/Lng in a row -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="form-field" style="margin-bottom:0;">
+              <label class="form-label">Latitude</label>
+              <input type="text" class="form-input" placeholder="e.g. 5.6037">
+            </div>
+            <div class="form-field" style="margin-bottom:0;">
+              <label class="form-label">Longitude</label>
+              <input type="text" class="form-input" placeholder="e.g. -0.1870">
+            </div>
+          </div>
+          <!-- Description -->
+          <div class="form-field">
+            <label class="form-label">Description</label>
+            <textarea class="form-textarea" placeholder="Brief description of the entity..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="form-action-bar bordered">
+        <button class="btn btn-outline">Cancel</button>
+        <button class="btn btn-primary">Create Entity</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tw-classes">
+  <span class="tw-class">rounded-lg</span>
+  <span class="tw-class">border</span>
+  <span class="tw-class">bg-card</span>
+  <span class="tw-class">text-card-foreground</span>
+  <span class="tw-class">shadow-sm</span>
+  <span class="tw-class">p-6</span>
+  <span class="tw-class">space-y-6</span>
+  <span class="tw-class">border-t</span>
+  <span class="tw-class">pt-6</span>
+  <span class="tw-class">flex justify-end gap-3</span>
+</div>
+
+<div class="code-block"><span class="kw">&lt;</span><span class="fn">FormCard</span>
+  <span class="pr">title</span>=<span class="str">"Create Entity"</span>
+  <span class="pr">description</span>=<span class="str">"Add a new affected entity to the system."</span>
+<span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"name"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"type"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"location"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="fn">FormActionBar</span>
+    <span class="pr">onCancel</span>={() => router.back()}
+    <span class="pr">onSubmit</span>={form.handleSubmit(onSubmit)}
+  <span class="kw">/&gt;</span>
+<span class="kw">&lt;/</span><span class="fn">FormCard</span><span class="kw">&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 8: Compact Variant
+     =========================== -->
+<div id="variant-compact"></div>
+<h2>Variant: Compact</h2>
+<span class="variant-badge">compact</span>
+<p>Reduced padding (<code>p-4</code>, 16px) and tighter field spacing (<code>space-y-4</code>, 16px). Designed for inline edits, sidebar forms, or contexts where vertical space is limited. No card description by default.</p>
+
+<div class="mockup-container">
+  <div style="max-width:420px;">
+    <div class="form-card">
+      <div class="card-header" style="padding:16px 16px 0 16px;">
+        <div class="card-title" style="font-size:16px;">Quick Edit</div>
+      </div>
+      <div class="card-content-compact">
+        <div style="display:grid;gap:12px;">
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Display Name</label>
+            <input type="text" class="form-input" value="UNHCR Kenya">
+          </div>
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Email</label>
+            <input type="text" class="form-input" value="contact@unhcr.ke">
+          </div>
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Phone</label>
+            <input type="text" class="form-input" placeholder="+254 xxx xxx xxx">
+          </div>
+        </div>
+      </div>
+      <div class="form-action-bar" style="padding:12px 16px 16px 16px;">
+        <button class="btn btn-outline" style="height:32px;font-size:13px;padding:6px 12px;">Cancel</button>
+        <button class="btn btn-primary" style="height:32px;font-size:13px;padding:6px 12px;">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tw-classes">
+  <span class="tw-class">p-4</span>
+  <span class="tw-class">space-y-4</span>
+  <span class="tw-class">text-base</span>
+  <span class="tw-class">h-8</span>
+  <span class="tw-class">text-xs</span>
+</div>
+
+<div class="code-block"><span class="kw">&lt;</span><span class="fn">FormCard</span> <span class="pr">title</span>=<span class="str">"Quick Edit"</span> <span class="pr">variant</span>=<span class="str">"compact"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"displayName"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"email"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"phone"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="fn">FormActionBar</span>
+    <span class="pr">onCancel</span>={() => setIsEditing(false)}
+    <span class="pr">submitLabel</span>=<span class="str">"Save"</span>
+  <span class="kw">/&gt;</span>
+<span class="kw">&lt;/</span><span class="fn">FormCard</span><span class="kw">&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 9: Dialog Variant
+     =========================== -->
+<div id="variant-dialog"></div>
+<h2>Variant: Dialog</h2>
+<span class="variant-badge">dialog</span>
+<p>Compact padding optimized for modal dialogs. Renders inside a Dialog component with reduced vertical spacing. The card has no visible border (the Dialog provides the container). Content uses <code>px-6 py-4</code>.</p>
+
+<div class="mockup-container">
+  <div class="dialog-overlay">
+    <div class="dialog-content">
+      <div class="form-card" style="border:none;box-shadow:none;">
+        <div class="card-header" style="padding:20px 24px 0 24px;">
+          <div class="card-title" style="font-size:17px;">Edit User</div>
+          <div class="card-description" style="font-size:13px;">Update user account details.</div>
+        </div>
+        <div class="card-content-dialog">
+          <div style="display:grid;gap:16px;">
+            <div class="form-field" style="margin-bottom:0;">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-input" value="John Doe">
+            </div>
+            <div class="form-field" style="margin-bottom:0;">
+              <label class="form-label">Role</label>
+              <select class="form-select">
+                <option>Admin</option>
+                <option selected>Coordinator</option>
+                <option>Donor</option>
+                <option>Assessor</option>
+              </select>
+            </div>
+            <div class="form-field" style="margin-bottom:0;">
+              <label class="form-label">Status</label>
+              <select class="form-select">
+                <option selected>Active</option>
+                <option>Inactive</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="form-action-bar" style="padding:12px 24px 20px 24px;">
+          <button class="btn btn-outline">Cancel</button>
+          <button class="btn btn-primary">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tw-classes">
+  <span class="tw-class">px-6</span>
+  <span class="tw-class">py-4</span>
+  <span class="tw-class">space-y-4</span>
+  <span class="tw-class">border-none</span>
+  <span class="tw-class">shadow-none</span>
+</div>
+
+<div class="code-block"><span class="kw">&lt;</span><span class="fn">Dialog</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="fn">DialogContent</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;</span><span class="fn">FormCard</span> <span class="pr">title</span>=<span class="str">"Edit User"</span> <span class="pr">variant</span>=<span class="str">"dialog"</span><span class="kw">&gt;</span>
+      <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"name"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+      <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"role"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+      <span class="kw">&lt;</span><span class="fn">FormActionBar</span>
+        <span class="pr">onCancel</span>={() => setOpen(false)}
+        <span class="pr">submitLabel</span>=<span class="str">"Save Changes"</span>
+      <span class="kw">/&gt;</span>
+    <span class="kw">&lt;/</span><span class="fn">FormCard</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;/</span><span class="fn">DialogContent</span><span class="kw">&gt;</span>
+<span class="kw">&lt;/</span><span class="fn">Dialog</span><span class="kw">&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 10: 2-Column Layout
+     =========================== -->
+<div id="variant-columns"></div>
+<h2>Variant: columns=2</h2>
+<span class="variant-badge">columns=2</span>
+<p>Two-column grid layout for forms with many short fields (e.g. Donor Profile, Settings). On mobile (<code>&lt;768px</code>), collapses to a single column. Fields snap to the grid automatically. Full-width fields (textarea) span both columns.</p>
+
+<div class="mockup-container">
+  <div style="max-width:680px;">
+    <div class="form-card">
+      <div class="card-header">
+        <div class="card-title">Donor Profile</div>
+        <div class="card-description">Manage your organization profile and contact details.</div>
+      </div>
+      <div class="card-content">
+        <div class="form-grid-2">
+          <!-- Row 1 -->
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Organization Name<span class="required">*</span></label>
+            <input type="text" class="form-input" value="UNHCR Kenya">
+          </div>
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Registration Number</label>
+            <input type="text" class="form-input" placeholder="NGO-2024-001">
+          </div>
+        </div>
+        <div style="height:20px;"></div>
+        <div class="form-grid-2">
+          <!-- Row 2 -->
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Contact Person<span class="required">*</span></label>
+            <input type="text" class="form-input" value="Jane Wanjiku">
+          </div>
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Email Address<span class="required">*</span></label>
+            <input type="text" class="form-input" value="jane@unhcr.ke">
+          </div>
+        </div>
+        <div style="height:20px;"></div>
+        <div class="form-grid-2">
+          <!-- Row 3 -->
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Phone Number</label>
+            <input type="text" class="form-input" value="+254 712 345 678">
+          </div>
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Country<span class="required">*</span></label>
+            <select class="form-select">
+              <option>Kenya</option>
+              <option>Uganda</option>
+              <option>Ethiopia</option>
+            </select>
+          </div>
+        </div>
+        <div style="height:20px;"></div>
+        <!-- Full-width field -->
+        <div class="form-field">
+          <label class="form-label">Mission Statement</label>
+          <textarea class="form-textarea" placeholder="Brief description of your organization's mission..."></textarea>
+        </div>
+      </div>
+      <div class="form-action-bar bordered">
+        <button class="btn btn-outline">Cancel</button>
+        <button class="btn btn-primary">Save Profile</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tw-classes">
+  <span class="tw-class">grid grid-cols-1 md:grid-cols-2 gap-6</span>
+  <span class="tw-class">col-span-2</span>
+  <span class="tw-class">for full-width fields</span>
+</div>
+
+<div class="code-block"><span class="kw">&lt;</span><span class="fn">FormCard</span> <span class="pr">title</span>=<span class="str">"Donor Profile"</span> <span class="pr">columns</span>={<span class="num">2</span>}<span class="kw">&gt;</span>
+  <span class="cm">{/* Fields auto-flow into 2-col grid */}</span>
+  <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"orgName"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"regNumber"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"contactPerson"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"email"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="fn">FormActionBar</span>
+    <span class="pr">onCancel</span>={() => router.back()}
+    <span class="pr">submitLabel</span>=<span class="str">"Save Profile"</span>
+  <span class="kw">/&gt;</span>
+<span class="kw">&lt;/</span><span class="fn">FormCard</span><span class="kw">&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 11: FormCard.Section
+     =========================== -->
+<div id="variant-sections"></div>
+<h2>FormCard.Section</h2>
+<span class="variant-badge green">FormCard.Section</span>
+<p>Groups related fields within a form using a section title, optional description, and a visual separator. Designed for complex forms like HealthAssessment, PopulationAssessment, and DeliveryConfirmation that have multiple logical groupings of fields.</p>
+
+<div class="mockup-container">
+  <div style="max-width:560px;">
+    <div class="form-card">
+      <div class="card-header">
+        <div class="card-title">Health Assessment</div>
+        <div class="card-description">Complete all sections for the assessment.</div>
+      </div>
+
+      <!-- Section 1 -->
+      <div class="form-section">
+        <div class="form-section-title">Organization Info</div>
+        <div class="form-section-desc">Identify the assessing organization and assessor.</div>
+        <div style="display:grid;gap:16px;">
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Organization<span class="required">*</span></label>
+            <input type="text" class="form-input" value="WHO Kenya">
+          </div>
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Assessor<span class="required">*</span></label>
+            <input type="text" class="form-input" value="Dr. Sarah Kimani">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-divider" style="margin:24px 0;"></div>
+
+      <!-- Section 2 -->
+      <div class="form-section">
+        <div class="form-section-title">Contact Details</div>
+        <div class="form-section-desc">Primary contact information for follow-up.</div>
+        <div style="display:grid;gap:16px;">
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Email</label>
+            <input type="text" class="form-input" value="s.kimani@who.int">
+          </div>
+          <div class="form-field" style="margin-bottom:0;">
+            <label class="form-label">Phone</label>
+            <input type="text" class="form-input" value="+254 722 111 222">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-action-bar bordered" style="margin-top:24px;">
+        <button class="btn btn-outline">Cancel</button>
+        <button class="btn btn-primary">Submit Assessment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="code-block"><span class="kw">&lt;</span><span class="fn">FormCard</span> <span class="pr">title</span>=<span class="str">"Health Assessment"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="fn">FormCard.Section</span> <span class="pr">title</span>=<span class="str">"Organization Info"</span> <span class="pr">description</span>=<span class="str">"..."</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"org"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"assessor"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;/</span><span class="fn">FormCard.Section</span><span class="kw">&gt;</span>
+
+  <span class="kw">&lt;</span><span class="fn">FormCard.Divider</span> <span class="kw">/&gt;</span>
+
+  <span class="kw">&lt;</span><span class="fn">FormCard.Section</span> <span class="pr">title</span>=<span class="str">"Contact Details"</span> <span class="pr">description</span>=<span class="str">"..."</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"email"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+    <span class="kw">&lt;</span><span class="typ">FormField</span> <span class="pr">name</span>=<span class="str">"phone"</span><span class="kw">&gt;</span>...<span class="kw">&lt;/</span><span class="typ">FormField</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;/</span><span class="fn">FormCard.Section</span><span class="kw">&gt;</span>
+
+  <span class="kw">&lt;</span><span class="fn">FormActionBar</span> ... <span class="kw">/&gt;</span>
+<span class="kw">&lt;/</span><span class="fn">FormCard</span><span class="kw">&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 12: FormWizard Mockup
+     =========================== -->
+<div id="variant-wizard"></div>
+<h2>FormWizard</h2>
+<span class="variant-badge amber">FormWizard</span>
+<p>Multi-step form with a step indicator at the top and Previous/Next navigation. The step indicator shows numbered circles connected by a line. Active step is highlighted in primary blue. Completed steps show a checkmark. Previous/Next buttons are provided by FormActionBar.</p>
+
+<div class="mockup-container">
+  <div style="max-width:600px;">
+    <div class="form-card">
+      <!-- Step indicator -->
+      <div style="padding:24px 24px 0 24px;">
+        <div class="wizard-steps">
+          <div class="wizard-step completed">
+            <div class="wizard-step-dot">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <span class="wizard-step-label">Account</span>
+          </div>
+          <div class="wizard-step active">
+            <div class="wizard-step-dot">2</div>
+            <span class="wizard-step-label">Details</span>
+          </div>
+          <div class="wizard-step">
+            <div class="wizard-step-dot">3</div>
+            <span class="wizard-step-label">Review</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step content -->
+      <div class="card-header" style="padding-top:8px;">
+        <div class="card-title">Donor Registration</div>
+        <div class="card-description">Step 2 of 3: Enter your organization details.</div>
+      </div>
+      <div class="card-content">
+        <div style="display:grid;gap:20px;">
+          <div class="form-field">
+            <label class="form-label">Organization Name<span class="required">*</span></label>
+            <input type="text" class="form-input" placeholder="Enter organization name">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Registration Type</label>
+            <select class="form-select">
+              <option value="">Select type</option>
+              <option>International NGO</option>
+              <option>National NGO</option>
+              <option>UN Agency</option>
+              <option>Government</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">Country of Operation</label>
+            <select class="form-select">
+              <option>Kenya</option>
+              <option>Uganda</option>
+              <option>South Sudan</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-action-bar bordered" style="justify-content:space-between;">
+        <button class="btn btn-outline">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Previous
+        </button>
+        <button class="btn btn-primary">
+          Next
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="code-block"><span class="kw">&lt;</span><span class="fn">FormWizard</span>
+  <span class="pr">steps</span>={[
+    { <span class="pr">title</span>: <span class="str">"Account"</span> },
+    { <span class="pr">title</span>: <span class="str">"Details"</span> },
+    { <span class="pr">title</span>: <span class="str">"Review"</span> },
+  ]}
+  <span class="pr">currentStep</span>={<span class="num">1</span>}
+  <span class="pr">onStepChange</span>={setCurrentStep}
+<span class="kw">&gt;</span>
+  {currentStep === <span class="num">0</span> &amp;&amp; <span class="kw">&lt;</span><span class="typ">AccountStep</span> <span class="kw">/&gt;</span>}
+  {currentStep === <span class="num">1</span> &amp;&amp; <span class="kw">&lt;</span><span class="typ">DetailsStep</span> <span class="kw">/&gt;</span>}
+  {currentStep === <span class="num">2</span> &amp;&amp; <span class="kw">&lt;</span><span class="typ">ReviewStep</span> <span class="kw">/&gt;</span>}
+<span class="kw">&lt;/</span><span class="fn">FormWizard</span><span class="kw">&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 13: ActionBar Variants
+     =========================== -->
+<div id="variant-actionbar"></div>
+<h2>FormActionBar Variants</h2>
+
+<h3 style="margin-top:32px;">Align: End (default)</h3>
+<span class="variant-badge">align="end"</span>
+<p>Buttons pushed to the right. This is the default and most common pattern.</p>
+
+<div class="mockup-container">
+  <div style="max-width:560px;">
+    <div class="form-card">
+      <div class="card-content" style="padding:16px 24px;">
+        <div style="height:48px;background:var(--muted);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted-fg);font-size:13px;">Form fields...</div>
+      </div>
+      <div class="form-action-bar bordered align-end">
+        <button class="btn btn-outline">Cancel</button>
+        <button class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>Align: Start</h3>
+<span class="variant-badge">align="start"</span>
+
+<div class="mockup-container">
+  <div style="max-width:560px;">
+    <div class="form-card">
+      <div class="card-content" style="padding:16px 24px;">
+        <div style="height:48px;background:var(--muted);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted-fg);font-size:13px;">Form fields...</div>
+      </div>
+      <div class="form-action-bar bordered align-start">
+        <button class="btn btn-outline">Cancel</button>
+        <button class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>Align: Between (with custom children)</h3>
+<span class="variant-badge">align="between"</span>
+<p>Space-between layout for forms that need a destructive action on the left and primary actions on the right.</p>
+
+<div class="mockup-container">
+  <div style="max-width:560px;">
+    <div class="form-card">
+      <div class="card-content" style="padding:16px 24px;">
+        <div style="height:48px;background:var(--muted);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted-fg);font-size:13px;">Form fields...</div>
+      </div>
+      <div class="form-action-bar bordered align-between">
+        <button class="btn btn-destructive">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Delete
+        </button>
+        <div style="display:flex;gap:12px;">
+          <button class="btn btn-outline">Save Draft</button>
+          <button class="btn btn-primary">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>Loading State</h3>
+<span class="variant-badge">loading</span>
+<p>When <code>loading={true}</code>, the submit button shows a spinner icon and becomes disabled. The Cancel button remains interactive.</p>
+
+<div class="mockup-container">
+  <div style="max-width:560px;">
+    <div class="form-card">
+      <div class="card-content" style="padding:16px 24px;">
+        <div style="height:48px;background:var(--muted);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted-fg);font-size:13px;">Form fields...</div>
+      </div>
+      <div class="form-action-bar bordered align-end">
+        <button class="btn btn-outline">Cancel</button>
+        <button class="btn btn-primary" disabled style="opacity:0.8;">
+          <span class="spinner"></span>
+          Submitting...
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>Non-bordered variant</h3>
+<span class="variant-badge">variant="default"</span>
+<p>Without the <code>bordered</code> variant, the action bar has no top border separator. Useful for compact forms or when the content area already has sufficient visual separation.</p>
+
+<div class="mockup-container">
+  <div style="max-width:560px;">
+    <div class="form-card">
+      <div class="card-content" style="padding:16px 24px 0 24px;">
+        <div style="height:48px;background:var(--muted);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--muted-fg);font-size:13px;">Form fields...</div>
+      </div>
+      <div class="form-action-bar align-end">
+        <button class="btn btn-outline">Cancel</button>
+        <button class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="code-block"><span class="cm">// Default (bordered, end-aligned)</span>
+<span class="kw">&lt;</span><span class="fn">FormActionBar</span>
+  <span class="pr">onCancel</span>={() => router.back()}
+  <span class="pr">onSubmit</span>={handleSubmit}
+<span class="kw">/&gt;</span>
+
+<span class="cm">// With destructive action + custom buttons</span>
+<span class="kw">&lt;</span><span class="fn">FormActionBar</span> <span class="pr">align</span>=<span class="str">"between"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="fn">Button</span> <span class="pr">variant</span>=<span class="str">"destructive"</span><span class="kw">&gt;</span>Delete<span class="kw">&lt;/</span><span class="fn">Button</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="fn">Button</span> <span class="pr">variant</span>=<span class="str">"outline"</span><span class="kw">&gt;</span>Save Draft<span class="kw">&lt;/</span><span class="fn">Button</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;</span><span class="fn">Button</span> <span class="pr">type</span>=<span class="str">"submit"</span><span class="kw">&gt;</span>Submit<span class="kw">&lt;/</span><span class="fn">Button</span><span class="kw">&gt;</span>
+<span class="kw">&lt;/</span><span class="fn">FormActionBar</span><span class="kw">&gt;</span>
+
+<span class="cm">// Loading state</span>
+<span class="kw">&lt;</span><span class="fn">FormActionBar</span>
+  <span class="pr">loading</span>={isSubmitting}
+  <span class="pr">onCancel</span>={() => setOpen(false)}
+<span class="kw">/&gt;</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 14: Before / After
+     =========================== -->
+<div id="before-after"></div>
+<span class="section-number">Section 08</span>
+<h2>Before / After Comparison</h2>
+<p>Side-by-side comparison of the current ad-hoc form pattern versus the unified FormCard pattern. Every form in the codebase currently uses a different combination of Card, manual spacing, and ad-hoc button placement.</p>
+
+<div class="comparison-label">Entity Creation Form</div>
+<div class="comparison-grid">
+  <!-- BEFORE -->
+  <div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--red-500);margin-bottom:8px;">Before (ad-hoc)</div>
+    <div class="comparison-before">
+      <div class="form-card" style="border:2px dashed var(--muted-fg);">
+        <div style="padding:24px;">
+          <h3 style="font-size:18px;font-weight:600;margin-bottom:4px;color:var(--card-fg);">Create Entity</h3>
+          <p style="font-size:14px;color:var(--muted-fg);margin-bottom:24px;">Add a new entity</p>
+
+          <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:14px;font-weight:500;margin-bottom:6px;color:var(--card-fg);">Name *</label>
+            <input type="text" style="width:100%;height:36px;padding:0 12px;font-size:14px;border:1px solid var(--input);border-radius:6px;background:var(--bg);" placeholder="Entity name">
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:14px;font-weight:500;margin-bottom:6px;color:var(--card-fg);">Type</label>
+            <input type="text" style="width:100%;height:36px;padding:0 12px;font-size:14px;border:1px solid var(--input);border-radius:6px;background:var(--bg);" placeholder="Type">
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:14px;font-weight:500;margin-bottom:6px;color:var(--card-fg);">Location</label>
+            <input type="text" style="width:100%;height:36px;padding:0 12px;font-size:14px;border:1px solid var(--input);border-radius:6px;background:var(--bg);" placeholder="Location">
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:24px;">
+            <button style="padding:8px 16px;border:1px solid var(--input);border-radius:6px;background:var(--bg);font-size:14px;cursor:pointer;">Cancel</button>
+            <button style="padding:8px 16px;border:none;border-radius:6px;background:var(--primary);color:var(--primary-fg);font-size:14px;cursor:pointer;">Create</button>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted-fg);font-family:'SF Mono',monospace;">
+        Issues: inconsistent spacing, no border-t separator, gap-8 vs gap-12, no loading state
+      </div>
+    </div>
+  </div>
+
+  <!-- AFTER -->
+  <div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--green-600);margin-bottom:8px;">After (FormCard)</div>
+    <div class="comparison-after">
+      <div class="form-card">
+        <div class="card-header">
+          <div class="card-title">Create Entity</div>
+          <div class="card-description">Add a new affected entity to the system.</div>
+        </div>
+        <div class="card-content">
+          <div style="display:grid;gap:20px;">
+            <div class="form-field" style="margin-bottom:0;">
+              <label class="form-label">Name<span class="required">*</span></label>
+              <input type="text" class="form-input" placeholder="Entity name">
+            </div>
+            <div class="form-field" style="margin-bottom:0;">
+              <label class="form-label">Type</label>
+              <select class="form-select"><option>Select type</option></select>
+            </div>
+            <div class="form-field" style="margin-bottom:0;">
+              <label class="form-label">Location</label>
+              <input type="text" class="form-input" placeholder="Location">
+            </div>
+          </div>
+        </div>
+        <div class="form-action-bar bordered">
+          <button class="btn btn-outline">Cancel</button>
+          <button class="btn btn-primary">Create Entity</button>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--green-600);font-family:'SF Mono',monospace;">
+        Consistent: spacing, separator, loading, dark mode, field validation
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 15: FormCard API
+     =========================== -->
+<div id="api-formcard"></div>
+<span class="section-number">Section 09</span>
+<h2>API Reference: FormCard</h2>
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Prop</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>title</code></td>
+      <td><code>string</code></td>
+      <td>--</td>
+      <td>CardHeader title. Rendered as <code>CardTitle</code>. Required.</td>
+    </tr>
+    <tr>
+      <td><code>description</code></td>
+      <td><code>string</code></td>
+      <td><code>undefined</code></td>
+      <td>CardHeader description. Rendered as <code>CardDescription</code>.</td>
+    </tr>
+    <tr>
+      <td><code>variant</code></td>
+      <td><code>"default" | "compact" | "dialog"</code></td>
+      <td><code>"default"</code></td>
+      <td>Controls padding and spacing. Default: p-6/space-y-6. Compact: p-4/space-y-4. Dialog: px-6 py-4/space-y-4.</td>
+    </tr>
+    <tr>
+      <td><code>columns</code></td>
+      <td><code>1 | 2</code></td>
+      <td><code>1</code></td>
+      <td>Field grid layout. 1 = single column always. 2 = single column mobile, two-column desktop.</td>
+    </tr>
+    <tr>
+      <td><code>className</code></td>
+      <td><code>string</code></td>
+      <td><code>undefined</code></td>
+      <td>Merged via <code>cn()</code> for external overrides.</td>
+    </tr>
+    <tr>
+      <td><code>children</code></td>
+      <td><code>React.ReactNode</code></td>
+      <td>--</td>
+      <td>FormField children and FormActionBar. Required.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>FormCard.Sub-components</h3>
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Component</th>
+      <th>Props</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>FormCard.Header</code></td>
+      <td><code>children: React.ReactNode</code></td>
+      <td>Override the default CardHeader content entirely.</td>
+    </tr>
+    <tr>
+      <td><code>FormCard.Section</code></td>
+      <td><code>title: string, description?: string, children: React.ReactNode</code></td>
+      <td>Field group with a section title, description, and visual separator from the next section.</td>
+    </tr>
+    <tr>
+      <td><code>FormCard.Divider</code></td>
+      <td>none</td>
+      <td>Visual separator (1px border) between field groups.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 16: FormActionBar API
+     =========================== -->
+<div id="api-actionbar"></div>
+<span class="section-number">Section 10</span>
+<h2>API Reference: FormActionBar</h2>
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Prop</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>onCancel</code></td>
+      <td><code>() => void</code></td>
+      <td><code>undefined</code></td>
+      <td>If provided, renders a Cancel (outline) button.</td>
+    </tr>
+    <tr>
+      <td><code>cancelLabel</code></td>
+      <td><code>string</code></td>
+      <td><code>"Cancel"</code></td>
+      <td>Label for the Cancel button.</td>
+    </tr>
+    <tr>
+      <td><code>onSubmit</code></td>
+      <td><code>() => void</code></td>
+      <td><code>undefined</code></td>
+      <td>If provided, renders a Submit (primary) button.</td>
+    </tr>
+    <tr>
+      <td><code>submitLabel</code></td>
+      <td><code>string</code></td>
+      <td><code>"Submit"</code></td>
+      <td>Label for the Submit button.</td>
+    </tr>
+    <tr>
+      <td><code>loading</code></td>
+      <td><code>boolean</code></td>
+      <td><code>false</code></td>
+      <td>Shows Loader2 spinner on submit button and disables it.</td>
+    </tr>
+    <tr>
+      <td><code>disabled</code></td>
+      <td><code>boolean</code></td>
+      <td><code>false</code></td>
+      <td>Disables both buttons.</td>
+    </tr>
+    <tr>
+      <td><code>align</code></td>
+      <td><code>"end" | "between" | "start"</code></td>
+      <td><code>"end"</code></td>
+      <td>Flex alignment. "end" = right-aligned. "between" = space-between. "start" = left-aligned.</td>
+    </tr>
+    <tr>
+      <td><code>variant</code></td>
+      <td><code>"default" | "bordered"</code></td>
+      <td><code>"bordered"</code></td>
+      <td>"bordered" adds a border-t separator above the action bar.</td>
+    </tr>
+    <tr>
+      <td><code>children</code></td>
+      <td><code>React.ReactNode</code></td>
+      <td><code>undefined</code></td>
+      <td>Custom buttons (Delete, Save Draft) rendered between Cancel and Submit.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 17: FormWizard API
+     =========================== -->
+<div id="api-wizard"></div>
+<span class="section-number">Section 11</span>
+<h2>API Reference: FormWizard</h2>
+
+<table class="api-table">
+  <thead>
+    <tr>
+      <th>Prop</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>steps</code></td>
+      <td><code>{ title: string; description?: string }[]</code></td>
+      <td>--</td>
+      <td>Array of step definitions. Required.</td>
+    </tr>
+    <tr>
+      <td><code>currentStep</code></td>
+      <td><code>number</code></td>
+      <td>--</td>
+      <td>Zero-indexed current step. Required.</td>
+    </tr>
+    <tr>
+      <td><code>onStepChange</code></td>
+      <td><code>(step: number) => void</code></td>
+      <td>--</td>
+      <td>Callback when step changes (Previous/Next). Required.</td>
+    </tr>
+    <tr>
+      <td><code>children</code></td>
+      <td><code>React.ReactNode</code></td>
+      <td>--</td>
+      <td>Step content (typically conditional renders based on currentStep). Required.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 18: Migration Map
+     =========================== -->
+<div id="migration"></div>
+<span class="section-number">Section 12</span>
+<h2>Migration Map</h2>
+<p>Every form in the DRMS codebase maps to a specific FormCard variant and configuration. After migration, all ad-hoc Card + register / Card + FormField patterns are replaced by the unified FormCard + FormActionBar + FormWizard family.</p>
+
+<table class="migration-table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Form</th>
+      <th>Current Pattern</th>
+      <th>Target</th>
+      <th>Variant</th>
+      <th>Cols</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td class="file">LoginForm</td>
+      <td>Raw Card + register</td>
+      <td>FormCard default</td>
+      <td><code>default</code></td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td class="file">RegisterForm</td>
+      <td>Raw Card + register</td>
+      <td>FormCard default</td>
+      <td><code>default</code></td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td class="file">EditUserForm</td>
+      <td>Raw Card + register</td>
+      <td>FormCard dialog</td>
+      <td><code>dialog</code></td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td class="file">DonorRegistrationForm</td>
+      <td>Card + FormField (2 steps)</td>
+      <td>FormWizard + FormCard</td>
+      <td><code>wizard</code></td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td class="file">CommitmentForm</td>
+      <td>Card + FormField</td>
+      <td>FormCard default</td>
+      <td><code>default</code></td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td class="file">DonorProfile (inline edit)</td>
+      <td>Card + FormField</td>
+      <td>FormCard compact</td>
+      <td><code>compact</code></td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td class="file">CommitmentStatusTracker</td>
+      <td>Card + FormField</td>
+      <td>FormCard dialog</td>
+      <td><code>dialog</code></td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td class="file">Edit Donor Page</td>
+      <td>Page-level Form + FormField</td>
+      <td>FormCard default</td>
+      <td><code>default</code></td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td class="file">EntityForm</td>
+      <td>Card + register</td>
+      <td>FormCard default</td>
+      <td><code>default</code></td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td class="file">IncidentCreationForm</td>
+      <td>Card + register</td>
+      <td>FormCard default</td>
+      <td><code>default</code></td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td class="file">HealthAssessmentForm</td>
+      <td>Multi-Card + FormField</td>
+      <td>FormCard default + Sections</td>
+      <td><code>default</code></td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td class="file">PopulationAssessmentForm</td>
+      <td>Multi-Card + FormField</td>
+      <td>FormCard default + Sections</td>
+      <td><code>default</code></td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td class="file">FoodAssessmentForm</td>
+      <td>Multi-Card + FormField</td>
+      <td>FormCard default + Sections</td>
+      <td><code>default</code></td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>14</td>
+      <td class="file">WASHAssessmentForm</td>
+      <td>Multi-Card + FormField</td>
+      <td>FormCard default + Sections</td>
+      <td><code>default</code></td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>15</td>
+      <td class="file">ShelterAssessmentForm</td>
+      <td>Multi-Card + FormField</td>
+      <td>FormCard default + Sections</td>
+      <td><code>default</code></td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>16</td>
+      <td class="file">SecurityAssessmentForm</td>
+      <td>Multi-Card + FormField</td>
+      <td>FormCard default + Sections</td>
+      <td><code>default</code></td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>17</td>
+      <td class="file">ResponsePlanningForm</td>
+      <td>Card + FormField (tabs)</td>
+      <td>FormCard default</td>
+      <td><code>default</code></td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>18</td>
+      <td class="file">DonorCommitmentImportForm</td>
+      <td>Dialog + FormField</td>
+      <td>FormCard dialog</td>
+      <td><code>dialog</code></td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>19</td>
+      <td class="file">DeliveryConfirmationForm</td>
+      <td>Multi-Card + FormField</td>
+      <td>FormCard default + Sections</td>
+      <td><code>default</code></td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>20</td>
+      <td class="file">System Settings</td>
+      <td>Raw Card + manual state</td>
+      <td>FormCard default</td>
+      <td><code>default</code></td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>21</td>
+      <td class="file">ExportModal</td>
+      <td>Dialog + raw register</td>
+      <td>FormWizard + FormCard dialog</td>
+      <td><code>wizard + dialog</code></td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>22</td>
+      <td class="file">PreliminaryAssessmentForm</td>
+      <td>Card + register</td>
+      <td>FormCard default + Sections</td>
+      <td><code>default</code></td>
+      <td>2</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Summary Statistics</h3>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:16px 0 32px;">
+  <div style="background:var(--muted);border-radius:10px;padding:20px;text-align:center;border:1px solid var(--border);">
+    <div style="font-size:28px;font-weight:800;color:var(--primary);">14</div>
+    <div style="font-size:13px;color:var(--muted-fg);margin-top:4px;">Default Variant</div>
+  </div>
+  <div style="background:var(--muted);border-radius:10px;padding:20px;text-align:center;border:1px solid var(--border);">
+    <div style="font-size:28px;font-weight:800;color:var(--amber-600);">1</div>
+    <div style="font-size:13px;color:var(--muted-fg);margin-top:4px;">Compact Variant</div>
+  </div>
+  <div style="background:var(--muted);border-radius:10px;padding:20px;text-align:center;border:1px solid var(--border);">
+    <div style="font-size:28px;font-weight:800;color:var(--green-600);">4</div>
+    <div style="font-size:13px;color:var(--muted-fg);margin-top:4px;">Dialog Variant</div>
+  </div>
+  <div style="background:var(--muted);border-radius:10px;padding:20px;text-align:center;border:1px solid var(--border);">
+    <div style="font-size:28px;font-weight:800;color:var(--purple-500);">2</div>
+    <div style="font-size:13px;color:var(--muted-fg);margin-top:4px;">Wizard Wrappers</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:16px 0 32px;">
+  <div style="background:var(--muted);border-radius:10px;padding:20px;text-align:center;border:1px solid var(--border);">
+    <div style="font-size:28px;font-weight:800;color:var(--card-fg);">10</div>
+    <div style="font-size:13px;color:var(--muted-fg);margin-top:4px;">Single Column</div>
+  </div>
+  <div style="background:var(--muted);border-radius:10px;padding:20px;text-align:center;border:1px solid var(--border);">
+    <div style="font-size:28px;font-weight:800;color:var(--card-fg);">12</div>
+    <div style="font-size:13px;color:var(--muted-fg);margin-top:4px;">Two Column</div>
+  </div>
+  <div style="background:var(--muted);border-radius:10px;padding:20px;text-align:center;border:1px solid var(--border);">
+    <div style="font-size:28px;font-weight:800;color:var(--card-fg);">7</div>
+    <div style="font-size:13px;color:var(--muted-fg);margin-top:4px;">With Sections</div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 19: Implementation Notes
+     =========================== -->
+<span class="section-number">Section 13</span>
+<h2>Implementation Notes</h2>
+
+<div class="rules-grid">
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Validation integration</h4>
+      <p>FormCard is presentation-only. Validation is handled by the consumer via <code>react-hook-form</code> + <code>zod</code> schemas. FormMessage renders inline below each field. FormActionBar submit button should be disabled when <code>!form.formState.isValid</code>.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Responsive behavior</h4>
+      <p>When <code>columns={2}</code>, the grid uses <code>grid-cols-1</code> below <code>768px</code> and <code>grid-cols-2</code> above. Textareas and wide fields span both columns via <code>col-span-2</code>. The FormActionBar always stacks buttons horizontally with <code>flex-wrap</code>.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Dark mode</h4>
+      <p>All variants render correctly in dark mode. Cards use <code>--card</code> background, inputs use <code>--input</code> border, labels use <code>--card-foreground</code>. The action bar border uses <code>--border</code>. No additional work required by consumers.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Accessibility</h4>
+      <p>Form fields must have associated labels via <code>htmlFor</code> / <code>id</code>. Required fields use <code>aria-required="true"</code>. Error messages link to fields via <code>aria-describedby</code>. FormActionBar buttons have <code>type="button"</code> (Cancel) and <code>type="submit"</code> (Submit).</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>File structure</h4>
+      <p>Components live in <code>src/components/shared/</code>. <code>FormCard.tsx</code>, <code>FormActionBar.tsx</code>, <code>FormWizard.tsx</code>. Each file is self-contained with no barrel exports. Import directly: <code>import { FormCard } from '@/components/shared/FormCard'</code>.</p>
+    </div>
+  </div>
+
+  <div class="rule">
+    <div class="rule-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+    </div>
+    <div class="rule-body">
+      <h4>Composability</h4>
+      <p>FormCard does not wrap <code>&lt;form&gt;</code> itself. The consumer provides <code>&lt;form&gt;</code> around or inside FormCard. This allows FormCard to work inside Dialog components, existing form providers, or as a nested sub-form within a larger page.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 20: Error State Mockup
+     =========================== -->
+<span class="section-number">Section 14</span>
+<h2>Error State Rendering</h2>
+<p>When a field fails validation, the FormField (from shadcn) renders an error state. FormCard does not control this -- it just provides the container. The standard pattern is: red border on input, red error text below, <code>aria-describedby</code> linking input to error.</p>
+
+<div class="mockup-container">
+  <div style="max-width:460px;">
+    <div class="form-card">
+      <div class="card-header">
+        <div class="card-title">Create Entity</div>
+      </div>
+      <div class="card-content">
+        <div style="display:grid;gap:20px;">
+          <!-- Error state -->
+          <div class="form-field">
+            <label class="form-label">Name<span class="required">*</span></label>
+            <input type="text" class="form-input error" value="">
+            <div class="form-error-msg">Name is required.</div>
+          </div>
+          <!-- Valid state -->
+          <div class="form-field">
+            <label class="form-label">Type<span class="required">*</span></label>
+            <select class="form-select">
+              <option>Refugee Camp</option>
+            </select>
+          </div>
+          <!-- With hint -->
+          <div class="form-field">
+            <label class="form-label">Location</label>
+            <input type="text" class="form-input" value="Nairobi, Kenya">
+            <div class="form-hint">City, Region, or Country.</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-action-bar bordered">
+        <button class="btn btn-outline">Cancel</button>
+        <button class="btn btn-primary">Create Entity</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tw-classes">
+  <span class="tw-class">border-destructive</span>
+  <span class="tw-class">focus-visible:ring-destructive</span>
+  <span class="tw-class">text-destructive</span>
+  <span class="tw-class">text-xs</span>
+  <span class="tw-class">mt-1</span>
+</div>
+
+<div class="code-block"><span class="cm">// Error state is handled by shadcn FormMessage</span>
+<span class="kw">&lt;</span><span class="typ">FormField</span>
+  <span class="pr">control</span>={form.control}
+  <span class="pr">name</span>=<span class="str">"name"</span>
+  <span class="pr">render</span>={({ field }) => (
+    <span class="kw">&lt;</span><span class="typ">FormItem</span><span class="kw">&gt;</span>
+      <span class="kw">&lt;</span><span class="typ">FormLabel</span><span class="kw">&gt;</span>Name<span class="kw">&lt;/</span><span class="typ">FormLabel</span><span class="kw">&gt;</span>
+      <span class="kw">&lt;</span><span class="typ">FormControl</span><span class="kw">&gt;</span>
+        <span class="kw">&lt;</span><span class="fn">Input</span> {...field} <span class="kw">/&gt;</span>
+      <span class="kw">&lt;/</span><span class="typ">FormControl</span><span class="kw">&gt;</span>
+      <span class="kw">&lt;</span><span class="typ">FormMessage</span> <span class="kw">/&gt;</span>  <span class="cm">{/* Shows red error text */}</span>
+    <span class="kw">&lt;/</span><span class="typ">FormItem</span><span class="kw">&gt;</span>
+  )}
+<span class="kw">/&gt;</span></div>
+
+<!-- Footer -->
+<div class="sep"></div>
+<p style="font-size:13px;text-align:center;padding:24px 0;">
+  DRMS Design System -- FormCard Component Family Specification v1.0.0<br>
+  Phase 5 -- Generated 2025-05-24 &middot; For stakeholder review
+</p>
+
+</main>
+
+<!-- ============================================================
+     Sidebar active state script
+     ============================================================ -->
+<script>
+(function() {
+  const links = document.querySelectorAll('.sidebar a');
+  const sections = [];
+
+  links.forEach(link => {
+    const href = link.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      const el = document.getElementById(href.slice(1));
+      if (el) sections.push({ link, el });
+    }
+  });
+
+  function update() {
+    const scrollY = window.scrollY + 120;
+    let current = sections[0];
+    sections.forEach(s => {
+      if (s.el.offsetTop <= scrollY) current = s;
+    });
+    links.forEach(l => l.classList.remove('active'));
+    if (current) current.link.classList.add('active');
+  }
+
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+</script>
+
+</body>
+</html>

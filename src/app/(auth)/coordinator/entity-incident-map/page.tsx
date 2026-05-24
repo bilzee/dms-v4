@@ -35,6 +35,7 @@ import type {
   RelationshipQueryParams 
 } from '@/types/assessment-relationships';
 import type { Priority, AssessmentType } from '@prisma/client';
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 
 // Dynamic imports for client-side only components
 const AssessmentRelationshipMap = dynamic(
@@ -113,7 +114,7 @@ export default function EntityIncidentMapPage() {
       <div className="container mx-auto py-6">
         <Card>
           <CardContent className="flex items-center justify-center h-96">
-            <div className="animate-pulse text-muted-foreground">Loading incidents...</div>
+            <ContentSkeleton variant="card" />
           </CardContent>
         </Card>
       </div>

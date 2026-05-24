@@ -10,6 +10,7 @@ import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
 import { 
   Building2, 
   User,
@@ -78,10 +79,7 @@ export default function DonorDetailsPage() {
     return (
       <RoleBasedRoute requiredRoles={['ADMIN']} fallbackPath="/dashboard">
         <div className="container mx-auto py-8">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-300 rounded w-1/4"></div>
-            <div className="h-96 bg-gray-300 rounded"></div>
-          </div>
+          <ContentSkeleton variant="card" />
         </div>
       </RoleBasedRoute>
     )

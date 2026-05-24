@@ -51,6 +51,7 @@ import { cn } from '@/lib/utils'
 
 // Role-based access
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
 
 // API utilities
 import { apiGet } from '@/lib/api'
@@ -278,14 +279,7 @@ export function DonorDashboard() {
                                       </CardHeader>
                                       <CardContent>
                                         {entitiesLoading ? (
-                                          <div className="space-y-3 animate-pulse">
-                                            {[...Array(3)].map((_, i) => (
-                                              <div key={i} className="flex items-center justify-between p-3 border rounded">
-                                                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                                                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                                              </div>
-                                            ))}
-                                          </div>
+                                          <ContentSkeleton variant="list" count={3} />
                                         ) : entities.length === 0 ? (
                                           <EmptyState
                                             type="data"
@@ -435,11 +429,7 @@ export function DonorDashboard() {
                                       </CardHeader>
                                       <CardContent className="space-y-4">
                                         {gamificationLoading ? (
-                                          <div className="animate-pulse space-y-2">
-                                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                                            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                                            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                                          </div>
+                                          <ContentSkeleton variant="card" />
                                         ) : gamificationData?.donors?.[0]?.badges ? (
                                           <div className="space-y-4">
                                             <GameBadgeSystem 
@@ -476,11 +466,7 @@ export function DonorDashboard() {
                                       </CardHeader>
                                       <CardContent>
                                         {gamificationLoading ? (
-                                          <div className="animate-pulse space-y-4">
-                                            <div className="h-4 bg-gray-200 rounded"></div>
-                                            <div className="h-8 bg-gray-200 rounded"></div>
-                                            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                                          </div>
+                                          <ContentSkeleton variant="card" />
                                         ) : gamificationData?.donors?.[0] ? (
                                           <div className="space-y-4">
                                             <div className="grid grid-cols-2 gap-4">

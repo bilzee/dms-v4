@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormCard } from '@/components/shared/FormCard'
+import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
 import { apiGet, apiPost } from '@/lib/api'
@@ -117,15 +117,13 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Create User</CardTitle>
-        <CardDescription>
-          Create a new user account with role assignments
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <FormCard
+      title="Create User"
+      description="Create a new user account with role assignments"
+      variant="default"
+      className="w-full max-w-md"
+    >
+      <form onSubmit={handleSubmit(onSubmit)}>
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -270,15 +268,11 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             )}
           </div>
 
-          <Button 
-            type="submit" 
-            className="w-full" 
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Creating...' : 'Create User'}
-          </Button>
+          <FormActionBar
+            submitLabel={isSubmitting ? 'Creating...' : 'Create User'}
+            loading={isSubmitting}
+          />
         </form>
-      </CardContent>
-    </Card>
+    </FormCard>
   )
 }

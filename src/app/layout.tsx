@@ -5,7 +5,7 @@ import { QueryProvider } from '@/components/providers/QueryProvider';
 import { BackgroundSyncProvider } from '@/providers/BackgroundSyncProvider';
 import { AuthInitializer } from '@/components/providers/AuthInitializer';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
   title: 'Disaster Response Management System (DRMS)',
@@ -68,7 +68,7 @@ export default function RootLayout({
                 </div>
                 </footer>
               </div>
-              <Toaster />
+              <Toaster richColors position="top-right" closeButton duration={4000} />
               </AuthInitializer>
             </BackgroundSyncProvider>
           </QueryProvider>

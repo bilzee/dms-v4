@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRMS Chart Standardization — Design Specification</title>
+<style>
+/* ============================================================
+   CSS Custom Properties — sourced from globals.css HSL tokens
+   ============================================================ */
+:root {
+  --bg: hsl(0 0% 100%);
+  --fg: hsl(222.2 84% 4.9%);
+  --card: hsl(0 0% 100%);
+  --card-fg: hsl(222.2 84% 4.9%);
+  --primary: hsl(221.2 83.2% 53.3%);
+  --primary-fg: hsl(210 40% 98%);
+  --secondary: hsl(210 40% 96%);
+  --secondary-fg: hsl(222.2 84% 4.9%);
+  --muted: hsl(210 40% 96%);
+  --muted-fg: hsl(215.4 16.3% 46.9%);
+  --accent: hsl(210 40% 96%);
+  --accent-fg: hsl(222.2 84% 4.9%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-fg: hsl(210 40% 98%);
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: hsl(214.3 31.8% 91.4%);
+  --ring: hsl(221.2 83.2% 53.3%);
+  --radius: 0.5rem;
+  --chart-blue: rgba(59, 130, 246, 0.8);
+  --chart-blue-bg: rgba(59, 130, 246, 0.1);
+  --chart-green: rgba(34, 197, 94, 0.8);
+  --chart-green-bg: rgba(34, 197, 94, 0.1);
+  --chart-orange: rgba(251, 146, 60, 0.8);
+  --chart-orange-bg: rgba(251, 146, 60, 0.1);
+  --chart-red: rgba(239, 68, 68, 0.8);
+  --chart-red-bg: rgba(239, 68, 68, 0.1);
+  --chart-purple: rgba(168, 85, 247, 0.8);
+  --chart-purple-bg: rgba(168, 85, 247, 0.1);
+  --chart-gray: rgba(156, 163, 175, 0.8);
+  --chart-gray-bg: rgba(156, 163, 175, 0.1);
+  --progress-default: hsl(221.2 83.2% 53.3%);
+  --progress-success: #22c55e;
+  --progress-warning: #f59e0b;
+  --progress-danger: #ef4444;
+  --progress-gradient-from: #3b82f6;
+  --progress-gradient-to: #a855f7;
+  --progress-track: var(--muted);
+  --grid-line: #e5e7eb;
+  --grid-tick: #6b7280;
+  --amber-500: #f59e0b; --amber-600: #d97706;
+  --green-500: #22c55e; --green-600: #16a34a;
+  --blue-500: #3b82f6;  --blue-600: #2563eb;
+  --red-500: #ef4444;   --red-600: #dc2626;
+  --purple-500: #a855f7; --purple-600: #9333ea;
+  --sidebar-w: 260px;
+  --topbar-h: 56px;
+  --content-max: 1100px;
+  --doc-bg: #fafafa;
+  --doc-border: #e5e7eb;
+}
+.dark {
+  --bg: hsl(224 71% 4%);
+  --fg: hsl(213 31% 91%);
+  --card: hsl(224 71% 4%);
+  --card-fg: hsl(213 31% 91%);
+  --primary: hsl(210 40% 98%);
+  --primary-fg: hsl(222.2 84% 4.9%);
+  --secondary: hsl(215 28% 17%);
+  --secondary-fg: hsl(210 40% 98%);
+  --muted: hsl(215 28% 17%);
+  --muted-fg: hsl(217.9 10.6% 64.9%);
+  --accent: hsl(215 28% 17%);
+  --accent-fg: hsl(210 40% 98%);
+  --destructive: hsl(0 63% 31%);
+  --destructive-fg: hsl(210 40% 98%);
+  --border: hsl(215 28% 17%);
+  --input: hsl(215 28% 17%);
+  --ring: hsl(216 12% 83.9%);
+  --chart-blue: rgba(96, 165, 250, 0.8);
+  --chart-blue-bg: rgba(96, 165, 250, 0.1);
+  --chart-green: rgba(74, 222, 128, 0.8);
+  --chart-green-bg: rgba(74, 222, 128, 0.1);
+  --chart-orange: rgba(253, 186, 116, 0.8);
+  --chart-orange-bg: rgba(253, 186, 116, 0.1);
+  --chart-red: rgba(248, 113, 113, 0.8);
+  --chart-red-bg: rgba(248, 113, 113, 0.1);
+  --chart-purple: rgba(192, 132, 252, 0.8);
+  --chart-purple-bg: rgba(192, 132, 252, 0.1);
+  --chart-gray: rgba(156, 163, 175, 0.8);
+  --chart-gray-bg: rgba(156, 163, 175, 0.1);
+  --progress-default: hsl(210 40% 98%);
+  --progress-track: hsl(215 28% 17%);
+  --grid-line: #374151;
+  --grid-tick: #9ca3af;
+  --doc-bg: #0b0f1a;
+  --doc-border: #1e293b;
+}
+
+/* Reset + Base */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; line-height: 1.6; color: var(--fg); background: var(--doc-bg); }
+
+/* Layout */
+.topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: var(--topbar-h); background: var(--bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.topbar-title { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; color: var(--fg); }
+.topbar-badge { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 4px; background: var(--primary); color: var(--primary-fg); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-version { font-size: 12px; color: var(--muted-fg); font-family: "SF Mono", "Cascadia Code", monospace; }
+.sidebar { position: fixed; top: var(--topbar-h); left: 0; bottom: 0; z-index: 90; width: var(--sidebar-w); background: var(--bg); border-right: 1px solid var(--border); overflow-y: auto; padding: 24px 0; }
+.sidebar-section { margin-bottom: 24px; }
+.sidebar-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted-fg); padding: 0 20px; margin-bottom: 8px; }
+.sidebar a { display: block; padding: 6px 20px; font-size: 13px; font-weight: 500; color: var(--muted-fg); text-decoration: none; transition: all 0.15s; border-left: 2px solid transparent; }
+.sidebar a:hover { color: var(--fg); background: var(--muted); }
+.sidebar a.active { color: var(--primary); border-left-color: var(--primary); background: hsl(221.2 83.2% 53.3% / 0.06); }
+.main { margin-left: var(--sidebar-w); margin-top: var(--topbar-h); padding: 40px 48px 80px; max-width: calc(var(--sidebar-w) + var(--content-max) + 96px); }
+
+/* Typography */
+h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 8px; }
+h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.3; margin-bottom: 16px; padding-top: 48px; border-top: 1px solid var(--border); }
+h2:first-of-type { border-top: none; }
+h3 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.4; margin-bottom: 12px; }
+p { margin-bottom: 12px; color: var(--muted-fg); max-width: 72ch; }
+.subtitle { font-size: 17px; color: var(--muted-fg); margin-bottom: 32px; }
+
+/* Tokens */
+.token-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+.token-chip { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); font-size: 13px; font-family: "SF Mono", "Cascadia Code", monospace; }
+.token-swatch { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; }
+
+/* Badges */
+.variant-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background: hsl(221.2 83.2% 53.3% / 0.1); color: hsl(221.2 83.2% 53.3%); margin-bottom: 16px; }
+.variant-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* Rules */
+.rules-grid { display: grid; gap: 12px; margin: 16px 0 32px; }
+.rule { display: flex; gap: 16px; padding: 16px 20px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; }
+.rule-icon { flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--muted); color: var(--muted-fg); font-size: 16px; }
+.rule-body h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.rule-body p { font-size: 13px; margin-bottom: 0; }
+
+/* Mockups */
+.mockup-container { background: var(--muted); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin: 20px 0 32px; }
+.mockup-container.dark-bg { background: hsl(224 71% 4%); border-color: #1e293b; }
+.mockup-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.mockup-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.mockup-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.mockup-grid-1 { display: grid; grid-template-columns: 1fr; gap: 16px; max-width: 480px; }
+@media (max-width: 900px) { .mockup-grid-4 { grid-template-columns: repeat(2, 1fr); } .mockup-grid-3 { grid-template-columns: 1fr; } }
+
+/* Color Swatches */
+.swatch-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; margin: 20px 0 32px; }
+.swatch-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.swatch-fill { height: 64px; width: 100%; }
+.swatch-fill-bg { height: 32px; width: 100%; border-top: 1px solid var(--border); }
+.swatch-info { padding: 10px 14px; }
+.swatch-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.swatch-value { font-size: 11px; font-family: "SF Mono", "Cascadia Code", monospace; color: var(--muted-fg); }
+
+/* Chart Mockup */
+.chart-mock { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+.chart-mock .chart-title { font-size: 14px; font-weight: 600; color: var(--card-fg); margin-bottom: 4px; }
+.chart-mock .chart-subtitle { font-size: 12px; color: var(--muted-fg); margin-bottom: 20px; }
+.chart-area { position: relative; height: 200px; border-left: 1px solid var(--grid-line); border-bottom: 1px solid var(--grid-line); margin-left: 40px; }
+.chart-area .grid-line { position: absolute; left: 0; right: 0; height: 1px; background: var(--grid-line); }
+.chart-area .grid-label { position: absolute; left: -40px; font-size: 11px; color: var(--grid-tick); font-family: "SF Mono", "Cascadia Code", monospace; transform: translateY(-50%); }
+.chart-area .x-label { position: absolute; bottom: -20px; font-size: 11px; color: var(--grid-tick); transform: translateX(-50%); }
+.bar-group { position: absolute; bottom: 0; display: flex; gap: 3px; align-items: flex-end; }
+.bar { width: 20px; border-radius: 3px 3px 0 0; min-height: 2px; }
+.chart-legend { display: flex; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted-fg); }
+.legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+/* Progress Bar */
+.progress-track { width: 100%; border-radius: 999px; overflow: hidden; position: relative; background: var(--progress-track); }
+.progress-fill { height: 100%; border-radius: 999px; }
+.progress-size-sm .progress-track { height: 6px; }
+.progress-size-default .progress-track { height: 8px; }
+.progress-size-lg .progress-track { height: 12px; }
+.progress-variant-default .progress-fill { background: var(--progress-default); }
+.progress-variant-success .progress-fill { background: var(--progress-success); }
+.progress-variant-warning .progress-fill { background: var(--progress-warning); }
+.progress-variant-danger .progress-fill { background: var(--progress-danger); }
+.progress-variant-gradient .progress-fill { background: linear-gradient(to right, var(--progress-gradient-from), var(--progress-gradient-to)); }
+.progress-label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.progress-label-text { font-size: 13px; font-weight: 500; color: var(--fg); }
+.progress-label-pct { font-size: 12px; font-weight: 600; color: var(--muted-fg); font-family: "SF Mono", "Cascadia Code", monospace; }
+
+/* Code Blocks */
+.code-block { background: hsl(224 71% 4%); color: hsl(213 31% 91%); border-radius: 10px; padding: 20px 24px; font-family: "SF Mono", "Cascadia Code", "Fira Code", monospace; font-size: 13px; line-height: 1.7; overflow-x: auto; margin: 16px 0 24px; border: 1px solid #1e293b; }
+.code-block .kw { color: #c084fc; } .code-block .str { color: #86efac; } .code-block .typ { color: #67e8f9; }
+.code-block .cm { color: #64748b; font-style: italic; } .code-block .fn { color: #fbbf24; } .code-block .pr { color: #f9a8d4; } .code-block .num { color: #fb923c; }
+.tw-classes { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; font-family: "SF Mono", "Cascadia Code", monospace; font-size: 12px; color: var(--muted-fg); margin: 8px 0 16px; display: flex; flex-wrap: wrap; gap: 6px; }
+.tw-class { display: inline-block; padding: 2px 8px; border-radius: 4px; background: var(--secondary); color: var(--secondary-fg); font-size: 12px; }
+
+/* Tables */
+.api-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0 32px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.api-table th { text-align: left; padding: 10px 16px; background: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-fg); border-bottom: 1px solid var(--border); }
+.api-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); }
+.api-table tr:last-child td { border-bottom: none; }
+.api-table code { font-family: "SF Mono", "Cascadia Code", monospace; font-size: 12px; background: var(--muted); padding: 2px 6px; border-radius: 4px; }
+.migration-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 16px 0 32px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.migration-table th { text-align: left; padding: 10px 14px; background: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-fg); border-bottom: 1px solid var(--border); }
+.migration-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.migration-table tr:last-child td { border-bottom: none; }
+.migration-table code { font-family: "SF Mono", "Cascadia Code", monospace; font-size: 11px; background: var(--muted); padding: 2px 5px; border-radius: 3px; white-space: nowrap; }
+.migration-table .file { color: var(--primary); font-weight: 500; }
+
+/* Section numbering */
+.section-number { display: inline-block; font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+
+/* Theme toggle */
+.theme-toggle { display: flex; align-items: center; gap: 8px; background: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 4px 12px; cursor: pointer; user-select: none; font-size: 12px; font-weight: 600; color: var(--muted-fg); transition: all 0.2s; }
+.theme-toggle:hover { background: var(--accent); }
+.theme-toggle .toggle-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+
+/* Separator */
+.sep { height: 1px; background: var(--border); margin: 40px 0; }
+
+/* Comparison */
+.comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 16px 0 32px; }
+.comparison-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; padding: 4px 10px; border-radius: 4px; display: inline-block; }
+.comparison-label.before { background: hsl(0 84.2% 60.2% / 0.1); color: hsl(0 84.2% 60.2%); }
+.comparison-label.after { background: hsl(142 71% 45% / 0.1); color: hsl(142 71% 45%); }
+
+/* Source list */
+.source-list { list-style: none; margin: 16px 0 24px; }
+.source-list li { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; display: flex; align-items: center; gap: 10px; }
+.source-list li:last-child { border-bottom: none; }
+.source-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* Summary */
+.summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0 32px; }
+.summary-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px; text-align: center; }
+.summary-value { font-size: 32px; font-weight: 800; color: var(--primary); line-height: 1; }
+.summary-label { font-size: 13px; color: var(--muted-fg); margin-top: 8px; }
+
+/* Grid helper */
+.grid-helper-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted-fg); margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     Top Bar
+     ============================================================ -->
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-title">DRMS Chart Standardization</span>
+    <span class="topbar-badge">Phase 8</span>
+  </div>
+  <div class="topbar-right">
+    <span class="topbar-version">v1.0.0 -- 2025-05-24</span>
+    <div class="theme-toggle" onclick="document.body.classList.toggle('dark')">
+      <span class="toggle-dot"></span>
+      Light / Dark
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     Sidebar Navigation
+     ============================================================ -->
+<nav class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Overview</div>
+    <a href="#research">Research</a>
+    <a href="#current-state">Current State</a>
+    <a href="#decision">Decision</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Design System</div>
+    <a href="#color-system">Color System</a>
+    <a href="#shared-config">Shared Config</a>
+    <a href="#patterns">Patterns</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Components</div>
+    <a href="#mockup-palette">Color Palette</a>
+    <a href="#mockup-line">Line Chart</a>
+    <a href="#mockup-bar">Bar Chart</a>
+    <a href="#mockup-radar">Radar Chart</a>
+    <a href="#mockup-progress">ProgressBar</a>
+    <a href="#mockup-dark">Dark Mode</a>
+    <a href="#mockup-comparison">Before / After</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Reference</div>
+    <a href="#api">Component API</a>
+    <a href="#migration">Migration Map</a>
+    <a href="#summary">Summary</a>
+  </div>
+</nav>
+
+<!-- ============================================================
+     Main Content
+     ============================================================ -->
+<main class="main">
+
+<!-- ===========================
+     Section 1: Research
+     =========================== -->
+<div id="research"></div>
+<span class="section-number">Section 01</span>
+<h1>Chart Standardization</h1>
+<p class="subtitle">Centralized chart colors, shared Chart.js configuration, and a unified ProgressBar component to replace 8+ ad-hoc implementations across DRMS dashboards.</p>
+
+<h3>Research Sources</h3>
+<ul class="source-list">
+  <li><span class="source-dot" style="background:#3b82f6"></span> Chart.js best practices &amp; theming documentation</li>
+  <li><span class="source-dot" style="background:#f59e0b"></span> D3.js color scales (Categorical, Sequential)</li>
+  <li><span class="source-dot" style="background:#22c55e"></span> Material Design Data Visualization color guidelines</li>
+  <li><span class="source-dot" style="background:#a855f7"></span> Ant Design Charts color palette system</li>
+  <li><span class="source-dot" style="background:#ef4444"></span> Carbon Charts theming system (IBM)</li>
+  <li><span class="source-dot" style="background:#6b7280"></span> Vizion -- humanitarian data visualization standards</li>
+  <li><span class="source-dot" style="background:#9ca3af"></span> OCHA Visual Data Style Guide (humanitarian response)</li>
+</ul>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 2: Current State
+     =========================== -->
+<div id="current-state"></div>
+<span class="section-number">Section 02</span>
+<h2>Current State</h2>
+
+<h3>Chart.js Components (2 files)</h3>
+
+<table class="migration-table">
+  <thead>
+    <tr><th>File</th><th>Chart Types</th><th>Colors</th><th>Registration</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="file">DonorPerformanceDashboard.tsx</td>
+      <td>Line, Bar, Radar</td>
+      <td>Hardcoded RGB inline (blue, green, orange)</td>
+      <td>Per-file <code>ChartJS.register(...)</code></td>
+    </tr>
+    <tr>
+      <td class="file">PeerComparison.tsx</td>
+      <td>Radar, Bar</td>
+      <td>Hardcoded RGB inline (blue, green, gray)</td>
+      <td>Per-file <code>ChartJS.register(...)</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Custom CSS Bar Charts (8+ files)</h3>
+
+<table class="migration-table">
+  <thead>
+    <tr><th>File</th><th>Pattern</th><th>Colors</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="file">VerificationAnalytics.tsx</td><td>Horizontal bars with width%</td><td>bg-blue-100, bg-green-100</td></tr>
+    <tr><td class="file">AssessmentTrends.tsx</td><td>Score bars</td><td>Conditional: green/yellow/orange/red</td></tr>
+    <tr><td class="file">CommitmentDashboard.tsx</td><td>Progress bar</td><td>bg-blue-600</td></tr>
+    <tr><td class="file">ConflictSummary.tsx</td><td>Progress bar</td><td>bg-green-500</td></tr>
+    <tr><td class="file">GameBadgeSystem.tsx</td><td>Progress bar</td><td>gradient blue-purple</td></tr>
+    <tr><td class="file">EntityInsightsHeader.tsx</td><td>Progress bar</td><td>bg-orange-500</td></tr>
+    <tr><td class="file">SyncQueue.tsx</td><td>Progress bar</td><td>Dynamic</td></tr>
+    <tr><td class="file">DonorRegistrationForm.tsx</td><td>shadcn Progress</td><td>Standard component</td></tr>
+  </tbody>
+</table>
+
+<h3>Problems Identified</h3>
+
+<div class="rules-grid">
+  <div class="rule">
+    <div class="rule-icon" style="color:var(--red-500);">!</div>
+    <div class="rule-body">
+      <h4>No centralized chart colors</h4>
+      <p>Each component hardcodes its own colors. Changing the palette requires editing every file independently.</p>
+    </div>
+  </div>
+  <div class="rule">
+    <div class="rule-icon" style="color:var(--amber-500);">!</div>
+    <div class="rule-body">
+      <h4>No shared chart options</h4>
+      <p>Font sizes, grid colors, tooltip styles are duplicated across files with subtle inconsistencies.</p>
+    </div>
+  </div>
+  <div class="rule">
+    <div class="rule-icon" style="color:var(--amber-500);">!</div>
+    <div class="rule-body">
+      <h4>Chart.js registration per-file</h4>
+      <p><code>ChartJS.register()</code> called in each component instead of once at app initialization.</p>
+    </div>
+  </div>
+  <div class="rule">
+    <div class="rule-icon" style="color:var(--amber-500);">!</div>
+    <div class="rule-body">
+      <h4>Custom CSS bars -- inconsistent</h4>
+      <p>Mix of bg-gray-200 track + colored fill. Inconsistent heights, border-radius, gap spacing across files.</p>
+    </div>
+  </div>
+  <div class="rule">
+    <div class="rule-icon" style="color:var(--red-500);">!</div>
+    <div class="rule-body">
+      <h4>No dark mode support in Chart.js</h4>
+      <p>Hardcoded RGB colors do not adapt to dark theme. Grid lines and labels remain light-mode only.</p>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 3: Decision
+     =========================== -->
+<div id="decision"></div>
+<span class="section-number">Section 03</span>
+<h2>Decision: Standardize on Chart.js</h2>
+<p>Chart.js is already the primary chart library. No need to switch. The strategy is to create centralized configuration files and a reusable ProgressBar component, then migrate existing code incrementally.</p>
+
+<h3>New Files to Create</h3>
+
+<div class="code-block"><span class="cm">// File structure</span>
+src/lib/utils/chart-config.ts          <span class="cm">(~100 lines) NEW</span>
+src/lib/utils/chart-registration.ts    <span class="cm">(~15 lines)  NEW</span>
+src/components/shared/ProgressBar.tsx  <span class="cm">(~60 lines)  NEW</span></div>
+
+<h3>1. chart-config.ts</h3>
+
+<div class="code-block"><span class="cm">// Chart color tokens aligned with DRMS design system</span>
+<span class="kw">export const</span> <span class="fn">CHART_COLORS</span> = {
+  <span class="pr">blue</span>:   { <span class="pr">light</span>: <span class="str">'rgba(59, 130, 246, 0.8)'</span>,  <span class="pr">dark</span>: <span class="str">'rgba(96, 165, 250, 0.8)'</span>,
+             <span class="pr">bgLight</span>: <span class="str">'rgba(59, 130, 246, 0.1)'</span>, <span class="pr">bgDark</span>: <span class="str">'rgba(96, 165, 250, 0.1)'</span> },
+  <span class="pr">green</span>:  { <span class="pr">light</span>: <span class="str">'rgba(34, 197, 94, 0.8)'</span>,   <span class="pr">dark</span>: <span class="str">'rgba(74, 222, 128, 0.8)'</span>,
+             <span class="pr">bgLight</span>: <span class="str">'rgba(34, 197, 94, 0.1)'</span>,  <span class="pr">bgDark</span>: <span class="str">'rgba(74, 222, 128, 0.1)'</span> },
+  <span class="pr">orange</span>: { <span class="pr">light</span>: <span class="str">'rgba(251, 146, 60, 0.8)'</span>,  <span class="pr">dark</span>: <span class="str">'rgba(253, 186, 116, 0.8)'</span>,
+             <span class="pr">bgLight</span>: <span class="str">'rgba(251, 146, 60, 0.1)'</span>, <span class="pr">bgDark</span>: <span class="str">'rgba(253, 186, 116, 0.1)'</span> },
+  <span class="pr">red</span>:    { <span class="pr">light</span>: <span class="str">'rgba(239, 68, 68, 0.8)'</span>,   <span class="pr">dark</span>: <span class="str">'rgba(248, 113, 113, 0.8)'</span>,
+             <span class="pr">bgLight</span>: <span class="str">'rgba(239, 68, 68, 0.1)'</span>,  <span class="pr">bgDark</span>: <span class="str">'rgba(248, 113, 113, 0.1)'</span> },
+  <span class="pr">purple</span>: { <span class="pr">light</span>: <span class="str">'rgba(168, 85, 247, 0.8)'</span>,  <span class="pr">dark</span>: <span class="str">'rgba(192, 132, 252, 0.8)'</span>,
+             <span class="pr">bgLight</span>: <span class="str">'rgba(168, 85, 247, 0.1)'</span>, <span class="pr">bgDark</span>: <span class="str">'rgba(192, 132, 252, 0.1)'</span> },
+  <span class="pr">gray</span>:   { <span class="pr">light</span>: <span class="str">'rgba(156, 163, 175, 0.8)'</span>, <span class="pr">dark</span>: <span class="str">'rgba(156, 163, 175, 0.8)'</span>,
+             <span class="pr">bgLight</span>: <span class="str">'rgba(156, 163, 175, 0.1)'</span>,<span class="pr">bgDark</span>: <span class="str">'rgba(156, 163, 175, 0.1)'</span> },
+}
+
+<span class="cm">// Semantic chart colors</span>
+<span class="kw">export const</span> <span class="fn">SEMANTIC_COLORS</span> = {
+  <span class="pr">primary</span>: CHART_COLORS.blue,
+  <span class="pr">success</span>: CHART_COLORS.green,
+  <span class="pr">warning</span>: CHART_COLORS.orange,
+  <span class="pr">danger</span>:  CHART_COLORS.red,
+  <span class="pr">neutral</span>: CHART_COLORS.gray,
+}
+
+<span class="cm">// Series palette for multi-series charts</span>
+<span class="kw">export const</span> <span class="fn">SERIES_PALETTE</span> = [
+  CHART_COLORS.blue, CHART_COLORS.green,
+  CHART_COLORS.orange, CHART_COLORS.purple, CHART_COLORS.red,
+]
+
+<span class="cm">// Light: grid=#e5e7eb, tick=#6b7280  |  Dark: grid=#374151, tick=#9ca3af</span>
+<span class="kw">export function</span> <span class="fn">getDefaultChartOptions</span>(isDark?): <span class="typ">ChartOptions</span> { ... }
+<span class="kw">export function</span> <span class="fn">getBarChartOptions</span>(isDark?): <span class="typ">ChartOptions</span> { ... }
+<span class="kw">export function</span> <span class="fn">getRadarChartOptions</span>(isDark?): <span class="typ">ChartOptions</span> { ... }</div>
+
+<h3>2. chart-registration.ts</h3>
+
+<div class="code-block"><span class="kw">import</span> { <span class="typ">Chart</span> <span class="kw">as</span> <span class="typ">ChartJS</span> } <span class="kw">from</span> <span class="str">'chart.js'</span>
+<span class="kw">import</span> {
+  <span class="typ">CategoryScale</span>, <span class="typ">LinearScale</span>, <span class="typ">PointElement</span>,
+  <span class="typ">LineElement</span>, <span class="typ">BarElement</span>, <span class="typ">ArcElement</span>,
+  <span class="typ">RadialLinearScale</span>, <span class="typ">Title</span>, <span class="typ">Tooltip</span>, <span class="typ">Legend</span>, <span class="typ">Filler</span>,
+} <span class="kw">from</span> <span class="str">'chart.js'</span>
+
+<span class="typ">ChartJS</span>.<span class="fn">register</span>(
+  <span class="typ">CategoryScale</span>, <span class="typ">LinearScale</span>, <span class="typ">PointElement</span>,
+  <span class="typ">LineElement</span>, <span class="typ">BarElement</span>, <span class="typ">ArcElement</span>,
+  <span class="typ">RadialLinearScale</span>, <span class="typ">Title</span>, <span class="typ">Tooltip</span>, <span class="typ">Legend</span>, <span class="typ">Filler</span>,
+)</div>
+
+<h3>3. ProgressBar.tsx</h3>
+
+<div class="code-block"><span class="kw">interface</span> <span class="typ">ProgressBarProps</span> {
+  <span class="pr">value</span>: <span class="typ">number</span>              <span class="cm">// 0-100</span>
+  <span class="pr">variant</span>?: <span class="str">'default'</span> | <span class="str">'success'</span> | <span class="str">'warning'</span> | <span class="str">'danger'</span> | <span class="str">'gradient'</span>
+  <span class="pr">size</span>?: <span class="str">'sm'</span> | <span class="str">'default'</span> | <span class="str">'lg'</span>  <span class="cm">// h-1.5, h-2, h-3</span>
+  <span class="pr">showLabel</span>?: <span class="typ">boolean</span>       <span class="cm">// show percentage text</span>
+  <span class="pr">label</span>?: <span class="typ">string</span>            <span class="cm">// custom label</span>
+  <span class="pr">className</span>?: <span class="typ">string</span>
+}
+
+<span class="cm">// default=bg-primary  success=bg-green-500  warning=bg-amber-500</span>
+<span class="cm">// danger=bg-red-500   gradient=from-blue-500 to-purple-500</span>
+<span class="cm">// Track = bg-muted (theme-aware in both light and dark)</span></div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 4: Color System
+     =========================== -->
+<div id="color-system"></div>
+<span class="section-number">Section 04</span>
+<h2>Color System</h2>
+<p>Six chart color tokens, each with light/dark variants for stroke (0.8 opacity) and fill/background (0.1 opacity). Derived from Chart.js best practices and aligned with the DRMS design system palette.</p>
+
+<h3>Chart Color Palette</h3>
+
+<div class="swatch-grid">
+  <div class="swatch-card">
+    <div class="swatch-fill" style="background:rgba(59,130,246,0.8)"></div>
+    <div class="swatch-fill-bg" style="background:rgba(59,130,246,0.1)"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Blue</div>
+      <div class="swatch-value">rgba(59,130,246)</div>
+    </div>
+  </div>
+  <div class="swatch-card">
+    <div class="swatch-fill" style="background:rgba(34,197,94,0.8)"></div>
+    <div class="swatch-fill-bg" style="background:rgba(34,197,94,0.1)"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Green</div>
+      <div class="swatch-value">rgba(34,197,94)</div>
+    </div>
+  </div>
+  <div class="swatch-card">
+    <div class="swatch-fill" style="background:rgba(251,146,60,0.8)"></div>
+    <div class="swatch-fill-bg" style="background:rgba(251,146,60,0.1)"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Orange</div>
+      <div class="swatch-value">rgba(251,146,60)</div>
+    </div>
+  </div>
+  <div class="swatch-card">
+    <div class="swatch-fill" style="background:rgba(239,68,68,0.8)"></div>
+    <div class="swatch-fill-bg" style="background:rgba(239,68,68,0.1)"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Red</div>
+      <div class="swatch-value">rgba(239,68,68)</div>
+    </div>
+  </div>
+  <div class="swatch-card">
+    <div class="swatch-fill" style="background:rgba(168,85,247,0.8)"></div>
+    <div class="swatch-fill-bg" style="background:rgba(168,85,247,0.1)"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Purple</div>
+      <div class="swatch-value">rgba(168,85,247)</div>
+    </div>
+  </div>
+  <div class="swatch-card">
+    <div class="swatch-fill" style="background:rgba(156,163,175,0.8)"></div>
+    <div class="swatch-fill-bg" style="background:rgba(156,163,175,0.1)"></div>
+    <div class="swatch-info">
+      <div class="swatch-name">Gray</div>
+      <div class="swatch-value">rgba(156,163,175)</div>
+    </div>
+  </div>
+</div>
+
+<h3>Semantic Color Mapping</h3>
+
+<div class="token-grid">
+  <div class="token-chip">
+    <div class="token-swatch" style="background:rgba(59,130,246,0.8)"></div>
+    <span>primary (blue)</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:rgba(34,197,94,0.8)"></div>
+    <span>success (green)</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:rgba(251,146,60,0.8)"></div>
+    <span>warning (orange)</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:rgba(239,68,68,0.8)"></div>
+    <span>danger (red)</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:rgba(156,163,175,0.8)"></div>
+    <span>neutral (gray)</span>
+  </div>
+</div>
+
+<h3>Series Palette (5-color for multi-series)</h3>
+
+<div class="mockup-container">
+  <div class="chart-mock">
+    <div class="chart-title">Series Palette Distribution</div>
+    <div class="chart-subtitle">5 distinct colors for multi-series charts</div>
+    <div class="chart-area" style="margin-left:0;border-left:none;">
+      <div class="bar-group" style="left:10%;"><div class="bar" style="height:140px;background:rgba(59,130,246,0.8);width:40px;"></div></div>
+      <div class="bar-group" style="left:28%;"><div class="bar" style="height:120px;background:rgba(34,197,94,0.8);width:40px;"></div></div>
+      <div class="bar-group" style="left:46%;"><div class="bar" style="height:100px;background:rgba(251,146,60,0.8);width:40px;"></div></div>
+      <div class="bar-group" style="left:64%;"><div class="bar" style="height:80px;background:rgba(168,85,247,0.8);width:40px;"></div></div>
+      <div class="bar-group" style="left:82%;"><div class="bar" style="height:60px;background:rgba(239,68,68,0.8);width:40px;"></div></div>
+    </div>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(59,130,246,0.8)"></div> Series 1 (Blue)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(34,197,94,0.8)"></div> Series 2 (Green)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(251,146,60,0.8)"></div> Series 3 (Orange)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(168,85,247,0.8)"></div> Series 4 (Purple)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(239,68,68,0.8)"></div> Series 5 (Red)</div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 5: Shared Config
+     =========================== -->
+<div id="shared-config"></div>
+<span class="section-number">Section 05</span>
+<h2>Shared Configuration</h2>
+
+<h3>Grid &amp; Tick Colors</h3>
+
+<div class="mockup-container">
+  <div class="mockup-grid-2">
+    <div>
+      <div class="grid-helper-label">Light Mode</div>
+      <div class="chart-mock">
+        <div class="chart-area">
+          <div class="grid-line" style="top:25%;"></div>
+          <div class="grid-line" style="top:50%;"></div>
+          <div class="grid-line" style="top:75%;"></div>
+          <div class="grid-label" style="top:25%;">100</div>
+          <div class="grid-label" style="top:50%;">50</div>
+          <div class="grid-label" style="top:75%;">25</div>
+          <div class="grid-label" style="top:0;">100</div>
+          <div class="x-label" style="left:25%;">Jan</div>
+          <div class="x-label" style="left:50%;">Feb</div>
+          <div class="x-label" style="left:75%;">Mar</div>
+        </div>
+      </div>
+      <p style="font-size:12px;text-align:center;">Grid: <code style="font-size:11px;background:var(--muted);padding:2px 6px;border-radius:4px;">#e5e7eb</code> Tick: <code style="font-size:11px;background:var(--muted);padding:2px 6px;border-radius:4px;">#6b7280</code></p>
+    </div>
+    <div>
+      <div class="grid-helper-label">Dark Mode</div>
+      <div class="chart-mock" style="background:hsl(224 71% 4%);border-color:#374151;">
+        <div class="chart-area" style="border-color:#374151;">
+          <div class="grid-line" style="top:25%;background:#374151;"></div>
+          <div class="grid-line" style="top:50%;background:#374151;"></div>
+          <div class="grid-line" style="top:75%;background:#374151;"></div>
+          <div class="grid-label" style="top:25%;color:#9ca3af;">100</div>
+          <div class="grid-label" style="top:50%;color:#9ca3af;">50</div>
+          <div class="grid-label" style="top:75%;color:#9ca3af;">25</div>
+          <div class="grid-label" style="top:0;color:#9ca3af;">100</div>
+          <div class="x-label" style="left:25%;color:#9ca3af;">Jan</div>
+          <div class="x-label" style="left:50%;color:#9ca3af;">Feb</div>
+          <div class="x-label" style="left:75%;color:#9ca3af;">Mar</div>
+        </div>
+      </div>
+      <p style="font-size:12px;text-align:center;">Grid: <code style="font-size:11px;background:var(--muted);padding:2px 6px;border-radius:4px;">#374151</code> Tick: <code style="font-size:11px;background:var(--muted);padding:2px 6px;border-radius:4px;">#9ca3af</code></p>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 6: Patterns
+     =========================== -->
+<div id="patterns"></div>
+<span class="section-number">Section 06</span>
+<h2>Chart Patterns</h2>
+
+<div class="rules-grid">
+  <div class="rule">
+    <div class="rule-icon">1</div>
+    <div class="rule-body">
+      <h4>Always use chart-config colors</h4>
+      <p>Never hardcode RGB values inline. Import from <code>chart-config.ts</code> and use <code>getChartColor()</code> to resolve light/dark variant.</p>
+    </div>
+  </div>
+  <div class="rule">
+    <div class="rule-icon">2</div>
+    <div class="rule-body">
+      <h4>Use getDefaultChartOptions() as base</h4>
+      <p>Every chart starts with shared options (font, grid, tooltip). Override specific properties per chart type if needed.</p>
+    </div>
+  </div>
+  <div class="rule">
+    <div class="rule-icon">3</div>
+    <div class="rule-body">
+      <h4>Detect dark mode via useTheme()</h4>
+      <p>Pass <code>isDark</code> to all chart config functions. This adapts grid lines, tick labels, and tooltip styling automatically.</p>
+    </div>
+  </div>
+  <div class="rule">
+    <div class="rule-icon">4</div>
+    <div class="rule-body">
+      <h4>Use ProgressBar for simple metrics</h4>
+      <p>If data is a single percentage or ratio, use <code>ProgressBar</code> instead of a full Chart.js bar chart. Reserve Chart.js for multi-point or multi-series data.</p>
+    </div>
+  </div>
+  <div class="rule">
+    <div class="rule-icon">5</div>
+    <div class="rule-body">
+      <h4>Register Chart.js once</h4>
+      <p>Import <code>chart-registration.ts</code> in your app layout or root. Never call <code>ChartJS.register()</code> inside individual chart components.</p>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 7: Mockups
+     =========================== -->
+<div id="mockup-palette"></div>
+<span class="section-number">Section 07</span>
+<h2>Visual Mockups</h2>
+
+<!-- Line Chart Mockup -->
+<div id="mockup-line"></div>
+<h3>Line Chart -- Delivery Rate</h3>
+<span class="variant-badge">line</span>
+
+<div class="mockup-container">
+  <div class="chart-mock">
+    <div class="chart-title">Delivery Rate Over Time</div>
+    <div class="chart-subtitle">Monthly delivery performance (%)</div>
+    <div style="position:relative;height:200px;margin-left:40px;">
+      <!-- Grid lines -->
+      <div style="position:absolute;left:0;right:0;top:0;height:1px;background:var(--grid-line);"></div>
+      <div style="position:absolute;left:0;right:0;top:25%;height:1px;background:var(--grid-line);"></div>
+      <div style="position:absolute;left:0;right:0;top:50%;height:1px;background:var(--grid-line);"></div>
+      <div style="position:absolute;left:0;right:0;top:75%;height:1px;background:var(--grid-line);"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--grid-line);"></div>
+      <!-- Y-axis labels -->
+      <div style="position:absolute;left:-40px;top:0;font-size:11px;color:var(--grid-tick);font-family:monospace;transform:translateY(-50%);">100</div>
+      <div style="position:absolute;left:-40px;top:25%;font-size:11px;color:var(--grid-tick);font-family:monospace;transform:translateY(-50%);">75</div>
+      <div style="position:absolute;left:-40px;top:50%;font-size:11px;color:var(--grid-tick);font-family:monospace;transform:translateY(-50%);">50</div>
+      <div style="position:absolute;left:-40px;top:75%;font-size:11px;color:var(--grid-tick);font-family:monospace;transform:translateY(-50%);">25</div>
+      <div style="position:absolute;left:-40px;bottom:0;font-size:11px;color:var(--grid-tick);font-family:monospace;transform:translateY(-50%);">0</div>
+      <!-- X-axis labels -->
+      <div style="position:absolute;bottom:-20px;left:8%;font-size:11px;color:var(--grid-tick);transform:translateX(-50%);">Jan</div>
+      <div style="position:absolute;bottom:-20px;left:25%;font-size:11px;color:var(--grid-tick);transform:translateX(-50%);">Feb</div>
+      <div style="position:absolute;bottom:-20px;left:42%;font-size:11px;color:var(--grid-tick);transform:translateX(-50%);">Mar</div>
+      <div style="position:absolute;bottom:-20px;left:58%;font-size:11px;color:var(--grid-tick);transform:translateX(-50%);">Apr</div>
+      <div style="position:absolute;bottom:-20px;left:75%;font-size:11px;color:var(--grid-tick);transform:translateX(-50%);">May</div>
+      <div style="position:absolute;bottom:-20px;left:92%;font-size:11px;color:var(--grid-tick);transform:translateX(-50%);">Jun</div>
+      <!-- Line (SVG overlay) -->
+      <svg style="position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible;" viewBox="0 0 500 200" preserveAspectRatio="none">
+        <polyline fill="none" stroke="rgba(59,130,246,0.8)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+          points="40,60 125,45 210,50 295,35 380,30 460,25"/>
+        <polygon fill="rgba(59,130,246,0.1)"
+          points="40,200 40,60 125,45 210,50 295,35 380,30 460,25 460,200"/>
+        <!-- Data points -->
+        <circle cx="40" cy="60" r="4" fill="rgba(59,130,246,0.8)"/>
+        <circle cx="125" cy="45" r="4" fill="rgba(59,130,246,0.8)"/>
+        <circle cx="210" cy="50" r="4" fill="rgba(59,130,246,0.8)"/>
+        <circle cx="295" cy="35" r="4" fill="rgba(59,130,246,0.8)"/>
+        <circle cx="380" cy="30" r="4" fill="rgba(59,130,246,0.8)"/>
+        <circle cx="460" cy="25" r="4" fill="rgba(59,130,246,0.8)"/>
+      </svg>
+    </div>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(59,130,246,0.8)"></div> Delivery Rate</div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- Bar Chart Mockup -->
+<div id="mockup-bar"></div>
+<h3>Bar Chart -- Peer Comparison</h3>
+<span class="variant-badge">bar</span>
+
+<div class="mockup-container">
+  <div class="chart-mock">
+    <div class="chart-title">Performance Comparison</div>
+    <div class="chart-subtitle">Your Score vs Top 25% vs Average</div>
+    <div style="position:relative;height:200px;margin-left:40px;">
+      <div style="position:absolute;left:0;right:0;top:0;height:1px;background:var(--grid-line);"></div>
+      <div style="position:absolute;left:0;right:0;top:25%;height:1px;background:var(--grid-line);"></div>
+      <div style="position:absolute;left:0;right:0;top:50%;height:1px;background:var(--grid-line);"></div>
+      <div style="position:absolute;left:0;right:0;top:75%;height:1px;background:var(--grid-line);"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--grid-line);"></div>
+      <div style="position:absolute;left:-40px;top:0;font-size:11px;color:var(--grid-tick);font-family:monospace;transform:translateY(-50%);">100</div>
+      <div style="position:absolute;left:-40px;top:25%;font-size:11px;color:var(--grid-tick);font-family:monospace;transform:translateY(-50%);">75</div>
+      <div style="position:absolute;left:-40px;top:50%;font-size:11px;color:var(--grid-tick);font-family:monospace;transform:translateY(-50%);">50</div>
+      <div style="position:absolute;left:-40px;top:75%;font-size:11px;color:var(--grid-tick);font-family:monospace;transform:translateY(-50%);">25</div>
+      <div style="position:absolute;left:-40px;bottom:0;font-size:11px;color:var(--grid-tick);font-family:monospace;transform:translateY(-50%);">0</div>
+      <!-- Bar groups: 3 categories x 3 bars each -->
+      <div class="bar-group" style="left:15%;">
+        <div class="bar" style="height:170px;background:rgba(59,130,246,0.8);width:18px;"></div>
+        <div class="bar" style="height:140px;background:rgba(34,197,94,0.8);width:18px;"></div>
+        <div class="bar" style="height:100px;background:rgba(156,163,175,0.8);width:18px;"></div>
+      </div>
+      <div class="bar-group" style="left:42%;">
+        <div class="bar" style="height:150px;background:rgba(59,130,246,0.8);width:18px;"></div>
+        <div class="bar" style="height:130px;background:rgba(34,197,94,0.8);width:18px;"></div>
+        <div class="bar" style="height:110px;background:rgba(156,163,175,0.8);width:18px;"></div>
+      </div>
+      <div class="bar-group" style="left:70%;">
+        <div class="bar" style="height:160px;background:rgba(59,130,246,0.8);width:18px;"></div>
+        <div class="bar" style="height:145px;background:rgba(34,197,94,0.8);width:18px;"></div>
+        <div class="bar" style="height:90px;background:rgba(156,163,175,0.8);width:18px;"></div>
+      </div>
+      <div style="position:absolute;bottom:-20px;left:22%;font-size:11px;color:var(--grid-tick);transform:translateX(-50%);">Delivery</div>
+      <div style="position:absolute;bottom:-20px;left:50%;font-size:11px;color:var(--grid-tick);transform:translateX(-50%);">Timeliness</div>
+      <div style="position:absolute;bottom:-20px;left:78%;font-size:11px;color:var(--grid-tick);transform:translateX(-50%);">Quality</div>
+    </div>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(59,130,246,0.8)"></div> Your Score</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(34,197,94,0.8)"></div> Top 25%</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(156,163,175,0.8)"></div> Average</div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- Radar Chart Mockup -->
+<div id="mockup-radar"></div>
+<h3>Radar Chart -- Performance Dimensions</h3>
+<span class="variant-badge">radar</span>
+
+<div class="mockup-container">
+  <div class="mockup-grid-2" style="max-width:640px;">
+    <div class="chart-mock" style="text-align:center;">
+      <div class="chart-title">Donor Performance</div>
+      <svg width="220" height="220" viewBox="0 0 220 220" style="margin:0 auto;display:block;">
+        <!-- Radar web (hexagonal grid) -->
+        <polygon points="110,20 192,65 192,155 110,200 28,155 28,65" fill="none" stroke="var(--grid-line)" stroke-width="1"/>
+        <polygon points="110,50 172,82 172,138 110,170 48,138 48,82" fill="none" stroke="var(--grid-line)" stroke-width="1"/>
+        <polygon points="110,80 152,100 152,120 110,140 68,120 68,100" fill="none" stroke="var(--grid-line)" stroke-width="1"/>
+        <!-- Axis lines -->
+        <line x1="110" y1="110" x2="110" y2="20" stroke="var(--grid-line)" stroke-width="1"/>
+        <line x1="110" y1="110" x2="192" y2="65" stroke="var(--grid-line)" stroke-width="1"/>
+        <line x1="110" y1="110" x2="192" y2="155" stroke="var(--grid-line)" stroke-width="1"/>
+        <line x1="110" y1="110" x2="110" y2="200" stroke="var(--grid-line)" stroke-width="1"/>
+        <line x1="110" y1="110" x2="28" y2="155" stroke="var(--grid-line)" stroke-width="1"/>
+        <line x1="110" y1="110" x2="28" y2="65" stroke="var(--grid-line)" stroke-width="1"/>
+        <!-- Data polygon (blue) -->
+        <polygon points="110,35 180,72 175,150 110,185 42,140 45,70" fill="rgba(59,130,246,0.1)" stroke="rgba(59,130,246,0.8)" stroke-width="2"/>
+        <!-- Data points -->
+        <circle cx="110" cy="35" r="3" fill="rgba(59,130,246,0.8)"/>
+        <circle cx="180" cy="72" r="3" fill="rgba(59,130,246,0.8)"/>
+        <circle cx="175" cy="150" r="3" fill="rgba(59,130,246,0.8)"/>
+        <circle cx="110" cy="185" r="3" fill="rgba(59,130,246,0.8)"/>
+        <circle cx="42" cy="140" r="3" fill="rgba(59,130,246,0.8)"/>
+        <circle cx="45" cy="70" r="3" fill="rgba(59,130,246,0.8)"/>
+        <!-- Axis labels -->
+        <text x="110" y="14" text-anchor="middle" font-size="11" fill="var(--grid-tick)" font-family="monospace">Delivery</text>
+        <text x="200" y="65" text-anchor="start" font-size="11" fill="var(--grid-tick)" font-family="monospace">Quality</text>
+        <text x="200" y="160" text-anchor="start" font-size="11" fill="var(--grid-tick)" font-family="monospace">Timeliness</text>
+        <text x="110" y="215" text-anchor="middle" font-size="11" fill="var(--grid-tick)" font-family="monospace">Reporting</text>
+        <text x="16" y="160" text-anchor="end" font-size="11" fill="var(--grid-tick)" font-family="monospace">Visibility</text>
+        <text x="16" y="65" text-anchor="end" font-size="11" fill="var(--grid-tick)" font-family="monospace">Compliance</text>
+      </svg>
+      <div class="chart-legend" style="justify-content:center;">
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(59,130,246,0.8)"></div> Your Performance</div>
+      </div>
+    </div>
+
+    <div class="chart-mock" style="text-align:center;">
+      <div class="chart-title">Peer Comparison</div>
+      <svg width="220" height="220" viewBox="0 0 220 220" style="margin:0 auto;display:block;">
+        <polygon points="110,20 192,65 192,155 110,200 28,155 28,65" fill="none" stroke="var(--grid-line)" stroke-width="1"/>
+        <polygon points="110,50 172,82 172,138 110,170 48,138 48,82" fill="none" stroke="var(--grid-line)" stroke-width="1"/>
+        <polygon points="110,80 152,100 152,120 110,140 68,120 68,100" fill="none" stroke="var(--grid-line)" stroke-width="1"/>
+        <line x1="110" y1="110" x2="110" y2="20" stroke="var(--grid-line)" stroke-width="1"/>
+        <line x1="110" y1="110" x2="192" y2="65" stroke="var(--grid-line)" stroke-width="1"/>
+        <line x1="110" y1="110" x2="192" y2="155" stroke="var(--grid-line)" stroke-width="1"/>
+        <line x1="110" y1="110" x2="110" y2="200" stroke="var(--grid-line)" stroke-width="1"/>
+        <line x1="110" y1="110" x2="28" y2="155" stroke="var(--grid-line)" stroke-width="1"/>
+        <line x1="110" y1="110" x2="28" y2="65" stroke="var(--grid-line)" stroke-width="1"/>
+        <!-- You (blue) -->
+        <polygon points="110,35 180,72 175,150 110,185 42,140 45,70" fill="rgba(59,130,246,0.1)" stroke="rgba(59,130,246,0.8)" stroke-width="2"/>
+        <!-- Peer (green) -->
+        <polygon points="110,45 165,80 185,145 110,175 55,148 38,75" fill="rgba(34,197,94,0.1)" stroke="rgba(34,197,94,0.8)" stroke-width="2"/>
+        <text x="110" y="14" text-anchor="middle" font-size="11" fill="var(--grid-tick)" font-family="monospace">Delivery</text>
+        <text x="200" y="65" text-anchor="start" font-size="11" fill="var(--grid-tick)" font-family="monospace">Quality</text>
+        <text x="200" y="160" text-anchor="start" font-size="11" fill="var(--grid-tick)" font-family="monospace">Timeliness</text>
+        <text x="110" y="215" text-anchor="middle" font-size="11" fill="var(--grid-tick)" font-family="monospace">Reporting</text>
+        <text x="16" y="160" text-anchor="end" font-size="11" fill="var(--grid-tick)" font-family="monospace">Visibility</text>
+        <text x="16" y="65" text-anchor="end" font-size="11" fill="var(--grid-tick)" font-family="monospace">Compliance</text>
+      </svg>
+      <div class="chart-legend" style="justify-content:center;">
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(59,130,246,0.8)"></div> You</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(34,197,94,0.8)"></div> Top 25%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ProgressBar Mockup -->
+<div id="mockup-progress"></div>
+<h3>ProgressBar Component</h3>
+<span class="variant-badge">progressbar</span>
+
+<h4>All Variants (size: default)</h4>
+<div class="mockup-container">
+  <div style="display:grid;gap:20px;max-width:480px;">
+    <!-- Default -->
+    <div class="progress-variant-default progress-size-default">
+      <div class="progress-label-row"><span class="progress-label-text">Default (Primary)</span><span class="progress-label-pct">72%</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:72%;"></div></div>
+    </div>
+    <!-- Success -->
+    <div class="progress-variant-success progress-size-default">
+      <div class="progress-label-row"><span class="progress-label-text">Success</span><span class="progress-label-pct">95%</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:95%;"></div></div>
+    </div>
+    <!-- Warning -->
+    <div class="progress-variant-warning progress-size-default">
+      <div class="progress-label-row"><span class="progress-label-text">Warning</span><span class="progress-label-pct">58%</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:58%;"></div></div>
+    </div>
+    <!-- Danger -->
+    <div class="progress-variant-danger progress-size-default">
+      <div class="progress-label-row"><span class="progress-label-text">Danger</span><span class="progress-label-pct">23%</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:23%;"></div></div>
+    </div>
+    <!-- Gradient -->
+    <div class="progress-variant-gradient progress-size-default">
+      <div class="progress-label-row"><span class="progress-label-text">Gradient</span><span class="progress-label-pct">81%</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:81%;"></div></div>
+    </div>
+  </div>
+</div>
+
+<h4>All Sizes (variant: default, value: 65%)</h4>
+<div class="mockup-container">
+  <div style="display:grid;gap:20px;max-width:480px;">
+    <div>
+      <span style="font-size:12px;font-weight:600;color:var(--muted-fg);">sm (h-1.5 / 6px)</span>
+      <div class="progress-variant-default progress-size-sm" style="margin-top:6px;">
+        <div class="progress-track"><div class="progress-fill" style="width:65%;"></div></div>
+      </div>
+    </div>
+    <div>
+      <span style="font-size:12px;font-weight:600;color:var(--muted-fg);">default (h-2 / 8px)</span>
+      <div class="progress-variant-default progress-size-default" style="margin-top:6px;">
+        <div class="progress-track"><div class="progress-fill" style="width:65%;"></div></div>
+      </div>
+    </div>
+    <div>
+      <span style="font-size:12px;font-weight:600;color:var(--muted-fg);">lg (h-3 / 12px)</span>
+      <div class="progress-variant-default progress-size-lg" style="margin-top:6px;">
+        <div class="progress-track"><div class="progress-fill" style="width:65%;"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h4>ProgressBar with Custom Labels</h4>
+<div class="mockup-container">
+  <div style="display:grid;gap:20px;max-width:480px;">
+    <div class="progress-variant-success progress-size-lg">
+      <div class="progress-label-row"><span class="progress-label-text">Verification Complete</span><span class="progress-label-pct">156/180</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:87%;"></div></div>
+    </div>
+    <div class="progress-variant-warning progress-size-lg">
+      <div class="progress-label-row"><span class="progress-label-text">Commitment Fulfillment</span><span class="progress-label-pct">47 of 82</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:57%;"></div></div>
+    </div>
+    <div class="progress-variant-gradient progress-size-lg">
+      <div class="progress-label-row"><span class="progress-label-text">Badge Progress</span><span class="progress-label-pct">Level 7</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:72%;"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- Dark Mode Chart -->
+<div id="mockup-dark"></div>
+<h3>Dark Mode Rendering</h3>
+<p>Toggle the Light / Dark button in the top bar to see all charts and progress bars adapt. Below is a dark-mode-specific preview showing the line chart and progress bars on the dark background.</p>
+
+<div class="mockup-container dark-bg">
+  <div class="chart-mock" style="background:hsl(224 71% 4%);border-color:#374151;">
+    <div class="chart-title" style="color:hsl(213 31% 91%);">Delivery Rate Over Time (Dark)</div>
+    <div class="chart-subtitle" style="color:hsl(217.9 10.6% 64.9%);">Monthly delivery performance (%)</div>
+    <div style="position:relative;height:200px;margin-left:40px;">
+      <div style="position:absolute;left:0;right:0;top:0;height:1px;background:#374151;"></div>
+      <div style="position:absolute;left:0;right:0;top:25%;height:1px;background:#374151;"></div>
+      <div style="position:absolute;left:0;right:0;top:50%;height:1px;background:#374151;"></div>
+      <div style="position:absolute;left:0;right:0;top:75%;height:1px;background:#374151;"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;height:1px;background:#374151;"></div>
+      <div style="position:absolute;left:-40px;top:0;font-size:11px;color:#9ca3af;font-family:monospace;transform:translateY(-50%);">100</div>
+      <div style="position:absolute;left:-40px;top:25%;font-size:11px;color:#9ca3af;font-family:monospace;transform:translateY(-50%);">75</div>
+      <div style="position:absolute;left:-40px;top:50%;font-size:11px;color:#9ca3af;font-family:monospace;transform:translateY(-50%);">50</div>
+      <div style="position:absolute;left:-40px;top:75%;font-size:11px;color:#9ca3af;font-family:monospace;transform:translateY(-50%);">25</div>
+      <div style="position:absolute;left:-40px;bottom:0;font-size:11px;color:#9ca3af;font-family:monospace;transform:translateY(-50%);">0</div>
+      <div style="position:absolute;bottom:-20px;left:8%;font-size:11px;color:#9ca3af;transform:translateX(-50%);">Jan</div>
+      <div style="position:absolute;bottom:-20px;left:25%;font-size:11px;color:#9ca3af;transform:translateX(-50%);">Feb</div>
+      <div style="position:absolute;bottom:-20px;left:42%;font-size:11px;color:#9ca3af;transform:translateX(-50%);">Mar</div>
+      <div style="position:absolute;bottom:-20px;left:58%;font-size:11px;color:#9ca3af;transform:translateX(-50%);">Apr</div>
+      <div style="position:absolute;bottom:-20px;left:75%;font-size:11px;color:#9ca3af;transform:translateX(-50%);">May</div>
+      <div style="position:absolute;bottom:-20px;left:92%;font-size:11px;color:#9ca3af;transform:translateX(-50%);">Jun</div>
+      <svg style="position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible;" viewBox="0 0 500 200" preserveAspectRatio="none">
+        <polyline fill="none" stroke="rgba(96,165,250,0.8)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+          points="40,60 125,45 210,50 295,35 380,30 460,25"/>
+        <polygon fill="rgba(96,165,250,0.1)"
+          points="40,200 40,60 125,45 210,50 295,35 380,30 460,25 460,200"/>
+        <circle cx="40" cy="60" r="4" fill="rgba(96,165,250,0.8)"/>
+        <circle cx="125" cy="45" r="4" fill="rgba(96,165,250,0.8)"/>
+        <circle cx="210" cy="50" r="4" fill="rgba(96,165,250,0.8)"/>
+        <circle cx="295" cy="35" r="4" fill="rgba(96,165,250,0.8)"/>
+        <circle cx="380" cy="30" r="4" fill="rgba(96,165,250,0.8)"/>
+        <circle cx="460" cy="25" r="4" fill="rgba(96,165,250,0.8)"/>
+      </svg>
+    </div>
+    <div class="chart-legend">
+      <div class="legend-item" style="color:#9ca3af;"><div class="legend-dot" style="background:rgba(96,165,250,0.8)"></div> Delivery Rate (Dark)</div>
+    </div>
+  </div>
+  <!-- Dark progress bars -->
+  <div style="display:grid;gap:16px;max-width:480px;margin-top:24px;">
+    <div class="progress-variant-default progress-size-default">
+      <div class="progress-label-row"><span class="progress-label-text" style="color:hsl(213 31% 91%);">Default</span><span class="progress-label-pct" style="color:#9ca3af;">72%</span></div>
+      <div class="progress-track" style="background:hsl(215 28% 17%);"><div class="progress-fill" style="width:72%;background:hsl(210 40% 98%);"></div></div>
+    </div>
+    <div class="progress-variant-success progress-size-default">
+      <div class="progress-label-row"><span class="progress-label-text" style="color:hsl(213 31% 91%);">Success</span><span class="progress-label-pct" style="color:#9ca3af;">95%</span></div>
+      <div class="progress-track" style="background:hsl(215 28% 17%);"><div class="progress-fill" style="width:95%;"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- Before/After -->
+<div id="mockup-comparison"></div>
+<h3>Before / After Comparison</h3>
+
+<h4>Chart.js Colors: Hardcoded vs Centralized</h4>
+<div class="comparison-grid">
+  <div class="comparison-col">
+    <span class="comparison-label before">Before -- Hardcoded</span>
+    <div class="code-block" style="font-size:12px;"><span class="cm">// DonorPerformanceDashboard.tsx</span>
+backgroundColor: <span class="str">'rgba(59, 130, 246, 0.5)'</span>,
+borderColor: <span class="str">'rgba(59, 130, 246, 1)'</span>,
+...
+backgroundColor: <span class="str">'rgba(34, 197, 94, 0.5)'</span>,
+borderColor: <span class="str">'rgba(34, 197, 94, 1)'</span>,
+
+<span class="cm">// No dark mode -- colors stay the same</span>
+<span class="cm">// No shared tooltip style</span>
+<span class="cm">// Per-file ChartJS.register()</span></div>
+  </div>
+  <div class="comparison-col">
+    <span class="comparison-label after">After -- Centralized</span>
+    <div class="code-block" style="font-size:12px;"><span class="cm">// DonorPerformanceDashboard.tsx</span>
+<span class="kw">import</span> { <span class="fn">CHART_COLORS</span>, <span class="fn">getChartColor</span> } <span class="kw">from</span> <span class="str">'@/lib/utils/chart-config'</span>
+
+backgroundColor: <span class="fn">getChartColor</span>(CHART_COLORS.blue, isDark),
+borderColor: <span class="fn">getChartColor</span>(CHART_COLORS.blue, isDark),
+
+<span class="cm">// Dark mode automatic via isDark</span>
+<span class="cm">// Shared tooltip, grid, font styles</span>
+<span class="cm">// Registration via chart-registration.ts</span></div>
+  </div>
+</div>
+
+<h4>Custom CSS Bars vs ProgressBar</h4>
+<div class="comparison-grid">
+  <div class="comparison-col">
+    <span class="comparison-label before">Before -- Ad-hoc CSS</span>
+    <div style="display:grid;gap:12px;">
+      <div>
+        <span style="font-size:12px;color:var(--muted-fg);">CommitmentDashboard (bg-blue-600, h-2)</span>
+        <div style="margin-top:4px;height:8px;background:var(--muted);border-radius:999px;overflow:hidden;">
+          <div style="width:72%;height:100%;background:#2563eb;border-radius:999px;"></div>
+        </div>
+      </div>
+      <div>
+        <span style="font-size:12px;color:var(--muted-fg);">ConflictSummary (bg-green-500, h-3)</span>
+        <div style="margin-top:4px;height:12px;background:var(--muted);border-radius:999px;overflow:hidden;">
+          <div style="width:85%;height:100%;background:#22c55e;border-radius:999px;"></div>
+        </div>
+      </div>
+      <div>
+        <span style="font-size:12px;color:var(--muted-fg);">EntityInsights (bg-orange-500, h-2.5)</span>
+        <div style="margin-top:4px;height:10px;background:var(--muted);border-radius:999px;overflow:hidden;">
+          <div style="width:58%;height:100%;background:#f59e0b;border-radius:999px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="comparison-col">
+    <span class="comparison-label after">After -- ProgressBar</span>
+    <div style="display:grid;gap:12px;">
+      <div class="progress-variant-default progress-size-default">
+        <div class="progress-label-row"><span class="progress-label-text" style="font-size:12px;">CommitmentDashboard</span><span class="progress-label-pct">72%</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:72%;"></div></div>
+      </div>
+      <div class="progress-variant-success progress-size-lg">
+        <div class="progress-label-row"><span class="progress-label-text" style="font-size:12px;">ConflictSummary</span><span class="progress-label-pct">85%</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:85%;"></div></div>
+      </div>
+      <div class="progress-variant-warning progress-size-default">
+        <div class="progress-label-row"><span class="progress-label-text" style="font-size:12px;">EntityInsights</span><span class="progress-label-pct">58%</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:58%;"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 8: Component API
+     =========================== -->
+<div id="api"></div>
+<span class="section-number">Section 08</span>
+<h2>Component API</h2>
+
+<h3>ProgressBar</h3>
+
+<div class="code-block"><span class="kw">interface</span> <span class="typ">ProgressBarProps</span> {
+  <span class="pr">value</span>: <span class="typ">number</span>              <span class="cm">// 0-100</span>
+  <span class="pr">variant</span>?: <span class="str">'default'</span> | <span class="str">'success'</span> | <span class="str">'warning'</span> | <span class="str">'danger'</span> | <span class="str">'gradient'</span>
+  <span class="pr">size</span>?: <span class="str">'sm'</span> | <span class="str">'default'</span> | <span class="str">'lg'</span>
+  <span class="pr">showLabel</span>?: <span class="typ">boolean</span>
+  <span class="pr">label</span>?: <span class="typ">string</span>
+  <span class="pr">className</span>?: <span class="typ">string</span>
+}</div>
+
+<table class="api-table">
+  <thead>
+    <tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>value</code></td><td><code>number</code></td><td>--</td><td>Progress value 0-100. Required. Clamped to valid range.</td></tr>
+    <tr><td><code>variant</code></td><td><code>'default' | 'success' | 'warning' | 'danger' | 'gradient'</code></td><td><code>'default'</code></td><td>Color variant. Maps to primary, green, amber, red, or gradient fill.</td></tr>
+    <tr><td><code>size</code></td><td><code>'sm' | 'default' | 'lg'</code></td><td><code>'default'</code></td><td>Height: 6px (sm), 8px (default), 12px (lg).</td></tr>
+    <tr><td><code>showLabel</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Shows percentage text to the right of the label row.</td></tr>
+    <tr><td><code>label</code></td><td><code>string</code></td><td><code>undefined</code></td><td>Custom label text shown above the bar. Replaces percentage if showLabel is true.</td></tr>
+    <tr><td><code>className</code></td><td><code>string</code></td><td><code>undefined</code></td><td>Merged via <code>cn()</code> for external overrides.</td></tr>
+  </tbody>
+</table>
+
+<h3>Chart Config Functions</h3>
+
+<table class="api-table">
+  <thead>
+    <tr><th>Function</th><th>Params</th><th>Returns</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>getChartColor</code></td><td><code>color, isDark?</code></td><td><code>string</code></td><td>Resolves a CHART_COLORS entry to the correct light/dark RGBA value.</td></tr>
+    <tr><td><code>getDefaultChartOptions</code></td><td><code>isDark?</code></td><td><code>ChartOptions</code></td><td>Base options: responsive, font family, grid colors, tooltip style.</td></tr>
+    <tr><td><code>getBarChartOptions</code></td><td><code>isDark?</code></td><td><code>ChartOptions</code></td><td>Bar-specific: extends default with bar percentage, category percentage.</td></tr>
+    <tr><td><code>getRadarChartOptions</code></td><td><code>isDark?</code></td><td><code>ChartOptions</code></td><td>Radar-specific: extends default with scale config, point style.</td></tr>
+  </tbody>
+</table>
+
+<h3>Usage Examples</h3>
+
+<div class="code-block"><span class="cm">// 1. ProgressBar -- default variant</span>
+<span class="kw">&lt;</span><span class="fn">ProgressBar</span> <span class="pr">value</span>={<span class="num">72</span>} <span class="pr">label</span>=<span class="str">"Completion"</span> <span class="pr">showLabel</span> <span class="kw">/&gt;</span>
+
+<span class="cm">// 2. ProgressBar -- success variant, large</span>
+<span class="kw">&lt;</span><span class="fn">ProgressBar</span> <span class="pr">value</span>={<span class="num">95</span>} <span class="pr">variant</span>=<span class="str">"success"</span> <span class="pr">size</span>=<span class="str">"lg"</span> <span class="kw">/&gt;</span>
+
+<span class="cm">// 3. Chart.js Line chart with centralized config</span>
+<span class="kw">import</span> { <span class="fn">CHART_COLORS</span>, <span class="fn">getChartColor</span>, <span class="fn">getDefaultChartOptions</span> } <span class="kw">from</span> <span class="str">'@/lib/utils/chart-config'</span>
+
+<span class="kw">const</span> isDark = useTheme().resolvedTheme === <span class="str">'dark'</span>
+<span class="kw">const</span> options = <span class="fn">getDefaultChartOptions</span>(isDark)
+<span class="kw">const</span> data = {
+  datasets: [{
+    label: <span class="str">'Delivery Rate'</span>,
+    data: [<span class="num">85</span>, <span class="num">88</span>, <span class="num">82</span>, <span class="num">91</span>, <span class="num">94</span>, <span class="num">96</span>],
+    borderColor: <span class="fn">getChartColor</span>(CHART_COLORS.blue, isDark),
+    backgroundColor: <span class="fn">getChartColor</span>(CHART_COLORS.blue, isDark).<span class="fn">replace</span>(<span class="str">'0.8'</span>, <span class="str">'0.1'</span>),
+    fill: <span class="kw">true</span>,
+  }]
+}</div>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 9: Migration Map
+     =========================== -->
+<div id="migration"></div>
+<span class="section-number">Section 09</span>
+<h2>Migration Map</h2>
+
+<h3>Chart.js Components</h3>
+
+<table class="migration-table">
+  <thead>
+    <tr><th>File</th><th>Change</th><th>Effort</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="file">DonorPerformanceDashboard.tsx</td>
+      <td>Import <code>chart-config</code>, replace hardcoded colors with <code>getChartColor()</code>, remove per-file <code>ChartJS.register()</code></td>
+      <td>Medium</td>
+    </tr>
+    <tr>
+      <td class="file">PeerComparison.tsx</td>
+      <td>Import <code>chart-config</code>, replace hardcoded colors with <code>getChartColor()</code>, remove per-file <code>ChartJS.register()</code></td>
+      <td>Medium</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Custom CSS Bars to ProgressBar</h3>
+
+<table class="migration-table">
+  <thead>
+    <tr><th>File</th><th>Current Pattern</th><th>Target</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="file">VerificationAnalytics.tsx</td>
+      <td>Custom CSS horizontal bars (bg-blue-100, bg-green-100)</td>
+      <td><code>Chart.js Bar chart</code> or <code>ProgressBar</code></td>
+    </tr>
+    <tr>
+      <td class="file">AssessmentTrends.tsx</td>
+      <td>Conditional Tailwind bars (green/yellow/orange/red)</td>
+      <td><code>&lt;ProgressBar variant={scoreVariant} value={score} /&gt;</code></td>
+    </tr>
+    <tr>
+      <td class="file">CommitmentDashboard.tsx</td>
+      <td>bg-blue-600 progress bar</td>
+      <td><code>&lt;ProgressBar variant="default" value={pct} /&gt;</code></td>
+    </tr>
+    <tr>
+      <td class="file">ConflictSummary.tsx</td>
+      <td>bg-green-500 progress bar</td>
+      <td><code>&lt;ProgressBar variant="success" value={pct} /&gt;</code></td>
+    </tr>
+    <tr>
+      <td class="file">GameBadgeSystem.tsx</td>
+      <td>Gradient progress (blue to purple)</td>
+      <td><code>&lt;ProgressBar variant="gradient" value={pct} /&gt;</code></td>
+    </tr>
+    <tr>
+      <td class="file">EntityInsightsHeader.tsx</td>
+      <td>bg-orange-500 progress bar</td>
+      <td><code>&lt;ProgressBar variant="warning" value={pct} /&gt;</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="sep"></div>
+
+<!-- ===========================
+     Section 10: Summary
+     =========================== -->
+<div id="summary"></div>
+<span class="section-number">Section 10</span>
+<h2>Summary</h2>
+
+<div class="summary-grid">
+  <div class="summary-card">
+    <div class="summary-value">2</div>
+    <div class="summary-label">Chart.js components to migrate</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-value">6</div>
+    <div class="summary-label">Custom CSS bars to ProgressBar</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-value">3</div>
+    <div class="summary-label">New files to create</div>
+  </div>
+</div>
+
+<h3>New Files</h3>
+
+<div class="code-block"><span class="cm">// File structure</span>
+src/lib/utils/chart-config.ts          <span class="cm">(~100 lines) centralized colors + options</span>
+src/lib/utils/chart-registration.ts    <span class="cm">(~15 lines)  single ChartJS.register()</span>
+src/components/shared/ProgressBar.tsx  <span class="cm">(~60 lines)  unified progress component</span></div>
+
+<h3>Key Metrics</h3>
+
+<div class="token-grid">
+  <div class="token-chip">
+    <div class="token-swatch" style="background:var(--primary);"></div>
+    <span>Estimated: 1-2 days</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:#22c55e;"></div>
+    <span>Risk: LOW (additive)</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:#f59e0b;"></div>
+    <span>Migration: gradual</span>
+  </div>
+  <div class="token-chip">
+    <div class="token-swatch" style="background:#a855f7;"></div>
+    <span>Dark mode: automatic</span>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="sep"></div>
+<p style="font-size:13px;text-align:center;padding:24px 0;">
+  DRMS Design System -- Chart Standardization Specification v1.0.0<br>
+  Generated 2025-05-24 &middot; For stakeholder review
+</p>
+
+</main>
+
+<!-- ============================================================
+     Sidebar active state script
+     ============================================================ -->
+<script>
+(function() {
+  const links = document.querySelectorAll('.sidebar a');
+  const sections = [];
+
+  links.forEach(link => {
+    const href = link.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      const el = document.getElementById(href.slice(1));
+      if (el) sections.push({ link, el });
+    }
+  });
+
+  function update() {
+    const scrollY = window.scrollY + 120;
+    let current = sections[0];
+    sections.forEach(s => {
+      if (s.el.offsetTop <= scrollY) current = s;
+    });
+    links.forEach(l => l.classList.remove('active'));
+    if (current) current.link.classList.add('active');
+  }
+
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+</script>
+
+</body>
+</html>

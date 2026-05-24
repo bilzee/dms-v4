@@ -46,6 +46,7 @@ import {
 import { apiGet, apiPost } from '@/lib/api';
 import { createAuthenticatedFetch } from '@/lib/auth/token-utils';
 import { cn } from '@/lib/utils';
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 import { format } from 'date-fns';
 
 interface AuditLogEntry {
@@ -555,24 +556,7 @@ export function ConfigurationAuditHistory({
       {/* Audit entries */}
       <div className="space-y-4">
         {isLoading ? (
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <Card key={i}>
-                <CardContent className="p-4">
-                  <div className="animate-pulse">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="h-4 bg-gray-200 rounded w-48"></div>
-                      <div className="h-6 bg-gray-200 rounded w-24"></div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-3 bg-gray-200 rounded w-full"></div>
-                      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <ContentSkeleton variant="card" count={5} className="space-y-4" />
         ) : auditData?.data?.length === 0 ? (
           <Card>
             <CardContent className="p-8">

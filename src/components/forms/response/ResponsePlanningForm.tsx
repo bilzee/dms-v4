@@ -10,6 +10,8 @@ import { v4 as uuidv4 } from 'uuid'
 // UI components
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormCard } from '@/components/shared/FormCard'
+import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -518,7 +520,7 @@ export function ResponsePlanningForm({
               </Badge>
             )}
           </div>
-          
+
           {/* Connection Status */}
           <div className="flex items-center gap-2">
             {isOnline ? (
@@ -532,7 +534,7 @@ export function ResponsePlanningForm({
                 Offline
               </Badge>
             )}
-            
+
             {isWorkingOffline() && (
               <Badge variant="outline" className="text-blue-700 border-blue-300">
                 <CloudOff className="h-3 w-3 mr-1" />
@@ -542,7 +544,7 @@ export function ResponsePlanningForm({
           </div>
         </CardTitle>
         <CardDescription>
-          {mode === 'create' 
+          {mode === 'create'
             ? 'Plan response resources for a verified assessment. Choose between manual planning or importing from donor commitments.'
             : mode === 'resubmit'
             ? 'Edit the rejected response details. Update the information and save to prepare for resubmission to coordinator.'
@@ -1285,24 +1287,13 @@ export function ResponsePlanningForm({
               </div>
 
               {/* Submit Buttons */}
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="submit"
-                  disabled={isLoading || !form.formState.isValid}
-                  className="flex-1"
-                >
-                  {isLoading ? 'Saving...' : 'Update Plan'}
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={isLoading}
-                >
-                  Cancel
-                </Button>
-              </div>
+              <FormActionBar
+                onCancel={handleCancel}
+                submitLabel="Update Plan"
+                loading={isLoading}
+                disabled={isLoading || !form.formState.isValid}
+                variant="bordered"
+              />
 
               {submitError && (
                 <Alert variant="destructive">

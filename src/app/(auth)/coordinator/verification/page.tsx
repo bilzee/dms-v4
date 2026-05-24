@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, Shield, User, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 import Link from 'next/link';
 
 export default function VerificationPage() {
@@ -79,10 +80,7 @@ export default function VerificationPage() {
       fallbackPath="/dashboard"
       loadingComponent={
         <div className="container mx-auto p-6">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          </div>
+          <ContentSkeleton variant="card" />
         </div>
       }
       errorComponent={isClient ? <RoleAccessError /> : null}

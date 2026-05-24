@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormCard } from '@/components/shared/FormCard'
+import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -240,7 +241,7 @@ export function HealthAssessmentForm({
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto" data-testid="health-assessment-form">
+    <FormCard className="max-w-4xl mx-auto" data-testid="health-assessment-form">
       {/* Gap Analysis Summary */}
       <Card>
         <CardHeader>
@@ -270,7 +271,7 @@ export function HealthAssessmentForm({
       </Card>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(handleSubmit)}>
           {/* Incident Selection */}
           <Card>
             <CardHeader>
@@ -708,26 +709,15 @@ export function HealthAssessmentForm({
             </CardContent>
           </Card>
 
-          {/* Form Actions */}
-          <div className="flex justify-end gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting || disabled || !selectedEntity}
-              data-testid="submit-assessment-button"
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Health Assessment'}
-            </Button>
-          </div>
+          <FormActionBar
+            onCancel={onCancel}
+            submitLabel="Submit Health Assessment"
+            loading={isSubmitting}
+            disabled={isSubmitting || disabled || !selectedEntity}
+            variant="bordered"
+          />
         </form>
       </Form>
-    </div>
+    </FormCard>
   )
 }

@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormCard } from '@/components/shared/FormCard';
+import { FormActionBar } from '@/components/shared/FormActionBar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Loader2, MapPin, Building2, CheckCircle, AlertCircle, MapIcon, Crosshair } from 'lucide-react';
+import { MapPin, CheckCircle, AlertCircle, MapIcon, Crosshair } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import dynamic from 'next/dynamic';
 
@@ -124,22 +125,13 @@ export function EntityForm({ onSubmit, onCancel, initialData, isEditing = false 
 
   return (
     <>
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            {isEditing ? 'Edit Entity' : 'Create New Entity'}
-          </CardTitle>
-          <CardDescription>
-            {isEditing 
-              ? 'Update the entity information below'
-              : 'Fill in the details to create a new entity in the system'
-            }
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent>
-          <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      <FormCard
+        title={isEditing ? 'Edit Entity' : 'Create New Entity'}
+        description={isEditing ? 'Update the entity information below' : 'Fill in the details to create a new entity in the system'}
+        variant="default"
+        className="w-full max-w-2xl mx-auto"
+      >
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
             {/* Name Field */}
             <div className="space-y-2">
               <Label htmlFor="name">Entity Name *</Label>
@@ -306,38 +298,14 @@ export function EntityForm({ onSubmit, onCancel, initialData, isEditing = false 
             )}
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-end space-x-3 pt-4 border-t">
-              {onCancel && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onCancel}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-              )}
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="min-w-[120px]"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isEditing ? 'Updating...' : 'Creating...'}
-                  </>
-                ) : (
-                  <>
-                    <Building2 className="mr-2 h-4 w-4" />
-                    {isEditing ? 'Update Entity' : 'Create Entity'}
-                  </>
-                )}
-              </Button>
-            </div>
+            <FormActionBar
+              onCancel={onCancel}
+              submitLabel={isSubmitting ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Update Entity' : 'Create Entity')}
+              loading={isSubmitting}
+              variant="bordered"
+            />
           </form>
-        </CardContent>
-      </Card>
+      </FormCard>
 
       {/* Map Selector Dialog */}
       <Dialog open={showMapSelector} onOpenChange={setShowMapSelector}>

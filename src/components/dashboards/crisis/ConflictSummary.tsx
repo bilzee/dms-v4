@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react';
 import { useConflicts } from '@/hooks/useConflicts';
+import { ProgressBar } from '@/components/shared/ProgressBar';
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 
 interface ConflictSummaryProps {
   className?: string;
@@ -40,13 +42,7 @@ export const ConflictSummary = ({
   if (loading || !summary) {
     return (
       <div className={`bg-white rounded-lg border border-gray-200 p-4 ${className}`}>
-        <div className="animate-pulse">
-          {showTitle && <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>}
-          <div className="space-y-2">
-            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/4"></div>
-          </div>
-        </div>
+        <ContentSkeleton variant="card" />
       </div>
     );
   }
@@ -90,12 +86,7 @@ export const ConflictSummary = ({
         </div>
 
         {/* Progress Bar */}
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div
-            className="bg-green-500 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${summary.resolutionRate}%` }}
-          />
-        </div>
+        <ProgressBar value={summary.resolutionRate} variant="success" size="sm" />
 
         {/* Breakdown by Type (if there are conflicts) */}
         {summary.totalConflicts > 0 && (

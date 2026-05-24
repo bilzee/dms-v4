@@ -21,6 +21,8 @@ import {
   BarChart3,
   LineChart
 } from 'lucide-react'
+import { ProgressBar } from '@/components/shared/ProgressBar'
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
 
 interface AssessmentTrendsProps {
   entityId: string
@@ -124,11 +126,7 @@ export function AssessmentTrends({ entityId }: AssessmentTrendsProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-48 bg-gray-200 rounded"></div>
-            ))}
-          </div>
+          <ContentSkeleton variant="card" count={3} />
         </CardContent>
       </Card>
     )
@@ -360,15 +358,12 @@ function CategoryTrendCard({ trend }: CategoryTrendCardProps) {
                     <span className="text-sm font-medium w-20">{dataPoint.period}</span>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className={`h-2 rounded-full ${
-                              dataPoint.score >= 80 ? 'bg-green-500' :
-                              dataPoint.score >= 60 ? 'bg-yellow-500' :
-                              dataPoint.score >= 40 ? 'bg-orange-500' : 'bg-red-500'
-                            }`}
-                            style={{ width: `${Math.max(dataPoint.score, 5)}%` }}
-                          ></div>
+                        <div className="flex-1">
+                          <ProgressBar
+                            value={Math.max(dataPoint.score, 5)}
+                            variant={dataPoint.score >= 80 ? 'success' : dataPoint.score >= 60 ? 'warning' : 'danger'}
+                            size="sm"
+                          />
                         </div>
                         <span className="text-sm font-medium w-12 text-right">
                           {dataPoint.score.toFixed(0)}%

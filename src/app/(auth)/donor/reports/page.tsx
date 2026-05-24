@@ -30,7 +30,8 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { apiGet, getAuthHeaders } from '@/lib/api'
-import { useToast } from '@/components/ui/use-toast'
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
+import { toast } from 'sonner'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 
@@ -63,7 +64,6 @@ interface ReportConfig {
 export default function DonorReportsPage() {
   const { currentRole, user } = useAuth()
   const router = useRouter()
-  const { toast } = useToast()
   const [reportConfig, setReportConfig] = useState<ReportConfig>({
     format: 'pdf',
     includeCharts: true,
@@ -127,7 +127,7 @@ export default function DonorReportsPage() {
       URL.revokeObjectURL(url)
     } catch (error) {
       console.error('Failed to generate report:', error)
-      toast({ title: 'Error', description: 'Failed to generate report', variant: 'destructive' })
+      toast.error('Failed to generate report')
     } finally {
       setIsGenerating(false)
     }
@@ -153,15 +153,7 @@ export default function DonorReportsPage() {
     return (
       <RoleBasedRoute requiredRole="DONOR">
         <div className="py-6">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-64 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-          </div>
+          <ContentSkeleton variant="metric" count={4} />
         </div>
       </RoleBasedRoute>
     )

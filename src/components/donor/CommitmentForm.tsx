@@ -10,7 +10,9 @@ import { useRouter } from 'next/navigation'
 
 // UI components
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormCard } from '@/components/shared/FormCard'
+import { FormActionBar } from '@/components/shared/FormActionBar'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -202,29 +204,28 @@ export function CommitmentForm({ donorId, onSuccess, onCancel, initialData, preS
 
   
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          {onCancel && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onCancel}
-              className="p-0 h-8"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          )}
-          <CardTitle>Create New Commitment</CardTitle>
+    <FormCard
+      title="Create New Commitment"
+      description="Specify the items you're committing to donate for this incident"
+      variant="default"
+      className="w-full max-w-4xl mx-auto"
+    >
+      {onCancel && (
+        <div className="-mt-2 mb-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onCancel}
+            className="p-0 h-8"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
         </div>
-        <CardDescription>
-          Specify the items you&apos;re committing to donate for this incident
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      )}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
             {/* Entity and Incident Selection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
@@ -448,29 +449,15 @@ export function CommitmentForm({ donorId, onSuccess, onCancel, initialData, preS
               </AlertDescription>
             </Alert>
 
-            {/* Form Actions */}
-            <div className="flex justify-end gap-4 pt-6">
-              {onCancel && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onCancel}
-                  disabled={createCommitmentMutation.isPending}
-                >
-                  Cancel
-                </Button>
-              )}
-              <Button
-                type="submit"
-                disabled={createCommitmentMutation.isPending}
-                className="min-w-[120px]"
-              >
-                {createCommitmentMutation.isPending ? 'Creating...' : 'Create Commitment'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+          {/* Form Actions */}
+          <FormActionBar
+            onCancel={onCancel}
+            submitLabel={createCommitmentMutation.isPending ? 'Creating...' : 'Create Commitment'}
+            loading={createCommitmentMutation.isPending}
+            variant="bordered"
+          />
+        </form>
+      </Form>
+    </FormCard>
   )
 }

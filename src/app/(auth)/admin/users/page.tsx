@@ -9,12 +9,15 @@ import { StatCard } from '@/components/shared/StatCard'
 import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { FilterBar } from '@/components/shared/FilterBar'
 import { RegisterForm } from '@/components/auth/RegisterForm'
 import { EditUserForm } from '@/components/auth/EditUserForm'
 import { useAuth } from '@/hooks/useAuth'
+import { useFilters } from '@/hooks/useFilters'
 import { apiGet } from '@/lib/api'
 import { Edit, Users, UserCheck, UserX, Plus, Pencil } from 'lucide-react'
 import { DataTable, type ColumnDef, type RowAction } from '@/components/shared/DataTable'
+import type { AdminFilters, FilterConfig, ToolbarAction } from '@/types/filters'
 
 interface User {
   id: string
@@ -92,12 +95,29 @@ export default function UsersPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isHydrated, setIsHydrated] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [roleFilter, setRoleFilter] = useState<string>('all')
   const { hasPermission } = useAuth()
 
   const canManageUsers = hasPermission('MANAGE_USERS')
+
+  // Use the new useFilters hook for state management
+  const {
+    filters,
+    setFilters,
+    clearFilters,
+    setFilterValue,
+    summary
+  } = useFilters<AdminFilters>({
+    defaultFilters: {
+      search: '',
+      status: 'all',
+      role: 'all',
+      sortBy: 'name',
+      sortOrder: 'asc'
+    },
+    enableUrlSync: true, // Enable URL synchronization
+    persistKey: 'admin-users-filters', // Enable localStorage persistence
+    debounceMs: 300
+  })
 
   // Fetch users from backend via TanStack Query
   const { data: users = [], isLoading: loading, refetch: fetchUsers } = useQuery<User[]>({
@@ -132,25 +152,18 @@ export default function UsersPage() {
     }
   }
 
+  // Calculate metrics
   const totalUsers = users.length
   const activeUsers = users.filter(u => u.isActive).length
   const inactiveUsers = users.filter(u => !u.isActive).length
   const availableRoles = [...new Set(users.flatMap(u => u.roles.map(r => r.role.name)))]
 
-  const handleFilterChange = (key: string, value: string) => {
-    if (key === 'status') setStatusFilter(value)
-    if (key === 'role') setRoleFilter(value)
-  }
-
-  const filterValues: Record<string, string> = {
-    status: statusFilter,
-    role: roleFilter,
-  }
-
-  const filterConfigs = [
+  // Configure filter options based on available data
+  const filterConfigs: FilterConfig[] = [
     {
       key: 'status',
       label: 'Filter by status',
+      placeholder: 'All Status',
       options: [
         { label: 'All Users', value: 'all' },
         { label: 'Active Only', value: 'active' },
@@ -160,6 +173,7 @@ export default function UsersPage() {
     {
       key: 'role',
       label: 'Filter by role',
+      placeholder: 'All Roles',
       options: [
         { label: 'All Roles', value: 'all' },
         ...availableRoles.map(role => ({ label: role, value: role })),
@@ -167,24 +181,52 @@ export default function UsersPage() {
     },
   ]
 
+  // Define toolbar actions
+  const toolbarActions: ToolbarAction[] = [
+    {
+      label: 'Create User',
+      icon: Plus,
+      variant: 'default',
+      onClick: () => setCreateDialogOpen(true),
+    }
+  ]
+
   const actionsWithHandler = userActions.map(action => ({
     ...action,
     onClick: handleEditUser,
   }))
 
+  // Apply filters to users
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.username.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = !filters.search || 
+      user.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+      user.email.toLowerCase().includes(filters.search.toLowerCase()) ||
+      user.username.toLowerCase().includes(filters.search.toLowerCase())
 
-    const matchesStatus = statusFilter === 'all' ||
-                         (statusFilter === 'active' && user.isActive) ||
-                         (statusFilter === 'inactive' && !user.isActive)
+    const matchesStatus = filters.status === 'all' ||
+      (filters.status === 'active' && user.isActive) ||
+      (filters.status === 'inactive' && !user.isActive)
 
-    const matchesRole = roleFilter === 'all' ||
-                       user.roles.some(userRole => userRole.role.name === roleFilter)
+    const matchesRole = filters.role === 'all' ||
+      user.roles.some(userRole => userRole.role.name === filters.role)
 
     return matchesSearch && matchesStatus && matchesRole
+  })
+
+  // Sort filtered users
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    const direction = filters.sortOrder === 'desc' ? -1 : 1;
+    
+    switch (filters.sortBy) {
+      case 'name':
+        return direction * a.name.localeCompare(b.name);
+      case 'email':
+        return direction * a.email.localeCompare(b.email);
+      case 'createdAt':
+        return direction * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      default:
+        return 0;
+    }
   })
 
   // Prevent hydration mismatch by waiting for client-side hydration
@@ -234,19 +276,34 @@ export default function UsersPage() {
             <StatCard label="Inactive Users" value={inactiveUsers} severity="warning" icon={UserX} />
           </StatCardGrid>
 
+          {/* NEW: Enhanced FilterBar with all features */}
+          <FilterBar
+            searchValue={filters.search}
+            onSearchChange={(value) => setFilterValue('search', value)}
+            searchPlaceholder="Search users by name, email, or username..."
+            
+            filters={filterConfigs}
+            filterValues={{
+              status: filters.status || 'all',
+              role: filters.role || 'all'
+            }}
+            onFilterChange={(key, value) => setFilterValue(key, value)}
+            
+            actions={toolbarActions}
+            showClearAll={true}
+            onClearAll={clearFilters}
+            
+            summary={summary}
+            loading={!isHydrated || loading}
+          />
+
+          {/* Data Table - simplified since filtering moved to FilterBar */}
           <DataTable
             title="Users"
             columns={userColumns}
-            data={isHydrated ? filteredUsers : []}
+            data={isHydrated ? sortedUsers : []}
             loading={!isHydrated || loading}
             emptyMessage={users.length === 0 ? "No users found. Create your first user to get started." : "No users match the current filters."}
-            searchable
-            searchPlaceholder="Search users by name, email, or username..."
-            searchValue={searchTerm}
-            onSearchChange={setSearchTerm}
-            filters={filterConfigs}
-            filterValues={filterValues}
-            onFilterChange={handleFilterChange}
             actions={actionsWithHandler}
           />
 

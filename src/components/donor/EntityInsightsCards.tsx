@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
 
 interface EntityInsightsCardProps {
   entityId: string
@@ -125,14 +126,7 @@ export function EntityInsightsCard({ entityId, compact = false }: EntityInsights
     return (
       <Card className={cn(compact ? 'h-48' : 'h-64')}>
         <CardContent className="p-4">
-          <div className="animate-pulse space-y-3">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-            <div className="space-y-2">
-              <div className="h-2 bg-gray-200 rounded"></div>
-              <div className="h-2 bg-gray-200 rounded w-4/5"></div>
-            </div>
-          </div>
+          <ContentSkeleton variant="card" />
         </CardContent>
       </Card>
     )
@@ -316,7 +310,11 @@ export function EntityInsightsCards({ maxCards = 6, compact = false }: EntityIns
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {[...Array(maxCards)].map((_, i) => (
-          <div key={i} className="h-48 bg-gray-100 rounded-lg animate-pulse"></div>
+          <Card key={i} className="h-48">
+            <CardContent className="p-4">
+              <ContentSkeleton variant="card" />
+            </CardContent>
+          </Card>
         ))}
       </div>
     )

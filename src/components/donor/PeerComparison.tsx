@@ -8,35 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Chart as ChartJS,
-  RadialLinearScale,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js';
+import '@/lib/utils/chart-registration';
 import { Radar, Bar } from 'react-chartjs-2';
-
-ChartJS.register(
-  RadialLinearScale,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  Filler,
-  Title,
-  Tooltip,
-  Legend
-);
-import { 
-  Users, 
+import { CHART_COLORS, getChartColor, getChartBgColor } from '@/lib/utils/chart-config';
+import {
+  Users,
   TrendingUp, 
   TrendingDown, 
   Equal,
@@ -327,23 +303,23 @@ export function PeerComparison({
                     {
                       label: 'You',
                       data: radarData.map(d => d['You']),
-                      backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                      borderColor: 'rgb(59, 130, 246)',
-                      pointBackgroundColor: 'rgb(59, 130, 246)',
+                      backgroundColor: getChartBgColor(CHART_COLORS.blue),
+                      borderColor: getChartColor(CHART_COLORS.blue),
+                      pointBackgroundColor: getChartColor(CHART_COLORS.blue),
                     },
                     {
                       label: 'Top 25%',
                       data: radarData.map(d => d['Top 25%']),
-                      backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                      borderColor: 'rgb(16, 185, 129)',
-                      pointBackgroundColor: 'rgb(16, 185, 129)',
+                      backgroundColor: getChartBgColor(CHART_COLORS.green),
+                      borderColor: getChartColor(CHART_COLORS.green),
+                      pointBackgroundColor: getChartColor(CHART_COLORS.green),
                     },
                     {
                       label: 'Average',
                       data: radarData.map(d => d['Average']),
-                      backgroundColor: 'rgba(156, 163, 175, 0.2)',
-                      borderColor: 'rgb(156, 163, 175)',
-                      pointBackgroundColor: 'rgb(156, 163, 175)',
+                      backgroundColor: getChartBgColor(CHART_COLORS.gray),
+                      borderColor: getChartColor(CHART_COLORS.gray),
+                      pointBackgroundColor: getChartColor(CHART_COLORS.gray),
                     }
                   ]
                 }}
@@ -365,17 +341,17 @@ export function PeerComparison({
                     {
                       label: 'Your Score',
                       data: barData.map(d => d['Your Score']),
-                      backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                      backgroundColor: getChartColor(CHART_COLORS.blue),
                     },
                     {
                       label: 'Top 25%',
                       data: barData.map(d => d['Top 25%']),
-                      backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                      backgroundColor: getChartColor(CHART_COLORS.green),
                     },
                     {
                       label: 'Average',
                       data: barData.map(d => d['Average']),
-                      backgroundColor: 'rgba(156, 163, 175, 0.8)',
+                      backgroundColor: getChartColor(CHART_COLORS.gray),
                     }
                   ]
                 }}

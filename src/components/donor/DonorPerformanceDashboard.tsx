@@ -13,20 +13,9 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Chart as ChartJS, 
-  CategoryScale, 
-  LinearScale, 
-  PointElement, 
-  LineElement, 
-  BarElement, 
-  Title, 
-  Tooltip, 
-  Legend,
-  ArcElement,
-  RadialLinearScale
-} from 'chart.js';
+import '@/lib/utils/chart-registration';
 import { Line, Bar, Radar } from 'react-chartjs-2';
+import { CHART_COLORS, getChartColor, getChartBgColor, getDefaultChartOptions, getBarChartOptions, getRadarChartOptions } from '@/lib/utils/chart-config';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -49,19 +38,6 @@ import type {
   BadgeType 
 } from '@/types/gamification';
 
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-  RadialLinearScale
-);
 
 interface DonorPerformanceDashboardProps {
   donorId: string;
@@ -161,22 +137,22 @@ export function DonorPerformanceDashboard({
         {
           label: 'Delivery Rate (%)',
           data: deliveryRateData,
-          borderColor: 'rgb(34, 197, 94)',
-          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          borderColor: getChartColor(CHART_COLORS.green),
+          backgroundColor: getChartBgColor(CHART_COLORS.green),
           tension: 0.4,
         },
         {
           label: 'Commitment Fulfillment (%)',
           data: fulfillmentRateData,
-          borderColor: 'rgb(59, 130, 246)',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderColor: getChartColor(CHART_COLORS.blue),
+          backgroundColor: getChartBgColor(CHART_COLORS.blue),
           tension: 0.4,
         },
         ...(chartType === 'line' ? [{
           label: 'Response Verification (%)',
           data: responseVerificationData,
-          borderColor: 'rgb(251, 146, 60)',
-          backgroundColor: 'rgba(251, 146, 60, 0.1)',
+          borderColor: getChartColor(CHART_COLORS.orange),
+          backgroundColor: getChartBgColor(CHART_COLORS.orange),
           tension: 0.4,
         }] : [])
       ]

@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FilterPanel Component Family - Design Specification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        border: "hsl(214.3 31.8% 91.4%)",
+                        input: "hsl(214.3 31.8% 91.4%)",
+                        ring: "hsl(222.2 84% 4.9%)",
+                        background: "hsl(0 0% 100%)",
+                        foreground: "hsl(222.2 84% 4.9%)",
+                        primary: {
+                            DEFAULT: "hsl(222.2 47.4% 11.2%)",
+                            foreground: "hsl(210 40% 98%)",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(210 40% 96%)",
+                            foreground: "hsl(222.2 84% 4.9%)",
+                        },
+                        destructive: {
+                            DEFAULT: "hsl(0 84.2% 60.2%)",
+                            foreground: "hsl(210 40% 98%)",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(210 40% 96%)",
+                            foreground: "hsl(215.4 16.3% 46.9%)",
+                        },
+                        accent: {
+                            DEFAULT: "hsl(210 40% 96%)",
+                            foreground: "hsl(222.2 84% 4.9%)",
+                        },
+                        card: {
+                            DEFAULT: "hsl(0 0% 100%)",
+                            foreground: "hsl(222.2 84% 4.9%)",
+                        },
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        .expand-enter {
+            opacity: 0;
+            max-height: 0;
+            transform: translateY(-10px);
+        }
+        .expand-enter-active {
+            opacity: 1;
+            max-height: 1000px;
+            transform: translateY(0);
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .filter-badge {
+            animation: slideIn 0.2s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 p-6 font-sans">
+    <div class="max-w-7xl mx-auto space-y-8">
+        
+        <!-- Header -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">FilterPanel Component Family</h1>
+            <p class="text-gray-600 mb-4">Phase 4: Design System Unification - Filter Component Specification</p>
+            <div class="text-sm text-gray-500">
+                <strong>Research Sources:</strong> Material Design 3, Ant Design, Carbon Design System, Salesforce Lightning, Humanitarian Response.info
+            </div>
+        </div>
+
+        <!-- Research & Principles -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h2 class="text-xl font-semibold mb-4">Design Principles & Research</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-medium mb-2">UX Principles</h3>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li><strong>Progressive Disclosure:</strong> Simple → Advanced complexity tiers</li>
+                        <li><strong>Immediate Feedback:</strong> Real-time filter application and counts</li>
+                        <li><strong>Discoverability:</strong> Clear preset options and quick access</li>
+                        <li><strong>Persistence:</strong> Remember user preferences and custom filters</li>
+                        <li><strong>Accessibility:</strong> Keyboard navigation, screen reader support</li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-medium mb-2">Pattern Analysis</h3>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li><strong>Humanitarian Ops:</strong> Multi-criteria filtering with geographic context</li>
+                        <li><strong>Enterprise Dashboards:</strong> Saved filter presets for operational efficiency</li>
+                        <li><strong>Data Management:</strong> Bulk operations requiring precise filtering</li>
+                        <li><strong>Crisis Response:</strong> Time-sensitive filtering with status priorities</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Variant Selection Logic -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h2 class="text-xl font-semibold mb-4">Variant Selection Framework</h2>
+            
+            <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                <h3 class="font-medium text-blue-900 mb-2">Decision Tree</h3>
+                <div class="text-sm text-blue-800 space-y-2">
+                    <p><strong>FilterBar (Inline)</strong> → 1-3 filters, table/list context, simple search + dropdowns</p>
+                    <p><strong>FilterPanel (Advanced)</strong> → 4+ filters, dashboard context, multi-select + date ranges + presets</p>
+                    <p><strong>SearchToolbar</strong> → Legacy component for basic use cases, gradually migrate to FilterBar</p>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-4 text-sm">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-medium mb-2">Information Density</h4>
+                    <p class="text-gray-600">High density lists → FilterBar<br>Complex dashboards → FilterPanel</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-medium mb-2">User Task Context</h4>
+                    <p class="text-gray-600">Quick scanning → FilterBar<br>Deep analysis → FilterPanel</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-medium mb-2">Role & Frequency</h4>
+                    <p class="text-gray-600">Occasional use → FilterBar<br>Power users → FilterPanel</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FilterBar Variant -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h2 class="text-xl font-semibold mb-4">FilterBar (Inline Compact)</h2>
+            
+            <div class="mb-6">
+                <h3 class="font-medium mb-3">Use Cases: Admin Users, Simple Lists, Table Headers</h3>
+                
+                <!-- FilterBar Example -->
+                <div class="border rounded-lg p-4 space-y-4">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <!-- Search -->
+                        <div class="flex-1 min-w-64">
+                            <div class="relative">
+                                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                <input type="text" placeholder="Search users by name, email, or username..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+                        
+                        <!-- Status Filter -->
+                        <select class="px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-32">
+                            <option>All Status</option>
+                            <option>Active</option>
+                            <option>Inactive</option>
+                        </select>
+                        
+                        <!-- Role Filter -->
+                        <select class="px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white min-w-32">
+                            <option>All Roles</option>
+                            <option>Admin</option>
+                            <option>Coordinator</option>
+                            <option>Donor</option>
+                        </select>
+                        
+                        <!-- Actions -->
+                        <button class="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium flex items-center gap-2">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Add User
+                        </button>
+                    </div>
+                    
+                    <!-- Active Filters Summary -->
+                    <div class="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+                        <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"></path>
+                        </svg>
+                        <span class="text-sm text-blue-700">2 filters applied</span>
+                        <button class="text-sm text-blue-600 hover:text-blue-700 underline">Clear all</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-sm text-gray-600">
+                <strong>Features:</strong> Horizontal layout, 1-3 filter dropdowns, integrated search, responsive wrapping, immediate filter application
+            </div>
+        </div>
+
+        <!-- FilterPanel Variant -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h2 class="text-xl font-semibold mb-4">FilterPanel (Advanced)</h2>
+            
+            <div class="mb-6">
+                <h3 class="font-medium mb-3">Use Cases: Verification Queues, Dashboard Filtering, Complex Data Analysis</h3>
+                
+                <!-- FilterPanel Example -->
+                <div class="border rounded-lg p-6 space-y-6 max-w-4xl">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between pb-3 border-b">
+                        <div class="flex items-center gap-2">
+                            <svg class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"></path>
+                            </svg>
+                            <h3 class="text-lg font-semibold text-gray-900">Queue Filters</h3>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button class="px-3 py-1.5 text-sm border rounded-md hover:bg-gray-50 flex items-center gap-1">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                Clear All
+                            </button>
+                            <button class="p-1.5 hover:bg-gray-100 rounded-md">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Presets -->
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 mb-2 block">Quick Filters</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <button class="px-3 py-2 text-xs border rounded-md hover:bg-gray-50 text-left">Critical Priority</button>
+                            <button class="px-3 py-2 text-xs border rounded-md hover:bg-gray-50 text-left bg-blue-50 border-blue-200 text-blue-700">Over 1 Hour Old</button>
+                            <button class="px-3 py-2 text-xs border rounded-md hover:bg-gray-50 text-left">Health Assessments</button>
+                            <button class="px-3 py-2 text-xs border rounded-md hover:bg-gray-50 text-left">Recently Submitted</button>
+                        </div>
+                    </div>
+
+                    <!-- Search -->
+                    <div>
+                        <label class="text-sm font-medium text-gray-700 mb-2 block">Search</label>
+                        <div class="relative">
+                            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            <input type="text" placeholder="Search by entity, assessor, location..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Filter Groups -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Status -->
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 mb-3 block">Status</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center">
+                                    <input type="checkbox" checked class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-sm text-gray-600">Submitted</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-sm text-gray-600">Verified</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-sm text-gray-600">Auto Verified</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-sm text-gray-600">Rejected</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Priority -->
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 mb-3 block">Priority</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center">
+                                    <input type="checkbox" checked class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <div class="flex items-center ml-2 gap-2">
+                                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                        <span class="text-sm text-gray-600">Critical</span>
+                                    </div>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <div class="flex items-center ml-2 gap-2">
+                                        <div class="w-3 h-3 rounded-full bg-orange-500"></div>
+                                        <span class="text-sm text-gray-600">High</span>
+                                    </div>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <div class="flex items-center ml-2 gap-2">
+                                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                        <span class="text-sm text-gray-600">Medium</span>
+                                    </div>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <div class="flex items-center ml-2 gap-2">
+                                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                        <span class="text-sm text-gray-600">Low</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Assessment Type -->
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 mb-3 block">Assessment Type</label>
+                            <div class="space-y-2 max-h-32 overflow-y-auto">
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-sm text-gray-600">HEALTH</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" checked class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-sm text-gray-600">WASH</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-sm text-gray-600">SHELTER</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-sm text-gray-600">FOOD</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-sm text-gray-600">SECURITY</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 mb-2 block">From Date</label>
+                            <input type="datetime-local" class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700 mb-2 block">To Date</label>
+                            <input type="datetime-local" value="2024-01-15T14:30" class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Collapsible Advanced Section -->
+                    <div class="border-t pt-4">
+                        <button class="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                            <svg class="h-4 w-4 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                            Advanced Filters & Sorting
+                        </button>
+                        
+                        <!-- Advanced content (expanded) -->
+                        <div class="mt-4 space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700 mb-2 block">Sort By</label>
+                                    <select class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                        <option>Assessment Date</option>
+                                        <option>Response Date</option>
+                                        <option>Priority</option>
+                                        <option>Entity Name</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700 mb-2 block">Sort Order</label>
+                                    <select class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                        <option>Newest First</option>
+                                        <option>Oldest First</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Saved Filters -->
+                    <div class="border-t pt-4">
+                        <label class="text-sm font-medium text-gray-700 mb-3 block">Saved Filters</label>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between p-3 border rounded-lg">
+                                <div>
+                                    <div class="font-medium text-sm">High Priority Health</div>
+                                    <div class="text-xs text-gray-500">Saved Jan 10, 2024 09:15</div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button class="px-3 py-1 text-xs border rounded hover:bg-gray-50">Apply</button>
+                                    <button class="p-1 text-red-600 hover:bg-red-50 rounded">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Save Current Filter -->
+                    <div class="border-t pt-4">
+                        <div class="flex items-center gap-2">
+                            <input type="text" placeholder="Save current filter as..." class="flex-1 px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium flex items-center gap-2">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                                Save
+                            </button>
+                            <button class="px-3 py-2 border rounded-md hover:bg-gray-50 text-sm">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-sm text-gray-600">
+                <strong>Features:</strong> Collapsible sections, preset management, saved filters, multi-select checkboxes, date ranges, advanced sorting, localStorage persistence
+            </div>
+        </div>
+
+        <!-- Migration Mapping -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h2 class="text-xl font-semibold mb-4">Complete DRMS Filter Migration Mapping</h2>
+            
+            <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+                    <div>
+                        <div class="text-2xl font-bold text-green-600">2</div>
+                        <div class="text-sm text-green-700">FilterPanel<br/>(Advanced)</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-blue-600">28+</div>
+                        <div class="text-sm text-blue-700">FilterBar<br/>(Simple-Intermediate)</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-orange-600">10+</div>
+                        <div class="text-sm text-orange-700">SearchToolbar<br/>(Already Unified)</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-gray-600">7+</div>
+                        <div class="text-sm text-gray-700">Keep Custom<br/>(Specialized)</div>
+                    </div>
+                </div>
+                <div class="text-center mt-3 text-lg font-semibold text-gray-800">
+                    Total: <span class="text-purple-600">47+</span> Filter Implementations Identified
+                </div>
+            </div>
+            
+            <div class="space-y-8">
+                <!-- FilterPanel Migrations (Advanced) -->
+                <div>
+                    <h3 class="font-medium mb-4 text-green-900 text-lg">🔴 FilterPanel (Advanced - 7+ Controls)</h3>
+                    <div class="grid md:grid-cols-1 gap-4 text-sm">
+                        <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-400">
+                            <h4 class="font-medium mb-2">1. src/components/verification/QueueFilters.tsx</h4>
+                            <p class="text-gray-600 mb-2"><strong>Complexity:</strong> Advanced (15+ controls)</p>
+                            <p class="text-gray-600 mb-2"><strong>Features:</strong> Search + 3 multi-select groups (status, priority, assessment type) + date range + sorting + quick presets + saved filters + localStorage</p>
+                            <p class="text-green-800"><strong>Target:</strong> Direct FilterPanel migration (gold standard reference)</p>
+                            <div class="text-xs text-gray-500 mt-2">✓ Perfect match ✓ All advanced features ✓ Complex state management</div>
+                        </div>
+                        
+                        <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-400">
+                            <h4 class="font-medium mb-2">2. src/components/dashboards/situation/components/AdvancedFilters.tsx</h4>
+                            <p class="text-gray-600 mb-2"><strong>Complexity:</strong> Advanced (10+ controls)</p>
+                            <p class="text-gray-600 mb-2"><strong>Features:</strong> Search + entity types + severity + date range + geographic area + assessment status + presets + save filters + export integration</p>
+                            <p class="text-green-800"><strong>Target:</strong> FilterPanel + export actions</p>
+                            <div class="text-xs text-gray-500 mt-2">✓ Dashboard context ✓ Advanced features ✓ Export integration needed</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FilterBar Migrations (Simple-Intermediate) -->
+                <div>
+                    <h3 class="font-medium mb-4 text-blue-900 text-lg">🟡 FilterBar (Simple-Intermediate - 1-6 Controls)</h3>
+                    
+                    <!-- Admin Pages -->
+                    <div class="mb-6">
+                        <h4 class="font-medium mb-3 text-blue-800">Admin Pages (4 files)</h4>
+                        <div class="grid md:grid-cols-2 gap-3 text-sm">
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/app/(auth)/admin/users/page.tsx</h5>
+                                <p class="text-xs text-gray-600">Search + status filter + role filter (3 controls)</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/app/(auth)/admin/donors/page.tsx</h5>
+                                <p class="text-xs text-gray-600">Search + status dropdown (2 controls)</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/app/(auth)/coordinator/donors/page.tsx</h5>
+                                <p class="text-xs text-gray-600">Search + status dropdown (2 controls)</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/app/(auth)/coordinator/entities/page.tsx</h5>
+                                <p class="text-xs text-gray-600">Search + role filter (2 controls)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Components -->
+                    <div class="mb-6">
+                        <h4 class="font-medium mb-3 text-blue-800">Dashboard Components (5 files)</h4>
+                        <div class="grid md:grid-cols-2 gap-3 text-sm">
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/components/dashboards/crisis/ResourceGapAnalysis.tsx</h5>
+                                <p class="text-xs text-gray-600">Search + severity + entity + incident (4 controls)</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/components/dashboards/crisis/ResourceManagement.tsx</h5>
+                                <p class="text-xs text-gray-600">Search + status + donor + entity + incident (5 controls)</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/components/response/ResponsePlanningDashboard.tsx</h5>
+                                <p class="text-xs text-gray-600">Search + type + priority + sort (4 controls)</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/components/verification/VerificationQueue.tsx</h5>
+                                <p class="text-xs text-gray-600">Search + status filter (2 controls)</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/components/donor/LeaderboardDisplay.tsx</h5>
+                                <p class="text-xs text-gray-600">Search + region + timeframe + sort + limit (5 controls)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Assessment Pages -->
+                    <div class="mb-6">
+                        <h4 class="font-medium mb-3 text-blue-800">Assessment & Response Pages (8+ files)</h4>
+                        <div class="grid md:grid-cols-2 gap-3 text-sm">
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/app/(auth)/donor/responses/page.tsx</h5>
+                                <p class="text-xs text-gray-600">Search + status + type (3 controls)</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/app/(auth)/assessor/preliminary-assessment/page.tsx</h5>
+                                <p class="text-xs text-gray-600">Search + entity + assessment type (3 controls)</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/app/(auth)/assessor/rapid-assessments/page.tsx</h5>
+                                <p class="text-xs text-gray-600">Search + type + status (3 controls)</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/app/(auth)/donor/rapid-assessments/page.tsx</h5>
+                                <p class="text-xs text-gray-600">Search + status + entity (3 controls)</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/components/coordinator/IncidentManagement.tsx</h5>
+                                <p class="text-xs text-gray-600">Search + severity + status (3 controls)</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/components/coordinator/AssessmentTimeline.tsx</h5>
+                                <p class="text-xs text-gray-600">Date range + entity + assessment type (3 controls)</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/components/settings/GapFieldTable.tsx</h5>
+                                <p class="text-xs text-gray-600">Bulk selection + severity filters (2 controls)</p>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <h5 class="font-medium">src/app/(auth)/responder/responses/page.tsx</h5>
+                                <p class="text-xs text-gray-600">Search + status + entity (3 controls)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Components -->
+                    <div class="mb-4">
+                        <h4 class="font-medium mb-3 text-blue-800">Additional Components (7+ files)</h4>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="text-sm space-y-1">
+                                <p><strong>Verification:</strong> VerificationDashboard.tsx, EnhancedVerificationDashboard.tsx, VerificationAnalytics.tsx</p>
+                                <p><strong>Donor:</strong> DonorDashboard.tsx, CommitmentDashboard.tsx, GapAnalysis.tsx, PeerComparison.tsx</p>
+                                <p><strong>Crisis:</strong> DonorMetricsDashboard.tsx, VerificationQueueManagement.tsx</p>
+                                <p><strong>Settings:</strong> SeverityThresholdTable.tsx, AutoApprovalConfig.tsx, EnhancedAutoApprovalConfig.tsx</p>
+                                <p><strong>System:</strong> Database page tables, health monitoring filters</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Already Unified (SearchToolbar) -->
+                <div>
+                    <h3 class="font-medium mb-4 text-orange-900 text-lg">✅ Already Unified (SearchToolbar Pattern)</h3>
+                    <div class="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-400">
+                        <h4 class="font-medium mb-2">src/components/shared/SearchToolbar.tsx + Integration</h4>
+                        <p class="text-gray-600 mb-2"><strong>Status:</strong> ✅ Already implements FilterBar pattern</p>
+                        <p class="text-gray-600 mb-2"><strong>Usage:</strong> Integrated into DataTable, DataCardGrid, DataCardList components</p>
+                        <div class="text-sm text-gray-600 space-y-1 mt-3">
+                            <p><strong>Features:</strong> Search input + configurable filter dropdowns + action buttons + responsive layout</p>
+                            <p><strong>Files Using:</strong> ~10+ components already use this unified pattern</p>
+                            <p><strong>Action Needed:</strong> Extend SearchToolbar to support FilterBar/FilterPanel requirements</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Keep As Custom -->
+                <div>
+                    <h3 class="font-medium mb-4 text-gray-700 text-lg">🟢 Keep As Custom Components</h3>
+                    <div class="grid md:grid-cols-2 gap-4 text-sm">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-medium mb-2">Entity/Location Selectors</h4>
+                            <p class="text-gray-600 mb-1"><strong>Files:</strong> IncidentSelector, EntitySelector, etc.</p>
+                            <p class="text-gray-600"><strong>Rationale:</strong> Comboboxes with entity search, not filter panels. Specialized business logic.</p>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-medium mb-2">Assessment Forms</h4>
+                            <p class="text-gray-600 mb-1"><strong>Files:</strong> Embedded filtering within forms</p>
+                            <p class="text-gray-600"><strong>Rationale:</strong> Form-specific filtering, not general data filtering.</p>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-medium mb-2">Map-based Filters</h4>
+                            <p class="text-gray-600 mb-1"><strong>Files:</strong> Geographic/spatial filtering components</p>
+                            <p class="text-gray-600"><strong>Rationale:</strong> Specialized geographic filtering UI.</p>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-medium mb-2">Real-time Dashboards</h4>
+                            <p class="text-gray-600 mb-1"><strong>Files:</strong> High-frequency filter updates</p>
+                            <p class="text-gray-600"><strong>Rationale:</strong> Performance-critical filtering with specialized patterns.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Component API -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h2 class="text-xl font-semibold mb-4">Component API Specification</h2>
+            
+            <div class="space-y-6">
+                <!-- FilterBar API -->
+                <div>
+                    <h3 class="font-medium mb-3">FilterBar Component</h3>
+                    <div class="bg-gray-50 p-4 rounded-lg text-sm font-mono">
+                        <div class="text-gray-800 space-y-1">
+                            <div><span class="text-blue-600">interface</span> FilterBarProps {</div>
+                            <div class="ml-4">searchValue?: string;</div>
+                            <div class="ml-4">onSearchChange?: (value: string) => void;</div>
+                            <div class="ml-4">searchPlaceholder?: string;</div>
+                            <div class="ml-4">filters?: FilterConfig[];</div>
+                            <div class="ml-4">filterValues?: Record&lt;string, string&gt;;</div>
+                            <div class="ml-4">onFilterChange?: (key: string, value: string) => void;</div>
+                            <div class="ml-4">actions?: ActionButton[];</div>
+                            <div class="ml-4">showClearAll?: boolean;</div>
+                            <div class="ml-4">onClearAll?: () => void;</div>
+                            <div>}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FilterPanel API -->
+                <div>
+                    <h3 class="font-medium mb-3">FilterPanel Component</h3>
+                    <div class="bg-gray-50 p-4 rounded-lg text-sm font-mono">
+                        <div class="text-gray-800 space-y-1">
+                            <div><span class="text-blue-600">interface</span> FilterPanelProps&lt;T&gt; {</div>
+                            <div class="ml-4">title?: string;</div>
+                            <div class="ml-4">visible: boolean;</div>
+                            <div class="ml-4">onClose: () => void;</div>
+                            <div class="ml-4">filters: T;</div>
+                            <div class="ml-4">onFiltersChange: (filters: Partial&lt;T&gt;) => void;</div>
+                            <div class="ml-4">onClear: () => void;</div>
+                            <div class="ml-4">filterGroups: FilterGroup[];</div>
+                            <div class="ml-4">quickPresets?: FilterPreset[];</div>
+                            <div class="ml-4">advancedCollapsible?: boolean;</div>
+                            <div class="ml-4">enableSavedFilters?: boolean;</div>
+                            <div class="ml-4">savedFiltersKey?: string;</div>
+                            <div>}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Implementation Notes -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h2 class="text-xl font-semibold mb-4">Implementation Requirements</h2>
+            
+            <div class="space-y-4 text-sm">
+                <div class="flex items-start gap-3">
+                    <div class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                        <svg class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <strong>Accessibility:</strong> Keyboard navigation, ARIA labels, screen reader support, focus management, semantic HTML
+                    </div>
+                </div>
+                
+                <div class="flex items-start gap-3">
+                    <div class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                        <svg class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <strong>Performance:</strong> Debounced search (300ms), virtual scrolling for large option lists, memoized filter functions
+                    </div>
+                </div>
+                
+                <div class="flex items-start gap-3">
+                    <div class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                        <svg class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <strong>State Management:</strong> Works with local state, Zustand stores, supports controlled/uncontrolled patterns
+                    </div>
+                </div>
+                
+                <div class="flex items-start gap-3">
+                    <div class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                        <svg class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <strong>Persistence:</strong> LocalStorage for saved filters, URL query params for shareable filter states
+                    </div>
+                </div>
+                
+                <div class="flex items-start gap-3">
+                    <div class="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                        <svg class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <strong>Design Tokens:</strong> Uses existing status-colors.ts, shadcn/ui styling, consistent with design system
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="bg-gray-100 p-6 rounded-lg text-center text-sm text-gray-600">
+            <p><strong>Design System Phase 4:</strong> FilterPanel Component Family Specification</p>
+            <p>Ready for implementation after stakeholder review and approval</p>
+        </div>
+        
+    </div>
+</body>
+</html>

@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiGet } from '@/lib/api';
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 
 interface ConfigurationAnalyticsProps {
   className?: string;
@@ -234,23 +235,7 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
 
       {/* Content */}
       {isLoading ? (
-        <div className="space-y-6">
-          {/* Loading skeleton */}
-          {[...Array(3)].map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-                  <div className="space-y-3">
-                    <div className="h-3 bg-gray-200 rounded"></div>
-                    <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-                    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <ContentSkeleton variant="card" count={3} className="space-y-6" />
       ) : (
         <div className="space-y-6">
           {/* Overview Tab */}

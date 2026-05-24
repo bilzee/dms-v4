@@ -82,7 +82,13 @@ project-root/
 │   │   ├── reports/                        # Report builder interface and report management
 │   │   ├── response/                       # Response planning dashboard components
 │   │   ├── settings/                       # Severity threshold and gap field configuration tables
-│   │   ├── shared/                         # Reusable components (17 files): selectors, indicators, routing helpers
+│   │   ├── shared/                         # Unified design system component layer (32 files)
+│   │   │                                   # StatCard, StatCardGrid, StatusBadge, FormCard,
+│   │   │                                   # FormActionBar, FilterPanel, FilterBar,
+│   │   │                                   # ContentSkeleton, ErrorAlert, ProgressBar,
+│   │   │                                   # DataTable, DataCardList, DataCardGrid,
+│   │   │                                   # SafeDataLoader, EmptyState, DataList, SearchToolbar,
+│   │   │                                   # RoleBasedRoute, AppShell
 │   │   ├── testing/                        # Living documentation dashboard for runtime test visibility
 │   │   ├── ui/                             # shadcn/ui base components (29 files): Button, Dialog, Table, etc.
 │   │   └── verification/                   # Verification queue, auto-approval config, analytics (13 files)
@@ -163,7 +169,9 @@ project-root/
 │   │   │   ├── rapid-assessment.ts         # Rapid assessment validation
 │   │   │   └── response.ts                # Response validation rules
 │   │   ├── config/                         # Network detection and application configuration
-│   │   ├── utils/                          # Infrastructure utilities: audit logger, debounce, media manager
+│   │   ├── utils/                          # Utility functions and design system configuration
+│   │   │                                   # status-colors.ts, design-tokens.ts,
+│   │   │                                   # chart-config.ts, chart-registration.ts, cn.ts
 │   │   ├── data/                           # Static reference data: Nigeria locations, LGAs, wards
 │   │   ├── testing/                        # Living test system for runtime test management
 │   │   └── assignment/                     # Auto-assignment algorithm and assignment middleware

@@ -23,6 +23,7 @@ import {
   AlertTriangle
 } from 'lucide-react'
 import { StatCard } from '@/components/shared/StatCard'
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
 
 interface AssessmentViewerProps {
   entityId: string
@@ -152,11 +153,7 @@ export function AssessmentViewer({ entityId }: AssessmentViewerProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="animate-pulse space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-24 bg-gray-200 rounded"></div>
-              ))}
-            </div>
+            <ContentSkeleton variant="card" count={3} />
           </CardContent>
         </Card>
       </div>

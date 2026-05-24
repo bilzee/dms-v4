@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormCard } from '@/components/shared/FormCard'
+import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -212,7 +213,7 @@ export function FoodAssessmentForm({
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <FormCard className="max-w-4xl mx-auto">
       {/* Header */}
       <Card>
         <CardHeader>
@@ -247,7 +248,7 @@ export function FoodAssessmentForm({
       </Card>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(handleSubmit)}>
           {/* Incident Selection */}
           <Card>
             <CardHeader>
@@ -602,25 +603,15 @@ export function FoodAssessmentForm({
             </CardContent>
           </Card>
 
-          {/* Form Actions */}
-          <div className="flex justify-end gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting || disabled || !selectedEntity}
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Food Assessment'}
-            </Button>
-          </div>
+          <FormActionBar
+            onCancel={onCancel}
+            submitLabel="Submit Food Assessment"
+            loading={isSubmitting}
+            disabled={isSubmitting || disabled || !selectedEntity}
+            variant="bordered"
+          />
         </form>
       </Form>
-    </div>
+    </FormCard>
   )
 }

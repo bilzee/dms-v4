@@ -13,6 +13,7 @@ import { StatusBadge, getBadgeClasses } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
 import { 
   AlertTriangle, 
   TrendingUp, 
@@ -104,11 +105,7 @@ export function GapAnalysis({ entityId }: GapAnalysisProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
-            ))}
-          </div>
+          <ContentSkeleton variant="card" count={3} />
         </CardContent>
       </Card>
     )

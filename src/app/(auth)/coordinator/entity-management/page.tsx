@@ -35,6 +35,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 import { apiGet, apiPost, apiPut, apiDelete, extractArray } from '@/lib/api';
 import Link from 'next/link';
 
@@ -314,13 +315,7 @@ export default function EntityManagementPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="space-y-4">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="h-20 bg-gray-200 rounded"></div>
-                  </div>
-                ))}
-              </div>
+              <ContentSkeleton variant="list" count={5} />
             ) : filteredEntities.length === 0 ? (
               <div className="text-center py-12">
                 <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

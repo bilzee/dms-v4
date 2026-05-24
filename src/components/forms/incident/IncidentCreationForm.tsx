@@ -7,7 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormCard } from '@/components/shared/FormCard'
+import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Textarea } from '@/components/ui/textarea'
 import { 
@@ -20,7 +21,7 @@ import {
 import { useIncident } from '@/hooks/useIncident'
 import { IncidentSchema } from '@/lib/validation/incidents'
 import { IncidentData } from '@/types/incidents'
-import { AlertTriangle, Plus, Zap, MapPin, Loader2 } from 'lucide-react'
+import { AlertTriangle, MapPin, Loader2 } from 'lucide-react'
 import { getBadgeClasses } from '@/components/shared/StatusBadge'
 import { apiGet, extractArray } from '@/lib/api'
 import { z } from 'zod'
@@ -253,26 +254,12 @@ export function IncidentCreationForm({
   }
 
   return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Zap className="h-5 w-5" />
-          Create New Incident
-          {showAssessmentLink && assessmentId && (
-            <span className="text-sm text-gray-500">(from assessment)</span>
-          )}
-          {isDraft && (
-            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-              Draft (Auto-saved: {lastSaved?.toLocaleTimeString()})
-            </span>
-          )}
-        </CardTitle>
-        <CardDescription>
-          Create a new incident record for disaster response coordination
-          {autoSave && " • Auto-save enabled"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <FormCard
+      title="Create New Incident"
+      description={`Create a new incident record for disaster response coordination${autoSave ? ' • Auto-save enabled' : ''}`}
+      variant="default"
+      className="w-full max-w-2xl"
+    >
         {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertTriangle className="h-4 w-4" />
@@ -282,7 +269,18 @@ export function IncidentCreationForm({
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
+          {/* Draft indicator */}
+          {isDraft && (
+            <div className="flex items-center gap-2 text-xs text-blue-800 bg-blue-50 px-3 py-2 rounded-md">
+              <span className="bg-blue-100 px-2 py-0.5 rounded font-medium">
+                Draft (Auto-saved: {lastSaved?.toLocaleTimeString()})
+              </span>
+              {showAssessmentLink && assessmentId && (
+                <span className="text-gray-500">(from assessment)</span>
+              )}
+            </div>
+          )}
           {/* Incident Type */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -489,29 +487,14 @@ export function IncidentCreationForm({
           )}
 
           {/* Action Buttons */}
-          <div className="flex gap-4 justify-end">
-            {onCancel && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
-                disabled={disabled || isLoading}
-              >
-                Cancel
-              </Button>
-            )}
-
-            <Button
-              type="submit"
-              disabled={disabled || isLoading || (!showCustomType && !watch('type')) || (showCustomType && !customType)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              {isLoading ? 'Creating...' : 'Create Incident'}
-            </Button>
-          </div>
+          <FormActionBar
+            onCancel={onCancel}
+            submitLabel={isLoading ? 'Creating...' : 'Create Incident'}
+            loading={isLoading}
+            disabled={disabled || (!showCustomType && !watch('type')) || (showCustomType && !customType)}
+            variant="bordered"
+          />
         </form>
-      </CardContent>
-    </Card>
+    </FormCard>
   )
 }
