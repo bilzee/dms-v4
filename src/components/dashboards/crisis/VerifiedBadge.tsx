@@ -57,7 +57,7 @@ export function VerifiedBadge({
       text = 'Auto-Verified';
       break;
     case 'mixed':
-      colors = getBadgeClasses('verification', 'PUBLISHED');
+      colors = getBadgeClasses('verification', 'VERIFIED');
       Icon = CheckCircle;
       text = 'Verified';
       break;

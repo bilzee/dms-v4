@@ -46,7 +46,7 @@ export const CreateDeliveredResponseSchema = z.object({
 export const ResponseQuerySchema = z.object({
   assessmentId: z.string().min(1).optional(),
   entityId: z.string().min(1).optional(),
-  status: z.enum(['PLANNED', 'DELIVERED']).optional(),
+  deliveryStatus: z.enum(['PLANNED', 'DELIVERED']).optional(),
   type: z.enum(['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION', 'LOGISTICS']).optional(),
   page: z.number().positive().default(1),
   limit: z.number().positive().max(100).default(20)

@@ -13,7 +13,7 @@ import { apiGet } from '@/lib/api'
 interface Response {
   id: string
   type: string
-  status: string
+  deliveryStatus: string
   priority: string
   entityId: string
   assessmentId?: string
@@ -225,7 +225,7 @@ export default function ResponseDetailsPage() {
           )}
           
           <div className="flex flex-wrap gap-2">
-            {getStatusBadge(response.status)}
+            {getStatusBadge(response.deliveryStatus)}
             {getPriorityBadge(response.priority)}
           </div>
 

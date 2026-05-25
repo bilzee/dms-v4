@@ -157,7 +157,7 @@ export const QueryRapidAssessmentSchema = z.object({
   entityId: z.string().optional(),
   incidentId: z.string().optional(),
   type: z.enum(['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION']).optional(),
-  status: z.enum(['DRAFT', 'SUBMITTED', 'VERIFIED']).optional(),
+  status: z.never().optional(),
   verificationStatus: z.enum(['DRAFT', 'SUBMITTED', 'VERIFIED', 'AUTO_VERIFIED', 'REJECTED']).optional(),
   priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional(),
   startDate: z.coerce.date().optional(),

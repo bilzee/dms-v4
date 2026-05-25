@@ -42,7 +42,7 @@ export const GET = withAuth(
       
       // Build where clause for delivered responses submitted for verification with enhanced filtering
       const where: any = {
-        status: 'DELIVERED',
+        deliveryStatus: 'DELIVERED',
         verificationStatus: { in: status }
       }
       
@@ -133,7 +133,7 @@ export const GET = withAuth(
         total: total,
         critical: await prisma.rapidResponse.count({
           where: { 
-            status: 'DELIVERED',
+            deliveryStatus: 'DELIVERED',
             verificationStatus: { in: status as any },
             priority: 'CRITICAL',
             ...(entityId && { entityId }),
@@ -142,7 +142,7 @@ export const GET = withAuth(
         }),
         high: await prisma.rapidResponse.count({
           where: { 
-            status: 'DELIVERED',
+            deliveryStatus: 'DELIVERED',
             verificationStatus: { in: status as any },
             priority: 'HIGH',
             ...(entityId && { entityId }),
@@ -151,7 +151,7 @@ export const GET = withAuth(
         }),
         medium: await prisma.rapidResponse.count({
           where: { 
-            status: 'DELIVERED',
+            deliveryStatus: 'DELIVERED',
             verificationStatus: { in: status as any },
             priority: 'MEDIUM',
             ...(entityId && { entityId }),
@@ -160,7 +160,7 @@ export const GET = withAuth(
         }),
         low: await prisma.rapidResponse.count({
           where: { 
-            status: 'DELIVERED',
+            deliveryStatus: 'DELIVERED',
             verificationStatus: { in: status as any },
             priority: 'LOW',
             ...(entityId && { entityId }),
@@ -303,13 +303,13 @@ async function calculateDeliveryVerificationRate(): Promise<number> {
     const [submitted, verified] = await Promise.all([
       prisma.rapidResponse.count({
         where: {
-          status: 'DELIVERED',
+          deliveryStatus: 'DELIVERED',
           responseDate: { gte: last24Hours }
         }
       }),
       prisma.rapidResponse.count({
         where: {
-          status: 'DELIVERED',
+          deliveryStatus: 'DELIVERED',
           responseDate: { gte: last24Hours },
           verificationStatus: { in: ['VERIFIED', 'AUTO_VERIFIED'] }
         }

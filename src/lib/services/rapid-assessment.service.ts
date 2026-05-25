@@ -167,7 +167,6 @@ export class RapidAssessmentService {
           incidentId: input.incidentId,
           location: input.location,
           coordinates: input.coordinates,
-          status: 'SUBMITTED',
           priority: input.priority,
           mediaAttachments: input.mediaAttachments || [],
           versionNumber: 1,
@@ -314,15 +313,13 @@ export class RapidAssessmentService {
     total: number
     totalPages: number
   }> {
-    const { page, limit, entityId, type, status, verificationStatus, priority, startDate, endDate } = query
+    const { page, limit, entityId, type, verificationStatus, priority, startDate, endDate } = query
     const skip = (page - 1) * limit
 
-    // Build where clause
     const where: Prisma.RapidAssessmentWhereInput = { assessorId: userId }
 
     if (entityId) where.entityId = entityId
     if (type) where.rapidAssessmentType = type
-    if (status) where.status = status
     if (verificationStatus) where.verificationStatus = verificationStatus
     if (priority) where.priority = priority
     if (startDate || endDate) {
@@ -381,17 +378,15 @@ export class RapidAssessmentService {
     total: number
     totalPages: number
   }> {
-    const { page, limit, userId, entityId, incidentId, type, status, verificationStatus, priority, startDate, endDate } = query
+    const { page, limit, userId, entityId, incidentId, type, verificationStatus, priority, startDate, endDate } = query
     const skip = (page - 1) * limit
 
-    // Build where clause
     const where: Prisma.RapidAssessmentWhereInput = {}
 
     if (userId) where.assessorId = userId
     if (entityId) where.entityId = entityId
     if (incidentId) where.incidentId = incidentId
     if (type) where.rapidAssessmentType = type
-    if (status) where.status = status
     if (verificationStatus) where.verificationStatus = verificationStatus
     if (priority) where.priority = priority
     if (startDate || endDate) {
@@ -521,7 +516,7 @@ export class RapidAssessmentService {
     const updatedAssessment = await prisma.rapidAssessment.update({
       where: { id },
       data: {
-        status: 'SUBMITTED',
+        verificationStatus: 'SUBMITTED',
         updatedAt: new Date()
       },
       include: {
@@ -739,8 +734,8 @@ export class RapidAssessmentService {
           incidentId,
           entityId,
           rapidAssessmentType: type,
-          status: {
-            not: 'DRAFT' // Exclude drafts
+          verificationStatus: {
+            not: 'DRAFT'
           }
         },
         include: {

@@ -37,7 +37,7 @@ export class ResponseOfflineService {
         data: {
           ...data,
           id: responseId,
-          status: 'PLANNED',
+          deliveryStatus: 'PLANNED',
           createdAt: new Date().toISOString(),
           syncStatus: 'pending' as const
         },

@@ -4,7 +4,7 @@ export interface ResponseVerificationQueueItem {
   id: string;
   type: string; // ResponseType
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  status: string; // ResponseStatus
+  deliveryStatus: string;
   verificationStatus: 'DRAFT' | 'SUBMITTED' | 'VERIFIED' | 'AUTO_VERIFIED' | 'REJECTED';
   verifiedAt?: Date;
   verifiedBy?: string;
@@ -48,7 +48,7 @@ export interface ResponseVerificationQueueItem {
 }
 
 export interface ResponseVerificationFilters {
-  status?: string;
+  deliveryStatus?: string;
   verificationStatus?: 'DRAFT' | 'SUBMITTED' | 'VERIFIED' | 'AUTO_VERIFIED' | 'REJECTED';
   entityId?: string;
   responseType?: string;

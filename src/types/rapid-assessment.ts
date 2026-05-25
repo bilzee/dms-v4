@@ -1,7 +1,6 @@
-import { RapidAssessment, AssessmentType, AssessmentStatus, Priority, SyncStatus, VerificationStatus } from '@prisma/client'
+import { RapidAssessment, AssessmentType, Priority, SyncStatus, VerificationStatus } from '@prisma/client'
 
-// Re-export Prisma enums for convenient access
-export { AssessmentType, AssessmentStatus, Priority, SyncStatus, VerificationStatus }
+export { AssessmentType, Priority, SyncStatus, VerificationStatus }
 
 // Type for assessments with their specific data included
 export interface RapidAssessmentWithData extends RapidAssessment {
@@ -191,7 +190,7 @@ export interface GPSCoordinates {
 export interface AssessmentSummary {
   id: string
   type: AssessmentType
-  status: AssessmentStatus
+  verificationStatus: VerificationStatus
   priority: Priority
   entityName: string
   assessmentDate: Date
@@ -223,7 +222,7 @@ export interface AssessableEntity {
 export interface AssessmentStats {
   total: number
   byType: Record<AssessmentType, number>
-  byStatus: Record<AssessmentStatus, number>
+  byVerificationStatus: Record<VerificationStatus, number>
   byPriority: Record<Priority, number>
   recentActivity: number
   pendingVerification: number

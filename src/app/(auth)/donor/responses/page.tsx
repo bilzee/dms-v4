@@ -27,8 +27,8 @@ import { apiGet, extractArray } from '@/lib/api'
 
 const getResponseSeverity = (response: any): SeverityLevel => {
   if (response.verificationStatus === 'VERIFIED' || response.verificationStatus === 'AUTO_VERIFIED') return 'success'
-  if (response.status === 'DELIVERED') return 'info'
-  if (response.status === 'PLANNED') return 'warning'
+  if (response.deliveryStatus === 'DELIVERED') return 'info'
+  if (response.deliveryStatus === 'PLANNED') return 'warning'
   return 'neutral'
 }
 
@@ -112,11 +112,11 @@ function DonorResponsesPageContent() {
               if (filterStatus === 'all') {
                 matchesStatus = true
               } else if (filterStatus === 'PLANNED') {
-                matchesStatus = response.status === 'PLANNED'
+                matchesStatus = response.deliveryStatus === 'PLANNED'
               } else if (filterStatus === 'DELIVERED') {
-                matchesStatus = response.status === 'DELIVERED'
+                matchesStatus = response.deliveryStatus === 'DELIVERED'
               } else if (filterStatus === 'VERIFIED') {
-                matchesStatus = response.status === 'DELIVERED' && 
+                matchesStatus = response.deliveryStatus === 'DELIVERED' && 
                   (response.verificationStatus === 'VERIFIED' || response.verificationStatus === 'AUTO_VERIFIED')
               }
               
@@ -126,10 +126,10 @@ function DonorResponsesPageContent() {
             })
 
           // Calculate status counts
-          const plannedCount = responses.filter((r: any) => r.status === 'PLANNED').length
-          const deliveredCount = responses.filter((r: any) => r.status === 'DELIVERED').length
+          const plannedCount = responses.filter((r: any) => r.deliveryStatus === 'PLANNED').length
+          const deliveredCount = responses.filter((r: any) => r.deliveryStatus === 'DELIVERED').length
           const verifiedCount = responses.filter((r: any) => 
-            r.status === 'DELIVERED' && (r.verificationStatus === 'VERIFIED' || r.verificationStatus === 'AUTO_VERIFIED')
+            r.deliveryStatus === 'DELIVERED' && (r.verificationStatus === 'VERIFIED' || r.verificationStatus === 'AUTO_VERIFIED')
           ).length
 
           // Empty state handling
@@ -263,10 +263,10 @@ function DonorResponsesPageContent() {
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge
-                            variant={response.status === 'DELIVERED' ? 'default' : 'secondary'}
+                            variant={response.deliveryStatus === 'DELIVERED' ? 'default' : 'secondary'}
                             className="shrink-0"
                           >
-                            {response.status}
+                            {response.deliveryStatus}
                           </Badge>
                           {response.verificationStatus && (
                             <Badge

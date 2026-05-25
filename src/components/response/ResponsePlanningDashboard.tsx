@@ -280,14 +280,14 @@ export function ResponsePlanningDashboard({
             <div className="flex items-center justify-between pt-3 border-t">
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-xs">
-                  {response.status}
+                  {response.deliveryStatus}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
                   Updated {new Date(response.updatedAt).toLocaleDateString()}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                {response.status === 'PLANNED' && (
+                {response.deliveryStatus === 'PLANNED' && (
                   <Button
                     variant="default"
                     size="sm"

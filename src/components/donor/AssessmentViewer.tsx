@@ -383,7 +383,7 @@ function AssessmentCard({ assessment, isExpanded, onToggleExpansion }: Assessmen
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Badge variant="outline">{assessment.type}</Badge>
-          <StatusBadge domain="verification" status={assessment.status} />
+          <StatusBadge domain="verification" status={assessment.verificationStatus} />
           <div className="text-sm text-gray-600">
             <Calendar className="inline h-3 w-3 mr-1" />
             {new Date(assessment.date).toLocaleDateString()}

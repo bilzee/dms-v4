@@ -79,7 +79,7 @@ export const GET = withAuth(
           })) || [],
           totalCollaborators: collaboration?.collaborators.length || 0,
           isCurrentUserCollaborating,
-          canEdit: response.status === 'PLANNED' && (!collaboration || isCurrentUserCollaborating)
+          canEdit: response.deliveryStatus === 'PLANNED' && (!collaboration || isCurrentUserCollaborating)
         }
 
         return NextResponse.json({
@@ -117,7 +117,7 @@ export const POST = withAuth(
         // Verify user has access to this response
         const response = await ResponseService.getResponseById(responseId, context.userId)
         
-        if (response.status !== 'PLANNED') {
+        if (response.deliveryStatus !== 'PLANNED') {
           throw new Error('Only planned responses can be collaborated on')
         }
 

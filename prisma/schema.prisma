@@ -229,7 +229,6 @@ model RapidAssessment {
   assessorName         String
   location             String?
   coordinates          Json?
-  status               AssessmentStatus      @default(DRAFT)
   priority             Priority              @default(MEDIUM)
   versionNumber        Int                   @default(1)
   isOfflineCreated     Boolean               @default(false)
@@ -260,7 +259,7 @@ model RapidAssessment {
   @@index([incidentId, rapidAssessmentDate])
   @@index([incidentId, entityId])
   @@index([assessorId, createdAt])
-  @@index([status, priority])
+  @@index([verificationStatus, priority])
   @@index([createdAt, rapidAssessmentType])
   @@index([rapidAssessmentDate, rapidAssessmentType])
   @@index([syncStatus, isOfflineCreated])
@@ -371,7 +370,7 @@ model RapidResponse {
   assessmentId       String
   type               ResponseType
   priority           Priority           @default(MEDIUM)
-  status             ResponseStatus     @default(PLANNED)
+  deliveryStatus     DeliveryStatus     @default(PLANNED)
   description        String?
   resources          Json?
   timeline           Json?
@@ -567,7 +566,7 @@ enum ResponseType {
   LOGISTICS
 }
 
-enum ResponseStatus {
+enum DeliveryStatus {
   PLANNED
   DELIVERED
 }
@@ -577,13 +576,6 @@ enum Priority {
   HIGH
   MEDIUM
   LOW
-}
-
-enum AssessmentStatus {
-  DRAFT
-  SUBMITTED
-  VERIFIED
-  PUBLISHED
 }
 
 enum VerificationStatus {

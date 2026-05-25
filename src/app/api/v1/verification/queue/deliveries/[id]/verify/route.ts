@@ -79,7 +79,7 @@ export const POST = withAuth(
       }
       
       // Verify this is a delivered response submitted for verification
-      if (delivery.status !== 'DELIVERED' || delivery.verificationStatus !== 'SUBMITTED') {
+      if (delivery.deliveryStatus !== 'DELIVERED' || delivery.verificationStatus !== 'SUBMITTED') {
         return NextResponse.json(
           {
             success: false,

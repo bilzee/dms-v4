@@ -132,7 +132,7 @@ export const GET = withAuth(async (request: NextRequest, context, nextContext) =
       prisma.rapidResponse.count({
         where: {
           entityId: entityId,
-          status: 'PLANNED'
+          deliveryStatus: 'PLANNED'
         }
       })
     ]);

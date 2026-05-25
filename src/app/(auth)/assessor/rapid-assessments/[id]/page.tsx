@@ -135,15 +135,11 @@ export default function AssessmentDetailsPage() {
   }, [params.id])
 
   const getStatusBadge = (assessment: Assessment) => {
-    const displayStatus = assessment.status === 'SUBMITTED' ? assessment.verificationStatus : assessment.status;
-    
-    switch (displayStatus) {
+    switch (assessment.verificationStatus) {
       case 'VERIFIED':
         return <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Verified</Badge>
-      case 'PUBLISHED':
-        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Verified</Badge>
       case 'AUTO_VERIFIED':
-        return <Badge className="bg-blue-100 text-blue-800"><CheckCircle className="w-3 h-3 mr-1" />Auto-Verified</Badge>
+        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Auto-Verified</Badge>
       case 'REJECTED':
         return <Badge className="bg-red-100 text-red-800"><AlertTriangle className="w-3 h-3 mr-1" />Rejected</Badge>
       case 'SUBMITTED':
@@ -151,7 +147,7 @@ export default function AssessmentDetailsPage() {
       case 'DRAFT':
         return <Badge className="bg-gray-100 text-gray-800"><Clock className="w-3 h-3 mr-1" />Draft</Badge>
       default:
-        return <Badge variant="outline">{displayStatus}</Badge>
+        return <Badge variant="outline">{assessment.verificationStatus}</Badge>
     }
   }
 

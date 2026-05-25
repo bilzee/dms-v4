@@ -2215,7 +2215,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
           latestAssessments.health = {
             id: healthAssessment.rapidAssessmentId,
             date: healthAssessment.rapidAssessmentDate,
-            status: 'VERIFIED',
+            status: healthAssessment.verificationStatus || 'VERIFIED',
             verified: healthAssessment.verificationStatus === 'VERIFIED' || healthAssessment.verificationStatus === 'AUTO_VERIFIED',
             assessorName: healthAssessment.assessorName,
             gapIndicators: {
@@ -2230,7 +2230,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
           latestAssessments.food = {
             id: foodAssessment.rapidAssessmentId,
             date: foodAssessment.rapidAssessmentDate,
-            status: 'VERIFIED',
+            status: foodAssessment.verificationStatus || 'VERIFIED',
             verified: foodAssessment.verificationStatus === 'VERIFIED' || foodAssessment.verificationStatus === 'AUTO_VERIFIED',
             assessorName: foodAssessment.assessorName,
             gapIndicators: {
@@ -2245,7 +2245,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
           latestAssessments.wash = {
             id: washAssessment.rapidAssessmentId,
             date: washAssessment.rapidAssessmentDate,
-            status: 'VERIFIED',
+            status: washAssessment.verificationStatus || 'VERIFIED',
             verified: washAssessment.verificationStatus === 'VERIFIED' || washAssessment.verificationStatus === 'AUTO_VERIFIED',
             assessorName: washAssessment.assessorName,
             gapIndicators: {
@@ -2260,7 +2260,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
           latestAssessments.shelter = {
             id: shelterAssessment.rapidAssessmentId,
             date: shelterAssessment.rapidAssessmentDate,
-            status: 'VERIFIED',
+            status: shelterAssessment.verificationStatus || 'VERIFIED',
             verified: shelterAssessment.verificationStatus === 'VERIFIED' || shelterAssessment.verificationStatus === 'AUTO_VERIFIED',
             assessorName: shelterAssessment.assessorName,
             gapIndicators: {
@@ -2275,7 +2275,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
           latestAssessments.security = {
             id: securityAssessment.rapidAssessmentId,
             date: securityAssessment.rapidAssessmentDate,
-            status: 'VERIFIED',
+            status: securityAssessment.verificationStatus || 'VERIFIED',
             verified: securityAssessment.verificationStatus === 'VERIFIED' || securityAssessment.verificationStatus === 'AUTO_VERIFIED',
             assessorName: securityAssessment.assessorName,
             gapIndicators: {
@@ -2290,7 +2290,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
           latestAssessments.population = {
             id: populationAssessment.rapidAssessmentId,
             date: populationAssessment.rapidAssessmentDate,
-            status: 'VERIFIED',
+            status: populationAssessment.verificationStatus || 'VERIFIED',
             verified: populationAssessment.verificationStatus === 'VERIFIED' || populationAssessment.verificationStatus === 'AUTO_VERIFIED',
             assessorName: populationAssessment.assessorName,
             gapIndicators: {

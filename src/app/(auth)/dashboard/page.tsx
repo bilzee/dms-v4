@@ -66,7 +66,7 @@ export default function DashboardPage() {
   const { data: pendingVerifications = 0 } = useQuery({
     queryKey: ['dashboard-pending-verifications'],
     queryFn: async () => {
-      const result = await apiGet('/api/v1/rapid-assessments?status=SUBMITTED&verificationStatus=DRAFT')
+      const result = await apiGet('/api/v1/rapid-assessments?verificationStatus=SUBMITTED')
       if (result.success) {
         const assData = result.data
         return assData?.assessments?.length || assData?.length || 0

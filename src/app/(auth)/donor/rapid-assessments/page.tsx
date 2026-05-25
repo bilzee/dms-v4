@@ -40,13 +40,12 @@ export default function DonorAssessmentsPage() {
   const getVerificationSeverity = (status: string): SeverityLevel => {
     switch (status) {
       case 'VERIFIED':
-        return 'success'
       case 'AUTO_VERIFIED':
         return 'success'
-      case 'PUBLISHED':
-        return 'info'
       case 'SUBMITTED':
         return 'warning'
+      case 'REJECTED':
+        return 'critical'
       case 'DRAFT':
         return 'neutral'
       default:
@@ -116,15 +115,15 @@ export default function DonorAssessmentsPage() {
           data={assessments}
           loading={false}
           emptyMessage="No assessments available"
-          getSeverity={(a: any) => getVerificationSeverity(a.verificationStatus || a.status)}
+          getSeverity={(a: any) => getVerificationSeverity(a.verificationStatus)}
           renderCard={(assessment: any, { isExpanded, toggleExpand }: ExpandedCardProps) => (
             <div className="space-y-3">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="font-semibold text-lg">{assessment.rapidAssessmentType} Assessment</h3>
-                    <Badge className={getVerificationStatusColor(assessment.verificationStatus || assessment.status)}>
-                      {assessment.verificationStatus || assessment.status}
+                    <Badge className={getVerificationStatusColor(assessment.verificationStatus)}>
+                      {assessment.verificationStatus}
                     </Badge>
                     <Badge className={getPriorityBadgeColor(assessment.priority)}>
                       {assessment.priority}

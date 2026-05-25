@@ -449,7 +449,6 @@ export class EntityAssignmentServiceImpl implements EntityAssignmentService {
           id: true,
           rapidAssessmentType: true,
           rapidAssessmentDate: true,
-          status: true,
           verificationStatus: true,
           verifiedAt: true,
           verifiedBy: true,

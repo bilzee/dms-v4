@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import {
   verificationStatusBadgeColors,
-  responseStatusBadgeColors,
+  deliveryStatusBadgeColors,
 } from '@/lib/utils/status-colors'
 
 type Domain = 'severity' | 'verification' | 'response' | 'incident' | 'commitment' | 'system' | 'report' | 'role' | 'donorType' | 'conflictResolution' | 'assessment'
@@ -79,7 +79,7 @@ const assessmentBadgeColors: Record<string, string> = {
 }
 
 const responseBadgeColors: Record<string, string> = {
-  ...responseStatusBadgeColors,
+  ...deliveryStatusBadgeColors,
   IN_PROGRESS: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800',
 }
 
@@ -114,9 +114,9 @@ const dotColorMap: Record<Domain, Record<string, string>> = {
     DRAFT: 'bg-gray-500',
     SUBMITTED: 'bg-amber-500',
     VERIFIED: 'bg-green-500',
-    AUTO_VERIFIED: 'bg-blue-500',
+    AUTO_VERIFIED: 'bg-green-500',
     REJECTED: 'bg-red-500',
-    PUBLISHED: 'bg-blue-500',
+    PUBLISHED: 'bg-green-500',
   },
   response: {
     PLANNED: 'bg-blue-500',

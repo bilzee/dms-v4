@@ -410,7 +410,7 @@ export class ReportTemplateEngine {
         id: `assessment_${i}`,
         rapidAssessmentType: ['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION'][Math.floor(Math.random() * 6)],
         rapidAssessmentDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-        status: ['DRAFT', 'SUBMITTED', 'VERIFIED', 'PUBLISHED'][Math.floor(Math.random() * 4)],
+        verificationStatus: ['DRAFT', 'SUBMITTED', 'VERIFIED', 'AUTO_VERIFIED'][Math.floor(Math.random() * 4)],
         entity: {
           name: `Entity ${i}`,
           type: 'FACILITY',
@@ -420,7 +420,7 @@ export class ReportTemplateEngine {
       responses: Array.from({ length: 30 }, (_, i) => ({
         id: `response_${i}`,
         type: ['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION'][Math.floor(Math.random() * 6)],
-        status: ['PLANNED', 'DELIVERED'][Math.floor(Math.random() * 2)],
+        deliveryStatus: ['PLANNED', 'DELIVERED'][Math.floor(Math.random() * 2)],
         deliveredQuantity: Math.floor(Math.random() * 1000),
         donor: {
           name: `Donor ${Math.floor(i / 5) + 1}`

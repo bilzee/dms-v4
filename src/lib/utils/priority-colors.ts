@@ -43,12 +43,12 @@ export const verificationStatusBadgeColors: Record<string, string> = {
   SUBMITTED: 'bg-amber-100 text-amber-800 border-amber-300',
   VERIFIED: 'bg-green-100 text-green-800 border-green-300',
   REJECTED: 'bg-red-100 text-red-800 border-red-300',
-  AUTO_VERIFIED: 'bg-blue-100 text-blue-800 border-blue-300',
+  AUTO_VERIFIED: 'bg-green-100 text-green-800 border-green-300',
   DRAFT: 'bg-gray-100 text-gray-800 border-gray-300',
-  PUBLISHED: 'bg-blue-100 text-blue-800 border-blue-300',
+  PUBLISHED: 'bg-green-100 text-green-800 border-green-300',
 };
 
-export const responseStatusBadgeColors: Record<string, string> = {
+export const deliveryStatusBadgeColors: Record<string, string> = {
   PLANNED: 'bg-blue-100 text-blue-800 border-blue-300',
   IN_PROGRESS: 'bg-yellow-100 text-yellow-800 border-yellow-300',
   COMPLETED: 'bg-green-100 text-green-800 border-green-300',

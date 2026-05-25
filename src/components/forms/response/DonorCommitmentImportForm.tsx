@@ -72,7 +72,7 @@ export function DonorCommitmentImportForm({
   const [filters, setFilters] = useState({
     entityId: preselectedEntityId || 'all',
     incidentId: preselectedIncidentId || 'all',
-    status: 'PLANNED'
+    deliveryStatus: 'PLANNED'
   })
 
   // Form setup
@@ -95,7 +95,7 @@ export function DonorCommitmentImportForm({
       const params = new URLSearchParams()
       if (filters.entityId && filters.entityId !== 'all') params.append('entityId', filters.entityId)
       if (filters.incidentId && filters.incidentId !== 'all') params.append('incidentId', filters.incidentId)
-      if (filters.status) params.append('status', filters.status)
+      if (filters.deliveryStatus) params.append('status', filters.deliveryStatus)
       const result = await apiGet(`/api/v1/commitments/available?${params}`)
       if (!result.success) throw new Error('Failed to fetch commitments')
       return result.data
@@ -281,7 +281,7 @@ export function DonorCommitmentImportForm({
             </div>
             <div>
               <label className="text-sm font-medium">Status</label>
-              <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
+              <Select value={filters.deliveryStatus} onValueChange={(value) => setFilters(prev => ({ ...prev, deliveryStatus: value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>

@@ -79,7 +79,7 @@ function EditAssessmentContent() {
           const assessmentData = result.data
           
           // Check if assessment is rejected
-          const isRejected = assessmentData.status === 'REJECTED' || assessmentData.verificationStatus === 'REJECTED'
+          const isRejected = assessmentData.verificationStatus === 'REJECTED'
           
           if (!isRejected) {
             setError('Only rejected assessments can be edited.')
@@ -138,8 +138,7 @@ function EditAssessmentContent() {
       // Update the assessment
       const result = await apiPut(`/api/v1/rapid-assessments/${assessmentId}`, {
         ...typeSpecificData,
-        status: 'SUBMITTED', // Reset to submitted for re-verification
-        verificationStatus: 'PENDING',
+        verificationStatus: 'SUBMITTED',
         rejectionReason: null,
         verificationComment: null,
         verifiedAt: null,

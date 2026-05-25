@@ -150,7 +150,7 @@ export class DeliveryOfflineService {
         data: {
           ...deliveryData,
           id: responseId,
-          status: 'DELIVERED',
+          deliveryStatus: 'DELIVERED',
           verificationStatus: 'SUBMITTED',
           responseDate: new Date().toISOString(),
           // Store delivery metadata

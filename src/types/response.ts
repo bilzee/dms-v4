@@ -7,7 +7,7 @@ export const RapidResponseSchema = z.object({
   assessmentId: z.string(),
   type: z.enum(['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION', 'LOGISTICS']),
   priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).default('MEDIUM'),
-  status: z.enum(['PLANNED', 'DELIVERED']).default('PLANNED'),
+  deliveryStatus: z.enum(['PLANNED', 'DELIVERED']).default('PLANNED'),
   description: z.string().optional(),
   items: z.array(z.object({
     name: z.string(),

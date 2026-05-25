@@ -208,7 +208,7 @@ export function DeliveryConfirmationForm({
         success: offlineResult.success,
         data: {
           id: responseId,
-          status: offlineResult.networkStatus === 'online' ? 'DELIVERED' : 'DELIVERED',
+          deliveryStatus: offlineResult.networkStatus === 'online' ? 'DELIVERED' : 'DELIVERED',
           deliveryData: payload,
           deliveryLocation: gpsLocation,
           deliveryTimestamp: offlineResult.timestamp,

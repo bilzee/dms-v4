@@ -37,8 +37,8 @@ function ResponderResponsesPageContent() {
   const [filterType, setFilterType] = useState<string>('all')
   const getResponseSeverity = (response: any): SeverityLevel => {
     if (response.verificationStatus === 'REJECTED') return 'critical'
-    if (response.status === 'DELIVERED' && response.verificationStatus === 'SUBMITTED') return 'warning'
-    if (response.status === 'PLANNED') return 'info'
+    if (response.deliveryStatus === 'DELIVERED' && response.verificationStatus === 'SUBMITTED') return 'warning'
+    if (response.deliveryStatus === 'PLANNED') return 'info'
     if (response.verificationStatus === 'VERIFIED' || response.verificationStatus === 'AUTO_VERIFIED') return 'success'
     return 'info'
   }
@@ -114,11 +114,11 @@ function ResponderResponsesPageContent() {
             if (filterStatus === 'all') {
               matchesStatus = true
             } else if (filterStatus === 'PLANNED') {
-              matchesStatus = response.status === 'PLANNED'
+              matchesStatus = response.deliveryStatus === 'PLANNED'
             } else if (filterStatus === 'AWAITING_VERIFICATION') {
-              matchesStatus = response.status === 'DELIVERED' && response.verificationStatus === 'SUBMITTED'
+              matchesStatus = response.deliveryStatus === 'DELIVERED' && response.verificationStatus === 'SUBMITTED'
             } else if (filterStatus === 'VERIFIED') {
-              matchesStatus = response.status === 'DELIVERED' && 
+              matchesStatus = response.deliveryStatus === 'DELIVERED' && 
                 (response.verificationStatus === 'VERIFIED' || response.verificationStatus === 'AUTO_VERIFIED')
             } else if (filterStatus === 'REJECTED') {
               matchesStatus = response.verificationStatus === 'REJECTED'
@@ -130,12 +130,12 @@ function ResponderResponsesPageContent() {
           })
 
         // Calculate status counts
-        const plannedCount = responses.filter((r: any) => r.status === 'PLANNED').length
+        const plannedCount = responses.filter((r: any) => r.deliveryStatus === 'PLANNED').length
         const awaitingVerificationCount = responses.filter((r: any) => 
-          r.status === 'DELIVERED' && r.verificationStatus === 'SUBMITTED'
+          r.deliveryStatus === 'DELIVERED' && r.verificationStatus === 'SUBMITTED'
         ).length
         const verifiedCount = responses.filter((r: any) => 
-          r.status === 'DELIVERED' && (r.verificationStatus === 'VERIFIED' || r.verificationStatus === 'AUTO_VERIFIED')
+          r.deliveryStatus === 'DELIVERED' && (r.verificationStatus === 'VERIFIED' || r.verificationStatus === 'AUTO_VERIFIED')
         ).length
         const rejectedCount = responses.filter((r: any) => r.verificationStatus === 'REJECTED').length
 
@@ -250,11 +250,11 @@ function ResponderResponsesPageContent() {
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-medium">{response.type} Response</h3>
                         <Badge variant={
-                          response.status === 'DELIVERED' ? 'default' : 
-                          response.status === 'PLANNED' ? 'secondary' : 
+                          response.deliveryStatus === 'DELIVERED' ? 'default' : 
+                          response.deliveryStatus === 'PLANNED' ? 'secondary' : 
                           'outline'
                         }>
-                          {response.status}
+                          {response.deliveryStatus}
                         </Badge>
                         {response.verificationStatus && (
                           <StatusBadge
@@ -280,7 +280,7 @@ function ResponderResponsesPageContent() {
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    {response.status === 'PLANNED' && (
+                    {response.deliveryStatus === 'PLANNED' && (
                       <Button 
                         onClick={(e) => { e.stopPropagation(); handleNavigateToDelivery(response.id); }}
                         size="sm"

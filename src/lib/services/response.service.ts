@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db/client'
 import { 
   RapidResponse, 
-  ResponseStatus, 
+  DeliveryStatus, 
   VerificationStatus,
   SyncStatus,
   Prisma
@@ -85,7 +85,7 @@ export class ResponseService {
     const existingResponse = await prisma.rapidResponse.findFirst({
       where: {
         assessmentId,
-        status: 'PLANNED'
+        deliveryStatus: 'PLANNED'
       }
     })
 
@@ -101,7 +101,7 @@ export class ResponseService {
           assessmentId,
           entityId,
           responderId,
-          status: 'PLANNED' as ResponseStatus,
+          deliveryStatus: 'PLANNED' as DeliveryStatus,
           verificationStatus: 'DRAFT' as VerificationStatus,
           syncStatus: 'LOCAL' as SyncStatus,
           items: items as unknown as Prisma.InputJsonValue, // JSON field
@@ -184,7 +184,7 @@ export class ResponseService {
           responderId,
           assessmentId,
           entityId,
-          status: 'DELIVERED',
+          deliveryStatus: 'DELIVERED',
           verificationStatus: 'SUBMITTED', // Delivered responses go straight to verification queue
           verifiedAt: new Date(), // Mark as verified for delivery timestamp
           items: items,
@@ -208,7 +208,7 @@ export class ResponseService {
           entityId,
           type: baseData.type,
           priority: baseData.priority,
-          status: 'DELIVERED',
+          deliveryStatus: 'DELIVERED',
           itemsCount: items.length,
           deliveryNotes
         }
@@ -293,7 +293,7 @@ export class ResponseService {
     const existingResponse = await this.getResponseById(responseId, requesterId)
 
     // Can only update responses in PLANNED status or with REJECTED verification status
-    if (existingResponse.status !== 'PLANNED' && existingResponse.verificationStatus !== 'REJECTED') {
+    if (existingResponse.deliveryStatus !== 'PLANNED' && existingResponse.verificationStatus !== 'REJECTED') {
       throw new Error('Only planned responses or rejected deliveries can be updated')
     }
 
@@ -313,7 +313,7 @@ export class ResponseService {
       }
       
       if (existingResponse.verificationStatus === 'REJECTED') {
-        updateData.status = 'DELIVERED'  // Keep as delivered
+        updateData.deliveryStatus = 'DELIVERED'  // Keep as delivered
         updateData.verificationStatus = 'SUBMITTED'  // Resubmit for verification
         updateData.rejectionReason = null  // Clear rejection reason
         updateData.verifiedAt = null  // Clear previous verification timestamp
@@ -387,7 +387,7 @@ export class ResponseService {
     // Build where clause
     const where: Prisma.RapidResponseWhereInput = {
       entityId: { in: entityIds },
-      status: 'PLANNED'
+      deliveryStatus: 'PLANNED'
     }
 
     if (filters.assessmentId) where.assessmentId = filters.assessmentId
@@ -462,7 +462,7 @@ export class ResponseService {
     if (filters.assessmentId) where.assessmentId = filters.assessmentId
     if (filters.entityId) where.entityId = filters.entityId
     if (filters.type) where.type = filters.type
-    if (filters.status) where.status = filters.status
+    if (filters.deliveryStatus) where.deliveryStatus = filters.deliveryStatus
 
     // Get total count
     const total = await prisma.rapidResponse.count({ where })
@@ -515,7 +515,7 @@ export class ResponseService {
     const existingResponse = await this.getResponseById(responseId, requesterId)
 
     // Can only confirm delivery for responses in PLANNED status
-    if (existingResponse.status !== 'PLANNED') {
+    if (existingResponse.deliveryStatus !== 'PLANNED') {
       throw new Error('Only planned responses can have delivery confirmed')
     }
 
@@ -579,7 +579,7 @@ export class ResponseService {
     // Update the response to delivered status
     const result = await prisma.$transaction(async (tx) => {
       const oldValues = {
-        status: existingResponse.status,
+        deliveryStatus: existingResponse.deliveryStatus,
         deliveredItems: existingResponse.items,
         deliveryLocation: (existingResponse.resources as Record<string, unknown> | null)?.deliveryLocation,
         deliveryNotes: (existingResponse.resources as Record<string, unknown> | null)?.deliveryNotes,
@@ -588,7 +588,7 @@ export class ResponseService {
       }
 
       const updateData: Record<string, unknown> = {
-        status: 'DELIVERED',
+        deliveryStatus: 'DELIVERED',
         verificationStatus,
         items: input.deliveredItems, // Store delivered items in the existing JSON field
         resources: {
@@ -646,7 +646,7 @@ export class ResponseService {
         responseId,
         oldValues,
         {
-          status: 'DELIVERED',
+          deliveryStatus: 'DELIVERED',
           verificationStatus,
           items: input.deliveredItems,
           resources: {

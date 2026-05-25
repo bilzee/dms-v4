@@ -87,12 +87,7 @@ export default function AssessorRapidAssessmentsPage() {
     
     if (filters.type !== 'ALL') params.append('type', filters.type)
     if (filters.status !== 'ALL') {
-      // REJECTED is a verification status, not a regular status
-      if (filters.status === 'REJECTED') {
-        params.append('verificationStatus', filters.status)
-      } else {
-        params.append('status', filters.status)
-      }
+      params.append('verificationStatus', filters.status)
     }
     if (filters.priority !== 'ALL') params.append('priority', filters.priority)
     
@@ -201,23 +196,19 @@ export default function AssessorRapidAssessmentsPage() {
   }
 
   const getStatusBadge = (assessment: any) => {
-    // Use verificationStatus for submitted assessments, otherwise use status
-    const displayStatus = assessment.status === 'SUBMITTED' ? assessment.verificationStatus : assessment.status;
-    
-    switch (displayStatus) {
+    switch (assessment.verificationStatus) {
       case 'VERIFIED':
         return <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Verified</Badge>
+      case 'AUTO_VERIFIED':
+        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Auto-Verified</Badge>
       case 'REJECTED':
         return <Badge className="bg-red-100 text-red-800"><AlertTriangle className="w-3 h-3 mr-1" />Rejected</Badge>
-      case 'PUBLISHED':
-      case 'AUTO_VERIFIED':
-        return <Badge className="bg-blue-100 text-blue-800"><CheckCircle className="w-3 h-3 mr-1" />Verified</Badge>
       case 'SUBMITTED':
         return <Badge className="bg-yellow-100 text-yellow-800"><FileText className="w-3 h-3 mr-1" />Pending Review</Badge>
       case 'DRAFT':
         return <Badge className="bg-gray-100 text-gray-800"><Clock className="w-3 h-3 mr-1" />Draft</Badge>
       default:
-        return <Badge variant="outline">{displayStatus}</Badge>
+        return <Badge variant="outline">{assessment.verificationStatus}</Badge>
     }
   }
 
@@ -318,8 +309,8 @@ export default function AssessorRapidAssessmentsPage() {
 
         <StatCardGrid columns={5} gap="lg">
           <StatCard label="Total Assessments" value={filteredAssessments.length} severity="info" icon={FileText} />
-          <StatCard label="Submitted" value={filteredAssessments.filter(a => a.status === 'SUBMITTED').length} severity="success" icon={CheckCircle} />
-          <StatCard label="Drafts" value={filteredAssessments.filter(a => a.status === 'DRAFT').length} severity="warning" icon={Clock} />
+          <StatCard label="Submitted" value={filteredAssessments.filter(a => a.verificationStatus === 'SUBMITTED').length} severity="success" icon={CheckCircle} />
+          <StatCard label="Drafts" value={filteredAssessments.filter(a => a.verificationStatus === 'DRAFT').length} severity="warning" icon={Clock} />
           <StatCard label="Rejected" value={filteredAssessments.filter(a => a.verificationStatus === 'REJECTED').length} severity="critical" icon={XCircle} />
           <StatCard label="Critical Gaps" value={filteredAssessments.reduce((sum, a) => {
             const gapCount = a.gapAnalysis ? Object.keys(a.gapAnalysis).length : 0

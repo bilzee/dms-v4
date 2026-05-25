@@ -590,7 +590,7 @@ async function main() {
       incidentId: 'incident-flood-001',
       assessorName: 'Field Assessor',
       location: 'Maiduguri Metropolitan',
-      status: 'PUBLISHED',
+      status: 'DRAFT',
       priority: 'HIGH',
       verificationStatus: 'VERIFIED',
       coordinates: { latitude: 11.8311, longitude: 13.1511, accuracy: 10, timestamp: new Date().toISOString(), captureMethod: 'GPS' }
@@ -603,7 +603,7 @@ async function main() {
       incidentId: 'incident-flood-001',
       assessorName: 'Field Assessor',
       location: 'Jere Local Government',
-      status: 'SUBMITTED',
+      status: 'DRAFT',
       priority: 'CRITICAL',
       verificationStatus: 'VERIFIED',
       coordinates: { latitude: 11.8822, longitude: 13.2143, accuracy: 8, timestamp: new Date().toISOString(), captureMethod: 'GPS' }
@@ -616,7 +616,7 @@ async function main() {
       incidentId: 'incident-flood-001',
       assessorName: 'Multi Role Test User',
       location: 'IDP Camp Dalori',
-      status: 'SUBMITTED',
+      status: 'DRAFT',
       priority: 'MEDIUM',
       verificationStatus: 'VERIFIED',
       coordinates: { latitude: 11.7833, longitude: 13.2167, accuracy: 12, timestamp: new Date().toISOString(), captureMethod: 'GPS' }
@@ -629,7 +629,7 @@ async function main() {
       incidentId: 'incident-drought-001',
       assessorName: 'Field Assessor',
       location: 'Gwoza Local Government',
-      status: 'PUBLISHED',
+      status: 'DRAFT',
       priority: 'HIGH',
       verificationStatus: 'VERIFIED',
       coordinates: { latitude: 11.0417, longitude: 13.6875, accuracy: 15, timestamp: new Date().toISOString(), captureMethod: 'GPS' }
@@ -642,7 +642,7 @@ async function main() {
       incidentId: 'incident-flood-001',
       assessorName: 'Multi Role Test User',
       location: 'Primary Health Center Maiduguri',
-      status: 'SUBMITTED',
+      status: 'DRAFT',
       priority: 'LOW',
       verificationStatus: 'VERIFIED',
       coordinates: { latitude: 11.8467, longitude: 13.1569, accuracy: 5, timestamp: new Date().toISOString(), captureMethod: 'GPS' }

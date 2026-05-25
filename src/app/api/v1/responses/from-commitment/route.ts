@@ -141,7 +141,7 @@ export const POST = withAuth(async (request: NextRequest, context) => {
           entityId: commitment.entityId,
           assessmentId: assessment.id,
           type: 'LOGISTICS', // Default for commitment-based responses
-          status: 'DELIVERED', // Imported commitments are considered delivered
+          deliveryStatus: 'DELIVERED', // Imported commitments are considered delivered
           priority: commitment.incident.severity,
           description: notes || `Response from ${commitment.donor.name} commitment`,
           items: items,

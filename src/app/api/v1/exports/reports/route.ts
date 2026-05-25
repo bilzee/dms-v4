@@ -342,8 +342,8 @@ async function collectResponseActivityData(startDate: string, endDate: string, f
     stats: responseStats,
     summary: {
       totalResponses: responses.length,
-      deliveredResponses: responses.filter(r => r.status === 'DELIVERED').length,
-      plannedResponses: responses.filter(r => r.status === 'PLANNED').length,
+      deliveredResponses: responses.filter(r => r.deliveryStatus === 'DELIVERED').length,
+      plannedResponses: responses.filter(r => r.deliveryStatus === 'PLANNED').length,
       responsesByPriority: responses.reduce((acc, r) => {
         acc[r.priority] = (acc[r.priority] || 0) + 1;
         return acc;
@@ -708,7 +708,7 @@ function generateResponseActivitySection(data: any): string {
       <tr>
         <td>${response.id}</td>
         <td>${response.responsePriority}</td>
-        <td>${response.status}</td>
+        <td>${response.deliveryStatus}</td>
         <td>${response.entity?.name || 'N/A'}</td>
         <td>${response.progressPercentage || 0}%</td>
         <td>${response.assignedTo?.name || 'Unassigned'}</td>

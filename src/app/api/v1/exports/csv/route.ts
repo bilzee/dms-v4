@@ -108,14 +108,14 @@ async function generateAssessmentsCSV(startDate?: string, endDate?: string, filt
   const headers = [
     'ID', 'Assessment Type', 'Assessment Date', 'Status', 'Location', 'Coordinates',
     'Created Date', 'Last Updated', 'Assessor Name', 'Priority', 'Version',
-    'Is Offline Created', 'Sync Status', 'Verification Status', 'Verified At'
+    'Is Offline Created', 'Sync Status', 'Verified At'
   ];
 
   const csvRows = assessments.map(assessment => [
     assessment.id,
     assessment.rapidAssessmentType,
     assessment.rapidAssessmentDate.toISOString(),
-    assessment.status,
+    assessment.verificationStatus,
     assessment.location || 'Unknown',
     assessment.coordinates ? JSON.stringify(assessment.coordinates) : 'N/A',
     assessment.createdAt.toISOString(),
@@ -125,7 +125,6 @@ async function generateAssessmentsCSV(startDate?: string, endDate?: string, filt
     assessment.versionNumber,
     assessment.isOfflineCreated,
     assessment.syncStatus,
-    assessment.verificationStatus,
     assessment.verifiedAt?.toISOString() || '',
   ]);
 
@@ -182,7 +181,7 @@ async function generateResponsesCSV(startDate?: string, endDate?: string, filter
     response.assessment?.rapidAssessmentType || 'Unknown',
     response.type,
     response.priority,
-    response.status,
+    response.deliveryStatus,
     response.entity?.name || 'Unknown',
     response.entity?.type || 'Unknown',
     response.responder?.name || 'Unassigned',

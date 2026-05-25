@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { verificationPriorityBadgeColors, responseStatusBadgeColors } from '@/lib/utils/priority-colors';
+import { verificationPriorityBadgeColors, deliveryStatusBadgeColors } from '@/lib/utils/priority-colors';
 import { useResponseVerificationQueue, useVerifyResponse, useRejectResponse } from '@/hooks/useResponseVerification';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -293,7 +293,7 @@ export function ResponseVerificationQueue({
                 <Badge
                   className={cn(
                     'font-medium flex items-center gap-1',
-                    responseStatusBadgeColors[response.status as keyof typeof responseStatusBadgeColors]
+                    deliveryStatusBadgeColors[response.deliveryStatus as keyof typeof deliveryStatusBadgeColors]
                   )}
                 >
                   {getStatusIcon(response.verificationStatus)}

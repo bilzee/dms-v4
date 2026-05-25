@@ -64,7 +64,6 @@ export const POST = withAuth(async (
         where: { id: assessmentId },
         data: {
           verificationStatus: 'VERIFIED',
-          status: 'PUBLISHED',
           verifiedAt: new Date(),
           verifiedBy: user.userId
         },

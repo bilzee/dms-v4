@@ -6,7 +6,7 @@ export {
   verificationPriorityBadgeColors,
   verificationPrioritySolidColors,
   verificationStatusBadgeColors,
-  responseStatusBadgeColors,
+  deliveryStatusBadgeColors,
   getPriorityBadgeColor,
   getPrioritySolidColor,
   getVerificationStatusColor,

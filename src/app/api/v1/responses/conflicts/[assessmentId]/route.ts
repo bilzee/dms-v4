@@ -35,7 +35,7 @@ export const GET = withAuth(
             id: response.id,
             type: response.type,
             priority: response.priority,
-            status: response.status,
+            deliveryStatus: response.deliveryStatus,
             plannedDate: response.plannedDate,
             responderName: response.responder?.name,
             itemsCount: Array.isArray(response.items) ? response.items.length : 0
