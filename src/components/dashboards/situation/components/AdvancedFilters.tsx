@@ -19,7 +19,7 @@ import {
   Download,
   RefreshCw,
   Sliders
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { debounce } from '@/lib/utils/debounce';
 
@@ -300,7 +300,7 @@ export function AdvancedFilters({ incidentId, onFiltersChange, className }: Adva
       <CardContent className="space-y-4">
         {/* Basic Search Bar */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search incidents, entities, or locations..."
             value={filters.searchTerm}
@@ -311,7 +311,7 @@ export function AdvancedFilters({ incidentId, onFiltersChange, className }: Adva
 
         {/* Quick Filter Presets */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">Quick Filters</label>
+          <label className="text-sm font-medium text-foreground">Quick Filters</label>
           <div className="flex flex-wrap gap-2">
             {filterPresets.map((preset) => (
               <Button
@@ -342,10 +342,10 @@ export function AdvancedFilters({ incidentId, onFiltersChange, className }: Adva
 
         {/* Advanced Filters Panel */}
         {showAdvanced && (
-          <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
+          <div className="space-y-4 p-4 border rounded-lg bg-muted">
             {/* Entity Types */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Entity Types</label>
+              <label className="text-sm font-medium text-foreground">Entity Types</label>
               <div className="flex flex-wrap gap-2">
                 {entityTypeOptions.map((option) => (
                   <Button
@@ -368,7 +368,7 @@ export function AdvancedFilters({ incidentId, onFiltersChange, className }: Adva
 
             {/* Severity Levels */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Severity Levels</label>
+              <label className="text-sm font-medium text-foreground">Severity Levels</label>
               <div className="flex flex-wrap gap-2">
                 {severityOptions.map((option) => (
                   <Button
@@ -391,7 +391,7 @@ export function AdvancedFilters({ incidentId, onFiltersChange, className }: Adva
 
             {/* Date Range */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Date Range</label>
+              <label className="text-sm font-medium text-foreground">Date Range</label>
               <div className="grid grid-cols-2 gap-2">
                 <Input
                   type="date"
@@ -416,7 +416,7 @@ export function AdvancedFilters({ incidentId, onFiltersChange, className }: Adva
 
             {/* Geographic Area */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Geographic Area</label>
+              <label className="text-sm font-medium text-foreground">Geographic Area</label>
               <Select
                 value={filters.geographicArea}
                 onValueChange={(value) => handleFilterChange('geographicArea', value)}
@@ -436,7 +436,7 @@ export function AdvancedFilters({ incidentId, onFiltersChange, className }: Adva
 
             {/* Assessment Status */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Assessment Status</label>
+              <label className="text-sm font-medium text-foreground">Assessment Status</label>
               <div className="flex flex-wrap gap-2">
                 {assessmentStatusOptions.map((option) => (
                   <Button
@@ -459,7 +459,7 @@ export function AdvancedFilters({ incidentId, onFiltersChange, className }: Adva
 
             {/* Save Custom Filter */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Save Current Filter</label>
+              <label className="text-sm font-medium text-foreground">Save Current Filter</label>
               <div className="flex gap-2">
                 <Input
                   placeholder="Filter name..."
@@ -481,7 +481,7 @@ export function AdvancedFilters({ incidentId, onFiltersChange, className }: Adva
             {/* Saved Custom Filters */}
             {savedFilters.filter(f => !f.isDefault).length > 0 && (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Saved Filters</label>
+                <label className="text-sm font-medium text-foreground">Saved Filters</label>
                 <div className="flex flex-wrap gap-2">
                   {savedFilters.filter(f => !f.isDefault).map((saved) => (
                     <Button

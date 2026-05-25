@@ -17,7 +17,7 @@ import { SafeDataLoader } from '@/components/shared/SafeDataLoader'
 import { EmptyResponses } from '@/components/shared/EmptyState'
 
 // Icons
-import { Package, Truck, CheckCircle, ArrowLeft } from 'lucide-react'
+import { Package, Truck, CheckCircle, ArrowLeft } from '@/lib/icons'
 
 // Services and hooks
 import { useAuth } from '@/hooks/useAuth'

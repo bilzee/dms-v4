@@ -30,7 +30,7 @@ import {
   MapPin,
   LogOut,
   Menu
-} from 'lucide-react';
+} from '@/lib/icons';
 
 interface NavItem {
   name: string;
@@ -454,6 +454,13 @@ export const Navigation = () => {
     const isItemActive = isActive(item.href);
     const isExpanded = expandedItems.has(item.href);
 
+    const handleLogout = React.useCallback(async () => {
+      try {
+        await apiPost('/api/v1/auth/logout');
+      } catch {}
+      router.push('/login');
+    }, [router]);
+
     if (!isAccessible(item.href)) {
       return null;
     }
@@ -508,13 +515,6 @@ export const Navigation = () => {
         </div>
       );
     }
-
-    const handleLogout = React.useCallback(async () => {
-      try {
-        await apiPost('/api/v1/auth/logout');
-      } catch {}
-      router.push('/login');
-    }, [router]);
 
     if (item.href === '#logout') {
       return (

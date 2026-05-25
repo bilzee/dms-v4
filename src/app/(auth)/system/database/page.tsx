@@ -28,7 +28,7 @@ import {
   Clock,
   FileText,
   BarChart3
-} from 'lucide-react'
+} from '@/lib/icons'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { cn } from '@/lib/utils'
 

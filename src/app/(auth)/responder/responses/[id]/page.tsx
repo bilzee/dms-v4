@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { ArrowLeft, CheckCircle, Clock, Package, MapPin, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Clock, Package, MapPin, AlertTriangle } from '@/lib/icons'
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet } from '@/lib/api'
 

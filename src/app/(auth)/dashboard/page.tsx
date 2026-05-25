@@ -28,7 +28,7 @@ import {
   UserCog,
   TrendingUp,
   Clock
-} from 'lucide-react'
+} from '@/lib/icons'
 
 export default function DashboardPage() {
   const { user, hasPermission, hasRole, currentRole, token } = useAuth()

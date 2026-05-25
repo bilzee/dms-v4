@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Upload, X, Image as ImageIcon, FileVideo, AlertCircle } from 'lucide-react'
+import { Upload, X, Image as ImageIcon, FileVideo, AlertCircle } from '@/lib/icons'
 
 interface MediaFieldProps {
   onPhotosChange: (photos: string[]) => void
@@ -131,7 +131,7 @@ export function MediaField({
       {/* Upload Area */}
       <Card 
         className={`border-2 border-dashed transition-colors ${
-          dragActive ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-gray-400'
+          dragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -140,7 +140,7 @@ export function MediaField({
       >
         <CardContent className="p-6">
           <div className="text-center">
-            <Upload className="mx-auto h-12 w-12 text-gray-400" />
+            <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
             <div className="mt-4">
               <Button 
                 type="button" 
@@ -150,10 +150,10 @@ export function MediaField({
               >
                 Select Photos
               </Button>
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-muted-foreground">
                 or drag and drop images here
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 PNG, JPG, WebP up to {maxFileSize}MB each. Max {maxPhotos} files.
               </p>
             </div>
@@ -218,8 +218,8 @@ export function MediaField({
                       />
                     </>
                   ) : (
-                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                      <FileVideo className="h-8 w-8 text-gray-400" />
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <FileVideo className="h-8 w-8 text-muted-foreground" />
                     </div>
                   )}
                   
@@ -256,8 +256,8 @@ export function MediaField({
                 
                 {/* File Info */}
                 <div className="mt-2">
-                  <p className="text-xs text-gray-600 truncate">{photo.file.name}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground truncate">{photo.file.name}</p>
+                  <p className="text-xs text-muted-foreground">
                     {(photo.file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
                   {photo.error && (

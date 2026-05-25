@@ -24,7 +24,7 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp
-} from 'lucide-react';
+} from '@/lib/icons';
 
 // Types
 interface IncidentsOverviewProps {
@@ -52,17 +52,17 @@ interface DashboardData {
 const incidentTypeConfig: Record<string, { icon: React.ComponentType<{ className?: string }>, color: string, label: string }> = {
   'FLOOD': { icon: Waves, color: 'text-blue-600', label: 'Flood' },
   'DROUGHT': { icon: Sun, color: 'text-orange-600', label: 'Drought' },
-  'EARTHQUAKE': { icon: Mountain, color: 'text-gray-600', label: 'Earthquake' },
+  'EARTHQUAKE': { icon: Mountain, color: 'text-muted-foreground', label: 'Earthquake' },
   'WILDFIRE': { icon: Flame, color: 'text-red-600', label: 'Wildfire' },
   'HURRICANE': { icon: Wind, color: 'text-purple-600', label: 'Hurricane' },
-  'TORNADO': { icon: Wind, color: 'text-gray-500', label: 'Tornado' },
+  'TORNADO': { icon: Wind, color: 'text-muted-foreground', label: 'Tornado' },
   'TSUNAMI': { icon: Waves, color: 'text-blue-800', label: 'Tsunami' },
   'VOLCANIC': { icon: Mountain, color: 'text-red-500', label: 'Volcanic' },
   'CONFLICT': { icon: Users, color: 'text-red-700', label: 'Conflict' },
   'ACCIDENT': { icon: Car, color: 'text-yellow-600', label: 'Accident' },
-  'BUILDING_COLLAPSE': { icon: Building, color: 'text-gray-700', label: 'Building Collapse' },
+  'BUILDING_COLLAPSE': { icon: Building, color: 'text-foreground', label: 'Building Collapse' },
   'POWER_OUTAGE': { icon: Zap, color: 'text-yellow-500', label: 'Power Outage' },
-  'OTHER': { icon: AlertTriangle, color: 'text-gray-600', label: 'Other' }
+  'OTHER': { icon: AlertTriangle, color: 'text-muted-foreground', label: 'Other' }
 };
 
 /**
@@ -129,7 +129,7 @@ export function IncidentsOverview({ className }: IncidentsOverviewProps) {
     return (
       <Card className={cn("h-fit", className)}>
         <CardHeader 
-          className="pb-3 cursor-pointer hover:bg-gray-50 transition-colors"
+          className="pb-3 cursor-pointer hover:bg-muted transition-colors"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <CardTitle className="text-lg font-semibold flex items-center gap-2 justify-between">
@@ -146,7 +146,7 @@ export function IncidentsOverview({ className }: IncidentsOverviewProps) {
         </CardHeader>
         {isExpanded && (
           <CardContent>
-            <div className="text-center py-4 text-gray-500">
+            <div className="text-center py-4 text-muted-foreground">
               <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">Loading incidents overview...</p>
             </div>
@@ -161,7 +161,7 @@ export function IncidentsOverview({ className }: IncidentsOverviewProps) {
     return (
       <Card className={cn("h-fit", className)}>
         <CardHeader 
-          className="pb-3 cursor-pointer hover:bg-gray-50 transition-colors"
+          className="pb-3 cursor-pointer hover:bg-muted transition-colors"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <CardTitle className="text-lg font-semibold flex items-center gap-2 justify-between">
@@ -229,7 +229,7 @@ export function IncidentsOverview({ className }: IncidentsOverviewProps) {
     return (
       <Card className={cn("h-fit", className)}>
         <CardHeader 
-          className="pb-3 cursor-pointer hover:bg-gray-50 transition-colors"
+          className="pb-3 cursor-pointer hover:bg-muted transition-colors"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <CardTitle className="text-lg font-semibold flex items-center gap-2 justify-between">
@@ -249,7 +249,7 @@ export function IncidentsOverview({ className }: IncidentsOverviewProps) {
             <div className="text-center py-4 text-green-600">
               <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm font-medium">No Active Incidents</p>
-              <p className="text-xs text-gray-500 mt-1">All incidents have been resolved</p>
+              <p className="text-xs text-muted-foreground mt-1">All incidents have been resolved</p>
             </div>
           </CardContent>
         )}
@@ -260,7 +260,7 @@ export function IncidentsOverview({ className }: IncidentsOverviewProps) {
   return (
     <Card className={cn("h-fit", className)}>
       <CardHeader 
-        className="pb-3 cursor-pointer hover:bg-gray-50 transition-colors"
+        className="pb-3 cursor-pointer hover:bg-muted transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <CardTitle className="text-lg font-semibold flex items-center gap-2 justify-between">
@@ -286,12 +286,12 @@ export function IncidentsOverview({ className }: IncidentsOverviewProps) {
           const Icon = config.icon;
           
           return (
-            <div key={summary.type} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+            <div key={summary.type} className="flex items-center justify-between p-3 bg-muted rounded-lg border">
               <div className="flex items-center gap-3">
                 <Icon className={cn("h-5 w-5", config.color)} />
                 <div>
                   <div className="font-medium text-sm">{config.label}</div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-muted-foreground">
                     {summary.totalCount} incident{summary.totalCount !== 1 ? 's' : ''}
                   </div>
                 </div>
@@ -314,8 +314,8 @@ export function IncidentsOverview({ className }: IncidentsOverviewProps) {
         })}
         
         {/* Quick Stats */}
-        <div className="mt-4 pt-3 border-t border-gray-100">
-          <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="mt-4 pt-3 border-t border-border">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
               <span>Last updated: {new Date().toLocaleTimeString('en-US', { 

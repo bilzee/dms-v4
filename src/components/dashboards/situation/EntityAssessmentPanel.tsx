@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, RefreshCw, TrendingUp, MapPin, Users, Info } from 'lucide-react';
+import { AlertTriangle, RefreshCw, TrendingUp, MapPin, Users, Info } from '@/lib/icons';
 import { EntitySelector } from './components/EntitySelector';
 import { AssessmentCategorySummary } from './components/AssessmentCategorySummary';
 import { AggregationInfoPopup } from './components/AggregationInfoPopup';

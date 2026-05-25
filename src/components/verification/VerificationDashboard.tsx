@@ -29,7 +29,7 @@ import {
   BarChart3,
   Package,
   MapPin
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import type { VerificationQueueItem } from '@/types/verification';
 import type { ResponseVerificationQueueItem } from '@/types/response-verification';

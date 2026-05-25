@@ -173,16 +173,16 @@ input, textarea, select {
 }
 
 .status-indicator.online {
-  background-color: #dcfce7;
-  color: #166534;
+  background-color: hsl(var(--severity-success) / 0.15);
+  color: hsl(var(--severity-success));
 }
 
 .status-indicator.offline {
-  background-color: #fef2f2;
-  color: #dc2626;
+  background-color: hsl(var(--severity-critical) / 0.15);
+  color: hsl(var(--severity-critical));
 }
 
 .status-indicator.syncing {
-  background-color: #dbeafe;
-  color: #1d4ed8;
+  background-color: hsl(var(--severity-info) / 0.15);
+  color: hsl(var(--severity-info));
 }

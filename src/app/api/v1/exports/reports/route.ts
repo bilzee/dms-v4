@@ -330,7 +330,7 @@ async function collectResponseActivityData(startDate: string, endDate: string, f
   });
 
   const responseStats = await prisma.rapidResponse.groupBy({
-    by: ['status', 'priority'],
+    by: ['deliveryStatus', 'priority'],
     where: {
       createdAt: { gte: new Date(startDate), lte: new Date(endDate) },
     },
@@ -407,7 +407,6 @@ async function collectEntityStatusData(startDate: string, endDate: string, filte
     where: {
       ...(filters && {
         type: filters.type,
-        status: filters.status,
         jurisdictionId: filters.jurisdictionId,
       }),
     },

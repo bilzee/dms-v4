@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, CheckCircle, AlertTriangle, FileText, MapPin, Calendar, User, Home, Users, School, Activity } from 'lucide-react'
+import { ArrowLeft, CheckCircle, AlertTriangle, FileText, MapPin, Calendar, User, Home, Users, School, Activity } from '@/lib/icons'
 import { apiGet } from '@/lib/api'
 
 interface PreliminaryAssessment {

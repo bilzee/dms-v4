@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { MapPin, Users, AlertCircle, RefreshCw, X, Plus } from 'lucide-react'
+import { MapPin, Users, AlertCircle, RefreshCw, X, Plus } from '@/lib/icons'
 
 // UI components
 import { Badge } from '@/components/ui/badge'

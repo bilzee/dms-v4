@@ -15,7 +15,7 @@ import {
   CommandItem,
   CommandList
 } from '@/components/ui/command';
-import { Loader2, AlertCircle, MapPin, Building2, CheckCircle, AlertTriangle, Info, Check, ChevronsUpDown } from 'lucide-react';
+import { Loader2, AlertCircle, MapPin, Building2, CheckCircle, AlertTriangle, Info, Check, ChevronsUpDown } from '@/lib/icons';
 import { useEntitySelection, useEntityActions } from '@/stores/dashboardLayout.store';
 import { useIncidentSelection } from '@/stores/dashboardLayout.store';
 
@@ -98,7 +98,7 @@ const EntitySeverityBadge = ({ severity, count }: { severity: string; count: num
       <IconComponent className={cn("h-3 w-3", config.iconClass)} />
       {severity}
       {count > 0 && (
-        <span className="ml-1 text-xs bg-white/20 px-1 rounded">
+        <span className="ml-1 text-xs bg-card/20 px-1 rounded">
           {count}
         </span>
       )}
@@ -246,8 +246,8 @@ export function EntitySelector({
   // Show loading state when incident changes
   if (!incidentId) {
     return (
-      <div className={cn("p-3 border border-gray-200 bg-gray-50 rounded-md", className)}>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
+      <div className={cn("p-3 border border-border bg-muted rounded-md", className)}>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <MapPin className="h-4 w-4" />
           <span>Select an incident first</span>
         </div>
@@ -275,11 +275,11 @@ export function EntitySelector({
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-gray-700">
+        <label className="text-sm font-medium text-foreground">
           Entity Selection
         </label>
         {entityHistory.length > 0 && (
-          <div className="flex items-center gap-1 text-xs text-gray-500">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Building2 className="h-3 w-3" />
             <span>{entityHistory.length} recent</span>
           </div>
@@ -304,7 +304,7 @@ export function EntitySelector({
             <div className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
               <span className="font-medium">All Entities</span>
-              <span className="text-gray-500">({entities.length} total)</span>
+              <span className="text-muted-foreground">({entities.length} total)</span>
             </div>
           ) : selectedEntity ? (
             <div className="flex items-center justify-between w-full">
@@ -313,7 +313,7 @@ export function EntitySelector({
                   className: "h-4 w-4"
                 })}
                 <span className="font-medium">{selectedEntity.name}</span>
-                <span className="text-gray-500 text-xs">
+                <span className="text-muted-foreground text-xs">
                   ({entityTypeConfig[selectedEntity.type].label})
                 </span>
               </div>
@@ -347,7 +347,7 @@ export function EntitySelector({
                     <div className="flex items-center gap-2">
                       <Building2 className="h-4 w-4" />
                       <span>All Entities</span>
-                      <span className="text-gray-500">({entities.length} total)</span>
+                      <span className="text-muted-foreground">({entities.length} total)</span>
                       {includeAllEntities && (
                         <Check className="h-4 w-4 ml-auto" />
                       )}
@@ -371,7 +371,7 @@ export function EntitySelector({
                             className: "h-4 w-4"
                           })}
                           <span className="font-medium">{entity.name}</span>
-                          <span className="text-gray-500 text-xs">
+                          <span className="text-muted-foreground text-xs">
                             ({entityTypeConfig[entity.type].label})
                           </span>
                         </div>
@@ -400,7 +400,7 @@ export function EntitySelector({
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{entity.name}</span>
                           {entity.location && (
-                            <span className="text-gray-400 text-xs truncate ml-2">
+                            <span className="text-muted-foreground text-xs truncate ml-2">
                               📍 {entity.location}
                             </span>
                           )}

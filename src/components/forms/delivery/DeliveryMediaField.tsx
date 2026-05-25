@@ -17,7 +17,7 @@ import {
   Camera,
   Wifi,
   WifiOff
-} from 'lucide-react'
+} from '@/lib/icons'
 import { 
   DeliveryMediaFieldProps, 
   MediaAttachment, 
@@ -304,7 +304,7 @@ export function DeliveryMediaField({
               <span className="text-sm">
                 GPS Location: {currentGPS.latitude.toFixed(6)}, {currentGPS.longitude.toFixed(6)}
                 {currentGPS.accuracy && (
-                  <span className="text-gray-500 ml-2">
+                  <span className="text-muted-foreground ml-2">
                     (±{currentGPS.accuracy.toFixed(0)}m accuracy)
                   </span>
                 )}
@@ -321,7 +321,7 @@ export function DeliveryMediaField({
       {/* Upload Area */}
       <Card 
         className={`border-2 border-dashed transition-colors ${
-          dragActive ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-gray-400'
+          dragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground'
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -330,7 +330,7 @@ export function DeliveryMediaField({
       >
         <CardContent className="p-6">
           <div className="text-center">
-            <Camera className="mx-auto h-12 w-12 text-gray-400" />
+            <Camera className="mx-auto h-12 w-12 text-muted-foreground" />
             <div className="mt-4">
               <Button 
                 type="button" 
@@ -341,10 +341,10 @@ export function DeliveryMediaField({
                 <Upload className="h-4 w-4 mr-2" />
                 Take/Select Photos
               </Button>
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-muted-foreground">
                 or drag and drop delivery photos here
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 PNG, JPG, WebP up to {maxFileSize}MB each. Max {maxPhotos} files.
                 {requireGPS && " GPS location will be automatically captured."}
               </p>
@@ -422,8 +422,8 @@ export function DeliveryMediaField({
                       />
                     </>
                   ) : (
-                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                      <FileVideo className="h-8 w-8 text-gray-400" />
+                    <div className="w-full h-full bg-muted flex items-center justify-center">
+                      <FileVideo className="h-8 w-8 text-muted-foreground" />
                     </div>
                   )}
                   
@@ -476,7 +476,7 @@ export function DeliveryMediaField({
                 {/* File Info */}
                 <div className="mt-2">
                   <p className="text-xs text-gray-600 truncate">{upload.file.name}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {(upload.file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
                   {upload.error && (

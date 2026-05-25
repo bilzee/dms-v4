@@ -31,7 +31,7 @@ import {
   Calendar,
   Loader2,
   Clock
-} from 'lucide-react'
+} from '@/lib/icons'
 import { DataTable, type ColumnDef, type RowAction } from '@/components/shared/DataTable'
 
 interface DeliveryQueueItem {
@@ -194,7 +194,7 @@ export default function DeliveryVerificationQueuePage() {
       render: (delivery) => (
         <div>
           <div className="font-medium">{delivery.entity.name}</div>
-          <div className="text-sm text-gray-500">{delivery.entity.type}</div>
+          <div className="text-sm text-muted-foreground">{delivery.entity.type}</div>
         </div>
       ),
     },
@@ -204,7 +204,7 @@ export default function DeliveryVerificationQueuePage() {
       render: (delivery) => (
         <div>
           <div className="font-medium">{delivery.responder.name}</div>
-          <div className="text-sm text-gray-500">{delivery.responder.email}</div>
+          <div className="text-sm text-muted-foreground">{delivery.responder.email}</div>
         </div>
       ),
     },
@@ -223,7 +223,7 @@ export default function DeliveryVerificationQueuePage() {
       header: 'Delivery Date',
       render: (delivery) => (
         <div className="flex items-center gap-1">
-          <Calendar className="h-4 w-4 text-gray-400" />
+          <Calendar className="h-4 w-4 text-muted-foreground" />
           {delivery.responseDate
             ? formatDateTime(delivery.responseDate)
             : 'Not delivered'}
@@ -250,7 +250,7 @@ export default function DeliveryVerificationQueuePage() {
       header: 'Location',
       render: (delivery) => (
         <div className="flex items-center gap-1">
-          <MapPin className="h-4 w-4 text-gray-400" />
+          <MapPin className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-mono">
             {delivery.deliveryInfo.deliveryLocation.latitude.toFixed(4)},
             {delivery.deliveryInfo.deliveryLocation.longitude.toFixed(4)}
@@ -288,7 +288,7 @@ export default function DeliveryVerificationQueuePage() {
           <Package className="h-8 w-8 text-blue-600" />
           Delivery Verification Queue
         </h1>
-        <p className="text-gray-600 mt-2">
+        <p className="text-muted-foreground mt-2">
           Review and verify deliveries submitted by responders
         </p>
       </div>
@@ -420,32 +420,32 @@ export default function DeliveryVerificationQueuePage() {
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Entity</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">Entity</Label>
                   <p className="font-medium">{selectedDelivery.entity.name}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Responder</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">Responder</Label>
                   <p className="font-medium">{selectedDelivery.responder.name}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Response Type</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">Response Type</Label>
                   <p className="font-medium">{selectedDelivery.type}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Priority</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">Priority</Label>
                   {getPriorityBadge(selectedDelivery.priority)}
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-500">Delivery Location</Label>
+                <Label className="text-sm font-medium text-muted-foreground">Delivery Location</Label>
                 <div className="p-3 bg-gray-50 rounded">
                   <p className="font-mono text-sm">
                     {selectedDelivery.deliveryInfo.deliveryLocation.latitude.toFixed(6)},
                     {selectedDelivery.deliveryInfo.deliveryLocation.longitude.toFixed(6)}
                   </p>
                   {selectedDelivery.deliveryInfo.deliveryLocation.accuracy && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Accuracy: ±{selectedDelivery.deliveryInfo.deliveryLocation.accuracy}m
                     </p>
                   )}
@@ -453,7 +453,7 @@ export default function DeliveryVerificationQueuePage() {
               </div>
 
               <div>
-                <Label className="text-sm font-medium text-gray-500">Delivered Items</Label>
+                <Label className="text-sm font-medium text-muted-foreground">Delivered Items</Label>
                 <div className="space-y-1 mt-2">
                   {selectedDelivery.deliveryInfo.deliveredItems.map((item, index) => (
                     <div key={index} className="flex justify-between text-sm p-2 bg-gray-50 rounded">
@@ -466,19 +466,19 @@ export default function DeliveryVerificationQueuePage() {
 
               {selectedDelivery.deliveryInfo.deliveryNotes && (
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Delivery Notes</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">Delivery Notes</Label>
                   <p className="text-sm mt-1">{selectedDelivery.deliveryInfo.deliveryNotes}</p>
                 </div>
               )}
 
               {selectedDelivery.deliveryProof.length > 0 && (
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Delivery Photos</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">Delivery Photos</Label>
                   <div className="grid grid-cols-2 gap-4 mt-2">
                     {selectedDelivery.deliveryProof.map((photo) => (
                       <div key={photo.id} className="border rounded p-2">
                         <div className="aspect-square bg-gray-100 rounded flex items-center justify-center">
-                          <Package className="h-8 w-8 text-gray-400" />
+                          <Package className="h-8 w-8 text-muted-foreground" />
                         </div>
                         <p className="text-xs text-center mt-1 truncate">{photo.filename}</p>
                       </div>
@@ -489,7 +489,7 @@ export default function DeliveryVerificationQueuePage() {
 
               {selectedDelivery.verificationStatus === 'SUBMITTED' && (
                 <div className="space-y-4">
-                  <Label className="text-sm font-medium text-gray-500">Verification Action</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">Verification Action</Label>
                   <div className="flex gap-2">
                     <Button
                       variant="default"

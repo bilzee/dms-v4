@@ -39,7 +39,7 @@ import { usePreliminaryAssessment } from '@/hooks/usePreliminaryAssessment'
 import { useAuth } from '@/hooks/useAuth'
 import { PreliminaryAssessmentSchema } from '@/lib/validation/preliminary-assessment'
 import { PreliminaryAssessmentData } from '@/types/preliminary-assessment'
-import { AlertTriangle, Save, Send, Calendar, User, MapPin, Camera, Paperclip, X, CheckCircle2, Map as MapIcon, Crosshair } from 'lucide-react'
+import { AlertTriangle, Save, Send, Calendar, User, MapPin, Camera, Paperclip, X, CheckCircle2, Map as MapIcon, Crosshair } from '@/lib/icons'
 import { z } from 'zod'
 
 type FormData = z.infer<typeof PreliminaryAssessmentSchema>
@@ -289,9 +289,9 @@ export function PreliminaryAssessmentForm({
                   type="datetime-local"
                   {...register('reportingDate')}
                   disabled={true} // Always disabled
-                  className="bg-gray-50 text-gray-700 cursor-not-allowed"
+                  className="bg-muted text-foreground cursor-not-allowed"
                 />
-                <p className="text-xs text-gray-500">Automatically set to current date and time</p>
+                <p className="text-xs text-muted-foreground">Automatically set to current date and time</p>
                 {errors.reportingDate && (
                   <p className="text-sm text-red-600">{errors.reportingDate.message}</p>
                 )}
@@ -302,16 +302,16 @@ export function PreliminaryAssessmentForm({
                   Reporting Agent <span className="text-red-500">*</span>
                 </Label>
                 <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-gray-500" />
+                  <User className="h-4 w-4 text-muted-foreground" />
                   <Input
                     id="reportingAgent"
                     {...register('reportingAgent')}
                     disabled={true} // Always disabled
-                    className="bg-gray-50 text-gray-700 cursor-not-allowed"
+                    className="bg-muted text-foreground cursor-not-allowed"
                     placeholder="Automatically set to current user"
                   />
                 </div>
-                <p className="text-xs text-gray-500">Automatically set to current logged-in user</p>
+                <p className="text-xs text-muted-foreground">Automatically set to current logged-in user</p>
                 {errors.reportingAgent && (
                   <p className="text-sm text-red-600">{errors.reportingAgent.message}</p>
                 )}
@@ -344,13 +344,13 @@ export function PreliminaryAssessmentForm({
                 variant="outline"
                 onClick={() => setShowMapSelector(true)}
                 disabled={disabled}
-                className="w-full h-32 border-2 border-dashed border-gray-300 hover:border-blue-300 flex flex-col items-center justify-center text-gray-500 hover:text-blue-600 transition-colors"
+                className="w-full h-32 border-2 border-dashed border-border hover:border-blue-300 flex flex-col items-center justify-center text-muted-foreground hover:text-blue-600 transition-colors"
               >
                 <MapIcon className="h-6 w-6 mb-2" />
                 <span className="text-sm">Click to Select on Map</span>
                 <span className="text-xs">Alternative to GPS capture</span>
               </Button>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Click on the map to select coordinates for the incident location
               </p>
             </div>
@@ -607,7 +607,7 @@ export function PreliminaryAssessmentForm({
                     <SelectItem key={incident.id} value={incident.id}>
                       <div className="flex flex-col">
                         <span className="font-medium">{incident.type} - {incident.location}</span>
-                        <span className="text-sm text-gray-500">{incident.description}</span>
+                        <span className="text-sm text-muted-foreground">{incident.description}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -640,7 +640,7 @@ export function PreliminaryAssessmentForm({
                 disabled={disabled}
                 className="cursor-pointer"
               />
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Supported formats: Images (JPG, PNG), Videos (MP4, MOV), Audio (MP3, WAV)
               </p>
             </div>

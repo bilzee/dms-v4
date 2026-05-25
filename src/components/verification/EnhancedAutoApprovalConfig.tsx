@@ -42,7 +42,7 @@ import {
   MapPin,
   Search,
   AlertCircle
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 import { apiGet, apiPut, apiPost } from '@/lib/api';
@@ -387,10 +387,10 @@ export function EnhancedAutoApprovalConfig({
         <CardContent className="p-6">
           <div className="text-center">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               Failed to load auto-approval configurations
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               {error instanceof Error ? error.message : 'An unexpected error occurred'}
             </p>
             <Button onClick={() => refetch()} variant="outline">
@@ -443,7 +443,7 @@ export function EnhancedAutoApprovalConfig({
       {/* Quick search */}
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search entities..."
             value={filters.search}
@@ -555,11 +555,11 @@ export function EnhancedAutoApprovalConfig({
           <Card>
             <CardContent className="p-8">
               <div className="text-center">
-                <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">
                   No entities found
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   {configData?.data?.length === 0 
                     ? 'No entities are available for auto-approval configuration'
                     : 'No entities match the current filters'
@@ -590,7 +590,7 @@ export function EnhancedAutoApprovalConfig({
         {compactMode && filteredData.length > 5 && (
           <Card className="border-dashed">
             <CardContent className="p-4 text-center">
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 And {filteredData.length - 5} more entities...
               </p>
               <Button variant="outline" size="sm" className="mt-2">
@@ -722,8 +722,8 @@ function EntityConfigCard({
               className="border-2 border-gray-400 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 data-[state=checked]:text-white"
             />
             <div>
-              <h3 className="font-semibold text-gray-900">{entity.entityName}</h3>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <h3 className="font-semibold text-foreground">{entity.entityName}</h3>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>{entity.entityType}</span>
                 {entity.entityLocation && (
                   <>
@@ -748,7 +748,7 @@ function EntityConfigCard({
             )}
             
             <div className="flex items-center gap-2">
-              <Label htmlFor={`auto-approval-${entity.entityId}`} className="text-sm font-medium text-gray-800">
+              <Label htmlFor={`auto-approval-${entity.entityId}`} className="text-sm font-medium text-foreground">
                 Auto-Approval
               </Label>
               <Switch
@@ -764,10 +764,10 @@ function EntityConfigCard({
 
         {/* Configuration details */}
         {entity.enabled && !compactMode && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="mt-4 pt-4 border-t border-border">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <Label className="font-medium text-gray-700">Scope</Label>
+                <Label className="font-medium text-foreground">Scope</Label>
                 <div className="mt-1">
                   <Badge 
                     className={cn(
@@ -782,14 +782,14 @@ function EntityConfigCard({
               </div>
               
               <div>
-                <Label className="font-medium text-gray-700">Max Priority</Label>
+                <Label className="font-medium text-foreground">Max Priority</Label>
                 <div className="mt-1">
                   <StatusBadge status={entity.conditions.maxPriority} domain="severity" />
                 </div>
               </div>
               
               <div>
-                <Label className="font-medium text-gray-700">Documentation</Label>
+                <Label className="font-medium text-foreground">Documentation</Label>
                 <div className="mt-1">
                   <Badge variant={entity.conditions.requiresDocumentation ? "default" : "secondary"}>
                     {entity.conditions.requiresDocumentation ? 'Required' : 'Optional'}
@@ -798,8 +798,8 @@ function EntityConfigCard({
               </div>
               
               <div>
-                <Label className="font-medium text-gray-700">Types</Label>
-                <div className="mt-1 text-xs text-gray-600">
+                <Label className="font-medium text-foreground">Types</Label>
+                <div className="mt-1 text-xs text-muted-foreground">
                   {entity.scope !== 'responses' && entity.conditions.assessmentTypes.length > 0 ? 
                     `Assessments: ${entity.conditions.assessmentTypes.length}` : 'All assessments'
                   }
@@ -811,7 +811,7 @@ function EntityConfigCard({
               </div>
             </div>
             
-            <div className="mt-3 text-xs text-gray-500">
+            <div className="mt-3 text-xs text-muted-foreground">
               Last modified: {new Date(entity.lastModified).toLocaleString()}
             </div>
           </div>
@@ -862,12 +862,12 @@ function EnhancedBulkConfigDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-600 shadow-xl backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
+      <DialogContent className="sm:max-w-lg bg-card dark:bg-gray-900 border-2 border-border dark:border-gray-600 shadow-xl backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
         <DialogHeader>
-          <DialogTitle className="text-gray-900 dark:text-gray-100">
+          <DialogTitle className="text-foreground dark:text-gray-100">
             Bulk Configuration
           </DialogTitle>
-          <DialogDescription className="text-gray-600 dark:text-gray-300">
+          <DialogDescription className="text-muted-foreground dark:text-gray-300">
             Configure auto-approval settings for {selectedCount} selected entities with conflict detection.
           </DialogDescription>
         </DialogHeader>
@@ -897,13 +897,13 @@ function EnhancedBulkConfigDialog({
               }
               className="data-[state=checked]:bg-green-600 data-[state=unchecked]:bg-gray-400 border-2 border-gray-500 data-[state=checked]:border-green-600 [&>span]:bg-white [&>span]:shadow-md [&>span]:border [&>span]:border-gray-200"
             />
-            <Label htmlFor="bulk-enabled" className="text-gray-800 dark:text-gray-200 font-medium">Enable auto-approval</Label>
+            <Label htmlFor="bulk-enabled" className="text-foreground dark:text-gray-200 font-medium">Enable auto-approval</Label>
           </div>
 
           {config.enabled && (
             <>
               <div>
-                <Label className="text-gray-800 dark:text-gray-200">Auto-Approval Scope</Label>
+                <Label className="text-foreground dark:text-gray-200">Auto-Approval Scope</Label>
                 <Select
                   value={config.scope}
                   onValueChange={(value) =>
@@ -925,7 +925,7 @@ function EnhancedBulkConfigDialog({
               </div>
 
               <div>
-                <Label className="text-gray-800 dark:text-gray-200">Maximum Priority Level</Label>
+                <Label className="text-foreground dark:text-gray-200">Maximum Priority Level</Label>
                 <Select
                   value={config.conditions.maxPriority}
                   onValueChange={(value) =>
@@ -959,7 +959,7 @@ function EnhancedBulkConfigDialog({
                   }
                   className="border-2 border-gray-500 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 data-[state=checked]:text-white"
                 />
-                <Label htmlFor="bulk-documentation" className="text-gray-700 dark:text-gray-300 font-medium">Require documentation</Label>
+                <Label htmlFor="bulk-documentation" className="text-foreground dark:text-gray-300 font-medium">Require documentation</Label>
               </div>
 
               {/* Configuration Preview */}
@@ -973,9 +973,9 @@ function EnhancedBulkConfigDialog({
                 </Button>
                 
                 {showPreview && (
-                  <div className="mt-3 p-3 bg-gray-50 rounded-md text-sm">
+                  <div className="mt-3 p-3 bg-muted rounded-md text-sm">
                     <h4 className="font-medium mb-2">Configuration Summary:</h4>
-                    <ul className="space-y-1 text-gray-700">
+                    <ul className="space-y-1 text-foreground">
                       <li>• Scope: {config.scope}</li>
                       <li>• Max Priority: {config.conditions.maxPriority}</li>
                       <li>• Documentation: {config.conditions.requiresDocumentation ? 'Required' : 'Optional'}</li>

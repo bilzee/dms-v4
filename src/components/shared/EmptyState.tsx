@@ -17,7 +17,7 @@ import {
   RefreshCw,
   Inbox,
   Database
-} from 'lucide-react'
+} from '@/lib/icons'
 
 interface EmptyStateProps {
   type?: 'default' | 'data' | 'search' | 'error' | 'network'
@@ -76,15 +76,15 @@ export function EmptyState({
   return (
     <Card className={cn("border-dashed", className)}>
       <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-          <Icon className="h-8 w-8 text-gray-400" />
+        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+          <Icon className="h-8 w-8 text-muted-foreground" />
         </div>
         
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
+        <h3 className="text-lg font-medium text-foreground mb-2">
           {title || config.title}
         </h3>
         
-        <p className="text-sm text-gray-500 max-w-md mb-6">
+        <p className="text-sm text-muted-foreground max-w-md mb-6">
           {description || config.description}
         </p>
 

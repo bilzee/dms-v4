@@ -21,7 +21,7 @@ import { IncidentSelector } from '@/components/shared/IncidentSelector'
 import { FoodAssessmentFormProps, FoodAssessment } from '@/types/rapid-assessment'
 import { getCurrentUserName, getAssessmentLocationData } from '@/utils/assessment-utils'
 import { cn } from '@/lib/utils'
-import { Utensils, AlertTriangle, Package, Clock } from 'lucide-react'
+import { Utensils, AlertTriangle, Package, Clock } from '@/lib/icons'
 
 const FoodAssessmentSchema = z.object({
   isFoodSufficient: z.boolean(),

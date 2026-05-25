@@ -6,7 +6,7 @@ import { StatCard } from '@/components/shared/StatCard'
 import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { BarChart3, CheckCircle, XCircle, Clock, Users, FileText } from 'lucide-react'
+import { BarChart3, CheckCircle, XCircle, Clock, Users, FileText } from '@/lib/icons'
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet } from '@/lib/api'
 

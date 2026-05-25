@@ -121,7 +121,7 @@ Rather than editing files one by one:
 
 **Overall coverage: 100%** (with acceptable visual substitutions)
 
-### Critical Risk: Chevron Icons
+### Chevron Icon Handling
 
 Hugeicons free tier does NOT have single-chevron arrows (ChevronDown/Left/Right/Up). These are used extensively in:
 - `src/components/ui/select.tsx` (SelectTrigger icon)
@@ -129,10 +129,12 @@ Hugeicons free tier does NOT have single-chevron arrows (ChevronDown/Left/Right/
 - Navigation components
 - Accordion/collapsible sections
 
-**Decision: Dual-library approach**
-- Keep `lucide-react` installed for 4 chevron icons only
-- Use hugeicons for all other 150+ icons
-- This avoids the most common visual regression risk
+**Decision: Use hugeicons arrow icons as chevron replacements**
+- Replace `ChevronDown` → `ArrowDown01Icon` (rendered at smaller size to match chevron feel)
+- Replace `ChevronLeft` → `ArrowLeft01Icon`
+- Replace `ChevronRight` → `ArrowRight01Icon`
+- Replace `ChevronUp` → `ArrowUp01Icon`
+- Single icon library — remove `lucide-react` entirely after migration
 
 ### EntityMarker.tsx Conclusion
 
@@ -157,7 +159,7 @@ Hugeicons free tier does NOT have single-chevron arrows (ChevronDown/Left/Right/
 #### Step 1: Install Packages
 ```bash
 npm install @hugeicons/react @hugeicons/core-free-icons
-# Keep lucide-react for chevron icons
+# lucide-react will be removed after migration is complete
 ```
 
 #### Step 2: Create Icon Mapping
@@ -229,8 +231,9 @@ npx @hugeicons/migrate --source=src --framework=react --backup
 
 #### Step 4: Manual Fixes
 - Review and fix the 47 approximate mappings
-- Verify chevron icons still use lucide-react
+- Replace chevron icons with hugeicons arrow equivalents (ArrowDown01Icon, etc.)
 - Handle the 12 inline SVG files (keep EntityMarker DivIcon SVGs and PopulationImpact chart SVGs)
+- Remove lucide-react from package.json after all migrations verified
 
 #### Step 5: Test
 - Visual regression test across all 183 affected files

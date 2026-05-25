@@ -14,7 +14,7 @@ import {
   Settings,
   HelpCircle,
   X
-} from 'lucide-react';
+} from '@/lib/icons';
 
 export interface DonorOverlayControlProps {
   enabled: boolean;

@@ -15,7 +15,7 @@ import { EditUserForm } from '@/components/auth/EditUserForm'
 import { useAuth } from '@/hooks/useAuth'
 import { useFilters } from '@/hooks/useFilters'
 import { apiGet } from '@/lib/api'
-import { Edit, Users, UserCheck, UserX, Plus, Pencil } from 'lucide-react'
+import { Edit, Users, UserCheck, UserX, Plus, Pencil } from '@/lib/icons'
 import { DataTable, type ColumnDef, type RowAction } from '@/components/shared/DataTable'
 import type { AdminFilters, FilterConfig, ToolbarAction } from '@/types/filters'
 

@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { ReportBuilder } from '@/components/reports/builder/ReportBuilder'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from '@/lib/icons'
 import Link from 'next/link'
 
 export default function ReportBuilderPage() {

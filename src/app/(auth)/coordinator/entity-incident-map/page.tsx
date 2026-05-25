@@ -28,7 +28,7 @@ import {
   ChevronDown,
   ChevronRight,
   RotateCcw
-} from 'lucide-react';
+} from '@/lib/icons';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useIncidents } from '@/hooks/useIncidents'

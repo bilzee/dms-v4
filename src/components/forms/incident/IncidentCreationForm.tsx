@@ -21,7 +21,7 @@ import {
 import { useIncident } from '@/hooks/useIncident'
 import { IncidentSchema } from '@/lib/validation/incidents'
 import { IncidentData } from '@/types/incidents'
-import { AlertTriangle, MapPin, Loader2 } from 'lucide-react'
+import { AlertTriangle, MapPin, Loader2 } from '@/lib/icons'
 import { getBadgeClasses } from '@/components/shared/StatusBadge'
 import { apiGet, extractArray } from '@/lib/api'
 import { z } from 'zod'
@@ -277,7 +277,7 @@ export function IncidentCreationForm({
                 Draft (Auto-saved: {lastSaved?.toLocaleTimeString()})
               </span>
               {showAssessmentLink && assessmentId && (
-                <span className="text-gray-500">(from assessment)</span>
+                <span className="text-muted-foreground">(from assessment)</span>
               )}
             </div>
           )}
@@ -381,7 +381,7 @@ export function IncidentCreationForm({
           {/* Link to Preliminary Assessment (Optional) */}
           <div className="space-y-2">
             <Label htmlFor="preliminaryAssessment">
-              Link to Preliminary Assessment <span className="text-gray-400">(Optional)</span>
+              Link to Preliminary Assessment <span className="text-muted-foreground">(Optional)</span>
             </Label>
             <Select 
               value={selectedAssessmentId} 
@@ -398,7 +398,7 @@ export function IncidentCreationForm({
                       <span className="font-medium">
                         {assessment.reportingLGA}, {assessment.reportingWard}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         {new Date(assessment.reportingDate).toLocaleDateString()}
                       </span>
                     </div>
@@ -406,7 +406,7 @@ export function IncidentCreationForm({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               You can link this incident to an existing preliminary assessment for better data integration
             </p>
           </div>
@@ -452,7 +452,7 @@ export function IncidentCreationForm({
               </p>
             )}
             {gpsEnabled && !gpsLocation && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 GPS capture enabled - click the location pin to get coordinates
               </p>
             )}

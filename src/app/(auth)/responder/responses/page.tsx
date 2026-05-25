@@ -21,7 +21,7 @@ import { SafeDataLoader } from '@/components/shared/SafeDataLoader'
 import { EmptyResponses } from '@/components/shared/EmptyState'
 
 // Icons
-import { Package, Truck, Clock, CheckCircle, ArrowLeft, Plus, AlertTriangle, User, X, Edit, Info, Shield } from 'lucide-react'
+import { Package, Truck, Clock, CheckCircle, ArrowLeft, Plus, AlertTriangle, User, X, Edit, Info, Shield } from '@/lib/icons'
 
 import { DataCardList, type ExpandedCardProps } from '@/components/shared/DataCardList'
 import { type SeverityLevel } from '@/lib/utils/status-colors'

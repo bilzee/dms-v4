@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { List, Filter, Plus, Search, Eye, Edit } from 'lucide-react';
+import { List, Filter, Plus, Search, Eye, Edit } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { ReportTemplate, DEFAULT_TEMPLATES } from '@/lib/reports/template-engine';
 
@@ -149,8 +149,8 @@ export function TemplateSelector({
       <CardContent className="pt-0">
         <div className="space-y-3">
           {/* Template preview */}
-          <div className="bg-gray-50 rounded-md p-3 border">
-            <div className="text-xs text-gray-500 mb-2">Preview</div>
+          <div className="bg-muted rounded-md p-3 border">
+            <div className="text-xs text-muted-foreground mb-2">Preview</div>
             <div 
               className="text-[10px] leading-none"
               dangerouslySetInnerHTML={{ 
@@ -160,7 +160,7 @@ export function TemplateSelector({
           </div>
           
           {/* Template info */}
-          <div className="flex items-center justify-between text-xs text-gray-500">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>
               {template.layout?.length || 0} elements
             </span>
@@ -179,7 +179,7 @@ export function TemplateSelector({
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h2 className="text-xl font-semibold">Select Report Template</h2>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Choose a template to start building your custom report
           </p>
         </div>
@@ -192,9 +192,9 @@ export function TemplateSelector({
       </div>
 
       {/* Search and filters */}
-      <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+      <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search templates..."
             value={filters.search}
@@ -249,14 +249,14 @@ export function TemplateSelector({
           <div className="flex items-center justify-center h-48">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-              <p className="text-sm text-gray-600">Loading templates...</p>
+              <p className="text-sm text-muted-foreground">Loading templates...</p>
             </div>
           </div>
         ) : error ? (
           <div className="flex items-center justify-center h-48">
             <div className="text-center">
-              <Filter className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">Failed to load templates</p>
+              <Filter className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Failed to load templates</p>
             </div>
           </div>
         ) : (
@@ -264,7 +264,7 @@ export function TemplateSelector({
             {/* Default templates section */}
             {filteredDefaultTemplates.length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
                   <List className="h-4 w-4" />
                   System Templates
                 </h3>
@@ -279,7 +279,7 @@ export function TemplateSelector({
             {/* User templates section */}
             {filteredTemplates.length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-gray-700">
+                <h3 className="text-sm font-medium text-foreground">
                   Custom Templates
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -292,9 +292,9 @@ export function TemplateSelector({
             {filteredDefaultTemplates.length === 0 && filteredTemplates.length === 0 && (
               <div className="flex items-center justify-center h-48">
                 <div className="text-center">
-                  <Filter className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-600 mb-1">No templates found</p>
-                  <p className="text-xs text-gray-500">
+                  <Filter className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground mb-1">No templates found</p>
+                  <p className="text-xs text-muted-foreground">
                     Try adjusting your filters or create a new template
                   </p>
                 </div>
@@ -315,7 +315,7 @@ export function TemplateSelector({
           >
             Previous
           </Button>
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             Page {page} of {data.data.pagination.pages}
           </span>
           <Button

@@ -6,7 +6,7 @@ import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, ArrowLeft, Settings, TrendingUp, Users } from 'lucide-react';
+import { Package, ArrowLeft, Settings, TrendingUp, Users } from '@/lib/icons';
 import Link from 'next/link';
 import { ResourceManagement } from '@/components/dashboards/crisis/ResourceManagement';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';

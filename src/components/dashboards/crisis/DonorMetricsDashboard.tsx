@@ -21,7 +21,7 @@ import {
   RefreshCw,
   Calendar,
   Activity
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 

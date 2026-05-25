@@ -19,7 +19,7 @@ import { IncidentSelector } from '@/components/shared/IncidentSelector'
 import { PopulationAssessmentFormProps, PopulationAssessment } from '@/types/rapid-assessment'
 import { cn } from '@/lib/utils'
 import { getCurrentUserName, getAssessmentLocationData } from '@/utils/assessment-utils'
-import { Users, Baby, User, UserPlus, AlertTriangle, Heart } from 'lucide-react'
+import { Users, Baby, User, UserPlus, AlertTriangle, Heart } from '@/lib/icons'
 
 const PopulationAssessmentSchema = z.object({
   totalHouseholds: z.number().int().min(0),

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Calendar, Filter, X, Save, RotateCcw } from 'lucide-react';
+import { Calendar, Filter, X, Save, RotateCcw } from '@/lib/icons';
 import { VerificationFilters } from '@/stores/verification.store';
 import { cn } from '@/lib/utils';
 import { getDotColor } from '@/components/shared/StatusBadge';

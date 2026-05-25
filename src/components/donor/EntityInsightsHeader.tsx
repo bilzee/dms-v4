@@ -12,7 +12,7 @@ import {
   FileText,
   Package,
   AlertTriangle
-} from 'lucide-react'
+} from '@/lib/icons'
 import { ProgressBar } from '@/components/shared/ProgressBar'
 
 interface EntityDemographics {

@@ -91,15 +91,15 @@ export const ConflictExportDialog = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Export Conflicts</h3>
+      <div className="bg-card rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div className="px-6 py-4 border-b border-border">
+          <h3 className="text-lg font-semibold text-foreground">Export Conflicts</h3>
         </div>
 
         <div className="px-6 py-4 space-y-4">
           {/* Entity Type Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Entity Type
             </label>
             <select
@@ -116,7 +116,7 @@ export const ConflictExportDialog = ({
 
           {/* Resolution Status Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Resolution Status
             </label>
             <select
@@ -133,7 +133,7 @@ export const ConflictExportDialog = ({
           {/* Date Range */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 From Date
               </label>
               <input
@@ -144,7 +144,7 @@ export const ConflictExportDialog = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 To Date
               </label>
               <input
@@ -158,7 +158,7 @@ export const ConflictExportDialog = ({
 
           {/* Export Format */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Format
             </label>
             <select
@@ -172,9 +172,9 @@ export const ConflictExportDialog = ({
 
           {/* Preview Information */}
           {preview && (
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-gray-900 mb-2">Export Preview</h4>
-              <div className="text-sm text-gray-600 space-y-1">
+            <div className="bg-muted rounded-lg p-4">
+              <h4 className="text-sm font-medium text-foreground mb-2">Export Preview</h4>
+              <div className="text-sm text-muted-foreground space-y-1">
                 <p>Estimated records: <span className="font-medium">{preview.estimatedCount.toLocaleString()}</span></p>
                 <p>Estimated size: <span className="font-medium">{preview.estimatedSize}</span></p>
                 {preview.dateRange.from && preview.dateRange.to && (
@@ -219,11 +219,11 @@ export const ConflictExportDialog = ({
         </div>
 
         {/* Dialog Actions */}
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+        <div className="px-6 py-4 border-t border-border flex justify-end gap-3">
           <button
             onClick={onClose}
             disabled={isExporting}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-foreground bg-muted hover:bg-gray-200 rounded-md disabled:opacity-50"
           >
             Cancel
           </button>

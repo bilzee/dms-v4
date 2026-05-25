@@ -18,7 +18,7 @@ import {
   Calendar,
   Download,
   RefreshCw
-} from 'lucide-react';
+} from '@/lib/icons';
 import { useVerificationMetrics } from '@/hooks/useRealTimeVerification';
 import { useAuth } from '@/hooks/useAuth';
 import { useVerificationStore } from '@/stores/verification.store';

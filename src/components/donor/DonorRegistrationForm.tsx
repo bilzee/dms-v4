@@ -22,7 +22,7 @@ import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 
 // Icons
-import { Building, User, Mail, Phone, Shield, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { Building, User, Mail, Phone, Shield, CheckCircle, AlertCircle, Eye, EyeOff } from '@/lib/icons'
 
 // API utilities
 import { apiPost } from '@/lib/api'

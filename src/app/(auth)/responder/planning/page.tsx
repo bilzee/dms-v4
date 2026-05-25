@@ -14,7 +14,7 @@ import { SafeDataLoader } from '@/components/shared/SafeDataLoader'
 import { EmptyState } from '@/components/shared/EmptyState'
 
 // Icons
-import { Plus, Edit, Package, CheckCircle, User, Shield, RefreshCw, AlertTriangle, ArrowLeft } from 'lucide-react'
+import { Plus, Edit, Package, CheckCircle, User, Shield, RefreshCw, AlertTriangle, ArrowLeft } from '@/lib/icons'
 
 // Forms and components
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'

@@ -27,7 +27,6 @@ interface AssessmentRelation {
   id: string;
   rapidAssessmentType: string;
   rapidAssessmentDate: Date;
-  status: string;
   verificationStatus: string;
   location?: string | null;
   coordinates?: unknown;
@@ -113,7 +112,6 @@ export class ResponseService {
               id: true,
               rapidAssessmentType: true,
               rapidAssessmentDate: true,
-              status: true,
               verificationStatus: true,
               entity: {
                 select: {
@@ -232,7 +230,6 @@ export class ResponseService {
             id: true,
             rapidAssessmentType: true,
             rapidAssessmentDate: true,
-            status: true,
             verificationStatus: true,
             location: true,
             coordinates: true,
@@ -328,7 +325,6 @@ export class ResponseService {
               id: true,
               rapidAssessmentType: true,
               rapidAssessmentDate: true,
-              status: true,
               verificationStatus: true
             }
           },
@@ -406,7 +402,6 @@ export class ResponseService {
             id: true,
             rapidAssessmentType: true,
             rapidAssessmentDate: true,
-            status: true,
             verificationStatus: true
           }
         },
@@ -476,7 +471,6 @@ export class ResponseService {
             id: true,
             rapidAssessmentType: true,
             rapidAssessmentDate: true,
-            status: true,
             verificationStatus: true
           }
         },
@@ -616,7 +610,6 @@ export class ResponseService {
               id: true,
               rapidAssessmentType: true,
               rapidAssessmentDate: true,
-              status: true,
               verificationStatus: true
             }
           },
@@ -758,14 +751,13 @@ export class ResponseService {
   private static async validateAssessmentAccess(
     assessmentId: string,
     entityId: string
-  ): Promise<{ id: string; entityId: string; verificationStatus: string; status: string }> {
+  ): Promise<{ id: string; entityId: string; verificationStatus: string }> {
     const assessment = await prisma.rapidAssessment.findUnique({
       where: { id: assessmentId },
       select: {
         id: true,
         entityId: true,
-        verificationStatus: true,
-        status: true
+        verificationStatus: true
       }
     })
 

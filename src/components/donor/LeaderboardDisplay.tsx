@@ -24,7 +24,7 @@ import {
   Search,
   Filter,
   RefreshCw
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { GameBadgeSystem } from './GameBadgeSystem';
 import type { 

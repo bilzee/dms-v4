@@ -16,7 +16,7 @@ import {
   Eye,
   ShieldCheck,
   CheckCircle
-} from 'lucide-react'
+} from '@/lib/icons'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { DataTable, type ColumnDef, type RowAction } from '@/components/shared/DataTable'

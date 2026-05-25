@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Settings, AlertTriangle, Info, ArrowLeft, Users, TrendingDown } from 'lucide-react'
+import { Settings, AlertTriangle, Info, ArrowLeft, Users, TrendingDown } from '@/lib/icons'
 import { useRouter } from 'next/navigation'
 import { SeverityThresholdTable } from '@/components/settings/SeverityThresholdTable'
 

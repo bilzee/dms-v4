@@ -6,7 +6,7 @@ import { DonorDashboard } from '@/components/donor/DonorDashboard'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { User } from 'lucide-react'
+import { User } from '@/lib/icons'
 
 export default function DonorDashboardPage() {
   const { currentRole, user } = useAuth()

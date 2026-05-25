@@ -3,7 +3,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 
 export interface FilterOption {

@@ -19,7 +19,7 @@ import {
   Target,
   Award,
   Activity
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import type { 
   LeaderboardEntry

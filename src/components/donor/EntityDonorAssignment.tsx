@@ -29,7 +29,7 @@ import {
   Building,
   User,
   X
-} from 'lucide-react';
+} from '@/lib/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { apiGet, apiPost, extractArray } from '@/lib/api';
 import type { Donor, Entity, Incident, DonorCommitment } from '@prisma/client';

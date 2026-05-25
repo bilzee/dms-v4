@@ -28,7 +28,7 @@ import {
   PieChart,
   Grid3X3,
   Info
-} from 'lucide-react';
+} from '@/lib/icons';
 
 // Types for verified population impact data (Population Assessments only)
 interface PopulationImpactProps {
@@ -213,7 +213,7 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-center py-6 text-gray-500">
+          <div className="text-center py-6 text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p className="text-sm">Loading population impact data...</p>
           </div>
@@ -259,10 +259,10 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-center py-6 text-gray-500">
+          <div className="text-center py-6 text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p className="text-sm">Select an incident to view population impact</p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Complete population assessments to see impact statistics
             </p>
           </div>
@@ -295,7 +295,7 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
       total: populationData.totalPopulation,
       percentage: calculatePercentage(populationData.demographicBreakdown.elderly, populationData.totalPopulation),
       icon: Users2,
-      color: 'bg-gray-500'
+      color: 'bg-muted'
     },
     {
       label: 'Persons with Disability',
@@ -343,7 +343,7 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <Info className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                <Info className="h-4 w-4 text-muted-foreground hover:text-muted-foreground" />
               </TooltipTrigger>
               <TooltipContent>
                 <p>Verified population data from latest Population Assessments of all affected entities</p>
@@ -356,10 +356,10 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
       <CardContent className="space-y-4">
         {/* No data state */}
         {populationData.assessmentCount === 0 && (
-          <div className="text-center py-6 text-gray-500">
+          <div className="text-center py-6 text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p className="text-sm">No verified population assessment data available</p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Complete and verify population assessments to see verified impact statistics
             </p>
           </div>
@@ -390,7 +390,7 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700">Casualty Impact</span>
+                  <span className="text-sm font-medium text-foreground">Casualty Impact</span>
                   <Badge className={cn("gap-1", casualtySeverity.color)}>
                     <AlertTriangle className="h-3 w-3" />
                     {casualtySeverity.level}
@@ -429,7 +429,7 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
               
               {/* Casualty Visualization */}
               {casualtyChartType === 'pie' ? (
-                <div className="bg-gray-50 rounded-lg p-3">
+                <div className="bg-muted rounded-lg p-3">
                   <div className="flex items-center justify-center mb-2">
                     <div className="relative w-24 h-24">
                       <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
@@ -519,26 +519,26 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
                     {populationData.livesLost > 0 && (
                       <div className="flex items-center gap-2 text-xs">
                         <div className="w-2 h-2 rounded-full bg-red-600" aria-hidden="true" />
-                        <span className="text-gray-600 flex-1">Lives Lost</span>
+                        <span className="text-muted-foreground flex-1">Lives Lost</span>
                         <span className="font-medium">{formatNumber(populationData.livesLost)}</span>
-                        <span className="text-gray-400">({calculatePercentage(populationData.livesLost, populationData.totalPopulation)}%)</span>
+                        <span className="text-muted-foreground">({calculatePercentage(populationData.livesLost, populationData.totalPopulation)}%)</span>
                       </div>
                     )}
                     {populationData.injured > 0 && (
                       <div className="flex items-center gap-2 text-xs">
                         <div className="w-2 h-2 rounded-full bg-orange-600" aria-hidden="true" />
-                        <span className="text-gray-600 flex-1">Injured</span>
+                        <span className="text-muted-foreground flex-1">Injured</span>
                         <span className="font-medium">{formatNumber(populationData.injured)}</span>
-                        <span className="text-gray-400">({calculatePercentage(populationData.injured, populationData.totalPopulation)}%)</span>
+                        <span className="text-muted-foreground">({calculatePercentage(populationData.injured, populationData.totalPopulation)}%)</span>
                       </div>
                     )}
                     {/* Non-casualty population legend */}
                     {((populationData.totalPopulation - populationData.livesLost - populationData.injured) > 0) && (
                       <div className="flex items-center gap-2 text-xs">
                         <div className="w-2 h-2 rounded-full bg-gray-300" aria-hidden="true" />
-                        <span className="text-gray-600 flex-1">Unaffected Population</span>
+                        <span className="text-muted-foreground flex-1">Unaffected Population</span>
                         <span className="font-medium">{formatNumber(populationData.totalPopulation - populationData.livesLost - populationData.injured)}</span>
-                        <span className="text-gray-400">({calculatePercentage(populationData.totalPopulation - populationData.livesLost - populationData.injured, populationData.totalPopulation)}%)</span>
+                        <span className="text-muted-foreground">({calculatePercentage(populationData.totalPopulation - populationData.livesLost - populationData.injured, populationData.totalPopulation)}%)</span>
                       </div>
                     )}
                   </div>
@@ -547,10 +547,10 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
                 <div className="space-y-2">
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-600">Lives Lost</span>
+                      <span className="text-muted-foreground">Lives Lost</span>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{formatNumber(populationData.livesLost)}</span>
-                        <span className="text-gray-400">{calculatePercentage(populationData.livesLost, populationData.totalPopulation)}%</span>
+                        <span className="text-muted-foreground">{calculatePercentage(populationData.livesLost, populationData.totalPopulation)}%</span>
                       </div>
                     </div>
                     <Progress 
@@ -560,10 +560,10 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-600">Injured Persons</span>
+                      <span className="text-muted-foreground">Injured Persons</span>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{formatNumber(populationData.injured)}</span>
-                        <span className="text-gray-400">{calculatePercentage(populationData.injured, populationData.totalPopulation)}%</span>
+                        <span className="text-muted-foreground">{calculatePercentage(populationData.injured, populationData.totalPopulation)}%</span>
                       </div>
                     </div>
                     <Progress 
@@ -579,7 +579,7 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
                       {formatNumber(populationData.livesLost)}
                     </div>
                     <div className="text-xs text-red-600">Lives Lost</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       {calculatePercentage(populationData.livesLost, populationData.totalPopulation)}%
                     </div>
                   </div>
@@ -589,7 +589,7 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
                       {formatNumber(populationData.injured)}
                     </div>
                     <div className="text-xs text-orange-600">Injured Persons</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       {calculatePercentage(populationData.injured, populationData.totalPopulation)}%
                     </div>
                   </div>
@@ -601,7 +601,7 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
             {(populationData.demographicBreakdown.populationMale > 0 || populationData.demographicBreakdown.populationFemale > 0) && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Gender Distribution</span>
+                  <span className="text-sm font-medium text-foreground">Gender Distribution</span>
                   <div className="flex items-center gap-1">
                     <Button
                       type="button"
@@ -635,9 +635,9 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
 
                 {/* Gender Visualization */}
                 {genderChartType === 'pie' ? (
-                  <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="bg-muted rounded-lg p-3">
                     <div className="flex items-center justify-center mb-2">
-                      <div className="relative w-24 h-24">
+                    <div className="relative w-24 h-24">
                         <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                           {(() => {
                             const genderData = [
@@ -687,15 +687,15 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 text-xs">
                         <div className="w-2 h-2 rounded-full bg-blue-600" aria-hidden="true" />
-                        <span className="text-gray-600 flex-1">Male</span>
+                        <span className="text-muted-foreground flex-1">Male</span>
                         <span className="font-medium">{formatNumber(populationData.demographicBreakdown.populationMale)}</span>
-                        <span className="text-gray-400">({populationData.percentageMale}%)</span>
+                        <span className="text-muted-foreground">({populationData.percentageMale}%)</span>
                       </div>
                       <div className="flex items-center gap-2 text-xs">
                         <div className="w-2 h-2 rounded-full bg-pink-600" aria-hidden="true" />
-                        <span className="text-gray-600 flex-1">Female</span>
+                        <span className="text-muted-foreground flex-1">Female</span>
                         <span className="font-medium">{formatNumber(populationData.demographicBreakdown.populationFemale)}</span>
-                        <span className="text-gray-400">({populationData.percentageFemale}%)</span>
+                        <span className="text-muted-foreground">({populationData.percentageFemale}%)</span>
                       </div>
                     </div>
                   </div>
@@ -703,10 +703,10 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
                   <div className="space-y-2">
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-600">Male</span>
+                        <span className="text-muted-foreground">Male</span>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{formatNumber(populationData.demographicBreakdown.populationMale)}</span>
-                          <span className="text-gray-400">{populationData.percentageMale}%</span>
+                          <span className="text-muted-foreground">{populationData.percentageMale}%</span>
                         </div>
                       </div>
                       <Progress 
@@ -716,10 +716,10 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-600">Female</span>
+                        <span className="text-muted-foreground">Female</span>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{formatNumber(populationData.demographicBreakdown.populationFemale)}</span>
-                          <span className="text-gray-400">{populationData.percentageFemale}%</span>
+                          <span className="text-muted-foreground">{populationData.percentageFemale}%</span>
                         </div>
                       </div>
                       <Progress 
@@ -735,7 +735,7 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
                         {formatNumber(populationData.demographicBreakdown.populationMale)}
                       </div>
                       <div className="text-xs text-blue-600">Male</div>
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-muted-foreground">
                         {populationData.percentageMale}%
                       </div>
                     </div>
@@ -745,7 +745,7 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
                         {formatNumber(populationData.demographicBreakdown.populationFemale)}
                       </div>
                       <div className="text-xs text-pink-600">Female</div>
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-muted-foreground">
                         {populationData.percentageFemale}%
                       </div>
                     </div>
@@ -759,7 +759,7 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-700">Vulnerable Populations</span>
+                    <span className="text-sm font-medium text-foreground">Vulnerable Populations</span>
                     <div className="flex items-center gap-1 text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
                       <TrendingUp className="h-3 w-3" />
                       {formatNumber(totalVulnerable)} total
@@ -798,7 +798,7 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
 
                 {/* Chart Visualization */}
                 {vulnerableChartType === 'pie' ? (
-                  <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="bg-muted rounded-lg p-3">
                     <div className="flex items-center justify-center mb-2">
                       <div className="relative w-32 h-32">
                         <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
@@ -895,10 +895,10 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
                                 style={{ backgroundColor: colors[index % colors.length] }}
                                 aria-hidden="true"
                               />
-                              <Icon className="h-3 w-3 text-gray-500" />
-                              <span className="text-gray-600 flex-1">{demo.label}</span>
+                              <Icon className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-muted-foreground flex-1">{demo.label}</span>
                               <span className="font-medium">{formatNumber(demo.value)}</span>
-                              <span className="text-gray-400">({demo.percentage}%)</span>
+                              <span className="text-muted-foreground">({demo.percentage}%)</span>
                             </div>
                           );
                         })}
@@ -906,10 +906,10 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
                       {((populationData.totalPopulation - totalVulnerable) > 0) && (
                         <div className="flex items-center gap-2 text-xs">
                           <div className="w-2 h-2 rounded-full bg-gray-300" aria-hidden="true" />
-                          <Users className="h-3 w-3 text-gray-500" />
-                          <span className="text-gray-600 flex-1">General Population</span>
+                          <Users className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-muted-foreground flex-1">General Population</span>
                           <span className="font-medium">{formatNumber(populationData.totalPopulation - totalVulnerable)}</span>
-                          <span className="text-gray-400">({calculatePercentage(populationData.totalPopulation - totalVulnerable, populationData.totalPopulation)}%)</span>
+                          <span className="text-muted-foreground">({calculatePercentage(populationData.totalPopulation - totalVulnerable, populationData.totalPopulation)}%)</span>
                         </div>
                       )}
                     </div>
@@ -955,11 +955,11 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
                             <div className="flex items-center justify-between text-xs">
                               <div className="flex items-center gap-1">
                                 <Icon className="h-3 w-3" />
-                                <span className="text-gray-600">{demo.label}</span>
+                                <span className="text-muted-foreground">{demo.label}</span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className="font-medium">{formatNumber(demo.value)}</span>
-                                <span className="text-gray-400">{demo.percentage}%</span>
+                                <span className="text-muted-foreground">{demo.percentage}%</span>
                               </div>
                             </div>
                             <Progress 
@@ -976,13 +976,13 @@ export function PopulationImpact({ incidentId, className }: PopulationImpactProp
             )}
 
             {/* Assessment Information */}
-            <div className="pt-2 border-t border-gray-100">
-              <div className="flex items-center gap-2 text-xs text-gray-500">
+            <div className="pt-2 border-t border-border">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Calendar className="h-3 w-3" />
                 <span>Latest Verified Assessment:</span>
                 <span className="font-medium">{formatDate(populationData.latestAssessmentDate)}</span>
               </div>
-              <div className="flex items-center gap-2 ml-5 text-xs text-gray-400">
+              <div className="flex items-center gap-2 ml-5 text-xs text-muted-foreground">
                 <FileText className="h-3 w-3" />
                 <span>Based on {populationData.assessmentCount} verified population assessment{populationData.assessmentCount !== 1 ? 's' : ''}</span>
               </div>

@@ -23,7 +23,7 @@ import {
   ShieldCheck,
   ClipboardList,
   Clock
-} from 'lucide-react'
+} from '@/lib/icons'
 import { StatCard } from '@/components/shared/StatCard'
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
 

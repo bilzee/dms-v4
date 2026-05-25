@@ -71,7 +71,6 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
           select: {
             id: true,
             verificationStatus: true,
-            status: true,
             priority: true,
             createdAt: true,
             rapidAssessmentType: true
@@ -81,7 +80,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
           where: { createdAt: { gte: start, lte: end } },
           select: {
             id: true,
-            status: true,
+            deliveryStatus: true,
             priority: true,
             createdAt: true,
             type: true

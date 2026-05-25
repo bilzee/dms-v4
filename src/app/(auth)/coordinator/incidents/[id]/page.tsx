@@ -28,7 +28,7 @@ import {
   Activity,
   Network,
   ArrowLeft
-} from 'lucide-react';
+} from '@/lib/icons';
 
 // Dynamic imports for client-side only components
 const AssessmentRelationshipMap = dynamic(

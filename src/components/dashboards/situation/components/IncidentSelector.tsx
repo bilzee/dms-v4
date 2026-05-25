@@ -15,7 +15,7 @@ import {
   CommandItem,
   CommandList
 } from '@/components/ui/command';
-import { Loader2, AlertCircle, History, Check, ChevronsUpDown } from 'lucide-react';
+import { Loader2, AlertCircle, History, Check, ChevronsUpDown } from '@/lib/icons';
 import { useIncidentSelection, useIncidentActions } from '@/stores/dashboardLayout.store';
 
 // Types for incident selector
@@ -179,11 +179,11 @@ export function IncidentSelector({
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium text-gray-700">
+        <label className="text-sm font-medium text-foreground">
           Incident Selection
         </label>
         {incidentHistory.length > 0 && (
-          <div className="flex items-center gap-1 text-xs text-gray-500">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <History className="h-3 w-3" />
             <span>{incidentHistory.length} recent</span>
           </div>
@@ -209,7 +209,7 @@ export function IncidentSelector({
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{selectedIncident.type}</span>
                   {selectedIncident.subType && (
-                    <span className="text-gray-500 text-sm">- {selectedIncident.subType}</span>
+                    <span className="text-muted-foreground text-sm">- {selectedIncident.subType}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-1">
@@ -251,7 +251,7 @@ export function IncidentSelector({
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{incident.type}</span>
                           {incident.subType && (
-                            <span className="text-gray-500 text-xs">- {incident.subType}</span>
+                            <span className="text-muted-foreground text-xs">- {incident.subType}</span>
                           )}
                         </div>
                         <div className="flex items-center gap-1">
@@ -281,9 +281,9 @@ export function IncidentSelector({
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{incident.type}</span>
                           {incident.subType && (
-                            <span className="text-gray-500 text-xs">- {incident.subType}</span>
+                            <span className="text-muted-foreground text-xs">- {incident.subType}</span>
                           )}
-                          <span className="text-gray-400 text-xs truncate ml-2">
+                          <span className="text-muted-foreground text-xs truncate ml-2">
                             {incident.location}
                           </span>
                         </div>
@@ -314,9 +314,9 @@ export function IncidentSelector({
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{incident.type}</span>
                           {incident.subType && (
-                            <span className="text-gray-500 text-xs">- {incident.subType}</span>
+                            <span className="text-muted-foreground text-xs">- {incident.subType}</span>
                           )}
-                          <span className="text-gray-400 text-xs truncate ml-2">
+                          <span className="text-muted-foreground text-xs truncate ml-2">
                             {incident.location}
                           </span>
                         </div>
@@ -347,9 +347,9 @@ export function IncidentSelector({
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{incident.type}</span>
                           {incident.subType && (
-                            <span className="text-gray-500 text-xs">- {incident.subType}</span>
+                            <span className="text-muted-foreground text-xs">- {incident.subType}</span>
                           )}
-                          <span className="text-gray-400 text-xs truncate ml-2">
+                          <span className="text-muted-foreground text-xs truncate ml-2">
                             {incident.location}
                           </span>
                         </div>
@@ -383,9 +383,9 @@ export function IncidentSelector({
 
       {/* Selected incident details */}
       {selectedIncident && (
-        <div className="mt-2 p-2 bg-gray-50 rounded-md text-xs text-gray-600">
+        <div className="mt-2 p-2 bg-muted rounded-md text-xs text-muted-foreground">
           <div className="line-clamp-2">{selectedIncident.description}</div>
-          <div className="mt-1 text-gray-400">
+          <div className="mt-1 text-muted-foreground">
             Location: {selectedIncident.location}
           </div>
         </div>

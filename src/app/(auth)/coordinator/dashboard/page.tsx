@@ -7,7 +7,7 @@ import { StatCard } from '@/components/shared/StatCard';
 import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, AlertTriangle, CheckCircle, Clock, FileText, Activity, PlusCircle, TrendingUp, Shield, BarChart3, Shield as ReportIcon, RefreshCw } from 'lucide-react';
+import { Users, AlertTriangle, CheckCircle, Clock, FileText, Activity, PlusCircle, TrendingUp, Shield, BarChart3, Shield as ReportIcon, RefreshCw } from '@/lib/icons';
 import Link from 'next/link';
 import { VerificationQueueManagement } from '@/components/dashboards/crisis/VerificationQueueManagement';
 import { useVerificationStore } from '@/stores/verification.store';

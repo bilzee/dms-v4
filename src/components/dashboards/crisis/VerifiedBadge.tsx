@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { CheckCircle, Shield, Star, Info } from 'lucide-react';
+import { CheckCircle, Shield, Star, Info } from '@/lib/icons';
 import { getBadgeClasses } from '@/components/shared/StatusBadge';
 import {
   Tooltip,

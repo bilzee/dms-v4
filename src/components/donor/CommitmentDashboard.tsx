@@ -20,7 +20,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 
 // Icons
-import { Plus, Package, MapPin, AlertTriangle, CheckCircle2, Clock, Truck, XCircle, Filter, Search, Edit, Eye, BarChart3 } from 'lucide-react'
+import { Plus, Package, MapPin, AlertTriangle, CheckCircle2, Clock, Truck, XCircle, Filter, Search, Edit, Eye, BarChart3 } from '@/lib/icons'
 
 // Components
 import { CommitmentForm } from './CommitmentForm'

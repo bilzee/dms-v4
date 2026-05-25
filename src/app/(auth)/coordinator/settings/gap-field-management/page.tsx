@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Settings, AlertTriangle, Info, ArrowLeft, Heart, UtensilsCrossed, Droplets, Home, Shield } from 'lucide-react'
+import { Settings, AlertTriangle, Info, ArrowLeft, Heart, UtensilsCrossed, Droplets, Home, Shield } from '@/lib/icons'
 import { useRouter } from 'next/navigation'
 import { GapFieldTable } from '@/components/settings/GapFieldTable'
 

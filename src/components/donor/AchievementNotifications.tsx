@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, Check, Trophy, Star, Award, Crown } from 'lucide-react';
+import { X, Check, Trophy, Star, Award, Crown } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import type { Achievement, BadgeType } from '@/types/gamification';
 
@@ -72,7 +72,7 @@ export function AchievementNotifications({
       return <Crown className="w-6 h-6 text-yellow-500" />;
     }
     if (badgeType.includes('Silver')) {
-      return <Award className="w-6 h-6 text-gray-400" />;
+      return <Award className="w-6 h-6 text-muted-foreground" />;
     }
     if (badgeType.includes('Bronze')) {
       return <Trophy className="w-6 h-6 text-amber-600" />;
@@ -114,10 +114,10 @@ export function AchievementNotifications({
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-sm text-gray-900 mb-1">
+                  <h4 className="font-semibold text-sm text-foreground mb-1">
                     New Achievement!
                   </h4>
-                  <p className="text-sm text-gray-700 mb-2">
+                  <p className="text-sm text-foreground mb-2">
                     {notification.achievement.description}
                   </p>
                   {notification.achievement.badge && (
@@ -144,7 +144,7 @@ export function AchievementNotifications({
                   variant="ghost"
                   size="sm"
                   onClick={() => handleDismiss(notification.id)}
-                  className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-muted-foreground"
                 >
                   <X className="w-4 h-4" />
                 </Button>
@@ -259,7 +259,7 @@ export function AchievementProgress({ currentBadges, category, className }: Achi
                 "flex items-center gap-3 p-2 rounded-lg border transition-all",
                 isUnlocked 
                   ? "bg-green-50 border-green-200" 
-                  : "bg-gray-50 border-gray-200"
+                  : "bg-muted border-border"
               )}
             >
               <div className={cn(
@@ -268,7 +268,7 @@ export function AchievementProgress({ currentBadges, category, className }: Achi
                   ? level.name === 'Gold' ? "bg-yellow-500 text-white"
                     : level.name === 'Silver' ? "bg-gray-400 text-white"
                     : "bg-amber-600 text-white"
-                  : "bg-gray-200 text-gray-500"
+                  : "bg-gray-200 text-muted-foreground"
               )}>
                 {isUnlocked ? '✓' : index + 1}
               </div>
@@ -277,7 +277,7 @@ export function AchievementProgress({ currentBadges, category, className }: Achi
                 <div className="flex items-center gap-2">
                   <span className={cn(
                     "font-medium",
-                    isUnlocked ? "text-gray-900" : "text-gray-500"
+                    isUnlocked ? "text-foreground" : "text-muted-foreground"
                   )}>
                     {level.name} Level
                   </span>
@@ -287,7 +287,7 @@ export function AchievementProgress({ currentBadges, category, className }: Achi
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-gray-600">{level.description}</p>
+                <p className="text-xs text-muted-foreground">{level.description}</p>
               </div>
               
               {isUnlocked && (

@@ -122,7 +122,7 @@ export const GET = withAuth(async (request: NextRequest, context, { params }: Ro
                 id: true,
                 type: true,
                 priority: true,
-                status: true,
+                deliveryStatus: true,
                 description: true,
                 items: true,
                 plannedDate: true,

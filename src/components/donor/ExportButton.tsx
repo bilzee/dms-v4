@@ -21,7 +21,7 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { createAuthenticatedFetch } from '@/lib/auth/token-utils';
 import type { ExportRequest } from '@/types/gamification';

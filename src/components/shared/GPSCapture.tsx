@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Navigation, AlertTriangle } from 'lucide-react'
+import { MapPin, Navigation, AlertTriangle } from '@/lib/icons'
 
 interface GPSCaptureProps {
   onLocationCapture: (lat: number, lng: number) => void

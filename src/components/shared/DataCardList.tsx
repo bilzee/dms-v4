@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { EmptyState } from '@/components/shared/EmptyState';
 import { SearchToolbar, type FilterConfig } from '@/components/shared/SearchToolbar';
 import { cn } from '@/lib/utils';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight } from '@/lib/icons';
 import { getSeverityCardClasses, type SeverityLevel } from '@/lib/utils/status-colors';
 
 export interface ExpandedCardProps {

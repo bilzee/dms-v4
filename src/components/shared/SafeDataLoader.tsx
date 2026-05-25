@@ -3,7 +3,7 @@
 import React, { ReactNode, useState, useEffect, useRef, useCallback } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Loader2, AlertTriangle, RefreshCw, Wifi, WifiOff } from 'lucide-react'
+import { Loader2, AlertTriangle, RefreshCw, Wifi, WifiOff } from '@/lib/icons'
 
 interface SafeDataLoaderProps<T> {
   children: (data: T | null, isLoading: boolean, error: string | null, retry: () => void) => ReactNode
@@ -185,11 +185,11 @@ export function SafeDataLoader<T = any>({
   if (showEmptyState && !state.data && !state.error && !state.isLoading) {
     return (
       <div className="text-center py-12">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <div className="w-8 h-8 text-gray-400" />
+        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-8 h-8 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">{emptyStateMessage}</h3>
-        <p className="text-sm text-gray-500">
+        <h3 className="text-lg font-medium text-foreground mb-2">{emptyStateMessage}</h3>
+        <p className="text-sm text-muted-foreground">
           Try adjusting your search or filters to find what you&apos;re looking for.
         </p>
         <Button variant="outline" onClick={retry} className="mt-4">

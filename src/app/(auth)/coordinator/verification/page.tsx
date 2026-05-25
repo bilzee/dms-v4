@@ -5,7 +5,7 @@ import { VerificationDashboard } from '@/components/verification/VerificationDas
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute';
 import { useAuth } from '@/hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Shield, User, BarChart3 } from 'lucide-react';
+import { AlertTriangle, Shield, User, BarChart3 } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 import Link from 'next/link';

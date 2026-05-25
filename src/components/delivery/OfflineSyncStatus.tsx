@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Wifi, WifiOff, RefreshCw, CheckCircle, AlertCircle, Clock } from 'lucide-react'
+import { Wifi, WifiOff, RefreshCw, CheckCircle, AlertCircle, Clock } from '@/lib/icons'
 import { DeliveryOfflineService, DeliveryOfflineStats } from '@/lib/services/delivery-offline.service'
 
 interface OfflineSyncStatusProps {

@@ -26,7 +26,7 @@ import {
   RefreshCw,
   Activity,
   Trophy
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { GameBadgeSystem, BadgeProgress } from './GameBadgeSystem';
 import { ExportButton } from './ExportButton';
@@ -305,10 +305,10 @@ export function DonorPerformanceDashboard({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-foreground">
             {donorName || 'Performance Dashboard'}
           </h2>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Member since {performanceData?.donor?.memberSince ? new Date(performanceData.donor.memberSince).toLocaleDateString() : 'N/A'}
           </p>
         </div>
@@ -465,7 +465,7 @@ export function DonorPerformanceDashboard({
           <CardContent>
             <div className="space-y-3">
               {performanceData.achievements.slice(0, 5).map((achievement, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                   <div className="flex items-center space-x-3">
                     {achievement.badge?.includes('Gold') && <span className="text-lg">🏆</span>}
                     {achievement.badge?.includes('Silver') && <span className="text-lg">🥈</span>}
@@ -474,7 +474,7 @@ export function DonorPerformanceDashboard({
                     
                     <div>
                       <p className="font-medium">{achievement.description}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         {new Date(achievement.date).toLocaleDateString()}
                       </p>
                     </div>

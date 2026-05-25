@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Filter, MapPin, TrendingUp, AlertTriangle, Maximize2, Minimize2, X } from 'lucide-react';
+import { CalendarIcon, Filter, MapPin, TrendingUp, AlertTriangle, Maximize2, Minimize2, X } from '@/lib/icons';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { 
@@ -484,7 +484,7 @@ export function AssessmentRelationshipMap({
 
             {/* Right Panel: Leaflet Map (70% width) */}
             <div className="flex-[7] relative">
-              <div className="h-full w-full border-2 border-gray-200 rounded-lg overflow-hidden">
+              <div className="h-full w-full border-2 border-border rounded-lg overflow-hidden">
                 <MapContainer
                   center={mapCenter}
                   zoom={zoomLevel}
@@ -503,7 +503,7 @@ export function AssessmentRelationshipMap({
                 
                 {/* Statistics Overlay with Maximize Button */}
                 {relationships?.data && (
-                  <Card className="absolute top-4 right-4 z-[1000] bg-white/95 backdrop-blur-sm">
+                  <Card className="absolute top-4 right-4 z-[1000] bg-card/95 backdrop-blur-sm">
                     <CardContent className="p-4">
                       <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                         <div className="flex items-center gap-2">
@@ -557,7 +557,7 @@ export function AssessmentRelationshipMap({
         <div className="fixed inset-0 z-[9999] pointer-events-none">
           {/* Calculate the position of the original map and create overlay */}
           <div 
-            className="absolute bg-white rounded-lg shadow-2xl border-2 border-blue-200 pointer-events-auto"
+            className="absolute bg-card rounded-lg shadow-2xl border-2 border-blue-200 pointer-events-auto"
             style={{
               // Anchor to original map position and expand upward
               bottom: `${window.innerHeight - mapPosition.top - mapPosition.height}px`,
@@ -568,7 +568,7 @@ export function AssessmentRelationshipMap({
             }}
           >
             {/* Header with minimize control */}
-            <div className="absolute top-0 left-0 right-0 z-[10001] bg-white/95 backdrop-blur-sm border-b rounded-t-lg">
+            <div className="absolute top-0 left-0 right-0 z-[10001] bg-card/95 backdrop-blur-sm border-b rounded-t-lg">
               <div className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3">
                   <MapPin className="h-5 w-5 text-blue-600" />
@@ -727,7 +727,7 @@ export function AssessmentRelationshipMap({
                   
                   {/* Statistics Overlay in maximized view */}
                   {relationships?.data && (
-                    <Card className="absolute top-4 right-4 z-[1000] bg-white/95 backdrop-blur-sm">
+                    <Card className="absolute top-4 right-4 z-[1000] bg-card/95 backdrop-blur-sm">
                       <CardContent className="p-4">
                         <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                           <div className="flex items-center gap-2">

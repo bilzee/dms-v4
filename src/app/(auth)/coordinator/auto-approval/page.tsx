@@ -6,7 +6,7 @@ import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, ArrowLeft, Settings } from 'lucide-react';
+import { CheckCircle, ArrowLeft, Settings } from '@/lib/icons';
 import Link from 'next/link';
 import { EnhancedAutoApprovalConfig } from '@/components/verification/EnhancedAutoApprovalConfig';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';

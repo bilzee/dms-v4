@@ -37,7 +37,7 @@ import {
   Maximize2,
   Minimize2,
   RefreshCw
-} from 'lucide-react';
+} from '@/lib/icons';
 import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -131,7 +131,7 @@ function DraggableTemplateCard({ template, onAdd }: {
         <template.icon className="h-8 w-8 text-blue-600" />
         <div className="flex-1">
           <div className="text-sm font-medium">{template.title}</div>
-          <div className="text-xs text-gray-500">{template.description}</div>
+          <div className="text-xs text-muted-foreground">{template.description}</div>
         </div>
         <Button
           variant="ghost"
@@ -529,20 +529,20 @@ export function ReportBuilder({
   }, [generatePreview, onSave]);
 
   return (
-    <div className={cn("flex h-screen bg-gray-50", className)}>
+    <div className={cn("flex h-screen bg-muted", className)}>
       {/* Sidebar */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+      <div className="w-80 bg-card border-r border-border flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-border">
           <h2 className="text-lg font-semibold mb-2">Report Builder</h2>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <LayoutGrid className="h-4 w-4" />
             {elements.length} elements
           </div>
         </div>
 
         {/* Controls */}
-        <div className="p-4 border-b border-gray-200 space-y-2">
+        <div className="p-4 border-b border-border space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Grid</span>
             <Button
@@ -608,7 +608,7 @@ export function ReportBuilder({
         </ScrollArea>
 
         {/* Actions */}
-        <div className="p-4 border-t border-gray-200 space-y-2">
+        <div className="p-4 border-t border-border space-y-2">
           <Button 
             onClick={generatePreview} 
             className="w-full justify-start"
@@ -635,7 +635,7 @@ export function ReportBuilder({
       >
         <div className="flex-1 flex flex-col">
           {/* Toolbar */}
-          <div className="h-16 bg-white border-b border-gray-200 flex items-center px-4 gap-4">
+          <div className="h-16 bg-card border-b border-border flex items-center px-4 gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Report:</span>
               <Input
@@ -692,8 +692,8 @@ export function ReportBuilder({
           <div className="flex-1 overflow-auto p-8">
             <div
               className={cn(
-                "relative bg-white rounded-lg shadow-sm border-2 transition-colors",
-                showGrid && "bg-grid-pattern border-dashed border-gray-300",
+                "relative bg-card rounded-lg shadow-sm border-2 transition-colors",
+                showGrid && "bg-grid-pattern border-dashed border-border",
                 "min-w-[800px] min-h-[600px]"
               )}
               style={{
@@ -731,14 +731,14 @@ export function ReportBuilder({
               {elements.length === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <LayoutGrid className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    <LayoutGrid className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">
                       Start Building Your Report
                     </h3>
-                    <p className="text-gray-600 mb-4">
+                    <p className="text-muted-foreground mb-4">
                       Drag elements from the sidebar to begin creating your custom report
                     </p>
-                    <div className="space-y-2 text-sm text-gray-500">
+                    <div className="space-y-2 text-sm text-muted-foreground">
                       <p>• Add headers, charts, tables, and more</p>
                       <p>• Configure data sources and aggregations</p>
                       <p>• Preview and save your template</p>
@@ -750,7 +750,7 @@ export function ReportBuilder({
           </div>
 
           {/* Status bar */}
-          <div className="h-8 bg-white border-t border-gray-200 flex items-center px-4 text-xs text-gray-600">
+          <div className="h-8 bg-card border-t border-border flex items-center px-4 text-xs text-muted-foreground">
             <span>Elements: {elements.length}</span>
             <Separator orientation="vertical" className="h-4 mx-2" />
             <span>Zoom: {Math.round(zoom * 100)}%</span>
@@ -766,8 +766,8 @@ export function ReportBuilder({
 
       {/* Properties Panel */}
       {selectedElement && (
-        <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
-          <div className="p-4 border-b border-gray-200">
+        <div className="w-80 bg-card border-l border-border flex flex-col">
+          <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold capitalize">
                 {selectedElement.type} Properties
@@ -928,8 +928,8 @@ function SortableCanvasElement({ element, isSelected, onSelect }: {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "border-2 rounded-md bg-white dark:bg-gray-900 shadow-sm transition-colors",
-        element.locked && "border-gray-400 cursor-not-allowed",
+        "border-2 rounded-md bg-card dark:bg-gray-900 shadow-sm transition-colors",
+        element.locked && "border-muted-foreground cursor-not-allowed",
         isSelected && !isDragging && "border-primary ring-2 ring-primary/20",
         isDragging && "border-primary/50 shadow-lg"
       )}
@@ -944,9 +944,9 @@ function SortableCanvasElement({ element, isSelected, onSelect }: {
           </span>
           <div className="flex items-center gap-1">
             {element.locked && (
-              <div className="w-3 h-3 bg-gray-400 rounded-full" title="Locked" />
+              <div className="w-3 h-3 bg-muted-foreground rounded-full" title="Locked" />
             )}
-            <div className="w-3 h-3 border border-gray-400 rounded-full" title="Resizable" />
+            <div className="w-3 h-3 border border-muted-foreground rounded-full" title="Resizable" />
           </div>
         </div>
         <div className="flex-1 text-xs text-muted-foreground overflow-hidden">
@@ -1180,7 +1180,7 @@ function ElementConfiguration({
 
       default:
         return (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-muted-foreground">
             <p>No specific configuration available for {element.type}</p>
             <p className="text-sm mt-1">Use the Data and Style tabs to configure this element</p>
           </div>
@@ -1210,7 +1210,7 @@ function DataConfiguration({
 
   if (!hasDataSource) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-muted-foreground">
         <p>This element type doesn&apos;t require data source configuration</p>
       </div>
     );

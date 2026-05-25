@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { getBadgeClasses } from '@/components/shared/StatusBadge';
-import { Calendar, User, AlertTriangle, CheckCircle, Info, AlertCircle } from 'lucide-react';
+import { Calendar, User, AlertTriangle, CheckCircle, Info, AlertCircle } from '@/lib/icons';
 import { GapIndicator } from './GapIndicator';
 import type { 
   HealthAssessmentData, 
@@ -67,9 +67,9 @@ const categoryConfig = {
   population: {
     title: 'Population Overview',
     icon: '👥',
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-50',
-    borderColor: 'border-gray-200'
+    color: 'text-muted-foreground',
+    bgColor: 'bg-muted',
+    borderColor: 'border-border'
   }
 } as const;
 
@@ -406,12 +406,12 @@ export function AssessmentCategorySummary({
         
         return (
           <div key={key} className="flex items-center justify-between py-1">
-            <span className="text-sm text-gray-600">{label}</span>
+            <span className="text-sm text-muted-foreground">{label}</span>
             <div className="flex items-center gap-2">
               {hasGap ? (
                 <>
                   <GapIndicator hasGap={true} severity={severity} size="sm" />
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
                     {fieldCount.gaps} of {fieldCount.total}
                   </span>
                 </>
@@ -432,7 +432,7 @@ export function AssessmentCategorySummary({
         const severity = hasGap ? (fieldSeverities[key] || getFieldSeveritySync(key)) : 'LOW';
         return (
           <div key={key} className="flex items-center justify-between py-1">
-            <span className="text-sm text-gray-600">{label}</span>
+            <span className="text-sm text-muted-foreground">{label}</span>
             <GapIndicator hasGap={hasGap} severity={severity} size="sm" />
           </div>
         );
@@ -466,12 +466,12 @@ export function AssessmentCategorySummary({
       // Overview layout: variable name and value on same row, minimizing vertical space
       return (
         <div key={key} className="flex items-center justify-between py-0.5">
-          <div className="text-gray-500 font-medium uppercase tracking-wide leading-tight" style={{fontSize: '8px'}}>
+          <div className="text-muted-foreground font-medium uppercase tracking-wide leading-tight" style={{fontSize: '8px'}}>
             {label}
           </div>
-          <div className="text-sm font-medium text-gray-900">
+          <div className="text-sm font-medium text-foreground">
             {displayValue}
-            {unit && <span className="text-xs text-gray-600 ml-1">{unit}</span>}
+            {unit && <span className="text-xs text-muted-foreground ml-1">{unit}</span>}
           </div>
         </div>
       );
@@ -480,10 +480,10 @@ export function AssessmentCategorySummary({
     // Gap analysis layout: regular row format
     return (
       <div key={key} className="flex items-center justify-between py-1">
-        <span className="text-sm text-gray-600 flex-1">{label}</span>
-        <span className="text-sm font-semibold text-gray-900 bg-gray-50 px-2 py-1 rounded text-right min-w-0 flex-shrink-0">
+        <span className="text-sm text-muted-foreground flex-1">{label}</span>
+        <span className="text-sm font-semibold text-foreground bg-muted px-2 py-1 rounded text-right min-w-0 flex-shrink-0">
           {displayValue}
-          {unit && <span className="text-xs text-gray-600 ml-1">{unit}</span>}
+          {unit && <span className="text-xs text-muted-foreground ml-1">{unit}</span>}
         </span>
       </div>
     );
@@ -535,7 +535,7 @@ export function AssessmentCategorySummary({
         </div>
         
         {/* Assessment metadata */}
-        <div className="flex items-center gap-4 text-xs text-gray-500">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
           {assessment.rapidAssessmentDate && (
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
@@ -563,13 +563,13 @@ export function AssessmentCategorySummary({
             {gapFieldElements.length > 0 ? (
               <>
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-sm font-medium text-gray-700">Gap Analysis (All Entities)</h4>
-                  <span className="text-xs text-gray-500">Select entity for details</span>
+                  <h4 className="text-sm font-medium text-foreground">Gap Analysis (All Entities)</h4>
+                  <span className="text-xs text-muted-foreground">Select entity for details</span>
                 </div>
                 {gapFieldElements}
               </>
             ) : (
-              <div className="text-center py-4 text-gray-500">
+              <div className="text-center py-4 text-muted-foreground">
                 <CheckCircle className="h-6 w-6 mx-auto mb-2 text-green-500" />
                 <p className="text-xs">No gap indicators across all entities</p>
               </div>
@@ -581,8 +581,8 @@ export function AssessmentCategorySummary({
             <div className="space-y-2">
               {gapFieldElements.length > 0 ? (
                 <>
-                  <div className="border border-gray-200 rounded-lg p-3">
-                    <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <div className="border border-border rounded-lg p-3">
+                    <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4" />
                       Gap Analysis
                     </h4>
@@ -592,7 +592,7 @@ export function AssessmentCategorySummary({
                   </div>
                 </>
               ) : (
-                <div className="text-center py-4 text-gray-500 bg-green-50 rounded-lg border border-green-200">
+                <div className="text-center py-4 text-muted-foreground bg-green-50 rounded-lg border border-green-200">
                   <CheckCircle className="h-6 w-6 mx-auto mb-2 text-green-500" />
                   <p className="text-xs text-green-700">No gap indicators</p>
                 </div>
@@ -614,7 +614,7 @@ export function AssessmentCategorySummary({
                   </div>
                 </>
               ) : (
-                <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
+                <div className="text-center py-4 text-muted-foreground bg-muted rounded-lg">
                   <Info className="h-6 w-6 mx-auto mb-2 opacity-50" />
                   <p className="text-xs">No overview data</p>
                 </div>
@@ -624,7 +624,7 @@ export function AssessmentCategorySummary({
         ) : (
           // Full layout - all fields together
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Assessment Details</h4>
+            <h4 className="text-sm font-medium text-foreground mb-2">Assessment Details</h4>
             {[...nonGapFieldElements, ...gapFieldElements]}
           </div>
         )}
@@ -632,10 +632,10 @@ export function AssessmentCategorySummary({
         {/* Recommendations - only show if enabled */}
         {showRecommendations && gapAnalysis?.recommendations && gapAnalysis.recommendations.length > 0 && (
           <div className="mt-4 pt-4 border-t">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Recommendations</h4>
+            <h4 className="text-sm font-medium text-foreground mb-2">Recommendations</h4>
             <ul className="space-y-1">
               {gapAnalysis.recommendations.map((recommendation: string, index: number) => (
-                <li key={index} className="text-xs text-gray-600 flex items-start gap-1">
+                <li key={index} className="text-xs text-muted-foreground flex items-start gap-1">
                   <span className="text-blue-500 mt-0.5">•</span>
                   {recommendation}
                 </li>

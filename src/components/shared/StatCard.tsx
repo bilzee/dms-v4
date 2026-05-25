@@ -3,7 +3,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight } from '@/lib/icons';
 import {
   severityCardColors,
   severityIconColors,
@@ -80,7 +80,7 @@ export function StatCard({
               {value}
             </p>
           </div>
-          {Icon && <Icon className={cn('h-4 w-4 shrink-0 ml-2', iconColor)} />}
+          {Icon && <Icon className={cn('h-5 w-5 shrink-0 ml-2', iconColor)} />}
         </div>
         {trend && trendDirection && (
           <div className="px-4 pb-3 pt-0">
@@ -95,7 +95,7 @@ export function StatCard({
     return (
       <Card className={cn('transition-colors', cardBg, className)}>
         <div className="flex flex-col items-center py-5 px-4 text-center">
-          {Icon && <Icon className={cn('h-5 w-5 mb-2', iconColor)} />}
+          {Icon && <Icon className={cn('h-7 w-7 mb-2', iconColor)} />}
           <p className="text-xs font-medium text-muted-foreground">{label}</p>
           <p className={cn('text-2xl font-bold tracking-tight mt-1', valueColor)}>
             {value}
@@ -126,7 +126,7 @@ export function StatCard({
             )}
           </div>
           {Icon && (
-            <Icon className={cn('h-4 w-4 shrink-0 ml-3 mt-0.5 text-muted-foreground')} />
+            <Icon className={cn('h-6 w-6 shrink-0 ml-3 mt-0.5 text-muted-foreground')} />
           )}
         </div>
       </div>
@@ -174,7 +174,7 @@ export function StatCardSkeleton({
             <div className="h-3 w-20 bg-muted rounded" />
             <div className="h-5 w-14 bg-muted rounded mt-1.5" />
           </div>
-          <div className="h-4 w-4 bg-muted rounded shrink-0 ml-2" />
+          <div className="h-5 w-5 bg-muted rounded shrink-0 ml-2" />
         </div>
       </Card>
     );
@@ -184,7 +184,7 @@ export function StatCardSkeleton({
     return (
       <Card className={cn('animate-pulse', className)}>
         <div className="flex flex-col items-center py-5 px-4">
-          <div className="h-5 w-5 bg-muted rounded mb-2" />
+          <div className="h-7 w-7 bg-muted rounded mb-2" />
           <div className="h-3 w-16 bg-muted rounded" />
           <div className="h-7 w-20 bg-muted rounded mt-1" />
         </div>
@@ -201,7 +201,7 @@ export function StatCardSkeleton({
             <div className="h-8 w-20 bg-muted rounded mt-2" />
             <div className="h-3 w-16 bg-muted rounded mt-3" />
           </div>
-          <div className="h-4 w-4 bg-muted rounded shrink-0 ml-3 mt-0.5" />
+          <div className="h-6 w-6 bg-muted rounded shrink-0 ml-3 mt-0.5" />
         </div>
       </div>
     </Card>

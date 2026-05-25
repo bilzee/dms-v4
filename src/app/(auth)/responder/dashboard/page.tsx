@@ -14,7 +14,7 @@ import { SafeDataLoader } from '@/components/shared/SafeDataLoader'
 import { EmptyState } from '@/components/shared/EmptyState'
 
 // Icons
-import { Plus, Edit, Package, CheckCircle, User, Shield, RefreshCw, AlertTriangle } from 'lucide-react'
+import { Plus, Edit, Package, CheckCircle, User, Shield, RefreshCw, AlertTriangle } from '@/lib/icons'
 
 // Forms and components
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
@@ -32,6 +32,11 @@ function ResponderDashboardContent() {
   const [editingResponse, setEditingResponse] = useState<string | null>(null)
   const [isClient, setIsClient] = useState(false)
 
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
   if (currentRole !== 'RESPONDER') {
     return (
       <div className="p-6 text-center">
@@ -43,11 +48,6 @@ function ResponderDashboardContent() {
       </div>
     )
   }
-
-  // Prevent hydration mismatch
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
 
   // Get assigned planned responses for this responder
   const getPlannedResponses = async () => {

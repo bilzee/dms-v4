@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { getBadgeClasses } from '@/components/shared/StatusBadge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, Save, RotateCcw, AlertCircle, Info } from 'lucide-react'
+import { Loader2, Save, RotateCcw, AlertCircle, Info } from '@/lib/icons'
 import { toast } from 'sonner'
 import { apiGet, apiPut } from '@/lib/api'
 

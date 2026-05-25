@@ -23,7 +23,7 @@ import {
   ArrowRight,
   Users,
   Activity
-} from 'lucide-react'
+} from '@/lib/icons'
 
 interface GapAnalysisProps {
   entityId: string

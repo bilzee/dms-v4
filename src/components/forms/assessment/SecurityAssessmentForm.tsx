@@ -19,7 +19,7 @@ import { EntitySelector } from '@/components/shared/EntitySelector'
 import { IncidentSelector } from '@/components/shared/IncidentSelector'
 import { SecurityAssessmentFormProps, SecurityAssessment } from '@/types/rapid-assessment'
 import { getCurrentUserName, getAssessmentLocationData } from '@/utils/assessment-utils'
-import { Shield, AlertTriangle, Users, Lightbulb, Phone } from 'lucide-react'
+import { Shield, AlertTriangle, Users, Lightbulb, Phone } from '@/lib/icons'
 
 const SecurityAssessmentSchema = z.object({
   isSafeFromViolence: z.boolean(),

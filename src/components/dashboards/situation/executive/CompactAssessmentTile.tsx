@@ -21,7 +21,7 @@ import {
   Clock,
   Loader2,
   AlertCircle
-} from 'lucide-react';
+} from '@/lib/icons';
 
 // Types
 interface CompactAssessmentTileProps {
@@ -52,7 +52,7 @@ const assessmentTypeConfig: Record<string, {
   'SHELTER': { icon: Home, color: 'text-green-600', label: 'Shelter' },
   'FOOD': { icon: Wheat, color: 'text-orange-600', label: 'Food Security' },
   'SECURITY': { icon: Shield, color: 'text-purple-600', label: 'Security' },
-  'POPULATION': { icon: Users, color: 'text-gray-600', label: 'Population' },
+  'POPULATION': { icon: Users, color: 'text-muted-foreground', label: 'Population' },
   'LOGISTICS': { icon: Truck, color: 'text-yellow-600', label: 'Logistics' }
 };
 
@@ -176,7 +176,7 @@ export function CompactAssessmentTile({ incidentId, className }: CompactAssessme
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-4 text-gray-500">
+          <div className="text-center py-4 text-muted-foreground">
             <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">Loading assessments...</p>
           </div>
@@ -213,7 +213,7 @@ export function CompactAssessmentTile({ incidentId, className }: CompactAssessme
       <Card className={cn("h-fit", className)}>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <FileText className="h-5 w-5 text-gray-500" />
+            <FileText className="h-5 w-5 text-muted-foreground" />
             Assessment Status Overview
             <Badge variant="secondary" className="text-xs">
               No data
@@ -221,10 +221,10 @@ export function CompactAssessmentTile({ incidentId, className }: CompactAssessme
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-4 text-gray-500">
+          <div className="text-center py-4 text-muted-foreground">
             <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">No assessments available</p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Complete assessments to see status overview
             </p>
           </div>
@@ -257,7 +257,7 @@ export function CompactAssessmentTile({ incidentId, className }: CompactAssessme
           {assessments.map((assessment) => {
             const config = assessmentTypeConfig[assessment.type] || {
               icon: AlertTriangle,
-              color: 'text-gray-600',
+              color: 'text-muted-foreground',
               label: assessment.type
             };
             const Icon = config.icon;
@@ -266,11 +266,11 @@ export function CompactAssessmentTile({ incidentId, className }: CompactAssessme
             const shouldFlash = assessment.severity ? (shouldFlashMap[assessment.severity] ?? false) : false;
             
             return (
-              <div key={assessment.type} className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors relative">
+              <div key={assessment.type} className="p-3 bg-muted rounded-lg border border-border hover:border-gray-300 transition-colors relative">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Icon className={cn("h-4 w-4", config.color)} />
-                    <span className="font-medium text-sm text-gray-900">{config.label}</span>
+                    <span className="font-medium text-sm text-foreground">{config.label}</span>
                   </div>
                   {assessment.severity && (
                     <div className="relative">
@@ -290,7 +290,7 @@ export function CompactAssessmentTile({ incidentId, className }: CompactAssessme
                 </div>
                 
                 <div className="space-y-2">
-                  <div className="flex items-center justify-center text-xs text-gray-600">
+                  <div className="flex items-center justify-center text-xs text-muted-foreground">
                     <span>Verified Assessments</span>
                   </div>
                   
@@ -298,7 +298,7 @@ export function CompactAssessmentTile({ incidentId, className }: CompactAssessme
                     <div className="text-2xl font-bold text-blue-600">
                       {assessment.verified}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       completed
                     </div>
                   </div>
@@ -309,13 +309,13 @@ export function CompactAssessmentTile({ incidentId, className }: CompactAssessme
         </div>
         
         {/* Overall Summary */}
-        <div className="mt-4 pt-3 border-t border-gray-100">
+        <div className="mt-4 pt-3 border-t border-border">
           <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2 text-gray-600">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <FileText className="h-4 w-4" />
               <span>Total Assessments</span>
             </div>
-            <div className="font-semibold text-gray-900">
+            <div className="font-semibold text-foreground">
               {totalVerified}/{totalAssessments} completed ({overallCompletion}%)
             </div>
           </div>

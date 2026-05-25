@@ -13,7 +13,7 @@ import {
   CheckCircle,
   PauseCircle,
   Timer
-} from 'lucide-react';
+} from '@/lib/icons';
 
 // Types for incident summary
 interface IncidentSummaryProps {

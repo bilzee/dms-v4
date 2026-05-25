@@ -29,7 +29,7 @@ import {
   Crown,
   Trophy,
   X
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import type { BadgeType } from '@/types/gamification';
@@ -80,8 +80,8 @@ const BADGE_DEFINITIONS: Record<BadgeType, BadgeDefinition> = {
     description: '85% verified delivery rate',
     icon: CheckCircle,
     color: {
-      bg: 'bg-gray-50',
-      text: 'text-gray-700',
+      bg: 'bg-muted',
+      text: 'text-foreground',
       border: 'border-gray-300'
     }
   },
@@ -119,8 +119,8 @@ const BADGE_DEFINITIONS: Record<BadgeType, BadgeDefinition> = {
     description: '25+ completed commitments',
     icon: Target,
     color: {
-      bg: 'bg-gray-50',
-      text: 'text-gray-700',
+      bg: 'bg-muted',
+      text: 'text-foreground',
       border: 'border-gray-300'
     }
   },
@@ -158,8 +158,8 @@ const BADGE_DEFINITIONS: Record<BadgeType, BadgeDefinition> = {
     description: 'Average response under 12 hours',
     icon: Clock,
     color: {
-      bg: 'bg-gray-50',
-      text: 'text-gray-700',
+      bg: 'bg-muted',
+      text: 'text-foreground',
       border: 'border-gray-300'
     }
   },
@@ -197,8 +197,8 @@ const BADGE_DEFINITIONS: Record<BadgeType, BadgeDefinition> = {
     description: 'Active for 6+ consecutive months',
     icon: Star,
     color: {
-      bg: 'bg-gray-50',
-      text: 'text-gray-700',
+      bg: 'bg-muted',
+      text: 'text-foreground',
       border: 'border-gray-300'
     }
   },
@@ -333,7 +333,7 @@ export function GameBadgeSystem({
           <TooltipContent>
             <div className="text-center">
               <p className="font-semibold">{badgeType}</p>
-              <p className="text-xs text-gray-600">{definition.description}</p>
+              <p className="text-xs text-muted-foreground">{definition.description}</p>
             </div>
           </TooltipContent>
         </Tooltip>
@@ -362,7 +362,7 @@ export function GameBadgeSystem({
             
             <div className="space-y-2">
               <h4 className="font-semibold">Description</h4>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 {BADGE_DEFINITIONS[selectedBadge].description}
               </p>
             </div>
@@ -437,7 +437,7 @@ export function GameBadgeSystem({
             <TooltipContent>
               <div className="text-center">
                 <p className="font-semibold">{badges.length - maxVisible} more achievements</p>
-                <p className="text-xs text-gray-600">Click to view all badges</p>
+                <p className="text-xs text-muted-foreground">Click to view all badges</p>
               </div>
             </TooltipContent>
           </Tooltip>
@@ -486,7 +486,7 @@ export function BadgeProgress({
           Achievements: {currentBadges.length}/{totalPossibleBadges}
         </span>
         {showPercentage && (
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-muted-foreground">
             {Math.round(percentage)}%
           </span>
         )}

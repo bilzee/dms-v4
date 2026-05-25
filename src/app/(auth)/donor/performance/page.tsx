@@ -6,7 +6,7 @@ import { DonorPerformanceDashboard } from '@/components/donor/DonorPerformanceDa
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { User, AlertCircle } from 'lucide-react';
+import { User, AlertCircle } from '@/lib/icons';
 
 // New error handling components
 import { SafeDataLoader } from '@/components/shared/SafeDataLoader';
@@ -104,11 +104,11 @@ export default function PerformancePage() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
                 <User className="w-8 h-8 text-blue-500" />
                 Performance Dashboard
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-muted-foreground mt-2">
                 Track your donation performance, achievements, and ranking over time.
               </p>
             </div>
@@ -145,7 +145,7 @@ export default function PerformancePage() {
                 className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <h3 className="font-semibold text-blue-600">View Leaderboard</h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   See how you rank among other donors
                 </p>
               </a>
@@ -155,7 +155,7 @@ export default function PerformancePage() {
                 className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <h3 className="font-semibold text-green-600">Manage Commitments</h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Update and track your current commitments
                 </p>
               </a>
@@ -165,7 +165,7 @@ export default function PerformancePage() {
                 className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <h3 className="font-semibold text-purple-600">Update Profile</h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Manage your organization details
                 </p>
               </a>

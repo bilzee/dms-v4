@@ -28,7 +28,7 @@ import {
   MessageSquare,
   Clock,
   Shield
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import type { 
   VerificationQueueItem, 
@@ -123,7 +123,7 @@ export function VerificationActions({
   if (!canVerify) {
     return (
       <div className={cn('flex items-center gap-2', className)}>
-        <Badge variant="outline" className="text-gray-600">
+        <Badge variant="outline" className="text-muted-foreground">
           {assessment.verificationStatus === 'VERIFIED' && 'Already Verified'}
           {assessment.verificationStatus === 'AUTO_VERIFIED' && 'Auto-Verified'}
           {assessment.verificationStatus === 'REJECTED' && 'Rejected'}
@@ -195,9 +195,9 @@ export function VerificationActions({
 
   // Non-inline mode (expanded card view)
   return (
-    <div className={cn('space-y-4 p-4 border rounded-lg bg-gray-50', className)}>
+    <div className={cn('space-y-4 p-4 border rounded-lg bg-muted', className)}>
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-gray-900">Verification Actions</h3>
+        <h3 className="font-semibold text-foreground">Verification Actions</h3>
         {isAutoApproveEnabled && (
           <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
             <Shield className="h-3 w-3 mr-1" />
@@ -228,7 +228,7 @@ export function VerificationActions({
       </div>
 
       {/* Status information */}
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-muted-foreground">
         <div className="flex items-center gap-2 mb-1">
           <Clock className="h-3 w-3" />
           <span>Submitted: {new Date(assessment.createdAt).toLocaleString()}</span>

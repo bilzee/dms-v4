@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DataTable, type ColumnDef, type RowAction } from '@/components/shared/DataTable';
 import { StatCard } from '@/components/shared/StatCard';
 import { StatCardGrid } from '@/components/shared/StatCardGrid';
-import { Users, MapPin, UserPlus, Trash2, Loader2, CheckCircle, AlertTriangle, Shield, User as UserIcon } from 'lucide-react';
+import { Users, MapPin, UserPlus, Trash2, Loader2, CheckCircle, AlertTriangle, Shield, User as UserIcon } from '@/lib/icons';
 
 interface Entity {
   id: string;

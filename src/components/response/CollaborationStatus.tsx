@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 // Icons
-import { Users, Edit, Clock, Shield, AlertTriangle } from 'lucide-react'
+import { Users, Edit, Clock, Shield, AlertTriangle } from '@/lib/icons'
 
 interface CollaborationStatusProps {
   collaboration: {
@@ -48,12 +48,12 @@ export function CollaborationStatus({
 
   if (!isActive) {
     return (
-      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+      <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
         <div className="flex items-center gap-3">
-          <Users className="h-5 w-5 text-gray-500" />
+          <Users className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium text-gray-900">No Active Collaboration</p>
-            <p className="text-xs text-gray-500">You can start collaborating on this response</p>
+            <p className="text-sm font-medium text-foreground">No Active Collaboration</p>
+            <p className="text-xs text-muted-foreground">You can start collaborating on this response</p>
           </div>
         </div>
         {canEdit && (
@@ -131,7 +131,7 @@ export function CollaborationStatus({
 
       {/* Collaborators List */}
       <div className="space-y-3">
-        <h4 className="text-sm font-medium text-gray-900">Collaborators</h4>
+        <h4 className="text-sm font-medium text-foreground">Collaborators</h4>
         
         {/* Current User */}
         {isCurrentUserCollaborating && collaborators.find(c => c.userId === currentUserId) && (
@@ -183,25 +183,25 @@ export function CollaborationStatus({
 
         {/* Other Collaborators */}
         {otherCollaborators.map((collaborator) => (
-          <div key={collaborator.userId} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <div key={collaborator.userId} className="flex items-center justify-between p-3 bg-muted border border-border rounded-lg">
             <div className="flex items-center gap-3">
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-gray-600 text-white text-xs">
+                <AvatarFallback className="bg-muted-foreground text-white text-xs">
                   {collaborator.userName.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-foreground">
                   {collaborator.userName}
                 </p>
                 <div className="flex items-center gap-2">
                   <Badge 
                     variant={collaborator.isEditing ? "destructive" : "outline"}
-                    className={collaborator.isEditing ? "" : "text-gray-600 border-gray-300"}
+                    className={collaborator.isEditing ? "" : "text-muted-foreground border-border"}
                   >
                     {collaborator.isEditing ? 'Editing' : 'Viewing'}
                   </Badge>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-muted-foreground">
                     Joined {new Date(collaborator.joinedAt).toLocaleTimeString()}
                   </span>
                 </div>
@@ -214,7 +214,7 @@ export function CollaborationStatus({
                   <span className="text-xs text-red-500">Editing</span>
                 </div>
               )}
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-muted-foreground">
                 Last seen {new Date(collaborator.lastSeen).toLocaleTimeString()}
               </span>
             </div>

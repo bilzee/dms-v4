@@ -29,7 +29,7 @@ import {
   HeartHandshake,
   Package,
   Activity
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import type { VerificationQueueItem } from '@/types/verification';
 import type { ResponseVerificationQueueItem } from '@/types/response-verification';
@@ -279,8 +279,8 @@ export function EnhancedVerificationDashboard() {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-gray-100">
-                  <div className="text-sm text-gray-600">
+                <div className="pt-4 border-t border-border">
+                  <div className="text-sm text-muted-foreground">
                     <div className="flex justify-between mb-1">
                       <span>Total Pending Items:</span>
                       <span className="font-semibold">{(metrics?.totalPending || 0) + (responseMetrics?.totalPending || 0)}</span>
@@ -319,7 +319,7 @@ export function EnhancedVerificationDashboard() {
                   <CardContent className="space-y-4">
                     {/* Status */}
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Status</label>
+                      <label className="text-sm font-medium text-muted-foreground">Status</label>
                       <div className="mt-1">
                         <StatusIndicator 
                           status={selectedAssessment.verificationStatus} 
@@ -330,7 +330,7 @@ export function EnhancedVerificationDashboard() {
 
                     {/* Priority */}
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Priority</label>
+                      <label className="text-sm font-medium text-muted-foreground">Priority</label>
                       <div className="mt-1">
                         <StatusBadge status={selectedAssessment.priority} domain="severity" />
                       </div>
@@ -338,18 +338,18 @@ export function EnhancedVerificationDashboard() {
 
                     {/* Assessment Details */}
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Assessor</label>
-                      <p className="text-sm text-gray-900 mt-1">
+                      <label className="text-sm font-medium text-muted-foreground">Assessor</label>
+                      <p className="text-sm text-foreground mt-1">
                         {selectedAssessment.assessor.name}
                       </p>
-                      <p className="text-xs text-gray-600">
+                      <p className="text-xs text-muted-foreground">
                         {selectedAssessment.assessor.email}
                       </p>
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Date</label>
-                      <p className="text-sm text-gray-900 mt-1">
+                      <label className="text-sm font-medium text-muted-foreground">Date</label>
+                      <p className="text-sm text-foreground mt-1">
                         {new Date(selectedAssessment.rapidAssessmentDate).toLocaleDateString()}
                       </p>
                     </div>
@@ -402,7 +402,7 @@ export function EnhancedVerificationDashboard() {
                   <CardContent className="space-y-4">
                     {/* Status */}
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Verification Status</label>
+                      <label className="text-sm font-medium text-muted-foreground">Verification Status</label>
                       <div className="mt-1">
                         <StatusBadge status={selectedResponse.verificationStatus} domain="verification" />
                       </div>
@@ -410,7 +410,7 @@ export function EnhancedVerificationDashboard() {
 
                     {/* Priority */}
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Priority</label>
+                      <label className="text-sm font-medium text-muted-foreground">Priority</label>
                       <div className="mt-1">
                         <StatusBadge status={selectedResponse.priority} domain="severity" />
                       </div>
@@ -418,18 +418,18 @@ export function EnhancedVerificationDashboard() {
 
                     {/* Response Details */}
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Responder</label>
-                      <p className="text-sm text-gray-900 mt-1">
+                      <label className="text-sm font-medium text-muted-foreground">Responder</label>
+                      <p className="text-sm text-foreground mt-1">
                         {selectedResponse.responder.name}
                       </p>
-                      <p className="text-xs text-gray-600">
+                      <p className="text-xs text-muted-foreground">
                         {selectedResponse.responder.email}
                       </p>
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Date</label>
-                      <p className="text-sm text-gray-900 mt-1">
+                      <label className="text-sm font-medium text-muted-foreground">Date</label>
+                      <p className="text-sm text-foreground mt-1">
                         {new Date(selectedResponse.createdAt).toLocaleDateString()}
                       </p>
                     </div>
@@ -437,7 +437,7 @@ export function EnhancedVerificationDashboard() {
                     {/* Donor Information */}
                     {selectedResponse.donor && (
                       <div>
-                        <label className="text-sm font-medium text-gray-600">Donor Information</label>
+                        <label className="text-sm font-medium text-muted-foreground">Donor Information</label>
                         <div className="mt-1 p-2 bg-blue-50 rounded border border-blue-200">
                           <p className="text-sm text-blue-900 font-medium">{selectedResponse.donor.name}</p>
                           <p className="text-xs text-blue-700">{selectedResponse.donor.email}</p>
@@ -453,9 +453,9 @@ export function EnhancedVerificationDashboard() {
                     {/* Response Resources */}
                     {selectedResponse.resources && (
                       <div>
-                        <label className="text-sm font-medium text-gray-600">Response Resources</label>
-                        <div className="mt-1 p-2 bg-gray-50 rounded border text-xs">
-                          <pre className="whitespace-pre-wrap text-gray-700">
+                        <label className="text-sm font-medium text-muted-foreground">Response Resources</label>
+                        <div className="mt-1 p-2 bg-muted rounded border text-xs">
+                          <pre className="whitespace-pre-wrap text-foreground">
                             {JSON.stringify(selectedResponse.resources, null, 2)}
                           </pre>
                         </div>
@@ -464,7 +464,7 @@ export function EnhancedVerificationDashboard() {
 
                     {/* Action buttons would go here */}
                     <div className="pt-4 border-t">
-                      <p className="text-sm text-gray-500 text-center">
+                      <p className="text-sm text-muted-foreground text-center">
                         Response verification actions will be available here
                       </p>
                     </div>

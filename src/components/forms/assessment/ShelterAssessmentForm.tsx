@@ -21,7 +21,7 @@ import { IncidentSelector } from '@/components/shared/IncidentSelector'
 import { ShelterAssessmentFormProps, ShelterAssessment } from '@/types/rapid-assessment'
 import { cn } from '@/lib/utils'
 import { getCurrentUserName, getAssessmentLocationData } from '@/utils/assessment-utils'
-import { Home, AlertTriangle, Cloud, Users } from 'lucide-react'
+import { Home, AlertTriangle, Cloud, Users } from '@/lib/icons'
 
 const ShelterAssessmentSchema = z.object({
   areSheltersSufficient: z.boolean(),

@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { OfflineIndicator } from '@/components/shared/OfflineIndicator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { AlertTriangle, FileText, Clock, Wifi, WifiOff, RefreshCw, Plus, Edit, ArrowLeft } from 'lucide-react'
+import { AlertTriangle, FileText, Clock, Wifi, WifiOff, RefreshCw, Plus, Edit, ArrowLeft } from '@/lib/icons'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 

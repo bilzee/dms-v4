@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 
 // Icons
-import { FileText, Calendar, MapPin, User, AlertTriangle, CheckCircle, Clock } from 'lucide-react'
+import { FileText, Calendar, MapPin, User, AlertTriangle, CheckCircle, Clock } from '@/lib/icons'
 
 // Services and types
 import { responseOfflineService } from '@/lib/services/response-offline.service'

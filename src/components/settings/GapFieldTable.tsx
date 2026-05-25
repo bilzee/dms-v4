@@ -9,7 +9,7 @@ import { getBadgeClasses } from '@/components/shared/StatusBadge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Loader2, Save, RotateCcw, Users, AlertCircle } from 'lucide-react'
+import { Loader2, Save, RotateCcw, Users, AlertCircle } from '@/lib/icons'
 import { toast } from 'sonner'
 import { apiGet, apiPut } from '@/lib/api'
 

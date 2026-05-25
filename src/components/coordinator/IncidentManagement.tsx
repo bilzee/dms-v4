@@ -44,7 +44,7 @@ import {
   RefreshCw,
   FileText,
   Link
-} from 'lucide-react'
+} from '@/lib/icons'
 import { useAuth } from '@/hooks/useAuth'
 
 const incidentColumns: ColumnDef<any>[] = [
@@ -55,7 +55,7 @@ const incidentColumns: ColumnDef<any>[] = [
       <div>
         <div className="font-medium">{incident.type}</div>
         {incident.subType && (
-          <div className="text-sm text-gray-500">{incident.subType}</div>
+          <div className="text-sm text-muted-foreground">{incident.subType}</div>
         )}
       </div>
     )
@@ -91,10 +91,10 @@ const incidentColumns: ColumnDef<any>[] = [
       return (
         <div className="text-sm space-y-1">
           <div className="flex items-center gap-2">
-            <Users className="h-3 w-3 text-gray-400" />
+            <Users className="h-3 w-3 text-muted-foreground" />
             <span>Population: {totalPopulation}</span>
           </div>
-          <div className="flex items-center gap-4 text-xs text-gray-500">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <span>Lives Lost: {livesLost}</span>
             <span>Injured: {injured}</span>
             <span>Entities: {affectedEntities}</span>
@@ -482,7 +482,7 @@ export function IncidentManagement({
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold">Incident Management</h2>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Manage and monitor disaster incidents
             {enableRealTimeUpdates && " • Real-time updates enabled"}
           </p>
@@ -501,7 +501,7 @@ export function IncidentManagement({
                 New Incident
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white shadow-2xl border border-gray-200 backdrop-blur-sm"
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-card shadow-2xl border border-border backdrop-blur-sm"
               style={{ 
                 backgroundColor: 'rgba(255, 255, 255, 0.98)',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
@@ -539,7 +539,7 @@ export function IncidentManagement({
             <div className="space-y-2">
               <Label>Search Location</Label>
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by location..."
                   value={state.filters.location || ''}
@@ -642,10 +642,10 @@ export function IncidentManagement({
               {(incident.preliminaryAssessments?.length || 0) > 0 ? (
                 <div className="space-y-1 text-xs">
                   {incident.preliminaryAssessments?.map((assessment: any, idx: number) => (
-                    <div key={idx} className="flex justify-between items-center p-2 bg-white rounded border">
+                    <div key={idx} className="flex justify-between items-center p-2 bg-card rounded border">
                       <div>
                         <div className="font-medium">{assessment.reportingLGA}, {assessment.reportingWard}</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           {assessment.reportingDate ? new Date(assessment.reportingDate).toLocaleDateString() : 'N/A'} •
                           {assessment.numberLivesLost || 0} lives lost •
                           {assessment.numberDisplaced || 0} displaced
@@ -658,8 +658,8 @@ export function IncidentManagement({
                   ))}
                 </div>
               ) : (
-                <div className="flex items-center justify-center p-4 bg-gray-50 rounded border-2 border-dashed border-gray-300">
-                  <span className="text-xs text-gray-500">No preliminary assessments linked</span>
+                <div className="flex items-center justify-center p-4 bg-muted rounded border-2 border-dashed border-border">
+                  <span className="text-xs text-muted-foreground">No preliminary assessments linked</span>
                 </div>
               )}
             </div>
@@ -675,7 +675,7 @@ export function IncidentManagement({
                   <span>Location:</span>
                   <span className="text-right">
                     <div className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3 text-gray-400" />
+                      <MapPin className="h-3 w-3 text-muted-foreground" />
                       {incident.location}
                     </div>
                   </span>
@@ -777,7 +777,7 @@ export function IncidentManagement({
           <div className="mt-6 space-y-6">
             {/* Linked Assessments Section */}
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
                 <FileText className="h-4 w-4" />
                 Linked Assessments ({state.linkedPreliminaryAssessments.length})
               </h3>
@@ -790,7 +790,7 @@ export function IncidentManagement({
                         <div className="font-medium text-sm">
                           {assessment.reportingLGA}, {assessment.reportingWard}
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-muted-foreground">
                           {new Date(assessment.createdAt).toLocaleDateString()} • 
                           {assessment.numberLivesLost} lives lost • 
                           {assessment.numberDisplaced} displaced • 
@@ -810,15 +810,15 @@ export function IncidentManagement({
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-4 border-2 border-dashed border-gray-300 rounded-lg">
-                  <p className="text-gray-500 text-sm">No preliminary assessments linked to this incident</p>
+                <div className="text-center py-4 border-2 border-dashed border-border rounded-lg">
+                  <p className="text-muted-foreground text-sm">No preliminary assessments linked to this incident</p>
                 </div>
               )}
             </div>
             
             {/* Available Assessments Section */}
             <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
                 <Link className="h-4 w-4" />
                 Available Assessments ({state.availablePreliminaryAssessments.length})
               </h3>
@@ -826,7 +826,7 @@ export function IncidentManagement({
               {state.availablePreliminaryAssessments.length > 0 ? (
                 <div className="space-y-2">
                   {state.availablePreliminaryAssessments.map((assessment) => (
-                    <div key={assessment.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                    <div key={assessment.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted">
                       <div className="flex items-center gap-3">
                         <Checkbox
                           id={`assessment-${assessment.id}`}
@@ -837,7 +837,7 @@ export function IncidentManagement({
                           <label htmlFor={`assessment-${assessment.id}`} className="font-medium text-sm cursor-pointer">
                             {assessment.reportingLGA}, {assessment.reportingWard}
                           </label>
-                          <div className="text-xs text-gray-600">
+                          <div className="text-xs text-muted-foreground">
                             {new Date(assessment.createdAt).toLocaleDateString()} • 
                             {assessment.numberLivesLost} lives lost • 
                             {assessment.numberDisplaced} displaced • 
@@ -849,9 +849,9 @@ export function IncidentManagement({
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-4 border-2 border-dashed border-gray-300 rounded-lg">
-                  <p className="text-gray-500 text-sm">No available preliminary assessments</p>
-                  <p className="text-xs text-gray-400 mt-1">All assessments may already be linked to incidents</p>
+                <div className="text-center py-4 border-2 border-dashed border-border rounded-lg">
+                  <p className="text-muted-foreground text-sm">No available preliminary assessments</p>
+                  <p className="text-xs text-muted-foreground mt-1">All assessments may already be linked to incidents</p>
                 </div>
               )}
             </div>
@@ -859,7 +859,7 @@ export function IncidentManagement({
           
           {/* Action Buttons */}
           <div className="flex justify-between items-center pt-4 border-t">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               {state.selectedAssessmentIds.length > 0 && (
                 <span>{state.selectedAssessmentIds.length} assessment(s) selected</span>
               )}

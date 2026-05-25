@@ -29,7 +29,7 @@ import {
   Download,
   Eye,
   ArrowLeft
-} from 'lucide-react';
+} from '@/lib/icons';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 

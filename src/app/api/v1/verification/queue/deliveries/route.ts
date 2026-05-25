@@ -36,7 +36,8 @@ export const GET = withAuth(
       const priority = searchParams.get('priority')?.split(',')
       const dateFrom = searchParams.get('dateFrom')
       const dateTo = searchParams.get('dateTo')
-      const sortBy = searchParams.get('sortBy') || 'responseDate'
+      const validSortFields = ['responseDate', 'createdAt', 'priority', 'deliveryStatus', 'verificationStatus', 'plannedDate']
+      const sortBy = validSortFields.includes(searchParams.get('sortBy') || '') ? searchParams.get('sortBy')! : 'responseDate'
       const sortOrder = searchParams.get('sortOrder') || 'desc'
       const search = searchParams.get('search')
       

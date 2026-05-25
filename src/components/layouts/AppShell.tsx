@@ -8,7 +8,7 @@ import { SyncIndicator } from '@/components/shared/SyncIndicator';
 import { OfflineIndicator } from '@/components/shared/OfflineIndicator';
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Shield } from 'lucide-react';
+import { Menu, X, Shield } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -48,7 +48,7 @@ export const AppShell = ({
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Header fullWidth={isDashboard} />
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           {children}
@@ -58,14 +58,14 @@ export const AppShell = ({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
           className="fixed inset-0 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         >
-          <div className="absolute inset-0 bg-gray-600 opacity-75" />
+          <div className="absolute inset-0 bg-black/50" />
         </div>
       )}
 
@@ -120,7 +120,7 @@ export const AppShell = ({
       {/* Main content area */}
       <div className="lg:pl-64">
         {/* Top bar for mobile */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:hidden">
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border bg-card px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:hidden">
           <Button
             variant="ghost"
             size="sm"

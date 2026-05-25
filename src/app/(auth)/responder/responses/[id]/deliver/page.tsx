@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Package, CheckCircle, AlertTriangle, Shield, User } from 'lucide-react'
+import { ArrowLeft, Package, CheckCircle, AlertTriangle, Shield, User } from '@/lib/icons'
 
 import { DeliveryConfirmationForm } from '@/components/forms/delivery'
 import { RapidResponse } from '@/types/response'

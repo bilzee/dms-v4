@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { Button } from '@/components/ui/button';
-import { MapPin, Crosshair, Maximize2 } from 'lucide-react';
+import { MapPin, Crosshair, Maximize2 } from '@/lib/icons';
 
 // Fix Leaflet default markers for SSR
 import L from 'leaflet';
@@ -125,7 +125,7 @@ export function LocationSelector({ onLocationSelect, initialCoordinates = { lati
         </MapContainer>
       </div>
 
-      <div className="text-xs text-gray-500 text-center">
+      <div className="text-xs text-muted-foreground text-center">
         Click on the map to select coordinates or use &quot;My Location&quot; button
       </div>
     </div>

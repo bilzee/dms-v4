@@ -21,7 +21,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 
 // Icons
-import { Truck, CheckCircle2, Clock, XCircle, AlertTriangle, Package, Edit, Save, X } from 'lucide-react'
+import { Truck, CheckCircle2, Clock, XCircle, AlertTriangle, Package, Edit, Save, X } from '@/lib/icons'
 
 // Types and validation
 import { DonorCommitment, CommitmentStatus } from '@/types/commitment'

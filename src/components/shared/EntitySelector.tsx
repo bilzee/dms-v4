@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 // External libraries
-import { MapPin, Users, AlertCircle, RefreshCw } from 'lucide-react'
+import { MapPin, Users, AlertCircle, RefreshCw } from '@/lib/icons'
 
 // UI components
 import { Badge } from '@/components/ui/badge'
@@ -199,7 +199,7 @@ export function EntitySelector({
                   {showAssignmentInfo && (
                     <div className="flex items-center space-x-1">
                       {entity.assignedUsersCount > 0 && (
-                        <div className="flex items-center text-xs text-gray-500">
+                        <div className="flex items-center text-xs text-muted-foreground">
                           <Users className="h-3 w-3 mr-1" />
                           {entity.assignedUsersCount}
                         </div>
@@ -217,7 +217,7 @@ export function EntitySelector({
       </Select>
 
       {selectedEntity && showAssignmentInfo && (
-        <div className="text-sm text-gray-600 p-3 bg-gray-50 rounded-md">
+        <div className="text-sm text-muted-foreground p-3 bg-muted rounded-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               {selectedEntity.location && (
@@ -230,7 +230,7 @@ export function EntitySelector({
                 {getAssignmentStatus(selectedEntity).text}
               </Badge>
             </div>
-            <div className="flex items-center text-xs text-gray-500">
+            <div className="flex items-center text-xs text-muted-foreground">
               <Users className="h-3 w-3 mr-1" />
               {selectedEntity.assignedUsersCount} assignee(s)
             </div>

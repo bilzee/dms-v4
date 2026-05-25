@@ -21,7 +21,7 @@ import { IncidentSelector } from '@/components/shared/IncidentSelector'
 import { WASHAssessmentFormProps, WASHAssessment } from '@/types/rapid-assessment'
 import { getCurrentUserName, getAssessmentLocationData } from '@/utils/assessment-utils'
 import { cn } from '@/lib/utils'
-import { Droplets, AlertTriangle, Toilet, Waves } from 'lucide-react'
+import { Droplets, AlertTriangle, Toilet, Waves } from '@/lib/icons'
 
 const WASHAssessmentSchema = z.object({
   waterSource: z.array(z.string()).default([]),

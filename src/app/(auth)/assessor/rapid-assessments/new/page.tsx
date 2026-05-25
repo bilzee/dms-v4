@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ArrowLeft, AlertTriangle, CheckCircle, Hospital, Users, Utensils, Droplets, Home, Shield } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, CheckCircle, Hospital, Users, Utensils, Droplets, Home, Shield } from '@/lib/icons'
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet, apiPost } from '@/lib/api'
 
@@ -234,10 +234,10 @@ function NewAssessmentContent() {
             </Button>
           
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-foreground">
               {showForm ? `${selectedAssessment?.label}` : 'Create New Assessment'}
             </h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-muted-foreground mt-2">
               {showForm 
                 ? `Complete the ${selectedAssessment?.label.toLowerCase()} form below`
                 : 'Select the type of assessment you want to create'
@@ -286,11 +286,11 @@ function NewAssessmentContent() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-3">
                           <div className="p-2 rounded-lg bg-gray-100">
-                            <Icon className="h-5 w-5 text-gray-700" />
+                            <Icon className="h-5 w-5 text-foreground" />
                           </div>
                           <div className="flex-1">
                             <h3 className="font-medium">{type.label}</h3>
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                               {type.description}
                             </p>
                           </div>

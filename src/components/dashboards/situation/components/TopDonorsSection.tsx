@@ -12,7 +12,7 @@ import {
   Loader2,
   AlertCircle,
   Users
-} from 'lucide-react';
+} from '@/lib/icons';
 import { apiGet, extractArray } from '@/lib/api';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 
@@ -114,7 +114,7 @@ export function TopDonorsSection({ incidentId, className }: TopDonorsProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-4 text-gray-500">
+          <div className="text-center py-4 text-muted-foreground">
             <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">No donor data available</p>
           </div>
@@ -127,7 +127,7 @@ export function TopDonorsSection({ incidentId, className }: TopDonorsProps) {
   const getRankingConfig = (index: number) => {
     const configs = [
       { icon: Trophy, bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', textColor: 'text-yellow-700', iconColor: 'text-yellow-600' },
-      { icon: Star, bgColor: 'bg-gray-50', borderColor: 'border-gray-200', textColor: 'text-gray-700', iconColor: 'text-gray-600' },
+      { icon: Star, bgColor: 'bg-muted', borderColor: 'border-border', textColor: 'text-foreground', iconColor: 'text-muted-foreground' },
       { icon: HandHeart, bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700', iconColor: 'text-orange-600' }
     ];
     return configs[index] || configs[2];
@@ -140,7 +140,7 @@ export function TopDonorsSection({ incidentId, className }: TopDonorsProps) {
           <Trophy className="h-5 w-5 text-yellow-600" />
           Top Performing Donors
         </CardTitle>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           {incidentId ? 'For selected incident' : 'Overall performance'}
         </p>
       </CardHeader>
@@ -160,7 +160,7 @@ export function TopDonorsSection({ incidentId, className }: TopDonorsProps) {
               )}
             >
               <div className="flex items-center gap-2">
-                <div className={cn("p-1.5 rounded-full bg-white", config.textColor)}>
+                <div className={cn("p-1.5 rounded-full bg-card", config.textColor)}>
                   <Icon className={cn("h-4 w-4", config.iconColor)} />
                 </div>
                 <div className={cn("text-sm font-bold", config.textColor)}>
@@ -169,10 +169,10 @@ export function TopDonorsSection({ incidentId, className }: TopDonorsProps) {
               </div>
               
               <div className="flex-1">
-                <div className="font-medium text-gray-900 text-sm">
+                <div className="font-medium text-foreground text-sm">
                   {donor.donorName}
                 </div>
-                <div className="text-xs text-gray-600">
+                <div className="text-xs text-muted-foreground">
                   {donor.verifiedActivities} of {donor.totalActivities} activities
                 </div>
               </div>
@@ -181,7 +181,7 @@ export function TopDonorsSection({ incidentId, className }: TopDonorsProps) {
                 <div className={cn("text-sm font-bold", config.textColor)}>
                   {donor.successRate.toFixed(2)}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   score
                 </div>
               </div>
@@ -190,8 +190,8 @@ export function TopDonorsSection({ incidentId, className }: TopDonorsProps) {
         })}
         
         {/* Formula explanation */}
-        <div className="pt-2 border-t border-gray-100">
-          <div className="text-xs text-gray-500 text-center">
+        <div className="pt-2 border-t border-border">
+          <div className="text-xs text-muted-foreground text-center">
             Ranking: (Verification Rate × 100) + Total Commitments
           </div>
         </div>

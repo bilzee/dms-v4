@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { AlertTriangle, Download, RefreshCw, WifiOff, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Download, RefreshCw, WifiOff, CheckCircle } from '@/lib/icons';
 import { offlineBootstrap, BootstrapProgress } from '@/lib/offline/bootstrap';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -135,8 +135,8 @@ export function OfflineGuard({
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-gray-400" />
-          <p className="text-sm text-gray-500">Checking offline data...</p>
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Checking offline data...</p>
         </div>
       </div>
     );
@@ -181,7 +181,7 @@ export function OfflineGuard({
                 <span>{bootstrapProgress.progress}%</span>
               </div>
               <Progress value={bootstrapProgress.progress} className="w-full" />
-              <p className="text-xs text-gray-500">{bootstrapProgress.message}</p>
+              <p className="text-xs text-muted-foreground">{bootstrapProgress.message}</p>
               
               {bootstrapProgress.errors.length > 0 && (
                 <div className="text-xs text-red-600">
@@ -203,11 +203,11 @@ export function OfflineGuard({
           {/* Data Requirements */}
           {!isBootstrapping && (
             <div className="space-y-3">
-              <p className="text-sm text-gray-600">{fallbackMessage}</p>
+              <p className="text-sm text-muted-foreground">{fallbackMessage}</p>
               
               <div className="space-y-2 text-xs">
-                <p className="font-medium text-gray-700">Required offline data:</p>
-                <ul className="space-y-1 text-gray-600">
+                <p className="font-medium text-foreground">Required offline data:</p>
+                <ul className="space-y-1 text-muted-foreground">
                   <li className="flex items-center gap-2">
                     <CheckCircle className="w-3 h-3 text-green-500" />
                     Entities and locations
@@ -259,7 +259,7 @@ export function OfflineGuard({
 
           {/* Offline Help */}
           {!isOnline && (
-            <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+            <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
               <WifiOff className="w-3 h-3 inline mr-1" />
               Connect to internet to download required offline data
             </div>

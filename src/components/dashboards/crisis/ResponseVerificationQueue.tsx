@@ -26,7 +26,7 @@ import {
   XCircle,
   HeartHandshake,
   Package
-} from 'lucide-react';
+} from '@/lib/icons';
 import { DataCardList, type ExpandedCardProps } from '@/components/shared/DataCardList';
 import { type SeverityLevel } from '@/lib/utils/status-colors';
 import type { ResponseVerificationQueueItem } from '@/types/response-verification';
@@ -149,10 +149,10 @@ export function ResponseVerificationQueue({
       <div className={cn('p-6 rounded-lg border bg-card text-card-foreground shadow-sm', className)}>
         <div className="text-center">
           <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-foreground mb-2">
             Failed to load response verification queue
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-muted-foreground mb-4">
             {error instanceof Error ? error.message : 'An unexpected error occurred'}
           </p>
           <Button onClick={handleRefresh} variant="outline">
@@ -172,24 +172,24 @@ export function ResponseVerificationQueue({
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div data-testid="total-pending-responses" className="text-center p-2 bg-yellow-50 rounded">
               <div className="text-lg font-bold">{queueData?.statistics?.submitted || 0}</div>
-              <div className="text-sm text-gray-600">Pending</div>
+              <div className="text-sm text-muted-foreground">Pending</div>
             </div>
             <div data-testid="total-verified-responses" className="text-center p-2 bg-green-50 rounded">
               <div className="text-lg font-bold">{queueData?.statistics?.verified || 0}</div>
-              <div className="text-sm text-gray-600">Verified</div>
+              <div className="text-sm text-muted-foreground">Verified</div>
             </div>
             <div data-testid="total-rejected-responses" className="text-center p-2 bg-red-50 rounded">
               <div className="text-lg font-bold">{queueData?.statistics?.rejected || 0}</div>
-              <div className="text-sm text-gray-600">Rejected</div>
+              <div className="text-sm text-muted-foreground">Rejected</div>
             </div>
             <div data-testid="verification-rate" className="text-center p-2 bg-blue-50 rounded">
               <div className="text-lg font-bold">{queueData?.statistics?.total && queueData.statistics.total > 0 ? Math.round((queueData.statistics.verified / queueData.statistics.total) * 100) : 0}%</div>
-              <div className="text-sm text-gray-600">Rate</div>
+              <div className="text-sm text-muted-foreground">Rate</div>
             </div>
           </div>
-          <div data-testid="average-processing-time" className="text-center p-2 bg-gray-50 rounded mb-4">
+          <div data-testid="average-processing-time" className="text-center p-2 bg-muted rounded mb-4">
             <div className="text-lg font-bold">{(queueData?.statistics as any)?.avgProcessingTime ? `${(queueData?.statistics as any)?.avgProcessingTime}h` : 'N/A'}</div>
-            <div className="text-sm text-gray-600">Avg Processing Time</div>
+            <div className="text-sm text-muted-foreground">Avg Processing Time</div>
           </div>
           <div data-testid="response-breakdown-by-type" className="mb-4">
             <h4 className="font-medium mb-2">Breakdown by Type</h4>
@@ -205,7 +205,7 @@ export function ResponseVerificationQueue({
               })}
             </div>
           </div>
-          <div data-testid="processing-time-chart" className="bg-gray-100 h-32 rounded flex items-center justify-center text-gray-500">
+          <div data-testid="processing-time-chart" className="bg-muted h-32 rounded flex items-center justify-center text-muted-foreground">
             Processing Time Chart Placeholder
           </div>
         </div>
@@ -259,11 +259,11 @@ export function ResponseVerificationQueue({
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div>
-                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2">
                     {getResponseTypeIcon(response.type)}
                     {response.entity.name}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {response.type} Response &bull; {response.responder.name}
                   </p>
                   {response.donor && (
@@ -314,7 +314,7 @@ export function ResponseVerificationQueue({
             </div>
 
             {/* Quick info row */}
-            <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
                 <span>{response.responder.name}</span>
@@ -333,14 +333,14 @@ export function ResponseVerificationQueue({
 
             {/* Description preview */}
             {response.description && (
-              <p className="text-sm text-gray-700 mb-2 line-clamp-2">
+              <p className="text-sm text-foreground mb-2 line-clamp-2">
                 {response.description}
               </p>
             )}
 
             {/* Inline Verify/Reject buttons for SUBMITTED responses */}
             {response.verificationStatus === 'SUBMITTED' && (
-              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
                 <Button
                   size="sm"
                   onClick={(e) => {
@@ -383,8 +383,8 @@ export function ResponseVerificationQueue({
         renderExpanded={(response: ResponseVerificationQueueItem) => (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">Entity Details</h4>
-              <div className="space-y-1 text-gray-600">
+              <h4 className="font-medium text-foreground mb-2">Entity Details</h4>
+              <div className="space-y-1 text-muted-foreground">
                 <div>Type: {response.entity.type}</div>
                 <div>ID: {response.entity.id}</div>
                 <div>Auto-Approve: {response.entity.autoApproveEnabled ? 'Enabled' : 'Disabled'}</div>
@@ -392,8 +392,8 @@ export function ResponseVerificationQueue({
             </div>
 
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">Responder Details</h4>
-              <div className="space-y-1 text-gray-600">
+              <h4 className="font-medium text-foreground mb-2">Responder Details</h4>
+              <div className="space-y-1 text-muted-foreground">
                 <div>Email: {response.responder.email}</div>
                 <div>ID: {response.responder.id}</div>
               </div>
@@ -402,8 +402,8 @@ export function ResponseVerificationQueue({
             {/* Donor information if available */}
             {response.donor && (
               <div className="md:col-span-2">
-                <h4 className="font-medium text-gray-900 mb-2">Donor Information</h4>
-                <div className="space-y-1 text-sm text-gray-600">
+                <h4 className="font-medium text-foreground mb-2">Donor Information</h4>
+                <div className="space-y-1 text-sm text-muted-foreground">
                   <div>Name: {response.donor.name}</div>
                   <div>Email: {response.donor.email}</div>
                   {response.commitment && (
@@ -418,8 +418,8 @@ export function ResponseVerificationQueue({
 
             {/* Timeline */}
             <div className="md:col-span-2">
-              <h4 className="font-medium text-gray-900 mb-2">Timeline</h4>
-              <div className="space-y-1 text-sm text-gray-600">
+              <h4 className="font-medium text-foreground mb-2">Timeline</h4>
+              <div className="space-y-1 text-sm text-muted-foreground">
                 <div>Created: {new Date(response.createdAt).toLocaleString()}</div>
                 <div>Last Updated: {new Date(response.updatedAt).toLocaleString()}</div>
                 {response.verifiedAt && (
@@ -431,9 +431,9 @@ export function ResponseVerificationQueue({
             {/* Resources information */}
             {response.resources && (
               <div className="md:col-span-2">
-                <h4 className="font-medium text-gray-900 mb-2">Resources</h4>
-                <div className="text-sm text-gray-600">
-                  <pre className="whitespace-pre-wrap text-xs bg-gray-50 p-2 rounded">
+                <h4 className="font-medium text-foreground mb-2">Resources</h4>
+                <div className="text-sm text-muted-foreground">
+                  <pre className="whitespace-pre-wrap text-xs bg-muted p-2 rounded">
                     {JSON.stringify(response.resources, null, 2)}
                   </pre>
                 </div>

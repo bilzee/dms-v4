@@ -16,7 +16,7 @@ import {
   AlertTriangle,
   Loader2,
   AlertCircle
-} from 'lucide-react';
+} from '@/lib/icons';
 
 // Types
 interface GroupedImpactSummaryProps {

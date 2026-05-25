@@ -17,7 +17,7 @@ import {
   RefreshCw,
   Battery,
   Signal
-} from 'lucide-react';
+} from '@/lib/icons';
 
 interface OfflineLayoutProps {
   children: React.ReactNode;
@@ -92,9 +92,9 @@ export function OfflineLayout({ children }: OfflineLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 relative">
+    <div className="min-h-screen bg-background relative">
       {/* Status Bar for Field Operations */}
-      <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between text-sm">
+      <div className="bg-card border-b border-border px-4 py-2 flex items-center justify-between text-sm">
         {/* Left: Connection Status */}
         <div className="flex items-center gap-4">
           <div className={`flex items-center gap-1 ${isOnline ? 'text-green-600' : 'text-red-600'}`}>

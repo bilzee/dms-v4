@@ -22,7 +22,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 // Icons
-import { Package, AlertTriangle, Search, Filter, Users, MapPin, Calendar, CheckCircle, AlertCircle, Plus, Minus, Eye, EyeOff } from 'lucide-react'
+import { Package, AlertTriangle, Search, Filter, Users, MapPin, Calendar, CheckCircle, AlertCircle, Plus, Minus, Eye, EyeOff } from '@/lib/icons'
 
 // Shared components
 import { AssessmentSelector } from '@/components/response/AssessmentSelector'
@@ -233,8 +233,8 @@ export function DonorCommitmentImportForm({
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
-          <Package className="mx-auto h-12 w-12 animate-pulse text-gray-400" />
-          <p className="mt-2 text-sm text-gray-600">Loading available commitments...</p>
+          <Package className="mx-auto h-12 w-12 animate-pulse text-muted-foreground" />
+          <p className="mt-2 text-sm text-muted-foreground">Loading available commitments...</p>
         </div>
       </div>
     )
@@ -294,7 +294,7 @@ export function DonorCommitmentImportForm({
             <div>
               <label className="text-sm font-medium">Search</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search commitments..."
                   className="pl-10"
@@ -342,7 +342,7 @@ export function DonorCommitmentImportForm({
                             </Badge>
                           </div>
                           
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-3">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground mb-3">
                             <div className="flex items-center gap-1">
                               <MapPin className="h-3 w-3" />
                               {commitment.entity.name}
@@ -363,14 +363,14 @@ export function DonorCommitmentImportForm({
                             </Badge>
                           )}
 
-                          <div className="text-sm text-gray-700">
+                          <div className="text-sm text-foreground">
                             {commitment.items?.slice(0, 3).map((item: any, index: number) => (
                               <span key={index} className="inline-block mr-2">
                                 {item.name} ({item.quantity} {item.unit})
                               </span>
                             ))}
                             {commitment.items?.length > 3 && (
-                              <span className="text-gray-500">
+                              <span className="text-muted-foreground">
                                 +{commitment.items.length - 3} more
                               </span>
                             )}
@@ -381,7 +381,7 @@ export function DonorCommitmentImportForm({
                           {selectedCommitment?.id === commitment.id ? (
                             <CheckCircle className="h-5 w-5 text-green-500" />
                           ) : (
-                            <div className="h-5 w-5 border-2 border-gray-300 rounded-full" />
+                            <div className="h-5 w-5 border-2 border-border rounded-full" />
                           )}
                         </div>
                       </div>
@@ -445,7 +445,7 @@ export function DonorCommitmentImportForm({
                           <FormLabel>Response Type *</FormLabel>
                           <FormControl>
                             <Select value={field.value} onValueChange={field.onChange} disabled={true}>
-                              <SelectTrigger className="bg-gray-50">
+                              <SelectTrigger className="bg-muted">
                                 <SelectValue placeholder="Auto-populated from assessment..." />
                               </SelectTrigger>
                               <SelectContent>
@@ -475,7 +475,7 @@ export function DonorCommitmentImportForm({
                           <FormLabel>Priority *</FormLabel>
                           <FormControl>
                             <Select value={field.value} onValueChange={field.onChange} disabled={true}>
-                              <SelectTrigger className="bg-gray-50">
+                              <SelectTrigger className="bg-muted">
                                 <SelectValue placeholder="Auto-populated from assessment..." />
                               </SelectTrigger>
                               <SelectContent>
@@ -535,7 +535,7 @@ export function DonorCommitmentImportForm({
                                 <div key={index} className="flex items-center gap-4 p-3 border rounded-lg">
                                   <div className="flex-1">
                                     <div className="font-medium">{item.name}</div>
-                                    <div className="text-sm text-gray-500">{item.unit}</div>
+                                    <div className="text-sm text-muted-foreground">{item.unit}</div>
                                   </div>
                                   
                                   <div className="flex items-center gap-2">
@@ -612,7 +612,7 @@ export function DonorCommitmentImportForm({
 
       {/* Preview Dialog */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="max-w-2xl bg-white dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 shadow-2xl">
+        <DialogContent className="max-w-2xl bg-card dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-blue-700 dark:text-blue-300 flex items-center gap-2">
               <Eye className="h-5 w-5" />
@@ -648,7 +648,7 @@ export function DonorCommitmentImportForm({
                 <label className="text-sm font-medium">Items to Import</label>
                 <div className="mt-2 space-y-2">
                   {selectedItems.filter(item => item.quantity > 0).map((item, index) => (
-                    <div key={index} className="flex justify-between p-2 bg-gray-50 rounded">
+                    <div key={index} className="flex justify-between p-2 bg-muted rounded">
                       <span>{item.name}</span>
                       <span>{item.quantity} {item.unit}</span>
                     </div>
@@ -665,7 +665,7 @@ export function DonorCommitmentImportForm({
             </div>
           )}
 
-          <DialogFooter className="bg-gray-50 dark:bg-gray-800 -mx-6 -mb-6 px-6 py-4 mt-6 flex justify-between">
+          <DialogFooter className="bg-muted dark:bg-gray-800 -mx-6 -mb-6 px-6 py-4 mt-6 flex justify-between">
             <Button
               onClick={handleConfirmImport}
               disabled={importMutation.isPending}

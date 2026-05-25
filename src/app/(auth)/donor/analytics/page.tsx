@@ -25,7 +25,7 @@ import {
   Users,
   AlertTriangle,
   Trophy
-} from 'lucide-react'
+} from '@/lib/icons'
 
 import { EntityInsightsCards } from '@/components/donor/EntityInsightsCards'
 import { useQuery } from '@tanstack/react-query'
@@ -109,8 +109,8 @@ export default function DonorAnalyticsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Donor Analytics Dashboard</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold text-foreground">Donor Analytics Dashboard</h1>
+            <p className="text-muted-foreground mt-2">
               Comprehensive analytics and insights across all assigned entities
             </p>
           </div>
@@ -199,11 +199,11 @@ export default function DonorAnalyticsPage() {
                         <div key={entity.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                              <Building className="h-5 w-5 text-gray-600" />
+                              <Building className="h-5 w-5 text-muted-foreground" />
                             </div>
                             <div>
                               <p className="font-medium">{entity.name}</p>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-muted-foreground">
                                 <Badge variant="outline">{entity.type}</Badge>
                                 {entity.location && (
                                   <span className="ml-2">
@@ -217,18 +217,18 @@ export default function DonorAnalyticsPage() {
                             <p className="font-semibold">
                               {entity.stats?.verifiedAssessments || 0}
                             </p>
-                            <p className="text-xs text-gray-600">Verified</p>
+                            <p className="text-xs text-muted-foreground">Verified</p>
                           </div>
                         </div>
                       ))}
                       {entities.length > 5 && (
-                        <p className="text-center text-sm text-gray-600 pt-2">
+                        <p className="text-center text-sm text-muted-foreground pt-2">
                           And {entities.length - 5} more entities
                         </p>
                       )}
                     </div>
                   ) : (
-                    <p className="text-gray-500 text-center py-8">
+                    <p className="text-muted-foreground text-center py-8">
                       No entities assigned yet
                     </p>
                   )}
@@ -254,7 +254,7 @@ export default function DonorAnalyticsPage() {
                           total + (entity.demographics?.population || 0), 0
                         ).toLocaleString()}
                       </div>
-                      <p className="text-sm text-gray-600">Total Population</p>
+                      <p className="text-sm text-muted-foreground">Total Population</p>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4 text-center">
@@ -264,7 +264,7 @@ export default function DonorAnalyticsPage() {
                             total + (entity.demographics?.vulnerableCount || 0), 0
                           ).toLocaleString()}
                         </div>
-                        <p className="text-xs text-gray-600">Vulnerable</p>
+                        <p className="text-xs text-muted-foreground">Vulnerable</p>
                       </div>
                       <div>
                         <div className="text-xl font-semibold text-green-600">
@@ -272,7 +272,7 @@ export default function DonorAnalyticsPage() {
                             total + (entity.stats?.responses || 0), 0
                           )}
                         </div>
-                        <p className="text-xs text-gray-600">Active</p>
+                        <p className="text-xs text-muted-foreground">Active</p>
                       </div>
                     </div>
                   </div>
@@ -417,7 +417,7 @@ export default function DonorAnalyticsPage() {
                           </div>
                           <div>
                             <p className="font-medium">{performer.donorName}</p>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted-foreground">
                               {performer.verifiedActivities}/{performer.totalActivities} activities
                             </p>
                           </div>
@@ -426,13 +426,13 @@ export default function DonorAnalyticsPage() {
                           <Badge variant="default">
                             {(performer.successRate * 100).toFixed(1)}%
                           </Badge>
-                          <p className="text-xs text-gray-600">Success rate</p>
+                          <p className="text-xs text-muted-foreground">Success rate</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-center py-8">
+                  <p className="text-muted-foreground text-center py-8">
                     No performance data available
                   </p>
                 )}
@@ -453,9 +453,9 @@ export default function DonorAnalyticsPage() {
                 <div className="space-y-4">
                   {entities.length === 0 ? (
                     <div className="text-center py-8">
-                      <Building className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Entities Assigned</h3>
-                      <p className="text-gray-600 mb-4">
+                      <Building className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium text-foreground mb-2">No Entities Assigned</h3>
+                      <p className="text-muted-foreground mb-4">
                         Start by getting entities assigned to your organization to see insights here.
                       </p>
                       <Button onClick={() => router.push('/donor/entities')}>
@@ -466,7 +466,7 @@ export default function DonorAnalyticsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="p-4 border rounded-lg">
                         <h4 className="font-medium mb-2">Coverage Analysis</h4>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           You&apos;re serving approximately {entities.reduce((total, entity) => 
                             total + (entity.demographics?.population || 0), 0
                           ).toLocaleString()} people across {entities.length} entities.
@@ -474,7 +474,7 @@ export default function DonorAnalyticsPage() {
                       </div>
                       <div className="p-4 border rounded-lg">
                         <h4 className="font-medium mb-2">Performance Trend</h4>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           Your average verification rate is {((metrics?.averageVerificationRate || 0) * 100).toFixed(1)}%, which is {((metrics?.averageVerificationRate || 0) * 100) > 80 ? 'above average' : 'below average'}.
                         </p>
                       </div>

@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, AlertTriangle, AlertCircle, Info, X, BarChart3, UserCheck, Eye } from 'lucide-react';
+import { CheckCircle, AlertTriangle, AlertCircle, Info, X, BarChart3, UserCheck, Eye } from '@/lib/icons';
 
 interface IndividualEntityGapInfoPopupProps {
   isOpen: boolean;
@@ -206,11 +206,11 @@ export function IndividualEntityGapInfoPopup({
         <CardContent className="pt-6 space-y-6">
           {/* Overview */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
               <UserCheck className="h-4 w-4 text-green-600" />
               What This Assessment Shows
             </h3>
-            <p className="text-gray-600 leading-relaxed">
+            <p className="text-muted-foreground leading-relaxed">
               Individual entity assessments evaluate gap indicators at a <span className="font-medium">specific location or facility</span>. 
               Unlike aggregated &quot;All Entities&quot; view which shows patterns across many locations, this assessment focuses on 
               the actual conditions at <span className="font-medium">this specific entity</span>.
@@ -219,23 +219,23 @@ export function IndividualEntityGapInfoPopup({
 
           {/* Severity Hierarchy */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-purple-600" />
               Understanding Severity Hierarchy
             </h3>
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-purple-200 rounded-lg p-4 space-y-4">
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-foreground">
                 Severity is calculated through a clear three-level hierarchy that connects individual field conditions to overall entity priority:
               </p>
               
               <div className="space-y-3">
                 {/* Level 1 */}
-                <div className="bg-white rounded-lg border border-gray-200 p-3">
+                <div className="bg-card rounded-lg border border-border p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
                     <span className="font-semibold text-blue-700">Individual Field Severity</span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">
+                  <p className="text-sm text-muted-foreground mb-2">
                     Each gap field (e.g., &quot;Functional Clinic&quot;, &quot;Clean Water Access&quot;) is assigned a severity level in <strong>Gap Field Severity Management</strong>:
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
@@ -259,43 +259,43 @@ export function IndividualEntityGapInfoPopup({
                 </div>
 
                 {/* Level 2 */}
-                <div className="bg-white rounded-lg border border-gray-200 p-3">
+                <div className="bg-card rounded-lg border border-border p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
                     <span className="font-semibold text-purple-700">Assessment Severity</span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">
+                  <p className="text-sm text-muted-foreground mb-2">
                     Each assessment type (Health, Food, WASH, etc.) gets its severity from the <strong>highest severity among its gap fields that have gaps</strong>:
                   </p>
                   <div className="bg-purple-50 rounded p-2 text-xs text-purple-800">
                     Example: If Health assessment has fields with severities [HIGH, MEDIUM, LOW], the Assessment Severity = HIGH
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-muted-foreground mt-2">
                     The assessment badge shows this severity level with appropriate color and icon.
                   </p>
                 </div>
 
                 {/* Level 3 */}
-                <div className="bg-white rounded-lg border border-gray-200 p-3">
+                <div className="bg-card rounded-lg border border-border p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold">3</div>
                     <span className="font-semibold text-green-700">Entity Severity</span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">
+                  <p className="text-sm text-muted-foreground mb-2">
                     Entity severity is the <strong>highest assessment severity across all assessment types</strong> for that entity:
                   </p>
                   <div className="bg-green-50 rounded p-2 text-xs text-green-800">
                     Example: If assessments show [HEALTH: HIGH, FOOD: MEDIUM, WASH: LOW], the Entity Severity = HIGH (with count = 1)
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-muted-foreground mt-2">
                     The entity badge shows this severity with the count of assessments that have this highest severity.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-4 p-3 bg-gray-100 rounded-lg">
-                <p className="text-xs font-semibold text-gray-700 mb-1">Priority Order:</p>
-                <div className="flex items-center gap-2 text-xs text-gray-600">
+              <div className="mt-4 p-3 bg-muted rounded-lg">
+                <p className="text-xs font-semibold text-foreground mb-1">Priority Order:</p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span>CRITICAL</span>
                   <span>&gt;</span>
                   <span>HIGH</span>
@@ -310,12 +310,12 @@ export function IndividualEntityGapInfoPopup({
 
           {/* How Gap Detection Works */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-purple-600" />
               How Gaps Are Identified
             </h3>
-            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-              <p className="text-sm text-gray-700">
+            <div className="bg-muted rounded-lg p-4 space-y-3">
+              <p className="text-sm text-foreground">
                 Gaps are identified through rapid assessments where field teams evaluate specific criteria:
               </p>
               
@@ -338,7 +338,7 @@ export function IndividualEntityGapInfoPopup({
 
           {/* What the Colors Mean */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-red-600" />
               What the Colors Indicate
             </h3>
@@ -348,7 +348,7 @@ export function IndividualEntityGapInfoPopup({
                   <div className="w-4 h-4 bg-red-600 rounded-full"></div>
                   <span className="text-sm font-medium text-red-700">Red (Critical)</span>
                 </div>
-                <p className="text-xs text-gray-600 pl-6">
+                <p className="text-xs text-muted-foreground pl-6">
                   Life-threatening or immediate safety risks
                 </p>
               </div>
@@ -358,7 +358,7 @@ export function IndividualEntityGapInfoPopup({
                   <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
                   <span className="text-sm font-medium text-orange-700">Orange (High)</span>
                 </div>
-                <p className="text-xs text-gray-600 pl-6">
+                <p className="text-xs text-muted-foreground pl-6">
                   Significant impact on service delivery
                 </p>
               </div>
@@ -368,7 +368,7 @@ export function IndividualEntityGapInfoPopup({
                   <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
                   <span className="text-sm font-medium text-yellow-700">Yellow (Medium)</span>
                 </div>
-                <p className="text-xs text-gray-600 pl-6">
+                <p className="text-xs text-muted-foreground pl-6">
                   Moderate issues affecting service quality
                 </p>
               </div>
@@ -378,7 +378,7 @@ export function IndividualEntityGapInfoPopup({
                   <div className="w-4 h-4 bg-green-600 rounded-full"></div>
                   <span className="text-sm font-medium text-green-700">Green (Low)</span>
                 </div>
-                <p className="text-xs text-gray-600 pl-6">
+                <p className="text-xs text-muted-foreground pl-6">
                   No significant issues detected
                 </p>
               </div>
@@ -387,7 +387,7 @@ export function IndividualEntityGapInfoPopup({
 
           {/* Specific Assessment Fields */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
               {config.icon}
               <span>{config.title} Fields</span>
             </h3>
@@ -398,11 +398,11 @@ export function IndividualEntityGapInfoPopup({
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {config.fields.map((field, index) => (
-                  <div key={field.key} className="bg-white rounded border border-blue-200 p-3">
-                    <div className="font-medium text-sm text-gray-900 mb-1">
+                  <div key={field.key} className="bg-card rounded border border-blue-200 p-3">
+                    <div className="font-medium text-sm text-foreground mb-1">
                       {field.name}
                     </div>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-muted-foreground">
                       {field.description}
                     </p>
                   </div>
@@ -413,17 +413,17 @@ export function IndividualEntityGapInfoPopup({
 
           {/* Assessment Process */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
               <Info className="h-4 w-4 text-blue-600" />
               Assessment Process
             </h3>
-            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+            <div className="bg-muted rounded-lg p-4 space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div className="flex items-start gap-2">
                   <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold">1</div>
                   <div>
                     <div className="font-medium">Field Assessment</div>
-                    <p className="text-gray-600">Evaluate each gap indicator against standards</p>
+                    <p className="text-muted-foreground">Evaluate each gap indicator against standards</p>
                   </div>
                 </div>
                 
@@ -431,7 +431,7 @@ export function IndividualEntityGapInfoPopup({
                   <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold">2</div>
                   <div>
                     <div className="font-medium">Gap Detection</div>
-                    <p className="text-gray-600">Identify which indicators have gaps</p>
+                    <p className="text-muted-foreground">Identify which indicators have gaps</p>
                   </div>
                 </div>
                 
@@ -439,12 +439,12 @@ export function IndividualEntityGapInfoPopup({
                   <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold">3</div>
                   <div>
                     <div className="font-medium">Severity Assignment</div>
-                    <p className="text-gray-600">Assign severity level based on impact</p>
+                    <p className="text-muted-foreground">Assign severity level based on impact</p>
                   </div>
                 </div>
               </div>
               
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 Assessment is conducted by trained field teams and verified by supervisors.
               </p>
             </div>
@@ -452,8 +452,8 @@ export function IndividualEntityGapInfoPopup({
 
           {/* Key Benefits */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-gray-900">Key Benefits</h3>
-            <ul className="text-sm text-gray-600 space-y-2">
+            <h3 className="font-semibold text-foreground">Key Benefits</h3>
+            <ul className="text-sm text-muted-foreground space-y-2">
               <li className="flex items-start gap-2">
                 <span className="text-green-500 mt-0.5">•</span>
                 <span>Provides detailed understanding of conditions at specific locations</span>

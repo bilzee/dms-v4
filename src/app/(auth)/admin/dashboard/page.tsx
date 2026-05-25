@@ -30,7 +30,7 @@ import {
   UserCheck,
   UserX,
   Building2
-} from 'lucide-react'
+} from '@/lib/icons'
 
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'

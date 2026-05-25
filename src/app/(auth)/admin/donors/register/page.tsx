@@ -4,7 +4,7 @@ import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { DonorRegistrationForm } from '@/components/donor/DonorRegistrationForm'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Shield, Users, Building2 } from 'lucide-react'
+import { ArrowLeft, Shield, Users, Building2 } from '@/lib/icons'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 

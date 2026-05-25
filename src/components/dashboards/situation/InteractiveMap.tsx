@@ -16,7 +16,7 @@ import {
   Layers,
   Maximize2,
   Minimize2
-} from 'lucide-react';
+} from '@/lib/icons';
 // import { OfflineTileLayer } from './components/OfflineTileLayer';
 import { EntityCluster } from './components/EntityMarker';
 import { DonorOverlayControl } from './components/DonorOverlayControl';

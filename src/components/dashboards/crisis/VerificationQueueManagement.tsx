@@ -15,7 +15,7 @@ import {
   BarChart3,
   HeartHandshake,
   MapPin
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { getPrioritySolidColor, getVerificationStatusColor } from '@/lib/utils/priority-colors';
 import { DataCardList, type ExpandedCardProps } from '@/components/shared/DataCardList';

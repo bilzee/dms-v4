@@ -20,7 +20,7 @@ import {
   AlertTriangle,
   BarChart3,
   LineChart
-} from 'lucide-react'
+} from '@/lib/icons'
 import { ProgressBar } from '@/components/shared/ProgressBar'
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
 
@@ -83,7 +83,7 @@ const CATEGORY_COLORS = {
 const TREND_ICONS = {
   improving: { icon: TrendingUp, color: 'text-green-600', label: 'Improving' },
   declining: { icon: TrendingDown, color: 'text-red-600', label: 'Declining' },
-  stable: { icon: Minus, color: 'text-gray-600', label: 'Stable' }
+  stable: { icon: Minus, color: 'text-muted-foreground', label: 'Stable' }
 }
 
 export function AssessmentTrends({ entityId }: AssessmentTrendsProps) {
@@ -142,7 +142,7 @@ export function AssessmentTrends({ entityId }: AssessmentTrendsProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-600 mb-4">
+          <p className="text-muted-foreground mb-4">
             Unable to load assessment trends data. Please try again later.
           </p>
           <Button onClick={() => refetch()} variant="outline">
@@ -198,7 +198,7 @@ export function AssessmentTrends({ entityId }: AssessmentTrendsProps) {
               </SelectContent>
             </Select>
 
-            <div className="text-sm text-gray-600 flex items-center">
+            <div className="text-sm text-muted-foreground flex items-center">
               <Activity className="h-4 w-4 mr-1" />
               {new Date(timeframe.start).toLocaleDateString()} - {new Date(timeframe.end).toLocaleDateString()}
             </div>
@@ -252,16 +252,16 @@ export function AssessmentTrends({ entityId }: AssessmentTrendsProps) {
                   <Badge variant="outline">{insight.category}</Badge>
                   <span className="text-sm font-medium">{insight.trend}</span>
                 </div>
-                <p className="text-sm text-gray-600">{insight.recommendation}</p>
+                <p className="text-sm text-muted-foreground">{insight.recommendation}</p>
               </div>
             ))}
           </div>
           
           {insights.length === 0 && (
             <div className="text-center py-8">
-              <Activity className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Insights Available</h3>
-              <p className="text-gray-600">
+              <Activity className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No Insights Available</h3>
+              <p className="text-muted-foreground">
                 Insufficient data to generate insights. Try a longer timeframe or different granularity.
               </p>
             </div>
@@ -295,7 +295,7 @@ function CategoryTrendCard({ trend }: CategoryTrendCardProps) {
   const getTrendIcon = (trendType: string) => {
     const config = TREND_ICONS[trendType as keyof typeof TREND_ICONS]
     const Icon = config?.icon || Minus
-    return <Icon className={`h-4 w-4 ${config?.color || 'text-gray-600'}`} />
+    return <Icon className={`h-4 w-4 ${config?.color || 'text-muted-foreground'}`} />
   }
 
   return (
@@ -314,19 +314,19 @@ function CategoryTrendCard({ trend }: CategoryTrendCardProps) {
           {/* Summary Statistics */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <p className="text-sm text-gray-600">Current Score</p>
+              <p className="text-sm text-muted-foreground">Current Score</p>
               <p className={`text-2xl font-bold ${getScoreColor(latestScore)}`}>
                 {latestScore.toFixed(1)}%
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Average Score</p>
+              <p className="text-sm text-muted-foreground">Average Score</p>
               <p className="text-2xl font-bold">
                 {averageScore.toFixed(1)}%
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Avg. Gaps</p>
+              <p className="text-sm text-muted-foreground">Avg. Gaps</p>
               <p className="text-2xl font-bold text-orange-600">
                 {averageGaps.toFixed(1)}
               </p>
@@ -334,7 +334,7 @@ function CategoryTrendCard({ trend }: CategoryTrendCardProps) {
           </div>
 
           {/* Trend Direction */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
             <span className="text-sm font-medium">Overall Trend</span>
             <div className="flex items-center gap-2">
               {getTrendIcon(
@@ -371,7 +371,7 @@ function CategoryTrendCard({ trend }: CategoryTrendCardProps) {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
                       {dataPoint.gapCount} gaps
@@ -386,7 +386,7 @@ function CategoryTrendCard({ trend }: CategoryTrendCardProps) {
           </div>
 
           {/* Assessment Count */}
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-muted-foreground">
             Total assessments analyzed: {dataPoints.reduce((sum, dp) => sum + dp.assessmentCount, 0)}
           </div>
         </div>

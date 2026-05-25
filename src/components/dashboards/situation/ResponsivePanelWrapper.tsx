@@ -43,7 +43,7 @@ const MobilePanelNavigation: React.FC<MobilePanelNavigationProps> = ({
   return (
     <div className="lg:hidden">
       {/* Tab Navigation */}
-      <div className="flex border-b border-gray-200 bg-white">
+      <div className="flex border-b border-border bg-card">
         {panelTabs.map((tab) => (
           <button
             key={tab.id}
@@ -53,7 +53,7 @@ const MobilePanelNavigation: React.FC<MobilePanelNavigationProps> = ({
               'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset',
               activePanel === tab.id
                 ? 'border-blue-500 text-blue-600 bg-blue-50'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
             )}
             role="tab"
             aria-selected={activePanel === tab.id}
@@ -62,7 +62,7 @@ const MobilePanelNavigation: React.FC<MobilePanelNavigationProps> = ({
             <div className="flex items-center justify-center space-x-2">
               <span>{tab.label}</span>
               {tab.count > 0 && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-foreground">
                   {tab.count}
                 </span>
               )}
@@ -95,7 +95,7 @@ const ResponsivePanel: React.FC<ResponsivePanelProps> = ({
       role="tabpanel"
       className={cn(
         // Base styles
-        'bg-white border border-gray-200',
+        'bg-card border border-border',
         'transition-all duration-300 ease-in-out',
         
         // Responsive behavior
@@ -117,10 +117,10 @@ const ResponsivePanel: React.FC<ResponsivePanelProps> = ({
     >
       {/* Collapse button for desktop */}
       {showCollapseButton && (
-        <div className="flex justify-end p-2 border-b border-gray-100 bg-gray-50">
+        <div className="flex justify-end p-2 border-b border-border bg-muted">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+            className="p-1 text-muted-foreground hover:text-foreground hover:bg-gray-100 rounded transition-colors"
             aria-label={isCollapsed ? `Expand ${position} panel` : `Collapse ${position} panel`}
             aria-expanded={!isCollapsed}
           >

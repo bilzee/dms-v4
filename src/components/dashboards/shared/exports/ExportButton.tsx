@@ -13,7 +13,7 @@ import {
   CheckCircle,
   AlertCircle,
   Clock
-} from 'lucide-react';
+} from '@/lib/icons';
 import { useExportStore } from '@/stores/export.store';
 import { cn } from '@/lib/utils';
 
@@ -168,9 +168,9 @@ const ExportButton = ({
 
       {/* Export Format Dropdown */}
       {showDropdown && (
-        <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
-          <div className="p-2 border-b border-gray-100">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+        <div className="absolute top-full left-0 mt-1 w-64 bg-card border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+          <div className="p-2 border-b border-border">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Download className="h-4 w-4" />
               Export {dataType} as
             </div>
@@ -181,7 +181,7 @@ const ExportButton = ({
               <button
                 key={format}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors',
+                  'w-full flex items-center gap-3 px-3 py-2 text-left text-sm hover:bg-muted transition-colors',
                   exportStatus?.format === format && exportStatus.status === 'processing' && 'bg-blue-50 text-blue-700'
                 )}
                 onClick={() => handleExport(format)}
@@ -196,9 +196,9 @@ const ExportButton = ({
             ))}
           </div>
 
-          <div className="p-2 border-t border-gray-100">
+          <div className="p-2 border-t border-border">
             <button
-              className="w-full flex items-center gap-2 px-2 py-1 text-xs text-gray-600 hover:text-gray-800 transition-colors"
+              className="w-full flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => {
                 setShowDropdown(false);
                 // Open advanced export modal

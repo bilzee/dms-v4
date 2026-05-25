@@ -10,7 +10,7 @@ import {
   AlertTriangle,
   Clock,
   CheckCircle 
-} from 'lucide-react';
+} from '@/lib/icons';
 import { useConnectionStatus, useRealTimeVerification, useVerificationMetrics } from '@/hooks/useRealTimeVerification';
 import { cn } from '@/lib/utils';
 import { getBadgeClasses } from '@/components/shared/StatusBadge';

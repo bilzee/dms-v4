@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { DataCardList, type ExpandedCardProps } from '@/components/shared/DataCardList'
 import { type SeverityLevel } from '@/lib/utils/status-colors'
-import { PlusCircle, Activity, FileText, Clock, CheckCircle, AlertTriangle, Filter, X, MessageSquare, XCircle } from 'lucide-react'
+import { PlusCircle, Activity, FileText, Clock, CheckCircle, AlertTriangle, Filter, X, MessageSquare, XCircle } from '@/lib/icons'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
@@ -265,7 +265,7 @@ export default function AssessorRapidAssessmentsPage() {
       case 'SHELTER':
         return <div className="w-4 h-4 text-blue-500">🏠</div>
       default:
-        return <FileText className="w-4 h-4 text-gray-500" />
+        return <FileText className="w-4 h-4 text-muted-foreground" />
     }
   }
 
@@ -275,8 +275,8 @@ export default function AssessorRapidAssessmentsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Rapid Assessments</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold text-foreground">Rapid Assessments</h1>
+            <p className="text-muted-foreground mt-2">
               Manage and create rapid assessments for affected communities
             </p>
           </div>
@@ -471,7 +471,7 @@ export default function AssessorRapidAssessmentsPage() {
                     <h3 className="font-medium">{assessment.rapidAssessmentType} Assessment</h3>
                     {getPriorityBadge(assessment.priority)}
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     <span className="font-medium">Entity:</span> {assessment.entity?.name || 'Unknown Entity'}
                     {assessment.incident && (
                       <span className="ml-3">
@@ -479,7 +479,7 @@ export default function AssessorRapidAssessmentsPage() {
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     Created: {new Date(assessment.createdAt).toLocaleDateString()} at{' '}
                     {new Date(assessment.createdAt).toLocaleTimeString()}
                   </p>
@@ -543,10 +543,10 @@ export default function AssessorRapidAssessmentsPage() {
             {selectedAssessmentForReason && (
               <div className="space-y-4">
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-2">
+                  <h4 className="font-medium text-foreground mb-2">
                     Assessment Details
                   </h4>
-                  <div className="space-y-1 text-sm text-gray-600">
+                  <div className="space-y-1 text-sm text-muted-foreground">
                     <p><strong>Type:</strong> {selectedAssessmentForReason.rapidAssessmentType}</p>
                     <p><strong>Entity:</strong> {selectedAssessmentForReason.entity?.name}</p>
                     <p><strong>Incident:</strong> {formatIncidentDisplay(selectedAssessmentForReason.incident)}</p>
@@ -563,7 +563,7 @@ export default function AssessorRapidAssessmentsPage() {
                   </p>
                 </div>
                 
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   <strong>Rejected by:</strong> {selectedAssessmentForReason.verifiedBy || 'Unknown'}
                   <br />
                   <strong>Date:</strong> {selectedAssessmentForReason.verifiedAt 

@@ -22,7 +22,7 @@ import {
   Trash2,
   Eye,
   BarChart3
-} from 'lucide-react'
+} from '@/lib/icons'
 
 import { DeliveryOfflineService, DeliveryOfflineOperation, DeliveryOfflineStats } from '@/lib/services/delivery-offline.service'
 import { OfflineSyncStatus } from './OfflineSyncStatus'

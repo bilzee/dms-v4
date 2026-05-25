@@ -42,7 +42,7 @@ import {
   RotateCcw,
   Filter,
   X
-} from 'lucide-react';
+} from '@/lib/icons';
 import { apiGet, apiPost } from '@/lib/api';
 import { createAuthenticatedFetch } from '@/lib/auth/token-utils';
 import { cn } from '@/lib/utils';
@@ -337,10 +337,10 @@ export function ConfigurationAuditHistory({
         <CardContent className="p-6">
           <div className="text-center">
             <History className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               Failed to load audit history
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               {error instanceof Error ? error.message : 'An unexpected error occurred'}
             </p>
             <Button onClick={() => refetch()} variant="outline">
@@ -469,7 +469,7 @@ export function ConfigurationAuditHistory({
               <div>
                 <Label>Search</Label>
                 <div className="relative mt-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search entries..."
                     value={filters.search}
@@ -561,11 +561,11 @@ export function ConfigurationAuditHistory({
           <Card>
             <CardContent className="p-8">
               <div className="text-center">
-                <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">
                   No audit entries found
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   No configuration changes match the current filters
                 </p>
                 {hasActiveFilters() && (
@@ -630,7 +630,7 @@ export function ConfigurationAuditHistory({
               </div>
             </div>
 
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               <p>Current filters will be applied to the export:</p>
               <ul className="mt-2 list-disc list-inside space-y-1">
                 <li>Date Range: {filters.dateRange}</li>
@@ -661,7 +661,7 @@ export function ConfigurationAuditHistory({
 
           {selectedEntry && (
             <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-md">
+              <div className="p-4 bg-muted rounded-md">
                 <h4 className="font-medium mb-2">Rollback Details:</h4>
                 <ul className="text-sm space-y-1">
                   <li><strong>Action:</strong> {selectedEntry.action}</li>
@@ -723,7 +723,7 @@ function AuditEntryCard({
     if (action.includes('DISABLED')) return 'bg-red-100 text-red-800';
     if (action.includes('UPDATED')) return 'bg-blue-100 text-blue-800';
     if (action.includes('BULK')) return 'bg-purple-100 text-purple-800';
-    return 'bg-gray-100 text-gray-800';
+    return 'bg-muted text-foreground';
   };
 
   return (
@@ -757,7 +757,7 @@ function AuditEntryCard({
                 )}
               </div>
               
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 <span className="font-medium">{entry.userName}</span> modified{' '}
                 <span className="font-medium">{entry.resourceName || entry.resourceId}</span>
                 {' '}• {format(new Date(entry.timestamp), 'MMM d, yyyy h:mm a')}
@@ -779,11 +779,11 @@ function AuditEntryCard({
         </div>
 
         {isExpanded && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="mt-4 pt-4 border-t border-border">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {Object.keys(entry.oldValues).length > 0 && (
                 <div>
-                  <Label className="font-medium text-gray-700">Previous Values</Label>
+                  <Label className="font-medium text-foreground">Previous Values</Label>
                   <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
                     <pre className="text-xs text-red-800 whitespace-pre-wrap">
                       {JSON.stringify(entry.oldValues, null, 2)}
@@ -794,7 +794,7 @@ function AuditEntryCard({
               
               {Object.keys(entry.newValues).length > 0 && (
                 <div>
-                  <Label className="font-medium text-gray-700">New Values</Label>
+                  <Label className="font-medium text-foreground">New Values</Label>
                   <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
                     <pre className="text-xs text-green-800 whitespace-pre-wrap">
                       {JSON.stringify(entry.newValues, null, 2)}
@@ -804,7 +804,7 @@ function AuditEntryCard({
               )}
             </div>
             
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
               <div>
                 <span className="font-medium">User:</span> {entry.userName} ({entry.userRole})
               </div>

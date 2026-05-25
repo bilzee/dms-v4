@@ -6,7 +6,7 @@ import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ArrowLeft, CheckCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle } from '@/lib/icons'
 import Link from 'next/link'
 import { AssessmentType } from '@/types/rapid-assessment'
 import { useAuth } from '@/hooks/useAuth'
@@ -137,7 +137,7 @@ function NewRapidAssessmentContent() {
             <CardContent className="space-y-4">
               {assessmentId && (
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600">Assessment ID:</p>
+                  <p className="text-sm text-muted-foreground">Assessment ID:</p>
                   <p className="font-mono text-lg" data-testid="assessment-id">{assessmentId}</p>
                 </div>
               )}
@@ -177,8 +177,8 @@ function NewRapidAssessmentContent() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">New Rapid Assessment</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-3xl font-bold text-foreground">New Rapid Assessment</h1>
+            <p className="text-muted-foreground mt-1">
               Create a new rapid assessment for affected communities
             </p>
           </div>
@@ -202,7 +202,7 @@ function NewRapidAssessmentContent() {
                     className="p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
                   >
                     <h3 className="font-medium mb-2">{type.label}</h3>
-                    <p className="text-sm text-gray-600">{type.description}</p>
+                    <p className="text-sm text-muted-foreground">{type.description}</p>
                   </div>
                 ))}
               </div>

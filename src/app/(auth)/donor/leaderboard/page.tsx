@@ -4,7 +4,7 @@ import React from 'react';
 import { LeaderboardDisplay } from '@/components/donor/LeaderboardDisplay';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Info, RefreshCw } from 'lucide-react';
+import { Trophy, Info, RefreshCw } from '@/lib/icons';
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -40,15 +40,15 @@ export default function LeaderboardPage() {
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-2">
           <Trophy className="w-8 h-8 text-yellow-500" />
-          <h1 className="text-4xl font-bold text-gray-900">Donor Leaderboard</h1>
+          <h1 className="text-4xl font-bold text-foreground">Donor Leaderboard</h1>
         </div>
-        <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+        <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
           Recognizing and celebrating our most dedicated disaster response partners. 
           Rankings are updated {criteria?.calculation?.updateFrequency || 'every 15 minutes'} based on response verification rate 
           and total commitments made to ensure both reliability and volume are rewarded.
         </p>
         {stats && (
-          <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
+          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
             <span>{stats.totalActiveDonors} active donors</span>
             <span>•</span>
             <span>Avg. delivery rate: {stats.averageDeliveryRate}%</span>
@@ -113,7 +113,7 @@ export default function LeaderboardPage() {
               </div>
 
               {stats && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg text-center text-sm text-gray-600">
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg text-center text-sm text-muted-foreground">
                   <p><strong>Current Distribution:</strong> {stats.badgeDistribution.gold} (Gold) • {stats.badgeDistribution.silver} (Silver) • {stats.badgeDistribution.bronze} (Bronze)</p>
                   <p className="mt-1"><strong>Formula:</strong> {criteria.calculation.formula}</p>
                 </div>
@@ -121,7 +121,7 @@ export default function LeaderboardPage() {
             </>
           ) : (
             <div className="text-center py-4">
-              <p className="text-gray-500">Unable to load ranking criteria. Please try refreshing.</p>
+              <p className="text-muted-foreground">Unable to load ranking criteria. Please try refreshing.</p>
             </div>
           )}
         </CardContent>

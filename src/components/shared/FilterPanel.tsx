@@ -46,7 +46,7 @@ import {
   Trash2,
   Calendar,
   Clock
-} from 'lucide-react';
+} from '@/lib/icons';
 import { StatusBadge, getDotColor } from './StatusBadge';
 import { format, parseISO } from 'date-fns';
 import type { 

@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatCard } from '@/components/shared/StatCard'
 import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { PlusCircle, Activity, FileText, Clock, CheckCircle, AlertTriangle } from 'lucide-react'
+import { DataCardList, type ExpandedCardProps } from '@/components/shared/DataCardList'
+import { type SeverityLevel } from '@/lib/utils/status-colors'
+import { PlusCircle, Activity, FileText, Clock, CheckCircle, AlertTriangle } from '@/lib/icons'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
@@ -29,7 +30,6 @@ export default function AssessorDashboard() {
   const router = useRouter()
   const { token } = useAuth()
 
-  // Fetch assessments from API
   useEffect(() => {
     const fetchAssessments = async () => {
       try {
@@ -50,11 +50,9 @@ export default function AssessorDashboard() {
     fetchAssessments()
   }, [token])
 
-  // Listen for new assessment creation events
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'assessment-created' && event.newValue) {
-        // Refresh assessments when a new one is created
         const fetchAssessments = async () => {
           try {
             if (token) {
@@ -100,6 +98,36 @@ export default function AssessorDashboard() {
     }
   }
 
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'CRITICAL':
+        return <Badge className="bg-red-100 text-red-800 text-xs font-medium">CRITICAL</Badge>
+      case 'HIGH':
+        return <Badge className="bg-orange-100 text-orange-800 text-xs font-medium">HIGH</Badge>
+      case 'MEDIUM':
+        return <Badge className="bg-blue-100 text-blue-800 text-xs font-medium">MEDIUM</Badge>
+      case 'LOW':
+        return <Badge className="bg-green-100 text-green-800 text-xs font-medium">LOW</Badge>
+      default:
+        return <Badge className="bg-gray-100 text-gray-800 text-xs font-medium">{priority || 'MEDIUM'}</Badge>
+    }
+  }
+
+  const getAssessmentSeverity = (priority: string): SeverityLevel => {
+    switch (priority) {
+      case 'CRITICAL':
+        return 'critical'
+      case 'HIGH':
+        return 'high'
+      case 'MEDIUM':
+        return 'medium'
+      case 'LOW':
+        return 'low'
+      default:
+        return 'neutral'
+    }
+  }
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'HEALTH':
@@ -109,23 +137,21 @@ export default function AssessorDashboard() {
       case 'SHELTER':
         return <div className="w-4 h-4 text-blue-500">🏠</div>
       default:
-        return <FileText className="w-4 h-4 text-gray-500" />
+        return <FileText className="w-4 h-4 text-muted-foreground" />
     }
   }
 
   return (
     <RoleBasedRoute requiredRole="ASSESSOR">
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Assessor Dashboard</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold text-foreground">Assessor Dashboard</h1>
+            <p className="text-muted-foreground mt-2">
               Manage and create rapid assessments for affected communities
             </p>
           </div>
           
-          {/* New Assessment Button */}
           <div className="flex items-center gap-4">
             <select 
               value={selectedType} 
@@ -148,18 +174,9 @@ export default function AssessorDashboard() {
               <PlusCircle className="h-4 w-4 mr-2" />
               New Assessment
             </Button>
-            <Button 
-              onClick={handleNewAssessment}
-              disabled={!selectedType}
-              data-testid="continue-button"
-              className="ml-2"
-            >
-              Continue
-            </Button>
           </div>
         </div>
 
-        {/* Statistics */}
         <StatCardGrid columns={4}>
           <StatCard
             label="Total Assessments"
@@ -187,66 +204,53 @@ export default function AssessorDashboard() {
           />
         </StatCardGrid>
 
-        {/* Assessments Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Assessments</CardTitle>
-            <CardDescription>
-              Your latest rapid assessment activities
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading assessments...</p>
-              </div>
-            ) : assessments.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No assessments found. Create your first assessment!</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {assessments.map((assessment) => (
-                  <div 
-                    key={assessment.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                    data-testid={`assessment-row-${assessment.rapidAssessmentType?.toLowerCase()}-${assessment.id}`}
-                  >
-                    <div className="flex items-center gap-4">
-                      {getTypeIcon(assessment.rapidAssessmentType)}
-                      <div>
-                        <h3 className="font-medium">{assessment.rapidAssessmentType} Assessment</h3>
-                        <p className="text-sm text-gray-600">{assessment.entity?.name || 'Unknown Entity'}</p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(assessment.createdAt).toLocaleDateString()} at{' '}
-                          {new Date(assessment.createdAt).toLocaleTimeString()}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      {(assessment.gapCount || 0) > 0 && (
-                        <Badge 
-                          variant="destructive" 
-                          data-testid={`gap-indicator-${assessment.id}`}
-                        >
-                          {assessment.gapCount} Gaps
-                        </Badge>
-                      )}
-                      {getStatusBadge(assessment)}
-                      <Link href={`/assessor/rapid-assessments/${assessment.id}`}>
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
-                      </Link>
-                    </div>
+        <DataCardList
+          title="Recent Assessments"
+          description="Your latest rapid assessment activities"
+          data={assessments}
+          loading={isLoading}
+          emptyMessage="No assessments found. Create your first assessment!"
+          getSeverity={(a: any) => getAssessmentSeverity(a.priority)}
+          renderCard={(assessment: any, { isExpanded, toggleExpand }: ExpandedCardProps) => (
+            <div
+              className="flex items-center justify-between"
+              data-testid={`assessment-row-${assessment.rapidAssessmentType?.toLowerCase()}-${assessment.id}`}
+            >
+              <div className="flex items-center gap-4">
+                {getTypeIcon(assessment.rapidAssessmentType)}
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-medium">{assessment.rapidAssessmentType} Assessment</h3>
+                    {getPriorityBadge(assessment.priority)}
                   </div>
-                ))}
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium">Entity:</span> {assessment.entity?.name || 'Unknown Entity'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Created: {new Date(assessment.createdAt).toLocaleDateString()} at{' '}
+                    {new Date(assessment.createdAt).toLocaleTimeString()}
+                  </p>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <div className="flex items-center gap-4">
+                {(assessment.gapCount || 0) > 0 && (
+                  <Badge
+                    variant="destructive"
+                    data-testid={`gap-indicator-${assessment.id}`}
+                  >
+                    {assessment.gapCount} Gaps
+                  </Badge>
+                )}
+                {getStatusBadge(assessment)}
+                <Link href={`/assessor/rapid-assessments/${assessment.id}`}>
+                  <Button variant="outline" size="sm">
+                    View Details
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
+        />
       </div>
     </RoleBasedRoute>
   )

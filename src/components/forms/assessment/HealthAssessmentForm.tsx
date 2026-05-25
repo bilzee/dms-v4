@@ -21,7 +21,7 @@ import { IncidentSelector } from '@/components/shared/IncidentSelector'
 import { HealthAssessmentFormProps, HealthAssessment } from '@/types/rapid-assessment'
 import { getCurrentUserName, getAssessmentLocationData } from '@/utils/assessment-utils'
 import { cn } from '@/lib/utils'
-import { Hospital, Activity, Pill, Baby, AlertTriangle } from 'lucide-react'
+import { Hospital, Activity, Pill, Baby, AlertTriangle } from '@/lib/icons'
 
 const HealthAssessmentSchema = z.object({
   hasFunctionalClinic: z.boolean(),

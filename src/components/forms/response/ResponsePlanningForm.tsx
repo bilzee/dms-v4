@@ -22,7 +22,7 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 // Icons
-import { Plus, Trash2, Package, AlertTriangle, Save, X, Wifi, WifiOff, Cloud, CloudOff, FileText, Download } from 'lucide-react'
+import { Plus, Trash2, Package, AlertTriangle, Save, X, Wifi, WifiOff, Cloud, CloudOff, FileText, Download } from '@/lib/icons'
 
 // Shared components
 import { EntitySelector } from '@/components/shared/EntitySelector'
@@ -662,7 +662,7 @@ export function ResponsePlanningForm({
                             <FormLabel>Response Type *</FormLabel>
                             <FormControl>
                               <Select value={currentType || field.value} onValueChange={field.onChange} disabled={true}>
-                                <SelectTrigger className="bg-gray-50">
+                                <SelectTrigger className="bg-muted">
                                   <SelectValue placeholder="Auto-populated from assessment..." />
                                 </SelectTrigger>
                               <SelectContent>
@@ -695,7 +695,7 @@ export function ResponsePlanningForm({
                             <FormLabel>Priority *</FormLabel>
                             <FormControl>
                               <Select value={currentPriority || field.value} onValueChange={field.onChange} disabled={true}>
-                                <SelectTrigger className="bg-gray-50">
+                                <SelectTrigger className="bg-muted">
                                   <SelectValue placeholder="Auto-populated from assessment..." />
                                 </SelectTrigger>
                               <SelectContent>
@@ -1009,7 +1009,7 @@ export function ResponsePlanningForm({
               {initialData?.entityId && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Entity</label>
-                  <div className="flex items-center gap-2 p-3 bg-gray-50 border rounded-md">
+                  <div className="flex items-center gap-2 p-3 bg-muted border rounded-md">
                     <span className="text-sm">
                       {entities.find((e: any) => e.id === initialData.entityId)?.name || 'Loading...'}
                     </span>
@@ -1023,7 +1023,7 @@ export function ResponsePlanningForm({
               {/* Assessment Display - Read-only in edit mode */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Assessment</label>
-                <div className="p-3 bg-gray-50 border rounded-md">
+                <div className="p-3 bg-muted border rounded-md">
                   {editAssessment ? (
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
@@ -1053,7 +1053,7 @@ export function ResponsePlanningForm({
                       <FormLabel>Response Type *</FormLabel>
                       <FormControl>
                         <Select value={field.value} onValueChange={field.onChange} disabled={true}>
-                          <SelectTrigger className="bg-gray-50">
+                          <SelectTrigger className="bg-muted">
                             <SelectValue placeholder="Auto-populated from assessment..." />
                           </SelectTrigger>
                           <SelectContent>
@@ -1083,7 +1083,7 @@ export function ResponsePlanningForm({
                       <FormLabel>Priority *</FormLabel>
                       <FormControl>
                         <Select value={field.value} onValueChange={field.onChange} disabled={mode === 'edit' || mode === 'resubmit'}>
-                          <SelectTrigger className={mode === 'edit' || mode === 'resubmit' ? 'bg-gray-50' : ''}>
+                          <SelectTrigger className={mode === 'edit' || mode === 'resubmit' ? 'bg-muted' : ''}>
                             <SelectValue placeholder="Select priority..." />
                           </SelectTrigger>
                           <SelectContent>

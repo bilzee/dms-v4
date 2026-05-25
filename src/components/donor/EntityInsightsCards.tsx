@@ -21,7 +21,7 @@ import {
   Clock,
   BarChart3,
   ChevronRight
-} from 'lucide-react'
+} from '@/lib/icons'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton'

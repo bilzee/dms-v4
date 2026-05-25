@@ -38,7 +38,7 @@ import {
   Award,
   TrendingDown,
   Star
-} from 'lucide-react'
+} from '@/lib/icons'
 
 import { DonorProfile } from './DonorProfile'
 import { EntitySelector } from './EntitySelector'

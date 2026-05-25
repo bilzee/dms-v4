@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable, type ColumnDef, type RowAction } from '@/components/shared/DataList'
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api'
-import { Edit, Plus, Trash2, Shield, Key, Users } from 'lucide-react'
+import { Edit, Plus, Trash2, Shield, Key, Users } from '@/lib/icons'
 import { toast } from 'sonner'
 
 const roleColumns: ColumnDef<Role>[] = [

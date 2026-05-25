@@ -4,7 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { BookOpen, Mail, MessageSquare, FileText, ExternalLink, HelpCircle, Phone } from 'lucide-react'
+import { BookOpen, Mail, MessageSquare, FileText, ExternalLink, HelpCircle, Phone } from '@/lib/icons'
 
 const faqItems = [
   {

@@ -25,7 +25,7 @@ import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 // Icons
-import { User, Building, Mail, Phone, Edit2, Save, X, Upload, CheckCircle, AlertCircle, Package, TrendingUp } from 'lucide-react'
+import { User, Building, Mail, Phone, Edit2, Save, X, Upload, CheckCircle, AlertCircle, Package, TrendingUp } from '@/lib/icons'
 
 // Types
 import { DonorProfileUpdateInput } from '@/lib/validation/donor'

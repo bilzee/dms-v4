@@ -29,7 +29,7 @@ import {
   Users,
   Activity,
   Package
-} from 'lucide-react'
+} from '@/lib/icons'
 
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'

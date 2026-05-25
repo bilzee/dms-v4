@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 // Icons
-import { ArrowLeft, Package, AlertTriangle, Shield, User } from 'lucide-react'
+import { ArrowLeft, Package, AlertTriangle, Shield, User } from '@/lib/icons'
 
 // Forms and components
 import { ResponsePlanningForm } from '@/components/forms/response'

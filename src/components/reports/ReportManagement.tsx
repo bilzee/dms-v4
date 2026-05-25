@@ -42,7 +42,7 @@ import {
   Copy,
   Share,
   DownloadCloud
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { ReportExecutionStatus } from '@prisma/client';
 import {

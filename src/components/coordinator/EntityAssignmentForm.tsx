@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Search, Users, MapPin, UserPlus, Trash2, Loader2, CheckCircle, UserCheck, 
   Building, UserCheck as DonorIcon, AlertTriangle, Filter
-} from 'lucide-react';
+} from '@/lib/icons';
 
 interface Entity {
   id: string;

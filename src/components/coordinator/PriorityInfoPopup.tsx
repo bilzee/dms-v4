@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Info } from 'lucide-react';
+import { Info } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 
 // Custom Dialog components with higher z-index to appear over leaflet maps

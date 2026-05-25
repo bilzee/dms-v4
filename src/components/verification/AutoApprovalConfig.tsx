@@ -38,7 +38,7 @@ import {
   Save,
   History,
   MapPin
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 import { apiGet, apiPut } from '@/lib/api';
@@ -237,10 +237,10 @@ export function AutoApprovalConfig({ className }: AutoApprovalConfigProps) {
         <CardContent className="p-6">
           <div className="text-center">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               Failed to load auto-approval configurations
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               {error instanceof Error ? error.message : 'An unexpected error occurred'}
             </p>
             <Button onClick={() => refetch()} variant="outline">
@@ -357,11 +357,11 @@ export function AutoApprovalConfig({ className }: AutoApprovalConfigProps) {
           <Card>
             <CardContent className="p-8">
               <div className="text-center">
-                <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">
                   No entities found
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   No entities are available for auto-approval configuration
                 </p>
               </div>
@@ -427,8 +427,8 @@ function EntityConfigCard({
               onCheckedChange={onToggleSelection}
             />
             <div>
-              <h3 className="font-semibold text-gray-900">{entity.entityName}</h3>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <h3 className="font-semibold text-foreground">{entity.entityName}</h3>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>{entity.entityType}</span>
                 {entity.entityLocation && (
                   <>
@@ -468,10 +468,10 @@ function EntityConfigCard({
 
         {/* Configuration details */}
         {entity.enabled && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="mt-4 pt-4 border-t border-border">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <Label className="font-medium text-gray-700">Scope</Label>
+                <Label className="font-medium text-foreground">Scope</Label>
                 <div className="mt-1">
                   <Badge 
                     className={cn(
@@ -486,7 +486,7 @@ function EntityConfigCard({
               </div>
               
               <div>
-                <Label className="font-medium text-gray-700">Assessment Types</Label>
+                <Label className="font-medium text-foreground">Assessment Types</Label>
                 <div className="mt-1">
                   {entity.conditions.assessmentTypes.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
@@ -497,13 +497,13 @@ function EntityConfigCard({
                       ))}
                     </div>
                   ) : (
-                    <span className="text-gray-500">All types</span>
+                    <span className="text-muted-foreground">All types</span>
                   )}
                 </div>
               </div>
               
               <div>
-                <Label className="font-medium text-gray-700">Response Types</Label>
+                <Label className="font-medium text-foreground">Response Types</Label>
                 <div className="mt-1">
                   {entity.conditions.responseTypes.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
@@ -514,20 +514,20 @@ function EntityConfigCard({
                       ))}
                     </div>
                   ) : (
-                    <span className="text-gray-500">All types</span>
+                    <span className="text-muted-foreground">All types</span>
                   )}
                 </div>
               </div>
               
               <div>
-                <Label className="font-medium text-gray-700">Max Priority</Label>
+                <Label className="font-medium text-foreground">Max Priority</Label>
                 <div className="mt-1">
                   <StatusBadge status={entity.conditions.maxPriority} domain="severity" />
                 </div>
               </div>
               
               <div>
-                <Label className="font-medium text-gray-700">Documentation</Label>
+                <Label className="font-medium text-foreground">Documentation</Label>
                 <div className="mt-1">
                   <Badge variant={entity.conditions.requiresDocumentation ? "default" : "secondary"}>
                     {entity.conditions.requiresDocumentation ? 'Required' : 'Optional'}
@@ -536,7 +536,7 @@ function EntityConfigCard({
               </div>
             </div>
             
-            <div className="mt-3 text-xs text-gray-500">
+            <div className="mt-3 text-xs text-muted-foreground">
               Last modified: {new Date(entity.lastModified).toLocaleString()}
             </div>
           </div>
@@ -572,10 +572,10 @@ function BulkConfigDialog({
 }: BulkConfigDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-600 shadow-xl backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
+      <DialogContent className="sm:max-w-lg bg-card dark:bg-gray-900 border-2 border-border dark:border-gray-600 shadow-xl backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
         <DialogHeader>
-          <DialogTitle className="text-gray-900 dark:text-gray-100">Bulk Auto-Approval Configuration</DialogTitle>
-          <DialogDescription className="text-gray-600 dark:text-gray-300">
+          <DialogTitle className="text-foreground dark:text-gray-100">Bulk Auto-Approval Configuration</DialogTitle>
+          <DialogDescription className="text-muted-foreground dark:text-gray-300">
             Configure auto-approval settings for {selectedCount} selected entities.
           </DialogDescription>
         </DialogHeader>
@@ -589,13 +589,13 @@ function BulkConfigDialog({
                 onConfigChange({ ...config, enabled })
               }
             />
-            <Label htmlFor="bulk-enabled" className="text-gray-800 dark:text-gray-200">Enable auto-approval</Label>
+            <Label htmlFor="bulk-enabled" className="text-foreground dark:text-gray-200">Enable auto-approval</Label>
           </div>
 
           {config.enabled && (
             <>
               <div>
-                <Label className="text-gray-800 dark:text-gray-200">Auto-Approval Scope</Label>
+                <Label className="text-foreground dark:text-gray-200">Auto-Approval Scope</Label>
                 <Select
                   value={config.scope}
                   onValueChange={(value) =>
@@ -618,7 +618,7 @@ function BulkConfigDialog({
 
               {config.scope !== 'responses' && (
                 <div>
-                  <Label className="text-gray-800 dark:text-gray-200">Assessment Types (leave empty for all)</Label>
+                  <Label className="text-foreground dark:text-gray-200">Assessment Types (leave empty for all)</Label>
                   <div className="mt-2 space-y-2">
                   {assessmentTypes.map(type => (
                     <div key={type} className="flex items-center space-x-2">
@@ -636,7 +636,7 @@ function BulkConfigDialog({
                           });
                         }}
                       />
-                      <Label htmlFor={`bulk-type-${type}`} className="text-gray-700 dark:text-gray-300">{type}</Label>
+                      <Label htmlFor={`bulk-type-${type}`} className="text-foreground dark:text-gray-300">{type}</Label>
                     </div>
                   ))}
                 </div>
@@ -645,7 +645,7 @@ function BulkConfigDialog({
 
               {config.scope !== 'assessments' && (
                 <div>
-                  <Label className="text-gray-800 dark:text-gray-200">Response Types (leave empty for all)</Label>
+                  <Label className="text-foreground dark:text-gray-200">Response Types (leave empty for all)</Label>
                   <div className="mt-2 space-y-2">
                   {responseTypes.map(type => (
                     <div key={type} className="flex items-center space-x-2">
@@ -663,7 +663,7 @@ function BulkConfigDialog({
                           });
                         }}
                       />
-                      <Label htmlFor={`bulk-response-type-${type}`} className="text-gray-700 dark:text-gray-300">{type}</Label>
+                      <Label htmlFor={`bulk-response-type-${type}`} className="text-foreground dark:text-gray-300">{type}</Label>
                     </div>
                   ))}
                 </div>
@@ -671,7 +671,7 @@ function BulkConfigDialog({
               )}
 
               <div>
-                <Label className="text-gray-800 dark:text-gray-200">Maximum Priority Level</Label>
+                <Label className="text-foreground dark:text-gray-200">Maximum Priority Level</Label>
                 <Select
                   value={config.conditions.maxPriority}
                   onValueChange={(value) =>
@@ -704,7 +704,7 @@ function BulkConfigDialog({
                     })
                   }
                 />
-                <Label htmlFor="bulk-documentation" className="text-gray-700 dark:text-gray-300">Require documentation</Label>
+                <Label htmlFor="bulk-documentation" className="text-foreground dark:text-gray-300">Require documentation</Label>
               </div>
             </>
           )}

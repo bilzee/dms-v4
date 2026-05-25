@@ -4,7 +4,7 @@ import { DonorRegistrationForm } from '@/components/donor/DonorRegistrationForm'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { ArrowLeft, Building } from 'lucide-react'
+import { ArrowLeft, Building } from '@/lib/icons'
 
 export default function DonorRegistrationPage() {
   const handleRegistrationSuccess = (data: any) => {
@@ -26,10 +26,10 @@ export default function DonorRegistrationPage() {
           
           <div className="text-center">
             <Building className="h-12 w-12 mx-auto mb-4 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-900 mb-2" data-testid="registration-form-title">
+            <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="registration-form-title">
               Register Your Organization
             </h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               Join our disaster response platform and start making a difference in communities affected by disasters. 
               Register your organization to access resources and coordinate relief efforts.
             </p>
@@ -48,7 +48,7 @@ export default function DonorRegistrationPage() {
               <CardTitle className="text-lg">Why Register?</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm text-gray-600">
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• Access real-time disaster assessment data</li>
                 <li>• Coordinate with response teams</li>
                 <li>• Track your contribution impact</li>
@@ -62,7 +62,7 @@ export default function DonorRegistrationPage() {
               <CardTitle className="text-lg">Organization Types</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm text-gray-600">
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• NGOs and Non-profits</li>
                 <li>• Corporate Organizations</li>
                 <li>• Government Agencies</li>
@@ -76,10 +76,10 @@ export default function DonorRegistrationPage() {
               <CardTitle className="text-lg">Get Started</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Complete the registration form to create your organization account and start contributing to disaster response efforts.
               </p>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-muted-foreground">
                 Questions? Contact our support team for assistance.
               </div>
             </CardContent>

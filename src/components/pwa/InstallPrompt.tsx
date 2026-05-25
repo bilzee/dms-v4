@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, X, Smartphone } from 'lucide-react';
+import { Download, X, Smartphone } from '@/lib/icons';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -171,7 +171,7 @@ export function InstallPrompt({
       {/* Install Prompt Modal */}
       {showPrompt && (
         <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 p-4 md:items-center">
-          <Card className="w-full max-w-md bg-white">
+          <Card className="w-full max-w-md bg-card">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -192,10 +192,10 @@ export function InstallPrompt({
             <CardContent className="pb-4">
               {isIOSDevice ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Install DRMS on your device for offline access:
                   </p>
-                  <ol className="text-sm space-y-2 text-gray-700">
+                  <ol className="text-sm space-y-2 text-foreground">
                     <li className="flex items-start gap-2">
                       <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
                       Tap the Share button in Safari
@@ -212,10 +212,10 @@ export function InstallPrompt({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Install DRMS for quick access and offline capabilities:
                   </p>
-                  <ul className="text-sm space-y-1 text-gray-700">
+                  <ul className="text-sm space-y-1 text-foreground">
                     <li className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-green-500" aria-hidden="true"></span>
                       Work offline in disaster areas

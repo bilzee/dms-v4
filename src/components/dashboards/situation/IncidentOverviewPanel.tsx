@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { apiGet } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 
 import { useIncidentSelection } from '@/stores/dashboardLayout.store';
@@ -245,7 +245,7 @@ export function IncidentOverviewPanel({
         /* No Incident Selected State */
         <Card className="border-dashed">
           <CardContent className="p-8 text-center">
-            <div className="text-gray-500">
+            <div className="text-muted-foreground">
               <div className="text-lg font-medium mb-2">
                 No Incident Selected
               </div>
@@ -259,8 +259,8 @@ export function IncidentOverviewPanel({
 
       {/* Loading indicator for data refresh */}
       {isLoading && dashboardData && (
-        <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-2 border border-gray-200">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+        <div className="fixed bottom-4 right-4 bg-card shadow-lg rounded-lg p-2 border border-border">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <RefreshCw className="h-4 w-4 animate-spin" />
             <span>Updating...</span>
           </div>

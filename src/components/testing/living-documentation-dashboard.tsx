@@ -34,7 +34,7 @@ import {
   RefreshCw,
   PlayCircle,
   PauseCircle
-} from 'lucide-react'
+} from '@/lib/icons'
 
 // ==================== Types ====================
 

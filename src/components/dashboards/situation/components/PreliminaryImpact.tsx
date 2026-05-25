@@ -21,7 +21,7 @@ import {
   Loader2,
   AlertCircle,
   Info
-} from 'lucide-react';
+} from '@/lib/icons';
 
 // Types for preliminary impact data
 interface PreliminaryImpactProps {

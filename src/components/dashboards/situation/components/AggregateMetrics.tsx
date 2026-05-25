@@ -20,7 +20,7 @@ import {
   BarChart3,
   Loader2,
   AlertCircle
-} from 'lucide-react';
+} from '@/lib/icons';
 
 // Types for aggregate metrics data
 interface AggregateMetricsProps {
@@ -68,7 +68,7 @@ const getTrendIndicator = (trend: number | undefined) => {
   
   return {
     icon: isNeutral ? Minus : isPositive ? TrendingUp : TrendingDown,
-    color: isNeutral ? 'text-gray-500' : isPositive ? 'text-green-600' : 'text-red-600',
+    color: isNeutral ? 'text-muted-foreground' : isPositive ? 'text-green-600' : 'text-red-600',
     label: isNeutral ? 'No change' : `${isPositive ? '+' : ''}${trend}%`
   };
 };
@@ -148,10 +148,10 @@ export function AggregateMetrics({ incidentId, className }: AggregateMetricsProp
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="p-3 rounded-lg border border-gray-200 bg-gray-50">
+              <div key={i} className="p-3 rounded-lg border border-border bg-muted">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-gray-200 h-4 w-4 animate-pulse" />
+                    <div className="p-2 rounded-lg bg-muted h-4 w-4 animate-pulse" />
                     <div className="space-y-1">
                       <div className="h-4 bg-gray-300 rounded w-24 animate-pulse" />
                       <div className="h-3 bg-gray-300 rounded w-16 animate-pulse" />
@@ -271,14 +271,14 @@ export function AggregateMetrics({ incidentId, className }: AggregateMetricsProp
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={cn("p-2 rounded-lg bg-white", metric.color)}>
+                    <div className={cn("p-2 rounded-lg bg-card", metric.color)}>
                       <Icon className="h-4 w-4" />
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-gray-700">
+                      <div className="text-sm font-medium text-foreground">
                         {metric.title}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         {metric.subtitle}
                       </div>
                     </div>
@@ -310,7 +310,7 @@ export function AggregateMetrics({ incidentId, className }: AggregateMetricsProp
         {data.totalAssessmentsCount > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">Assessment Verification</span>
+              <span className="text-sm font-medium text-foreground">Assessment Verification</span>
               <Badge variant="outline" className="text-xs">
                 {formatPercentage(verificationRate)} verified
               </Badge>
@@ -337,7 +337,7 @@ export function AggregateMetrics({ incidentId, className }: AggregateMetricsProp
         {/* Response Delivery Rate */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">Response Delivery Rate</span>
+            <span className="text-sm font-medium text-foreground">Response Delivery Rate</span>
             <Badge className={cn("gap-1", deliveryStatus.color)}>
               <Activity className="h-3 w-3" />
               {deliveryStatus.status}
@@ -347,7 +347,7 @@ export function AggregateMetrics({ incidentId, className }: AggregateMetricsProp
             value={metricsData.deliveryRate * 100} 
             className="h-2"
           />
-          <div className="flex justify-between text-xs text-gray-500">
+          <div className="flex justify-between text-xs text-muted-foreground">
             <span>{formatPercentage(metricsData.deliveryRate)} delivered</span>
             <span>{metricsData.responsesCount} of {metricsData.totalAssessmentsCount} assessments</span>
           </div>
@@ -356,7 +356,7 @@ export function AggregateMetrics({ incidentId, className }: AggregateMetricsProp
         {/* Entity Coverage Rate */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">Entity Coverage</span>
+            <span className="text-sm font-medium text-foreground">Entity Coverage</span>
             <Badge className={cn("gap-1", coverageStatus.color)}>
               <Building className="h-3 w-3" />
               {coverageStatus.status}
@@ -366,15 +366,15 @@ export function AggregateMetrics({ incidentId, className }: AggregateMetricsProp
             value={Math.min(metricsData.coverageRate * 100, 100)} 
             className="h-2"
           />
-          <div className="flex justify-between text-xs text-gray-500">
+          <div className="flex justify-between text-xs text-muted-foreground">
             <span>{formatPercentage(Math.min(metricsData.coverageRate, 1))} coverage</span>
             <span>{Math.min(metricsData.affectedEntitiesCount, metricsData.totalAssessmentsCount)} of {metricsData.affectedEntitiesCount} entities</span>
           </div>
         </div>
 
         {/* Overall Status Summary */}
-        <div className="pt-2 border-t border-gray-100">
-          <div className="text-sm font-medium text-gray-700 mb-2">Overall Status</div>
+        <div className="pt-2 border-t border-border">
+          <div className="text-sm font-medium text-foreground mb-2">Overall Status</div>
           <div className="grid grid-cols-2 gap-2">
             <div className="text-center p-2 bg-blue-50 rounded">
               <div className="text-sm font-medium text-blue-700">
@@ -393,8 +393,8 @@ export function AggregateMetrics({ incidentId, className }: AggregateMetricsProp
 
         {/* Trend Information */}
         {data.trends && (
-          <div className="pt-2 border-t border-gray-100">
-            <div className="text-sm font-medium text-gray-700 mb-2">24h Trends</div>
+          <div className="pt-2 border-t border-border">
+            <div className="text-sm font-medium text-foreground mb-2">24h Trends</div>
             <div className="space-y-1">
               {Object.entries(data.trends).map(([key, value]) => {
                 const trendIndicator = getTrendIndicator(value);
@@ -409,7 +409,7 @@ export function AggregateMetrics({ incidentId, className }: AggregateMetricsProp
                 
                 return (
                   <div key={key} className="flex items-center justify-between text-xs">
-                    <span className="text-gray-600">{labels[key as keyof typeof labels]}</span>
+                    <span className="text-muted-foreground">{labels[key as keyof typeof labels]}</span>
                     <div className={cn("flex items-center gap-1", trendIndicator.color)}>
                       <TrendIcon className="h-3 w-3" />
                       <span>{trendIndicator.label}</span>

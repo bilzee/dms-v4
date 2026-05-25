@@ -20,7 +20,7 @@ import {
   Check, 
   TriangleAlert,
   User 
-} from 'lucide-react';
+} from '@/lib/icons';
 
 interface RoleSwitcherProps {
   className?: string;

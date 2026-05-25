@@ -27,7 +27,7 @@ import {
   HandHeart,
   Package,
   Activity
-} from 'lucide-react'
+} from '@/lib/icons'
 
 interface DonorDetails {
   id: string

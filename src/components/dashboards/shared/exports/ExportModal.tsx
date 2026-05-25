@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Download, Mail, Settings, Info, X } from 'lucide-react';
+import { CalendarIcon, Download, Mail, Settings, Info, X } from '@/lib/icons';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useExportStore } from '@/stores/export.store';
@@ -334,7 +334,7 @@ const ExportModal = ({
                           <Label htmlFor={option.value} className="font-medium">
                             {option.label}
                           </Label>
-                          <p className="text-sm text-gray-500">{option.description}</p>
+                          <p className="text-sm text-muted-foreground">{option.description}</p>
                         </div>
                       </div>
                     ))}
@@ -374,7 +374,7 @@ const ExportModal = ({
                         variant="outline"
                         className={cn(
                           "w-full justify-start text-left font-normal",
-                          !form.getValues('dateRange.startDate') && "text-gray-500"
+                          !form.getValues('dateRange.startDate') && "text-muted-foreground"
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -409,7 +409,7 @@ const ExportModal = ({
                         variant="outline"
                         className={cn(
                           "w-full justify-start text-left font-normal",
-                          !form.getValues('dateRange.endDate') && "text-gray-500"
+                          !form.getValues('dateRange.endDate') && "text-muted-foreground"
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -444,7 +444,7 @@ const ExportModal = ({
             <div className="text-center py-8">
               <Download className="h-12 w-12 text-blue-600 mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">Date Range Selected</h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Using {dateRangeType.replace('_', ' ')} for export.
               </p>
             </div>
@@ -581,7 +581,7 @@ const ExportModal = ({
                         <Label htmlFor={`freq-${option.value}`} className="font-medium">
                           {option.label}
                         </Label>
-                        <p className="text-sm text-gray-500">{option.description}</p>
+                        <p className="text-sm text-muted-foreground">{option.description}</p>
                       </div>
                     </div>
                   ))}
@@ -699,7 +699,7 @@ const ExportModal = ({
                   ))}
 
                   {(form.getValues('recipients') || []).length === 0 && (
-                    <p className="text-sm text-gray-500 italic">
+                    <p className="text-sm text-muted-foreground italic">
                       No recipients added. Export will be available for download.
                     </p>
                   )}

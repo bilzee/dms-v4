@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { StatCard } from '@/components/shared/StatCard'
 import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Badge } from '@/components/ui/badge'
-import { Activity, Database, Users, HardDrive, Clock, Shield, RefreshCw, Server } from 'lucide-react'
+import { Activity, Database, Users, HardDrive, Clock, Shield, RefreshCw, Server } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 

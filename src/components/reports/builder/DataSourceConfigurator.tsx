@@ -25,7 +25,7 @@ import {
   MapPin,
   AlertCircle,
   CheckCircle2
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { DataSourceType, ReportFiltersSchema, ReportFilters, FilterConfig, AggregationConfig, AggregationFunction } from '@/lib/reports/data-aggregator';
 import { DataAggregator } from '@/lib/reports/data-aggregator';
@@ -237,7 +237,7 @@ export function DataSourceConfigurator({
           {getDataSourceIcon()}
           <div>
             <h2 className="text-lg font-semibold">Data Source: {getDataSourceLabel()}</h2>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Configure filters and aggregations for your report
             </p>
           </div>
@@ -249,7 +249,7 @@ export function DataSourceConfigurator({
 
       {/* Global Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search across all fields..."
           value={searchTerm}
@@ -347,10 +347,10 @@ export function DataSourceConfigurator({
           </div>
 
           {filters.filters.length === 0 ? (
-            <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg">
-              <Filter className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600 mb-1">No filters configured</p>
-              <p className="text-xs text-gray-500">
+            <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
+              <Filter className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground mb-1">No filters configured</p>
+              <p className="text-xs text-muted-foreground">
                 Add filters to narrow down your data
               </p>
             </div>
@@ -453,7 +453,7 @@ export function DataSourceConfigurator({
 
                         {/* Field Description */}
                         {selectedField && (
-                          <div className="text-xs text-gray-500 p-2 bg-gray-50 rounded">
+                          <div className="text-xs text-muted-foreground p-2 bg-muted rounded">
                             <strong>{selectedField.field}:</strong> {selectedField.description}
                           </div>
                         )}
@@ -477,10 +477,10 @@ export function DataSourceConfigurator({
           </div>
 
           {filters.aggregations.length === 0 ? (
-            <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg">
-              <BarChart3 className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600 mb-1">No aggregations configured</p>
-              <p className="text-xs text-gray-500">
+            <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
+              <BarChart3 className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground mb-1">No aggregations configured</p>
+              <p className="text-xs text-muted-foreground">
                 Add aggregations to calculate summary statistics
               </p>
             </div>
@@ -615,15 +615,15 @@ export function DataSourceConfigurator({
                   <div className="flex items-center justify-center h-48">
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                      <p className="text-sm text-gray-600">Loading preview...</p>
+                      <p className="text-sm text-muted-foreground">Loading preview...</p>
                     </div>
                   </div>
                 ) : previewError ? (
                   <div className="flex items-center justify-center h-48">
                     <div className="text-center">
                       <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-1">Failed to load preview</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-sm text-muted-foreground mb-1">Failed to load preview</p>
+                      <p className="text-xs text-muted-foreground">
                         Check your filters and try again
                       </p>
                     </div>
@@ -631,7 +631,7 @@ export function DataSourceConfigurator({
                 ) : previewData && previewData.length > 0 ? (
                   <div className="space-y-4">
                     {/* Summary */}
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span>Showing {previewData.length} sample records</span>
                       {filters.filters.length > 0 && (
                         <Badge variant="outline">
@@ -644,7 +644,7 @@ export function DataSourceConfigurator({
                     <ScrollArea className="h-96 border rounded-md">
                       <div className="min-w-full">
                         <table className="w-full text-sm">
-                          <thead className="bg-gray-50 sticky top-0">
+                          <thead className="bg-muted sticky top-0">
                             <tr>
                               {Object.keys(previewData[0] || {}).map((key) => (
                                 <th key={key} className="px-4 py-2 text-left font-medium border-b">
@@ -655,13 +655,13 @@ export function DataSourceConfigurator({
                           </thead>
                           <tbody>
                             {previewData.map((row, index) => (
-                              <tr key={index} className="border-b hover:bg-gray-50">
+                              <tr key={index} className="border-b hover:bg-muted">
                                 {Object.values(row).map((value, cellIndex) => (
                                   <td key={cellIndex} className="px-4 py-2 text-left">
                                     {value === null || value === undefined ? (
-                                      <span className="text-gray-400 italic">null</span>
+                                      <span className="text-muted-foreground italic">null</span>
                                     ) : typeof value === 'object' ? (
-                                      <span className="text-gray-600 text-xs">
+                                      <span className="text-muted-foreground text-xs">
                                         {JSON.stringify(value)}
                                       </span>
                                     ) : (
@@ -679,9 +679,9 @@ export function DataSourceConfigurator({
                 ) : (
                   <div className="flex items-center justify-center h-48">
                     <div className="text-center">
-                      <Database className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-1">No data found</p>
-                      <p className="text-xs text-gray-500">
+                      <Database className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground mb-1">No data found</p>
+                      <p className="text-xs text-muted-foreground">
                         Try adjusting your filters or date range
                       </p>
                     </div>
@@ -701,19 +701,19 @@ export function DataSourceConfigurator({
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div className="space-y-1">
-              <span className="text-gray-600">Data Source:</span>
+              <span className="text-muted-foreground">Data Source:</span>
               <div className="font-medium">{getDataSourceLabel()}</div>
             </div>
             <div className="space-y-1">
-              <span className="text-gray-600">Active Filters:</span>
+              <span className="text-muted-foreground">Active Filters:</span>
               <div className="font-medium">{filters.filters.length}</div>
             </div>
             <div className="space-y-1">
-              <span className="text-gray-600">Aggregations:</span>
+              <span className="text-muted-foreground">Aggregations:</span>
               <div className="font-medium">{filters.aggregations.length}</div>
             </div>
             <div className="space-y-1">
-              <span className="text-gray-600">Date Range:</span>
+              <span className="text-muted-foreground">Date Range:</span>
               <div className="font-medium">
                 {filters.dateRange ? 'Custom' : 'All Time'}
               </div>

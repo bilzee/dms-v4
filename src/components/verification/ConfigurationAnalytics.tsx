@@ -28,7 +28,7 @@ import {
   RefreshCw,
   Download,
   Calendar
-} from 'lucide-react';
+} from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { apiGet } from '@/lib/api';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
@@ -133,7 +133,7 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
     switch (impact) {
       case 'positive': return 'text-green-600';
       case 'negative': return 'text-red-600';
-      default: return 'text-gray-600';
+      default: return 'text-muted-foreground';
     }
   };
 
@@ -142,7 +142,7 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
       case 'high': return 'bg-red-100 text-red-800';
       case 'medium': return 'bg-yellow-100 text-yellow-800';
       case 'low': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -152,10 +152,10 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
         <CardContent className="p-6">
           <div className="text-center">
             <BarChart3 className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               Failed to load analytics
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               {error instanceof Error ? error.message : 'An unexpected error occurred'}
             </p>
             <Button onClick={() => refetch()} variant="outline">
@@ -212,7 +212,7 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex items-center gap-1 border-b border-gray-200">
+      <div className="flex items-center gap-1 border-b border-border">
         {[
           { id: 'overview', label: 'Overview', icon: Activity },
           { id: 'trends', label: 'Trends', icon: TrendingUp },
@@ -296,19 +296,19 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
                       <h4 className="font-medium mb-3">Performance Highlights</h4>
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Entities with auto-approval</span>
+                          <span className="text-sm text-muted-foreground">Entities with auto-approval</span>
                           <span className="font-medium">
                             {analyticsData.overview.autoApprovalEnabled} of {analyticsData.overview.totalEntities}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Overall auto-approval rate</span>
+                          <span className="text-sm text-muted-foreground">Overall auto-approval rate</span>
                           <span className="font-medium text-green-600">
                             {formatPercentage(analyticsData.overview.autoApprovalRate)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Configuration changes</span>
+                          <span className="text-sm text-muted-foreground">Configuration changes</span>
                           <span className="font-medium">{analyticsData.overview.configurationChanges}</span>
                         </div>
                       </div>
@@ -317,13 +317,13 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
                       <h4 className="font-medium mb-3">Optimization Opportunities</h4>
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Average processing time</span>
+                          <span className="text-sm text-muted-foreground">Average processing time</span>
                           <span className="font-medium">
                             {formatTime(analyticsData.overview.averageProcessingTime)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Effectiveness score</span>
+                          <span className="text-sm text-muted-foreground">Effectiveness score</span>
                           <span className={cn(
                             'font-medium',
                             analyticsData.overview.effectivenessScore >= 80 ? 'text-green-600' :
@@ -332,7 +332,7 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
                             {Math.round(analyticsData.overview.effectivenessScore)}/100
                           </span>
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-muted-foreground">
                           {analyticsData.overview.effectivenessScore >= 80 ? 'Excellent performance' :
                            analyticsData.overview.effectivenessScore >= 60 ? 'Good performance, room for improvement' :
                            'Significant optimization potential'}
@@ -361,7 +361,7 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
                       <div className="flex items-center justify-between mb-3">
                         <div>
                           <h4 className="font-medium">{entity.entityName}</h4>
-                          <p className="text-sm text-gray-600">{entity.entityType}</p>
+                          <p className="text-sm text-muted-foreground">{entity.entityType}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline">
@@ -381,19 +381,19 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
                       
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                         <div>
-                          <span className="text-gray-600">Total Verifications:</span>
+                          <span className="text-muted-foreground">Total Verifications:</span>
                           <div className="font-medium">{entity.totalVerifications}</div>
                         </div>
                         <div>
-                          <span className="text-gray-600">Auto-Verified:</span>
+                          <span className="text-muted-foreground">Auto-Verified:</span>
                           <div className="font-medium text-green-600">{entity.autoVerified}</div>
                         </div>
                         <div>
-                          <span className="text-gray-600">Manual Verified:</span>
+                          <span className="text-muted-foreground">Manual Verified:</span>
                           <div className="font-medium text-orange-600">{entity.manualVerified}</div>
                         </div>
                         <div>
-                          <span className="text-gray-600">Avg Processing Time:</span>
+                          <span className="text-muted-foreground">Avg Processing Time:</span>
                           <div className="font-medium">{formatTime(entity.averageProcessingTime)}</div>
                         </div>
                       </div>
@@ -419,7 +419,7 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
                     <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
                         <h4 className="font-medium">{impact.metric}</h4>
-                        <div className="text-sm text-gray-600 flex items-center gap-4">
+                        <div className="text-sm text-muted-foreground flex items-center gap-4">
                           <span>Before: {impact.beforeChange}</span>
                           <span>After: {impact.afterChange}</span>
                         </div>
@@ -468,8 +468,8 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
                           </Badge>
                         </div>
                         <h3 className="font-semibold mb-2">{rec.title}</h3>
-                        <p className="text-gray-600 mb-3">{rec.description}</p>
-                        <div className="text-sm text-gray-500">
+                        <p className="text-muted-foreground mb-3">{rec.description}</p>
+                        <div className="text-sm text-muted-foreground">
                           <strong>Potential Impact:</strong> {rec.potentialImpact}
                         </div>
                       </div>

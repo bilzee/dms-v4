@@ -130,7 +130,7 @@ export const ConflictLog = ({ className = '', compact = false }: ConflictLogProp
     };
 
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${colors[method as keyof typeof colors] || 'bg-gray-100 text-gray-800'}`}>
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${colors[method as keyof typeof colors] || 'bg-muted text-foreground'}`}>
         {method.replace('_', '-')}
       </span>
     );
@@ -138,7 +138,7 @@ export const ConflictLog = ({ className = '', compact = false }: ConflictLogProp
 
   if (loading && conflicts.length === 0) {
     return (
-      <div className={`bg-white rounded-lg border border-gray-200 p-6 ${className}`}>
+      <div className={`bg-card rounded-lg border border-border p-6 ${className}`}>
         <ContentSkeleton variant="list" count={3} />
       </div>
     );
@@ -146,7 +146,7 @@ export const ConflictLog = ({ className = '', compact = false }: ConflictLogProp
 
   if (error) {
     return (
-      <div className={`bg-white rounded-lg border border-red-200 p-6 ${className}`}>
+      <div className={`bg-card rounded-lg border border-red-200 p-6 ${className}`}>
         <div className="flex items-center gap-2 text-red-700">
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
@@ -167,16 +167,16 @@ export const ConflictLog = ({ className = '', compact = false }: ConflictLogProp
   const conflictGroups = groupConflictsByEntity(conflicts);
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 ${className}`}>
+    <div className={`bg-card rounded-lg border border-border ${className}`}>
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-6 py-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-foreground">
               Sync Conflicts
             </h3>
             {summary && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 {summary.totalConflicts} total • {summary.unresolvedConflicts} unresolved
               </p>
             )}
@@ -186,7 +186,7 @@ export const ConflictLog = ({ className = '', compact = false }: ConflictLogProp
             <button
               onClick={refresh}
               disabled={loading}
-              className="p-2 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+              className="p-2 text-muted-foreground hover:text-foreground disabled:opacity-50"
               title="Refresh"
             >
               <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="currentColor" viewBox="0 0 24 24">
@@ -240,11 +240,11 @@ export const ConflictLog = ({ className = '', compact = false }: ConflictLogProp
       <div className="p-6">
         {conflictGroups.length === 0 ? (
           <div className="text-center py-8">
-            <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-12 h-12 text-muted-foreground mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM10 17l-3.5-3.5 1.41-1.41L10 14.17l6.09-6.09L17.5 9.5 10 17z"/>
             </svg>
-            <h4 className="text-lg font-medium text-gray-900 mb-2">No conflicts found</h4>
-            <p className="text-gray-600">All data is synchronized without conflicts.</p>
+            <h4 className="text-lg font-medium text-foreground mb-2">No conflicts found</h4>
+            <p className="text-muted-foreground">All data is synchronized without conflicts.</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -253,16 +253,16 @@ export const ConflictLog = ({ className = '', compact = false }: ConflictLogProp
               const isExpanded = expandedGroups.has(groupKey);
 
               return (
-                <div key={groupKey} className="border border-gray-200 rounded-lg">
+                <div key={groupKey} className="border border-border rounded-lg">
                   {/* Group Header */}
                   <button
                     onClick={() => toggleGroupExpansion(groupKey)}
-                    className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors rounded-t-lg"
+                    className="w-full px-4 py-3 flex items-center justify-between bg-muted hover:bg-gray-100 transition-colors rounded-t-lg"
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900">{group.entityName}</span>
-                        <span className="text-sm text-gray-500">({group.entityType})</span>
+                        <span className="font-medium text-foreground">{group.entityName}</span>
+                        <span className="text-sm text-muted-foreground">({group.entityType})</span>
                       </div>
                       
                       <div className="flex items-center gap-2">
@@ -278,11 +278,11 @@ export const ConflictLog = ({ className = '', compact = false }: ConflictLogProp
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-muted-foreground">
                         {formatRelativeTime(group.lastConflictDate)}
                       </span>
                       <svg 
-                        className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                        className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
                         fill="currentColor" 
                         viewBox="0 0 24 24"
                       >
@@ -301,12 +301,12 @@ export const ConflictLog = ({ className = '', compact = false }: ConflictLogProp
                               <div className="flex items-center gap-3 mb-2">
                                 {getStatusIcon(conflict)}
                                 {getResolutionMethodBadge(conflict.resolutionMethod)}
-                                <span className="text-sm text-gray-500">
+                                <span className="text-sm text-muted-foreground">
                                   v{conflict.localVersion} ↔ v{conflict.serverVersion}
                                 </span>
                               </div>
                               
-                              <div className="text-sm text-gray-600">
+                              <div className="text-sm text-muted-foreground">
                                 <p>Conflict ID: <span className="font-mono">{conflict.id.slice(0, 8)}</span></p>
                                 <p>Detected: {formatRelativeTime(conflict.conflictDate)}</p>
                                 {conflict.resolvedAt && (
@@ -316,10 +316,10 @@ export const ConflictLog = ({ className = '', compact = false }: ConflictLogProp
                             </div>
 
                             <div className="text-right">
-                              <div className="text-sm text-gray-900 font-medium mb-1">
+                              <div className="text-sm text-foreground font-medium mb-1">
                                 {new Date(conflict.conflictDate).toLocaleDateString()}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-muted-foreground">
                                 {new Date(conflict.conflictDate).toLocaleTimeString()}
                               </div>
                             </div>
@@ -336,8 +336,8 @@ export const ConflictLog = ({ className = '', compact = false }: ConflictLogProp
 
         {/* Pagination */}
         {!compact && pagination && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
-            <div className="text-sm text-gray-600">
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+            <div className="text-sm text-muted-foreground">
               Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
               {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
               {pagination.total} conflicts
@@ -347,7 +347,7 @@ export const ConflictLog = ({ className = '', compact = false }: ConflictLogProp
               <button
                 onClick={() => handlePageChange(pagination.page - 1)}
                 disabled={!pagination.hasPrev}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                className="px-3 py-2 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted"
               >
                 Previous
               </button>
@@ -355,7 +355,7 @@ export const ConflictLog = ({ className = '', compact = false }: ConflictLogProp
               <button
                 onClick={() => handlePageChange(pagination.page + 1)}
                 disabled={!pagination.hasNext}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                className="px-3 py-2 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-muted"
               >
                 Next
               </button>

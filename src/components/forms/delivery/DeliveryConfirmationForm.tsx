@@ -36,7 +36,7 @@ import {
   Loader2,
   Eye,
   Edit
-} from 'lucide-react'
+} from '@/lib/icons'
 
 // Types and validation
 import { ConfirmDeliverySchema, ResponseItem } from '@/lib/validation/response'
@@ -379,21 +379,21 @@ export function DeliveryConfirmationForm({
         {response && (
           <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 rounded-lg border p-4">
             <div>
-              <label className="text-sm font-medium text-gray-500">Entity</label>
+              <label className="text-sm font-medium text-muted-foreground">Entity</label>
               <p className="font-medium">{response.entity?.name || 'N/A'}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500">Assessment Type</label>
+              <label className="text-sm font-medium text-muted-foreground">Assessment Type</label>
               <p className="font-medium">{response.assessment?.rapidAssessmentType || 'N/A'}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500">Priority</label>
+              <label className="text-sm font-medium text-muted-foreground">Priority</label>
               <Badge variant={getPriorityVariant(response.priority)}>
                 {response.priority}
               </Badge>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500">Planned Date</label>
+              <label className="text-sm font-medium text-muted-foreground">Planned Date</label>
               <p className="font-medium">
                 {new Date(response.plannedDate).toLocaleDateString()}
               </p>
@@ -452,15 +452,15 @@ export function DeliveryConfirmationForm({
                 {gpsLocation && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Latitude</label>
+                      <label className="text-sm font-medium text-muted-foreground">Latitude</label>
                       <p className="font-mono">{gpsLocation.latitude.toFixed(6)}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Longitude</label>
+                      <label className="text-sm font-medium text-muted-foreground">Longitude</label>
                       <p className="font-mono">{gpsLocation.longitude.toFixed(6)}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Accuracy</label>
+                      <label className="text-sm font-medium text-muted-foreground">Accuracy</label>
                       <p className="font-mono">{gpsLocation.accuracy?.toFixed(0)}m</p>
                     </div>
                   </div>
@@ -530,15 +530,15 @@ export function DeliveryConfirmationForm({
                       <div key={item.id} className="flex items-center gap-4 p-4 border rounded-lg">
                         <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
                           <div>
-                            <label className="text-sm font-medium text-gray-500">Item Name</label>
+                            <label className="text-sm font-medium text-muted-foreground">Item Name</label>
                             <p className="font-medium">{item.name}</p>
                           </div>
                           <div>
-                            <label className="text-sm font-medium text-gray-500">Unit</label>
+                            <label className="text-sm font-medium text-muted-foreground">Unit</label>
                             <p className="font-medium">{item.unit}</p>
                           </div>
                           <div>
-                            <label className="text-sm font-medium text-gray-500">Quantity</label>
+                            <label className="text-sm font-medium text-muted-foreground">Quantity</label>
                             <div className="flex items-center gap-2">
                               {isEditing ? (
                                 <Input
@@ -551,13 +551,13 @@ export function DeliveryConfirmationForm({
                               ) : (
                                 <span className="font-medium">{item.quantity}</span>
                               )}
-                              <span className="text-sm text-gray-500">{item.unit}</span>
+                              <span className="text-sm text-muted-foreground">{item.unit}</span>
                             </div>
                           </div>
                           {item.notes && (
                             <div>
-                              <label className="text-sm font-medium text-gray-500">Notes</label>
-                              <p className="text-sm text-gray-600">{item.notes}</p>
+                              <label className="text-sm font-medium text-muted-foreground">Notes</label>
+                              <p className="text-sm text-muted-foreground">{item.notes}</p>
                             </div>
                           )}
                         </div>
@@ -697,11 +697,11 @@ function DeliveryPreview({
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="text-sm font-medium text-gray-500">Entity</label>
+          <label className="text-sm font-medium text-muted-foreground">Entity</label>
           <p className="font-medium">{response.entity?.name || 'N/A'}</p>
         </div>
         <div>
-          <label className="text-sm font-medium text-gray-500">Response Type</label>
+          <label className="text-sm font-medium text-muted-foreground">Response Type</label>
           <p className="font-medium">{response.type}</p>
         </div>
       </div>
@@ -709,13 +709,13 @@ function DeliveryPreview({
       <Separator />
       
       <div>
-        <label className="text-sm font-medium text-gray-500">Delivery Location</label>
+        <label className="text-sm font-medium text-muted-foreground">Delivery Location</label>
         {gpsLocation ? (
-          <div className="p-3 bg-gray-50 rounded">
+          <div className="p-3 bg-muted rounded">
             <p className="font-mono text-sm">
               {gpsLocation.latitude.toFixed(6)}, {gpsLocation.longitude.toFixed(6)}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Captured at {locationCaptureTime?.toLocaleString()}
             </p>
           </div>
@@ -725,7 +725,7 @@ function DeliveryPreview({
       </div>
       
       <div>
-        <label className="text-sm font-medium text-gray-500">Items Delivered</label>
+        <label className="text-sm font-medium text-muted-foreground">Items Delivered</label>
         <div className="space-y-1 mt-2">
           {formData.deliveredItems.map((item, index) => (
             <div key={index} className="flex justify-between text-sm">
@@ -738,13 +738,13 @@ function DeliveryPreview({
       
       {formData.deliveryNotes && (
         <div>
-          <label className="text-sm font-medium text-gray-500">Delivery Notes</label>
+          <label className="text-sm font-medium text-muted-foreground">Delivery Notes</label>
           <p className="text-sm mt-1">{formData.deliveryNotes}</p>
         </div>
       )}
       
       <div>
-        <label className="text-sm font-medium text-gray-500">Media Attachments</label>
+        <label className="text-sm font-medium text-muted-foreground">Media Attachments</label>
         <p className="text-sm mt-1">{mediaAttachmentIds.length} photo(s) attached</p>
       </div>
     </div>

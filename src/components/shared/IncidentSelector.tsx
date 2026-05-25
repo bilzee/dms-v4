@@ -4,7 +4,7 @@ import React from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { FormControl, FormDescription, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { StatusBadge } from '@/components/shared/StatusBadge'
-import { AlertCircle, Activity } from 'lucide-react'
+import { AlertCircle, Activity } from '@/lib/icons'
 import { useActiveIncidents } from '@/hooks/useIncidents'
 import { cn } from '@/lib/utils'
 

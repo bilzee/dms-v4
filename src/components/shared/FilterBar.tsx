@@ -14,7 +14,7 @@ import {
   RotateCcw,
   ChevronDown,
   Check
-} from 'lucide-react';
+} from '@/lib/icons';
 import { StatusBadge } from './StatusBadge';
 import type { 
   FilterBarProps, 

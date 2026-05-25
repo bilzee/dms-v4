@@ -31,7 +31,7 @@ const commitmentBadgeColors: Record<string, string> = {
   PARTIAL: 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
   COMPLETE: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800',
   FULFILLED: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800',
-  CANCELLED: 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700',
+  CANCELLED: 'bg-muted text-foreground border-border dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700',
 }
 
 const systemBadgeColors: Record<string, string> = {
@@ -97,7 +97,7 @@ const domainMaps: Record<Domain, Record<string, string>> = {
   assessment: assessmentBadgeColors,
 }
 
-const FALLBACK = 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
+const FALLBACK = 'bg-muted text-foreground border-border dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'
 
 const dotColorMap: Record<Domain, Record<string, string>> = {
   severity: {
@@ -111,7 +111,7 @@ const dotColorMap: Record<Domain, Record<string, string>> = {
     low: 'bg-green-500',
   },
   verification: {
-    DRAFT: 'bg-gray-500',
+    DRAFT: 'bg-muted-foreground',
     SUBMITTED: 'bg-amber-500',
     VERIFIED: 'bg-green-500',
     AUTO_VERIFIED: 'bg-green-500',
@@ -122,7 +122,7 @@ const dotColorMap: Record<Domain, Record<string, string>> = {
     PLANNED: 'bg-blue-500',
     IN_PROGRESS: 'bg-yellow-500',
     COMPLETED: 'bg-green-500',
-    CANCELLED: 'bg-gray-500',
+    CANCELLED: 'bg-muted-foreground',
   },
   incident: {
     ACTIVE: 'bg-red-500',
@@ -134,7 +134,7 @@ const dotColorMap: Record<Domain, Record<string, string>> = {
     PARTIAL: 'bg-amber-500',
     COMPLETE: 'bg-green-500',
     FULFILLED: 'bg-green-500',
-    CANCELLED: 'bg-gray-500',
+    CANCELLED: 'bg-muted-foreground',
   },
   system: {
     ONLINE: 'bg-green-500',
@@ -193,7 +193,7 @@ function getBadgeClasses(domain: Domain, status: string): string {
 }
 
 function getDotColor(domain: Domain, status: string): string {
-  return dotColorMap[domain]?.[status] ?? 'bg-gray-500'
+  return dotColorMap[domain]?.[status] ?? 'bg-muted-foreground'
 }
 
 function formatLabel(status: string): string {

@@ -16,7 +16,7 @@ import {
   AlertTriangle,
   CheckCircle,
   RefreshCw
-} from 'lucide-react'
+} from '@/lib/icons'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { apiGet, extractArray } from '@/lib/api'

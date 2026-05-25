@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { CheckCircle, Clock, XCircle, Shield, FileText } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, Shield, FileText } from '@/lib/icons';
 import type { StatusIndicatorProps, VerificationStatus } from '@/types/verification';
 import { getBadgeClasses } from '@/components/shared/StatusBadge';
 
@@ -141,7 +141,7 @@ export function StatusProgress({ currentStatus, className }: StatusProgressProps
                         ? 'border-red-500 bg-red-50'
                         : isCompleted
                         ? 'border-green-500 bg-green-50'
-                        : 'border-gray-300 bg-gray-50'
+                        : 'border-border bg-muted'
                     )}
                   >
                     {isRejected ? (
@@ -149,7 +149,7 @@ export function StatusProgress({ currentStatus, className }: StatusProgressProps
                     ) : isCompleted ? (
                       <CheckCircle className="h-4 w-4 text-green-500" />
                     ) : (
-                      <div className="h-2 w-2 rounded-full bg-gray-400" aria-hidden="true" />
+                      <div className="h-2 w-2 rounded-full bg-muted-foreground" aria-hidden="true" />
                     )}
                   </div>
                   {index < steps.length - 1 && (
@@ -160,7 +160,7 @@ export function StatusProgress({ currentStatus, className }: StatusProgressProps
                           ? 'bg-red-200'
                           : isCompleted
                           ? 'bg-green-200'
-                          : 'bg-gray-200'
+                          : 'bg-border'
                       )}
                     />
                   )}
@@ -200,20 +200,20 @@ export function StatusProgress({ currentStatus, className }: StatusProgressProps
                     'flex h-8 w-8 items-center justify-center rounded-full border-2',
                     isCompleted
                       ? 'border-green-500 bg-green-50'
-                      : 'border-gray-300 bg-gray-50'
+                      : 'border-border bg-muted'
                   )}
                 >
                   {isCompleted ? (
                     <CheckCircle className="h-4 w-4 text-green-500" />
                   ) : (
-                    <div className="h-2 w-2 rounded-full bg-gray-400" aria-hidden="true" />
+                    <div className="h-2 w-2 rounded-full bg-muted-foreground" aria-hidden="true" />
                   )}
                 </div>
                 {index < steps.length - 1 && (
                   <div
                     className={cn(
                       'h-1 w-full mx-2',
-                      isCompleted ? 'bg-green-200' : 'bg-gray-200'
+                      isCompleted ? 'bg-green-200' : 'bg-border'
                     )}
                   />
                 )}

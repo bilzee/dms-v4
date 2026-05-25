@@ -23,7 +23,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 
 // Icons
-import { Plus, Trash2, Package, MapPin, AlertTriangle, DollarSign, CheckCircle2, ArrowLeft } from 'lucide-react'
+import { Plus, Trash2, Package, MapPin, AlertTriangle, DollarSign, CheckCircle2, ArrowLeft } from '@/lib/icons'
 
 // Types and validation
 import { CreateCommitmentInput, CommitmentItemInput } from '@/lib/validation/commitment'

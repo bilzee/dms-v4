@@ -24,7 +24,7 @@ import {
   User,
   ArrowLeft,
   AlertCircle
-} from 'lucide-react'
+} from '@/lib/icons'
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
 
 // Form validation schema

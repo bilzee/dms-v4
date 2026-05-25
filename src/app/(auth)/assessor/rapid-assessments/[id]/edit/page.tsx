@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ArrowLeft, AlertTriangle, CheckCircle, Save } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, CheckCircle, Save } from '@/lib/icons'
 import { apiGet, apiPut } from '@/lib/api'
 import { RapidAssessmentService } from '@/lib/services/rapid-assessment.service'
 

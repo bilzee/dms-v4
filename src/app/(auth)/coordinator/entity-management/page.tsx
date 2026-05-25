@@ -33,7 +33,7 @@ import {
   RefreshCw,
   AlertCircle,
   CheckCircle
-} from 'lucide-react';
+} from '@/lib/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 import { apiGet, apiPost, apiPut, apiDelete, extractArray } from '@/lib/api';

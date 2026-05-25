@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
-import { Package, Edit, Plus, AlertTriangle, Clock, CheckCircle, Truck } from 'lucide-react'
+import { Package, Edit, Plus, AlertTriangle, Clock, CheckCircle, Truck } from '@/lib/icons'
 
 import { ResponseService } from '@/lib/services/response-client.service'
 import { useAuth } from '@/hooks/useAuth'

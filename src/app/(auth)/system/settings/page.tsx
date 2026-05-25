@@ -24,7 +24,7 @@ import {
   RefreshCw,
   AlertTriangle,
   CheckCircle
-} from 'lucide-react'
+} from '@/lib/icons'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 
 interface SystemSettings {
@@ -166,7 +166,7 @@ export default function SystemSettingsPage() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">System Settings</h1>
-            <p className="text-gray-600">Configure system-wide parameters and preferences</p>
+            <p className="text-muted-foreground">Configure system-wide parameters and preferences</p>
           </div>
         </div>
 
@@ -325,7 +325,7 @@ export default function SystemSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Require Special Characters in Password</Label>
-                      <p className="text-sm text-gray-500">Passwords must include special characters</p>
+                      <p className="text-sm text-muted-foreground">Passwords must include special characters</p>
                     </div>
                     <Switch
                       checked={settings.security.passwordRequireSpecialChars}
@@ -335,7 +335,7 @@ export default function SystemSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Two-Factor Authentication</Label>
-                      <p className="text-sm text-gray-500">Require 2FA for admin accounts</p>
+                      <p className="text-sm text-muted-foreground">Require 2FA for admin accounts</p>
                     </div>
                     <Switch
                       checked={settings.security.twoFactorEnabled}
@@ -372,7 +372,7 @@ export default function SystemSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Email Notifications</Label>
-                      <p className="text-sm text-gray-500">Send notifications via email</p>
+                      <p className="text-sm text-muted-foreground">Send notifications via email</p>
                     </div>
                     <Switch
                       checked={settings.notifications.emailNotifications}
@@ -382,7 +382,7 @@ export default function SystemSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>SMS Notifications</Label>
-                      <p className="text-sm text-gray-500">Send critical alerts via SMS</p>
+                      <p className="text-sm text-muted-foreground">Send critical alerts via SMS</p>
                     </div>
                     <Switch
                       checked={settings.notifications.smsNotifications}
@@ -392,7 +392,7 @@ export default function SystemSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Critical Alerts</Label>
-                      <p className="text-sm text-gray-500">Immediate notifications for critical events</p>
+                      <p className="text-sm text-muted-foreground">Immediate notifications for critical events</p>
                     </div>
                     <Switch
                       checked={settings.notifications.criticalAlerts}
@@ -402,7 +402,7 @@ export default function SystemSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Weekly Reports</Label>
-                      <p className="text-sm text-gray-500">Send weekly activity reports</p>
+                      <p className="text-sm text-muted-foreground">Send weekly activity reports</p>
                     </div>
                     <Switch
                       checked={settings.notifications.weeklyReports}
@@ -412,7 +412,7 @@ export default function SystemSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Maintenance Alerts</Label>
-                      <p className="text-sm text-gray-500">Notify about system maintenance</p>
+                      <p className="text-sm text-muted-foreground">Notify about system maintenance</p>
                     </div>
                     <Switch
                       checked={settings.notifications.maintenanceAlerts}
@@ -476,7 +476,7 @@ export default function SystemSettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Automatic Backup</Label>
-                      <p className="text-sm text-gray-500">Enable automatic system backups</p>
+                      <p className="text-sm text-muted-foreground">Enable automatic system backups</p>
                     </div>
                     <Switch
                       checked={settings.backup.autoBackupEnabled}

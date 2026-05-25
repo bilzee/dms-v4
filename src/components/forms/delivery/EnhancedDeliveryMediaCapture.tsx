@@ -20,7 +20,7 @@ import {
   Eye,
   Upload,
   X
-} from 'lucide-react'
+} from '@/lib/icons'
 import { useGPS } from '@/hooks/useGPS'
 import { DeliveryMediaValidator } from '@/lib/utils/delivery-media-validator'
 import { GPSLocation } from '@/hooks/useGPS'
@@ -371,7 +371,7 @@ export function EnhancedDeliveryMediaCapture({
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <span className="font-medium">Location Captured</span>
                 </div>
-                <div className="text-xs text-gray-600 mt-1">
+                <div className="text-xs text-muted-foreground mt-1">
                   {gpsLocation.latitude.toFixed(6)}, {gpsLocation.longitude.toFixed(6)}
                   {gpsLocation.accuracy && (
                     <span className="ml-2">
@@ -439,7 +439,7 @@ export function EnhancedDeliveryMediaCapture({
               {capturedMedia.map((media, index) => (
                 <div key={index} className="relative group">
                   <div 
-                    className="aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer border-2 border-gray-200 hover:border-blue-300 transition-colors"
+                    className="aspect-square bg-muted rounded-lg overflow-hidden cursor-pointer border-2 border-border hover:border-blue-300 transition-colors"
                     onClick={() => setShowPreview(media.preview)}
                   >
                     {media.file.type.startsWith('image/') ? (
@@ -453,7 +453,7 @@ export function EnhancedDeliveryMediaCapture({
                       </>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="h-8 w-8 text-gray-400" />
+                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
                       </div>
                     )}
                     
@@ -509,7 +509,7 @@ export function EnhancedDeliveryMediaCapture({
         {/* Processing Overlay */}
         {isProcessing && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg">
+            <div className="bg-card p-6 rounded-lg">
               <div className="flex items-center gap-3">
                 <RefreshCw className="h-6 w-6 animate-spin" />
                 <span>Processing photo...</span>

@@ -22,7 +22,7 @@ import {
   AlertTriangle,
   Clock,
   Loader2
-} from 'lucide-react';
+} from '@/lib/icons';
 
 // Types
 interface ExecutiveIncidentsTableProps {
@@ -49,17 +49,17 @@ interface DashboardData {
 const incidentTypeConfig: Record<string, { icon: React.ComponentType<{ className?: string }>, color: string, label: string }> = {
   'FLOOD': { icon: Waves, color: 'text-blue-600', label: 'Flood' },
   'DROUGHT': { icon: Sun, color: 'text-orange-600', label: 'Drought' },
-  'EARTHQUAKE': { icon: Mountain, color: 'text-gray-600', label: 'Earthquake' },
+  'EARTHQUAKE': { icon: Mountain, color: 'text-muted-foreground', label: 'Earthquake' },
   'WILDFIRE': { icon: Flame, color: 'text-red-600', label: 'Wildfire' },
   'HURRICANE': { icon: Wind, color: 'text-purple-600', label: 'Hurricane' },
-  'TORNADO': { icon: Wind, color: 'text-gray-500', label: 'Tornado' },
+  'TORNADO': { icon: Wind, color: 'text-muted-foreground', label: 'Tornado' },
   'TSUNAMI': { icon: Waves, color: 'text-blue-800', label: 'Tsunami' },
   'VOLCANIC': { icon: Mountain, color: 'text-red-500', label: 'Volcanic' },
   'CONFLICT': { icon: Users, color: 'text-red-700', label: 'Conflict' },
   'ACCIDENT': { icon: Car, color: 'text-yellow-600', label: 'Accident' },
-  'BUILDING_COLLAPSE': { icon: Building, color: 'text-gray-700', label: 'Building Collapse' },
+  'BUILDING_COLLAPSE': { icon: Building, color: 'text-foreground', label: 'Building Collapse' },
   'POWER_OUTAGE': { icon: Zap, color: 'text-yellow-500', label: 'Power Outage' },
-  'OTHER': { icon: AlertTriangle, color: 'text-gray-600', label: 'Other' }
+  'OTHER': { icon: AlertTriangle, color: 'text-muted-foreground', label: 'Other' }
 };
 
 /**
@@ -141,7 +141,7 @@ export function ExecutiveIncidentsTable({ selectedIncidentId, onIncidentSelect, 
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-6 text-gray-500">
+          <div className="text-center py-6 text-muted-foreground">
             <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">Loading incidents overview...</p>
           </div>
@@ -192,7 +192,7 @@ export function ExecutiveIncidentsTable({ selectedIncidentId, onIncidentSelect, 
           <div className="text-center py-6 text-green-600">
             <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm font-medium">No Active Incidents</p>
-            <p className="text-xs text-gray-500 mt-1">All incidents have been resolved</p>
+            <p className="text-xs text-muted-foreground mt-1">All incidents have been resolved</p>
           </div>
         </CardContent>
       </Card>
@@ -210,7 +210,7 @@ export function ExecutiveIncidentsTable({ selectedIncidentId, onIncidentSelect, 
               {activeContainedIncidents.length} total
             </Badge>
           </div>
-          <div className="text-xs text-gray-500 font-normal">
+          <div className="text-xs text-muted-foreground font-normal">
             Click to select incident
           </div>
         </CardTitle>
@@ -232,7 +232,7 @@ export function ExecutiveIncidentsTable({ selectedIncidentId, onIncidentSelect, 
                   "p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:border-blue-300",
                   isSelected 
                     ? "border-blue-500 bg-blue-50 shadow-md" 
-                    : "border-gray-200 bg-white hover:shadow-sm"
+                    : "border-border bg-card hover:shadow-sm"
                 )}
                 onClick={() => onIncidentSelect?.(incident.id)}
               >
@@ -240,7 +240,7 @@ export function ExecutiveIncidentsTable({ selectedIncidentId, onIncidentSelect, 
                 <div className="flex items-center gap-2 mb-3">
                   <Icon className={cn("h-4 w-4 flex-shrink-0", config.color)} />
                   <div className="flex items-center gap-2 flex-1">
-                    <div className="text-xs text-gray-500">{config.label}</div>
+                    <div className="text-xs text-muted-foreground">{config.label}</div>
                     <Badge 
                       variant="outline"
                       className={cn("text-xs", severityClasses)}
@@ -252,7 +252,7 @@ export function ExecutiveIncidentsTable({ selectedIncidentId, onIncidentSelect, 
                 
                 {/* Incident Name */}
                 <div className="mb-3">
-                  <div className="font-medium text-sm text-gray-900 truncate">
+                  <div className="font-medium text-sm text-foreground truncate">
                     {incident.name || `${config.label} Event ${incident.id.slice(-3)}`}
                   </div>
                 </div>
@@ -268,14 +268,14 @@ export function ExecutiveIncidentsTable({ selectedIncidentId, onIncidentSelect, 
                 </div>
 
                 {/* Duration */}
-                <div className="flex items-center justify-center gap-1 mb-2 text-sm text-gray-600">
+                <div className="flex items-center justify-center gap-1 mb-2 text-sm text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   <span className="font-bold">{getTimeSince(incident.createdAt)}</span>
                 </div>
 
                 {/* Location */}
                 <div className="text-center">
-                  <div className="text-xs text-gray-500 truncate">
+                  <div className="text-xs text-muted-foreground truncate">
                     {incident.location || 'Not specified'}
                   </div>
                 </div>

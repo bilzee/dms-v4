@@ -33,7 +33,7 @@ import {
   ChevronRight,
   RotateCcw,
   X
-} from 'lucide-react';
+} from '@/lib/icons';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useRelationshipTimeline } from '@/hooks/useRelationships';
@@ -90,7 +90,7 @@ const VERIFICATION_ICONS = {
 } as const;
 
 const VERIFICATION_STYLES = {
-  DRAFT: 'text-gray-500',
+  DRAFT: 'text-muted-foreground',
   SUBMITTED: 'text-blue-500',
   VERIFIED: 'text-green-500',
   AUTO_VERIFIED: 'text-green-600',
@@ -182,12 +182,12 @@ export function AssessmentTimeline({
         <div className="relative flex flex-col items-center">
           <div 
             className={cn(
-              "w-3 h-3 rounded-full border-2 bg-white z-10",
+              "w-3 h-3 rounded-full border-2 bg-card z-10",
               ASSESSMENT_TYPE_COLORS[item.assessment.type]
             )}
           />
           {index < (data?.data?.length - 1) && (
-            <div className="w-px h-full bg-gray-200 absolute top-3" />
+            <div className="w-px h-full bg-border absolute top-3" />
           )}
         </div>
 

@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MapPin, CheckCircle, AlertCircle, MapIcon, Crosshair } from 'lucide-react';
+import { MapPin, CheckCircle, AlertCircle, MapIcon, Crosshair } from '@/lib/icons';
 import { useAuth } from '@/hooks/useAuth';
 import dynamic from 'next/dynamic';
 
@@ -177,7 +177,7 @@ export function EntityForm({ onSubmit, onCancel, initialData, isEditing = false 
                 {...register('location')}
                 placeholder="Enter location description"
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Optional descriptive location (e.g., &quot;Northern District&quot;, &quot;Downtown Area&quot;)
               </p>
             </div>
@@ -231,7 +231,7 @@ export function EntityForm({ onSubmit, onCancel, initialData, isEditing = false 
                       )}
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     Enter decimal coordinates (-90 to 90, -180 to 180)
                   </p>
                 </div>
@@ -243,13 +243,13 @@ export function EntityForm({ onSubmit, onCancel, initialData, isEditing = false 
                     type="button"
                     variant="outline"
                     onClick={() => setShowMapSelector(true)}
-                    className="w-full h-48 border-2 border-dashed border-gray-300 hover:border-blue-300 flex flex-col items-center justify-center text-gray-500 hover:text-blue-600 transition-colors"
+                    className="w-full h-48 border-2 border-dashed border-border hover:border-blue-300 flex flex-col items-center justify-center text-muted-foreground hover:text-blue-600 transition-colors"
                   >
                     <MapIcon className="h-8 w-8 mb-2" />
                     <span className="text-sm">Click to Select on Map</span>
                     <span className="text-xs">or drag to location</span>
                   </Button>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     Click on the map to select coordinates
                   </p>
                 </div>
@@ -279,7 +279,7 @@ export function EntityForm({ onSubmit, onCancel, initialData, isEditing = false 
                 <Label htmlFor="autoApproveEnabled" className="text-sm font-medium">
                   Enable Auto-Approval
                 </Label>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Automatically approve certain actions for this entity based on configured rules
                 </p>
               </div>

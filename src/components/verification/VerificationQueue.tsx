@@ -16,7 +16,7 @@ import {
   Clock,
   User,
   AlertTriangle
-} from 'lucide-react';
+} from '@/lib/icons';
 import { type SeverityLevel } from '@/lib/utils/status-colors';
 import type { VerificationQueueItem, VerificationStatus } from '@/types/verification';
 

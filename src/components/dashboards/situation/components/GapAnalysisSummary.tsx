@@ -16,7 +16,7 @@ import {
   PieChart,
   Activity,
   RefreshCw
-} from 'lucide-react';
+} from '@/lib/icons';
 import { GapIndicator } from './GapIndicator';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 

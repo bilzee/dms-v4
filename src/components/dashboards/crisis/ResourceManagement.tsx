@@ -33,7 +33,7 @@ import {
   ArrowDownRight,
   Eye,
   Edit
-} from 'lucide-react';
+} from '@/lib/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { apiGet } from '@/lib/api';
 import { ResourceGapAnalysis } from './ResourceGapAnalysis';

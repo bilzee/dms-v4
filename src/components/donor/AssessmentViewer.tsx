@@ -21,7 +21,7 @@ import {
   ChevronUp,
   Eye,
   AlertTriangle
-} from 'lucide-react'
+} from '@/lib/icons'
 import { StatCard } from '@/components/shared/StatCard'
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
 
@@ -34,6 +34,7 @@ interface Assessment {
   type: string
   date: string
   status: string
+  verificationStatus?: string
   data: any
   assessor: {
     id: string
@@ -383,7 +384,7 @@ function AssessmentCard({ assessment, isExpanded, onToggleExpansion }: Assessmen
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Badge variant="outline">{assessment.type}</Badge>
-          <StatusBadge domain="verification" status={assessment.verificationStatus} />
+          <StatusBadge domain="verification" status={assessment.verificationStatus || 'DRAFT'} />
           <div className="text-sm text-gray-600">
             <Calendar className="inline h-3 w-3 mr-1" />
             {new Date(assessment.date).toLocaleDateString()}

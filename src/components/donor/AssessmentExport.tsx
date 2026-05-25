@@ -18,7 +18,7 @@ import {
   Clock,
   AlertTriangle,
   Settings
-} from 'lucide-react'
+} from '@/lib/icons'
 
 interface AssessmentExportProps {
   entityId: string

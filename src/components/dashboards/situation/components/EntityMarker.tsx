@@ -20,7 +20,7 @@ import {
   Utensils,
   Info,
   Package
-} from 'lucide-react';
+} from '@/lib/icons';
 
 interface EntityMarkerProps {
   entity: EntityLocation;
