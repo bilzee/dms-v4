@@ -181,9 +181,20 @@ export class IncidentService {
       take: limit
     })
 
+    // Resolve createdBy user IDs to names
+    const creatorIds = [...new Set(incidents.map(i => i.createdBy).filter(Boolean))]
+    const creators = creatorIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: creatorIds } },
+          select: { id: true, name: true, email: true }
+        })
+      : []
+    const creatorMap = new Map(creators.map(u => [u.id, { name: u.name, email: u.email }]))
+
     // Calculate population impact for each incident
     const incidentsWithImpact = incidents.map(incident => ({
       ...incident,
+      createdByUser: creatorMap.get(incident.createdBy) || null,
       populationImpact: this.calculatePopulationImpactFromData(incident)
     }))
 

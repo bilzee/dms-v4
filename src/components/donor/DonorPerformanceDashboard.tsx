@@ -32,7 +32,6 @@ import { GameBadgeSystem, BadgeProgress } from './GameBadgeSystem';
 import { ExportButton } from './ExportButton';
 import type { 
   PerformanceTrends, 
-  PerformanceTrendsResponse,
   PerformanceTrendPoint,
   Achievement,
   BadgeType 
@@ -71,7 +70,7 @@ export function DonorPerformanceDashboard({
     error,
     refetch,
     isFetching
-  } = useQuery<PerformanceTrendsResponse>({
+  } = useQuery<PerformanceTrends>({
     queryKey: ['performance-trends', donorId, { timeframe, granularity }],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -104,13 +103,11 @@ export function DonorPerformanceDashboard({
     staleTime: 10 * 60 * 1000
   });
 
-  const data = performanceData?.data;
-
   // Prepare chart data
   const chartData = useMemo(() => {
-    if (!data?.trends) return null;
+    if (!performanceData?.trends) return null;
 
-    const labels = data.trends.map(trend => {
+    const labels = performanceData.trends.map(trend => {
       switch (granularity) {
         case 'week':
           return `Week ${trend.period.split('-W')[1]}`;
@@ -125,11 +122,11 @@ export function DonorPerformanceDashboard({
       }
     });
 
-    const deliveryRateData = data.trends.map(trend => trend.deliveryRate);
-    const fulfillmentRateData = data.trends.map(trend => trend.fulfillmentRate);
-    const responseVerificationData = data.trends.map(trend => trend.responseVerificationRate);
-    const commitmentData = data.trends.map(trend => trend.commitments);
-    const valueData = data.trends.map(trend => trend.totalValue);
+    const deliveryRateData = performanceData.trends.map(trend => trend.deliveryRate);
+    const fulfillmentRateData = performanceData.trends.map(trend => trend.fulfillmentRate);
+    const responseVerificationData = performanceData.trends.map(trend => trend.responseVerificationRate);
+    const commitmentData = performanceData.trends.map(trend => trend.commitments);
+    const valueData = performanceData.trends.map(trend => trend.totalValue);
 
     return {
       labels,
@@ -157,14 +154,14 @@ export function DonorPerformanceDashboard({
         }] : [])
       ]
     };
-  }, [data, granularity, chartType]);
+  }, [performanceData, granularity, chartType]);
 
   // Performance metrics calculation
   const performanceMetrics = useMemo(() => {
-    if (!data?.trends || data.trends.length === 0) return null;
+    if (!performanceData?.trends || performanceData.trends.length === 0) return null;
 
-    const latestTrend = data.trends[data.trends.length - 1];
-    const earliestTrend = data.trends[0];
+    const latestTrend = performanceData.trends[performanceData.trends.length - 1];
+    const earliestTrend = performanceData.trends[0];
 
     const deliveryRateTrend = latestTrend.deliveryRate - earliestTrend.deliveryRate;
     const commitmentTrend = latestTrend.commitments - earliestTrend.commitments;
@@ -174,13 +171,13 @@ export function DonorPerformanceDashboard({
       fulfillmentRate: latestTrend.fulfillmentRate,
       responseVerificationRate: latestTrend.responseVerificationRate,
       totalValue: latestTrend.totalValue,
-      totalCommitments: data.summary.totalCommitments,
-      totalResponses: data.summary.totalResponses,
+      totalCommitments: performanceData.summary.totalCommitments,
+      totalResponses: performanceData.summary.totalResponses,
       deliveryRateTrend,
       commitmentTrend,
-      periodCount: data.trends.length
+      periodCount: performanceData.trends.length
     };
-  }, [data]);
+  }, [performanceData]);
 
   // Chart options
   const chartOptions = {
@@ -312,7 +309,7 @@ export function DonorPerformanceDashboard({
             {donorName || 'Performance Dashboard'}
           </h2>
           <p className="text-gray-600">
-            Member since {data?.donor?.memberSince ? new Date(data.donor.memberSince).toLocaleDateString() : 'N/A'}
+            Member since {performanceData?.donor?.memberSince ? new Date(performanceData.donor.memberSince).toLocaleDateString() : 'N/A'}
           </p>
         </div>
         
@@ -396,7 +393,7 @@ export function DonorPerformanceDashboard({
       )}
 
       {/* Badges Section */}
-      {showBadges && data?.achievements && (
+      {showBadges && performanceData?.achievements && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -406,7 +403,7 @@ export function DonorPerformanceDashboard({
           </CardHeader>
           <CardContent className="space-y-4">
             <GameBadgeSystem 
-              badges={data.achievements
+              badges={performanceData.achievements
                 .filter(a => a.badge)
                 .map(a => a.badge!) as BadgeType[]} 
               showProgress={true}
@@ -414,8 +411,8 @@ export function DonorPerformanceDashboard({
             />
             
             <BadgeProgress 
-              currentBadges={data.achievements.filter(a => a.badge).map(a => a.badge!) as BadgeType[]}
-              totalPossibleBadges={14} // Based on BadgeType enum
+              currentBadges={performanceData.achievements.filter(a => a.badge).map(a => a.badge!) as BadgeType[]}
+              totalPossibleBadges={14}
             />
           </CardContent>
         </Card>
@@ -460,14 +457,14 @@ export function DonorPerformanceDashboard({
       )}
 
       {/* Recent Achievements */}
-      {data?.achievements && data.achievements.length > 0 && (
+      {performanceData?.achievements && performanceData.achievements.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Recent Achievements</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {data.achievements.slice(0, 5).map((achievement, index) => (
+              {performanceData.achievements.slice(0, 5).map((achievement, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     {achievement.badge?.includes('Gold') && <span className="text-lg">🏆</span>}

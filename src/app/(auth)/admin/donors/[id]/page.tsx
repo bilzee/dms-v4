@@ -48,7 +48,7 @@ interface DonorDetails {
     isActive: boolean
     isLocked: boolean
     createdAt: string
-  }
+  } | null
   _count: {
     commitments: number
     responses: number
@@ -269,74 +269,83 @@ export default function DonorDetailsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <h4 className="font-medium text-sm text-gray-600">Contact Name</h4>
-                <p className="mt-1">{donor.user.name}</p>
-              </div>
-              
-              <div>
-                <h4 className="font-medium text-sm text-gray-600">Username</h4>
-                <p className="mt-1">{donor.user.username}</p>
-              </div>
-              
-              <div>
-                <h4 className="font-medium text-sm text-gray-600">User Email</h4>
-                <div className="flex items-center gap-2 mt-1">
-                  <Mail className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">{donor.user.email}</span>
-                </div>
-              </div>
-              
-              {donor.user.organization && (
-                <div>
-                  <h4 className="font-medium text-sm text-gray-600">User Organization</h4>
-                  <p className="mt-1">{donor.user.organization}</p>
+              {donor.user ? (
+                <>
+                  <div>
+                    <h4 className="font-medium text-sm text-gray-600">Contact Name</h4>
+                    <p className="mt-1">{donor.user.name}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium text-sm text-gray-600">Username</h4>
+                    <p className="mt-1">{donor.user.username}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium text-sm text-gray-600">User Email</h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Mail className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">{donor.user.email}</span>
+                    </div>
+                  </div>
+                  
+                  {donor.user.organization && (
+                    <div>
+                      <h4 className="font-medium text-sm text-gray-600">User Organization</h4>
+                      <p className="mt-1">{donor.user.organization}</p>
+                    </div>
+                  )}
+                  
+                  <Separator />
+                  
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm text-gray-600">Account Status</h4>
+                    
+                    <div className="flex items-center gap-2">
+                      {donor.user.isActive ? (
+                        <>
+                          <ShieldCheck className="h-4 w-4 text-green-500" />
+                          <span className="text-sm text-green-600">Active</span>
+                        </>
+                      ) : (
+                        <>
+                          <Shield className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm text-gray-600">Inactive</span>
+                        </>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      {donor.user.isLocked ? (
+                        <>
+                          <AlertTriangle className="h-4 w-4 text-red-500" />
+                          <span className="text-sm text-red-600">Locked</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span className="text-sm text-green-600">Unlocked</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div>
+                    <h4 className="font-medium text-sm text-gray-600">Account Created</h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">{new Date(donor.user.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  <User className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>No linked user account</p>
                 </div>
               )}
-              
-              <Separator />
-              
-              <div className="space-y-3">
-                <h4 className="font-medium text-sm text-gray-600">Account Status</h4>
-                
-                <div className="flex items-center gap-2">
-                  {donor.user.isActive ? (
-                    <>
-                      <ShieldCheck className="h-4 w-4 text-green-500" />
-                      <span className="text-sm text-green-600">Active</span>
-                    </>
-                  ) : (
-                    <>
-                      <Shield className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">Inactive</span>
-                    </>
-                  )}
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  {donor.user.isLocked ? (
-                    <>
-                      <AlertTriangle className="h-4 w-4 text-red-500" />
-                      <span className="text-sm text-red-600">Locked</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="text-sm text-green-600">Unlocked</span>
-                    </>
-                  )}
-                </div>
-              </div>
-              
-              <Separator />
-              
-              <div>
-                <h4 className="font-medium text-sm text-gray-600">Account Created</h4>
-                <div className="flex items-center gap-2 mt-1">
-                  <Calendar className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">{new Date(donor.user.createdAt).toLocaleDateString()}</span>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>

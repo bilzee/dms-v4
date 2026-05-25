@@ -193,9 +193,9 @@ export const GET = withAuth(async (request: NextRequest, context, { params }) =>
       // Calculate period metrics
       const totalCommitments = periodCommitments.length;
       const completedCommitments = periodCommitments.filter(c => c.status === 'COMPLETE').length;
-      const totalCommittedItems = periodCommitments.reduce((sum, c) => sum + c.totalCommittedQuantity, 0);
-      const totalDeliveredItems = periodCommitments.reduce((sum, c) => sum + c.deliveredQuantity, 0);
-      const totalVerifiedItems = periodCommitments.reduce((sum, c) => sum + c.verifiedDeliveredQuantity, 0);
+      const totalCommittedItems = periodCommitments.reduce((sum, c) => sum + (c.totalCommittedQuantity || 0), 0);
+      const totalDeliveredItems = periodCommitments.reduce((sum, c) => sum + (c.deliveredQuantity || 0), 0);
+      const totalVerifiedItems = periodCommitments.reduce((sum, c) => sum + (c.verifiedDeliveredQuantity || 0), 0);
       const totalValue = periodCommitments.reduce((sum, c) => sum + (c.totalValueEstimated || 0), 0);
 
       const deliveryRate = totalCommittedItems > 0 ? (totalVerifiedItems / totalCommittedItems) * 100 : 0;

@@ -313,16 +313,19 @@ export default function AssessorRapidAssessmentsPage() {
               <PlusCircle className="h-4 w-4 mr-2" />
               New Assessment
             </Button>
-            <Button 
-              onClick={handleNewAssessment}
-              disabled={!selectedType}
-              data-testid="continue-button"
-              className="ml-2"
-            >
-              Continue
-            </Button>
           </div>
         </div>
+
+        <StatCardGrid columns={5} gap="lg">
+          <StatCard label="Total Assessments" value={filteredAssessments.length} severity="info" icon={FileText} />
+          <StatCard label="Submitted" value={filteredAssessments.filter(a => a.status === 'SUBMITTED').length} severity="success" icon={CheckCircle} />
+          <StatCard label="Drafts" value={filteredAssessments.filter(a => a.status === 'DRAFT').length} severity="warning" icon={Clock} />
+          <StatCard label="Rejected" value={filteredAssessments.filter(a => a.verificationStatus === 'REJECTED').length} severity="critical" icon={XCircle} />
+          <StatCard label="Critical Gaps" value={filteredAssessments.reduce((sum, a) => {
+            const gapCount = a.gapAnalysis ? Object.keys(a.gapAnalysis).length : 0
+            return sum + gapCount
+          }, 0)} severity="high" icon={AlertTriangle} />
+        </StatCardGrid>
 
         {/* Filters Section */}
         <Card>
@@ -457,17 +460,6 @@ export default function AssessorRapidAssessmentsPage() {
             </CardContent>
           )}
         </Card>
-
-        <StatCardGrid columns={5} gap="lg">
-          <StatCard label="Total Assessments" value={filteredAssessments.length} severity="info" icon={FileText} />
-          <StatCard label="Submitted" value={filteredAssessments.filter(a => a.status === 'SUBMITTED').length} severity="success" icon={CheckCircle} />
-          <StatCard label="Drafts" value={filteredAssessments.filter(a => a.status === 'DRAFT').length} severity="warning" icon={Clock} />
-          <StatCard label="Rejected" value={filteredAssessments.filter(a => a.verificationStatus === 'REJECTED').length} severity="critical" icon={XCircle} />
-          <StatCard label="Critical Gaps" value={filteredAssessments.reduce((sum, a) => {
-            const gapCount = a.gapAnalysis ? Object.keys(a.gapAnalysis).length : 0
-            return sum + gapCount
-          }, 0)} severity="high" icon={AlertTriangle} />
-        </StatCardGrid>
 
         <DataCardList
           title="Recent Assessments"

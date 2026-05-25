@@ -6,15 +6,15 @@ import { apiGet, apiPost, apiDelete, extractArray } from '@/lib/api';
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DataTable, type ColumnDef, type RowAction } from '@/components/shared/DataTable';
-import { Search, Users, MapPin, UserPlus, Trash2, Loader2, CheckCircle, AlertTriangle, Shield, User } from 'lucide-react';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
+import { Users, MapPin, UserPlus, Trash2, Loader2, CheckCircle, AlertTriangle, Shield, User as UserIcon } from 'lucide-react';
 
 interface Entity {
   id: string;
@@ -61,7 +61,7 @@ function CoordinatorEntitiesPageContent() {
   const [users, setUsers] = useState<User[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [selectedEntity, setSelectedEntity] = useState('');
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [isAssigning, setIsAssigning] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,12 +95,12 @@ function CoordinatorEntitiesPageContent() {
   }, []);
 
   const assignUsersToEntity = async () => {
-    if (!selectedEntity || selectedUserIds.length === 0) return;
+    if (!selectedEntity || selectedUserIds.size === 0) return;
 
     setIsAssigning(true);
     try {
       // Create assignments for each selected user
-      const assignmentPromises = selectedUserIds.map(userId =>
+      const assignmentPromises = Array.from(selectedUserIds).map(userId =>
         apiPost('/api/v1/entity-assignments', {
           userId,
           entityId: selectedEntity,
@@ -110,9 +110,9 @@ function CoordinatorEntitiesPageContent() {
 
       const results = await Promise.all(assignmentPromises);
       const failedAssignments = results.filter(res => !res.success);
-      
+
       if (failedAssignments.length === 0) {
-        setSelectedUserIds([]);
+        setSelectedUserIds(new Set());
         await fetchData(); // Refresh assignments
         alert(`Successfully assigned ${results.length} user(s) to entity`);
       } else {
@@ -186,25 +186,6 @@ function CoordinatorEntitiesPageContent() {
       }));
   };
 
-  // Handle checkbox selection
-  const handleUserSelection = (userId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedUserIds([...selectedUserIds, userId]);
-    } else {
-      setSelectedUserIds(selectedUserIds.filter(id => id !== userId));
-    }
-  };
-
-  // Select/deselect all unassigned users
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const unassignedUserIds = getUnassignedUsers().map(user => user.id);
-      setSelectedUserIds(unassignedUserIds);
-    } else {
-      setSelectedUserIds([]);
-    }
-  };
-
   return (
     <div className="container mx-auto py-6">
       <div className="space-y-6">
@@ -219,37 +200,11 @@ function CoordinatorEntitiesPageContent() {
         </div>
 
         {/* Statistics */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Entities</CardTitle>
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{entities.length}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Assignable Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{users.length}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Assignments</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{assignments.length}</div>
-            </CardContent>
-          </Card>
-        </div>
+        <StatCardGrid columns={3}>
+          <StatCard label="Total Entities" value={entities.length} severity="info" icon={MapPin} />
+          <StatCard label="Assignable Users" value={users.length} severity="info" icon={Users} />
+          <StatCard label="Active Assignments" value={assignments.length} severity="success" icon={CheckCircle} />
+        </StatCardGrid>
 
         {/* Entity Selection */}
         <Card>
@@ -264,7 +219,7 @@ function CoordinatorEntitiesPageContent() {
               <Label htmlFor="entity">Entity</Label>
               <Select value={selectedEntity} onValueChange={(value) => {
                 setSelectedEntity(value);
-                setSelectedUserIds([]);
+                setSelectedUserIds(new Set());
               }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose an entity..." />
@@ -297,128 +252,111 @@ function CoordinatorEntitiesPageContent() {
               {/* Assign Users Tab */}
               <TabsContent value="assign" className="p-6">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Assign Users to Entity</h3>
-                    {selectedEntity && (
-                      <Button 
-                        onClick={assignUsersToEntity}
-                        disabled={selectedUserIds.length === 0 || isAssigning}
-                        className="flex items-center gap-2"
-                      >
-                        {isAssigning ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Assigning...
-                          </>
-                        ) : (
-                          <>
-                            <UserPlus className="h-4 w-4" />
-                            Assign Selected ({selectedUserIds.length})
-                          </>
-                        )}
-                      </Button>
-                    )}
-                  </div>
-
                   {!selectedEntity ? (
                     <div className="text-center p-8 text-muted-foreground">
                       Please select an entity above to view assignable users
                     </div>
                   ) : (
                     <>
-                      {/* User Filters */}
-                      <div className="grid gap-4 md:grid-cols-3">
-                        <div className="space-y-2">
-                          <Label htmlFor="search">Search Users</Label>
-                          <div className="relative">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              id="search"
-                              placeholder="Search by name or email..."
-                              value={searchQuery}
-                              onChange={(e) => setSearchQuery(e.target.value)}
-                              className="pl-8"
-                            />
+                      {/* Selection Action Bar */}
+                      {selectedUserIds.size > 0 && (
+                        <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <span className="text-sm font-medium text-blue-800">
+                            {selectedUserIds.size} user(s) selected
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" onClick={() => setSelectedUserIds(new Set())}>
+                              Clear Selection
+                            </Button>
+                            <Button size="sm" onClick={assignUsersToEntity} disabled={isAssigning}>
+                              {isAssigning ? (
+                                <><Loader2 className="h-4 w-4 animate-spin mr-1" />Assigning...</>
+                              ) : (
+                                <><UserPlus className="h-4 w-4 mr-1" />Assign Selected</>
+                              )}
+                            </Button>
                           </div>
                         </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="role">Filter by Role</Label>
-                          <Select value={roleFilter} onValueChange={setRoleFilter}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="All roles" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="ALL">All roles</SelectItem>
-                              <SelectItem value="ASSESSOR">Assessor</SelectItem>
-                              <SelectItem value="RESPONDER">Responder</SelectItem>
-                              <SelectItem value="DONOR">Donor</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="flex items-end">
-                          <Button 
-                            variant="outline" 
-                            onClick={() => {
-                              setSearchQuery('');
-                              setRoleFilter('ALL');
-                            }}
-                            className="w-full"
-                          >
-                            Clear Filters
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Select All Checkbox */}
-                      <div className="flex items-center space-x-2 p-4 border rounded-lg bg-muted/50">
-                        <Checkbox
-                          checked={getUnassignedUsers().length > 0 && selectedUserIds.length === getUnassignedUsers().length}
-                          onCheckedChange={handleSelectAll}
-                        />
-                        <label className="text-sm font-medium">
-                          Select All ({getUnassignedUsers().length} users)
-                        </label>
-                      </div>
-
-                      {/* User List */}
-                      {isLoading ? (
-                        <div className="flex items-center justify-center p-8">
-                          <Loader2 className="h-8 w-8 animate-spin" />
-                          <span className="ml-2">Loading users...</span>
-                        </div>
-                      ) : getUnassignedUsers().length === 0 ? (
-                        <div className="text-center p-8 text-muted-foreground">
-                          No unassigned users found for this entity
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {getUnassignedUsers().map((user) => (
-                            <div key={user.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50">
-                              <Checkbox
-                                checked={selectedUserIds.includes(user.id)}
-                                onCheckedChange={(checked) => handleUserSelection(user.id, checked as boolean)}
-                              />
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className="font-medium">{user.name}</p>
-                                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                                  </div>
-                                  <div className="flex gap-1">
-                                    {getUserRoles(user).map((role) => (
-                                      <Badge key={role.role.id} variant="secondary" className="text-xs">
-                                        {role.role.name}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
                       )}
+
+                      <DataTable
+                        title="Assign Users to Entity"
+                        description={`${getUnassignedUsers().length} users available for assignment`}
+                        data={getUnassignedUsers().map(u => ({ ...u, id: u.id }))}
+                        loading={isLoading}
+                        emptyMessage="No unassigned users found for this entity"
+                        emptyType="search"
+                        searchable
+                        searchPlaceholder="Search by name or email..."
+                        searchValue={searchQuery}
+                        onSearchChange={setSearchQuery}
+                        filters={[{
+                          key: 'role',
+                          label: 'Filter by Role',
+                          options: [
+                            { label: 'All Roles', value: 'ALL' },
+                            { label: 'Assessor', value: 'ASSESSOR' },
+                            { label: 'Responder', value: 'RESPONDER' },
+                            { label: 'Donor', value: 'DONOR' },
+                          ]
+                        }]}
+                        filterValues={{ role: roleFilter }}
+                        onFilterChange={(key, value) => { if (key === 'role') setRoleFilter(value); }}
+                        selectable
+                        selectedIds={selectedUserIds}
+                        onSelectionChange={setSelectedUserIds}
+                        headerActions={
+                          selectedUserIds.size > 0 ? (
+                            <Button
+                              onClick={assignUsersToEntity}
+                              disabled={isAssigning}
+                              className="flex items-center gap-2"
+                            >
+                              {isAssigning ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  Assigning...
+                                </>
+                              ) : (
+                                <>
+                                  <UserPlus className="h-4 w-4" />
+                                  Assign Selected ({selectedUserIds.size})
+                                </>
+                              )}
+                            </Button>
+                          ) : undefined
+                        }
+                        columns={[
+                          {
+                            key: 'name',
+                            header: 'User',
+                            render: (user: any) => (
+                              <div className="flex flex-col">
+                                <span className="font-medium">{user.name}</span>
+                                <span className="text-xs text-muted-foreground">{user.email}</span>
+                              </div>
+                            ),
+                          },
+                          {
+                            key: 'roles',
+                            header: 'Roles',
+                            render: (user: any) => (
+                              <div className="flex gap-1">
+                                {getUserRoles(user).map((role) => (
+                                  <Badge key={role.role.id} variant="secondary" className="text-xs">
+                                    {role.role.name}
+                                  </Badge>
+                                ))}
+                              </div>
+                            ),
+                          },
+                          {
+                            key: 'organization',
+                            header: 'Organization',
+                            render: (user: any) => user.organization || 'N/A',
+                          },
+                        ]}
+                      />
                     </>
                   )}
                 </div>
@@ -581,7 +519,7 @@ export default function CoordinatorEntitiesPage() {
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription className="flex items-center gap-2">
-              <User className="h-4 w-4" />
+              <UserIcon className="h-4 w-4" />
               You need to select the <strong>Coordinator</strong> role to access this page.
             </AlertDescription>
           </Alert>
@@ -589,7 +527,7 @@ export default function CoordinatorEntitiesPage() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
             <div className="mb-4">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="h-8 w-8 text-blue-600" />
+                <UserIcon className="h-8 w-8 text-blue-600" />
               </div>
               <h3 className="text-lg font-semibold text-blue-900 mb-2">
                 Role Selection Required

@@ -173,7 +173,7 @@ export function DonorMetricsDashboard() {
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 text-sm font-bold">
+                          <div className="flex-shrink-0 flex items-center justify-center min-w-8 min-h-8 w-8 h-8 rounded-full bg-gray-100 text-gray-700 text-sm font-bold">
                             {index + 1}
                           </div>
                           <div>

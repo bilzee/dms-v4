@@ -600,10 +600,10 @@ export function DonorDashboard() {
                                       </CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                      {user ? (
+                                      {donor ? (
                                         <DonorPerformanceDashboard 
-                                          donorId={user.id}
-                                          donorName={(user.name || user.organization) || undefined}
+                                          donorId={donor.id}
+                                          donorName={(donor.name || donor.organization) || undefined}
                                           showRanking={true}
                                           showBadges={true}
                                           showTrends={true}

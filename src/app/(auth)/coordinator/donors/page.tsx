@@ -18,6 +18,7 @@ import {
   CheckCircle
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { DataTable, type ColumnDef, type RowAction } from '@/components/shared/DataTable'
 
 interface Donor {
@@ -118,23 +119,25 @@ const donorColumns: ColumnDef<Donor>[] = [
   },
 ]
 
-const donorActions: RowAction[] = [
-  {
-    label: 'View',
-    icon: Eye,
-    onClick: () => {},
-  },
-  {
-    label: 'Edit',
-    icon: Edit,
-    onClick: () => {},
-  },
-]
-
 export default function DonorManagementPage() {
   const { data: donorsData, isLoading: loading } = useAdminDonors()
   const donors: Donor[] = Array.isArray(donorsData?.items) ? donorsData.items : []
   const [searchTerm, setSearchTerm] = useState('')
+  const router = useRouter()
+
+  const donorActions: RowAction[] = [
+    {
+      label: 'View',
+      icon: Eye,
+      onClick: (donorId: string) => router.push(`/admin/donors/${donorId}`),
+    },
+    {
+      label: 'Edit',
+      icon: Edit,
+      onClick: (donorId: string) => router.push(`/admin/donors/${donorId}/edit`),
+    },
+  ]
+
   const [filter, setFilter] = useState<string>('all')
 
   const filteredDonors = (Array.isArray(donors) ? donors : []).filter(donor => {

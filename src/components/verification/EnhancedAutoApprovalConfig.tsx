@@ -158,7 +158,12 @@ async function fetchAutoApprovalConfigs(filters?: Partial<ConfigurationFilters>)
   if (!result.success) {
     throw new Error(result.error || 'Failed to fetch auto-approval configurations')
   }
-  return result.data as { data: AutoApprovalConfigData[]; summary: { totalEntities: number; enabledCount: number; disabledCount: number; totalAutoVerifiedAssessments: number; totalAutoVerifiedResponses: number; totalAutoVerified: number; } }
+  // API returns { success, data: [...configs], summary: {...} }
+  // result.data is the array of configurations, result.summary is the summary object
+  return {
+    data: result.data as AutoApprovalConfigData[],
+    summary: (result as any).summary as { totalEntities: number; enabledCount: number; disabledCount: number; totalAutoVerifiedAssessments: number; totalAutoVerifiedResponses: number; totalAutoVerified: number; }
+  }
 }
 
 async function detectConfigurationConflicts(entityIds: string[], config: BulkUpdateRequest): Promise<ConflictDetection> {

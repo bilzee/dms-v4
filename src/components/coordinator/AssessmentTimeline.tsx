@@ -10,9 +10,10 @@
 
 import React, { useState, useMemo } from 'react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -27,7 +28,11 @@ import {
   AlertCircle,
   FileText,
   User,
-  MapPin
+  MapPin,
+  ChevronDown,
+  ChevronRight,
+  RotateCcw,
+  X
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -119,6 +124,7 @@ export function AssessmentTimeline({
     start: null,
     end: null,
   });
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
 
   // Query parameters
   const queryParams = useMemo(() => ({
@@ -267,121 +273,243 @@ export function AssessmentTimeline({
 
   const timelineData = data?.data || [];
 
+  // Count active filters for badge
+  const activeFilterCount = 
+    selectedAssessmentTypes.length + 
+    selectedPriorities.length + 
+    selectedVerificationStatus.length + 
+    (dateRange.start ? 1 : 0);
+
+  const handleClearAllFilters = () => {
+    setSelectedAssessmentTypes([]);
+    setSelectedPriorities([]);
+    setSelectedVerificationStatus([]);
+    setDateRange({ start: null, end: null });
+  };
+
   return (
     <Card className={cn("w-full", className)}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Clock className="h-5 w-5" />
-          Assessment Timeline
-          <Badge variant="outline">
-            {timelineData.length} items
-          </Badge>
-        </CardTitle>
-
-        {/* Filters */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-4 border rounded-lg bg-gray-50">
-          {/* Assessment Type Filter */}
-          <div className="space-y-3 p-3 bg-white rounded-md border">
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-blue-600" />
-              <label className="text-sm font-medium text-gray-900">Assessment Types</label>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION'].map(type => (
-                <div key={type} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`type-${type}`}
-                    checked={selectedAssessmentTypes.includes(type as AssessmentType)}
-                    onCheckedChange={() => handleAssessmentTypeToggle(type as AssessmentType)}
-                  />
-                  <label htmlFor={`type-${type}`} className="text-xs cursor-pointer">
-                    {type}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Priority Filter */}
-          <div className="space-y-3 p-3 bg-white rounded-md border">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-orange-600" />
-              <label className="text-sm font-medium text-gray-900">Priority</label>
-            </div>
-            <div className="space-y-2">
-              {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(priority => (
-                <div key={priority} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`priority-${priority}`}
-                    checked={selectedPriorities.includes(priority as Priority)}
-                    onCheckedChange={() => handlePriorityToggle(priority as Priority)}
-                  />
-                  <label htmlFor={`priority-${priority}`} className="text-sm cursor-pointer">
-                    {priority}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Verification Status Filter */}
-          {showVerificationStatus && (
-            <div className="space-y-3 p-3 bg-white rounded-md border">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <label className="text-sm font-medium text-gray-900">Verification Status</label>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Assessment Timeline
+            <Badge variant="outline">
+              {timelineData.length} items
+            </Badge>
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            {activeFilterCount > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
+                <Filter className="h-3.5 w-3.5 text-blue-600" />
+                <span className="text-xs text-blue-700">{activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearAllFilters}
+                  className="h-5 w-5 p-0 text-blue-600 hover:text-blue-800"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
               </div>
-              <div className="space-y-2">
-                {['DRAFT', 'SUBMITTED', 'VERIFIED', 'AUTO_VERIFIED', 'REJECTED'].map(status => (
-                  <div key={status} className="flex items-center space-x-2">
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFiltersExpanded(!filtersExpanded)}
+              className="gap-1.5"
+            >
+              <Filter className="h-3.5 w-3.5" />
+              Filters
+              {activeFilterCount > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                  {activeFilterCount}
+                </Badge>
+              )}
+              {filtersExpanded ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {/* Collapsible Filters */}
+        {filtersExpanded && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 border rounded-lg bg-muted/30">
+            {/* Assessment Type Filter */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5 text-blue-600" />
+                  Assessment Types
+                </Label>
+                {selectedAssessmentTypes.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedAssessmentTypes([])}
+                    className="h-6 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <RotateCcw className="h-3 w-3 mr-1" />
+                    Reset
+                  </Button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION'].map(type => (
+                  <div key={type} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`status-${status}`}
-                      checked={selectedVerificationStatus.includes(status)}
-                      onCheckedChange={() => handleVerificationStatusToggle(status)}
+                      id={`type-${type}`}
+                      checked={selectedAssessmentTypes.includes(type as AssessmentType)}
+                      onCheckedChange={() => handleAssessmentTypeToggle(type as AssessmentType)}
                     />
-                    <label htmlFor={`status-${status}`} className="text-xs cursor-pointer">
-                      {status.replace('_', ' ')}
+                    <label htmlFor={`type-${type}`} className="text-xs cursor-pointer">
+                      {type}
                     </label>
                   </div>
                 ))}
               </div>
             </div>
-          )}
 
-          {/* Date Range Filter */}
-          <div className="space-y-3 p-3 bg-white rounded-md border">
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4 text-purple-600" />
-              <label className="text-sm font-medium text-gray-900">Date Range</label>
+            {/* Priority Filter */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium flex items-center gap-1.5">
+                  <AlertCircle className="h-3.5 w-3.5 text-orange-600" />
+                  Priority
+                </Label>
+                {selectedPriorities.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedPriorities([])}
+                    className="h-6 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <RotateCcw className="h-3 w-3 mr-1" />
+                    Reset
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(priority => (
+                  <div key={priority} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`priority-${priority}`}
+                      checked={selectedPriorities.includes(priority as Priority)}
+                      onCheckedChange={() => handlePriorityToggle(priority as Priority)}
+                    />
+                    <label htmlFor={`priority-${priority}`} className="text-xs cursor-pointer">
+                      {priority}
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full justify-start">
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  {dateRange.start && dateRange.end 
-                    ? `${format(dateRange.start, 'MMM dd')} - ${format(dateRange.end, 'MMM dd')}`
-                    : 'Select dates'
-                  }
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="range"
-                  numberOfMonths={2}
-                  onSelect={(range) => {
-                    setDateRange({ 
-                      start: range?.from || null, 
-                      end: range?.to || null 
-                    });
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-      </CardHeader>
 
-      <CardContent>
+            {/* Verification Status Filter */}
+            {showVerificationStatus && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium flex items-center gap-1.5">
+                    <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                    Verification
+                  </Label>
+                  {selectedVerificationStatus.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedVerificationStatus([])}
+                      className="h-6 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      Reset
+                    </Button>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  {['DRAFT', 'SUBMITTED', 'VERIFIED', 'AUTO_VERIFIED', 'REJECTED'].map(status => (
+                    <div key={status} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`status-${status}`}
+                        checked={selectedVerificationStatus.includes(status)}
+                        onCheckedChange={() => handleVerificationStatusToggle(status)}
+                      />
+                      <label htmlFor={`status-${status}`} className="text-xs cursor-pointer">
+                        {status.replace('_', ' ')}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Date Range Filter */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium flex items-center gap-1.5">
+                  <CalendarIcon className="h-3.5 w-3.5 text-purple-600" />
+                  Date Range
+                </Label>
+                {dateRange.start && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDateRange({ start: null, end: null })}
+                    className="h-6 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <RotateCcw className="h-3 w-3 mr-1" />
+                    Reset
+                  </Button>
+                )}
+              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-start text-left font-normal">
+                    <CalendarIcon className="h-4 w-4 mr-2" />
+                    {dateRange.start && dateRange.end 
+                      ? `${format(dateRange.start, 'MMM dd')} - ${format(dateRange.end, 'MMM dd')}`
+                      : dateRange.start
+                      ? `From ${format(dateRange.start, 'MMM dd')}`
+                      : 'Pick a date range'
+                    }
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="range"
+                    numberOfMonths={2}
+                    selected={{ from: dateRange.start || undefined, to: dateRange.end || undefined }}
+                    onSelect={(range) => {
+                      setDateRange({ 
+                        start: range?.from || null, 
+                        end: range?.to || null 
+                      });
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Clear all */}
+            {activeFilterCount > 0 && (
+              <div className="md:col-span-2 lg:col-span-4 flex justify-end pt-2 border-t">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearAllFilters}
+                  className="gap-1.5"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Clear All Filters
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
         {timelineData.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />

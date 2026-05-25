@@ -76,11 +76,11 @@ export default function IncidentDetailPage({ params }: IncidentDetailPageProps) 
     return <div>Error loading incident details.</div>;
   }
 
-  if (!incident?.data) {
+  if (!incident) {
     return <div>Incident not found.</div>;
   }
 
-  const incidentData = incident.data;
+  const incidentData = incident;
 
   return (
     <div className="space-y-6">

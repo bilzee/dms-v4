@@ -101,8 +101,8 @@ export default function EntityPerformancePage() {
       const assessmentsData = assessmentsResult.data;
 
       // Process and combine the data to create performance metrics
-      const entities = demographicsData.data.entities || [];
-      const assessmentsByCategory = assessmentsData.data.latestAssessmentsByCategory || {};
+      const entities = demographicsData?.entities || [];
+      const assessmentsByCategory = assessmentsData?.latestAssessmentsByCategory || {};
 
       const entityMetrics: EntityPerformanceMetrics[] = entities.map((entity: any) => {
         // Calculate performance scores based on assessments
@@ -188,8 +188,8 @@ export default function EntityPerformancePage() {
         needsAttention,
         entities: entityMetrics,
         overallStats: {
-          totalAssessments: demographicsData.data.overallStats?.totalVerifiedAssessments || 0,
-          totalPopulationServed: demographicsData.data.aggregatedDemographics?.totalPopulation || 0,
+          totalAssessments: demographicsData?.overallStats?.totalVerifiedAssessments || 0,
+          totalPopulationServed: demographicsData?.aggregatedDemographics?.totalPopulation || 0,
           averageCoverage: Math.round((entityMetrics.reduce((sum, e) => sum + e.assessmentCoverage, 0) / entityMetrics.length) * 100) / 100
         }
       } as EntityPerformanceResponse;

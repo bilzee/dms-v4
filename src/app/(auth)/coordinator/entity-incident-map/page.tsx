@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatCard } from '@/components/shared/StatCard'
 import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
 import { 
   MapPin, 
   TrendingUp, 
@@ -24,7 +24,10 @@ import {
   RefreshCw,
   FileText,
   Users,
-  X
+  X,
+  ChevronDown,
+  ChevronRight,
+  RotateCcw
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -62,6 +65,7 @@ export default function EntityIncidentMapPage() {
     start: null,
     end: null,
   });
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
 
   // Fetch all incidents for dropdown
   const { data: incidents, isLoading: incidentsLoading } = useIncidents({ status: 'ALL', limit: 100 });
@@ -154,22 +158,65 @@ export default function EntityIncidentMapPage() {
 
       {/* Incident Selection and Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Network className="h-5 w-5" />
-              Incident Selection & Filters
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Network className="h-5 w-5" />
+                Incident Selection & Filters
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Choose an incident to visualize entity relationships
+              </CardDescription>
             </div>
-          </CardTitle>
+            <div className="flex items-center gap-2">
+              {/* Active filter summary pills */}
+              {(selectedPriorities.length > 0 || dateRange.start) && (
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
+                  <Filter className="h-3.5 w-3.5 text-blue-600" />
+                  <span className="text-xs text-blue-700">
+                    {selectedPriorities.length > 0 && `${selectedPriorities.length} priority`}
+                    {selectedPriorities.length > 0 && dateRange.start && ', '}
+                    {dateRange.start && 'date range'}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      handlePriorityFilterChange([]);
+                      handleDateRangeChange(null, null);
+                    }}
+                    className="h-5 w-5 p-0 text-blue-600 hover:text-blue-800"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  window.location.reload();
+                }}
+                className="gap-1.5"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Refresh</span>
+              </Button>
+            </div>
+          </div>
         </CardHeader>
 
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-4 items-center">
-            {/* Incident Dropdown */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">Incident:</label>
+          {/* Primary filter row - Incident selector */}
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-end">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-1.5">
+                <Network className="h-3.5 w-3.5 text-muted-foreground" />
+                Incident
+              </Label>
               <Select value={selectedIncidentId} onValueChange={handleIncidentChange}>
-                <SelectTrigger className="w-64">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select an incident" />
                 </SelectTrigger>
                 <SelectContent>
@@ -181,7 +228,7 @@ export default function EntityIncidentMapPage() {
                           domain="severity" 
                           label={incident.type} 
                         />
-                        <span>{incident.description.substring(0, 40)}...</span>
+                        <span className="truncate max-w-[280px]">{incident.description.substring(0, 50)}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -189,120 +236,177 @@ export default function EntityIncidentMapPage() {
               </Select>
             </div>
 
-            {/* Priority Filters */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-orange-600" />
-                <span className="text-sm font-medium">Priority</span>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as Priority[]).map((priority) => (
-                  <Button
-                    key={priority}
-                    variant={selectedPriorities.includes(priority) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      const newPriorities = selectedPriorities.includes(priority)
-                        ? selectedPriorities.filter(p => p !== priority)
-                        : [...selectedPriorities, priority];
-                      handlePriorityFilterChange(newPriorities);
-                    }}
-                    className={`text-xs ${
-                      priority === 'CRITICAL' ? 'border-red-200 hover:bg-red-50' :
-                      priority === 'HIGH' ? 'border-orange-200 hover:bg-orange-50' :
-                      priority === 'MEDIUM' ? 'border-yellow-200 hover:bg-yellow-50' :
-                      'border-green-200 hover:bg-green-50'
-                    }`}
-                  >
-                    {priority.charAt(0) + priority.slice(1).toLowerCase()}
-                  </Button>
-                ))}
-              </div>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFiltersExpanded(!filtersExpanded)}
+              className="gap-1.5 h-10"
+            >
+              <Filter className="h-3.5 w-3.5" />
+              Filters
+              {(selectedPriorities.length > 0 || dateRange.start) && (
+                <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                  {selectedPriorities.length + (dateRange.start ? 1 : 0)}
+                </Badge>
+              )}
+              {filtersExpanded ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          </div>
 
-  
-            {/* Filter Status */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-medium">Active Filters</span>
-                {(selectedPriorities.length > 0 || dateRange.start) && (
+          {/* Collapsible advanced filters */}
+          {filtersExpanded && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border rounded-lg bg-muted/30">
+              {/* Priority Filter Group */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium flex items-center gap-1.5">
+                    <AlertTriangle className="h-3.5 w-3.5 text-orange-600" />
+                    Priority Level
+                  </Label>
+                  {selectedPriorities.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handlePriorityFilterChange([])}
+                      className="h-6 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      Reset
+                    </Button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as Priority[]).map((priority) => (
+                    <Button
+                      key={priority}
+                      variant={selectedPriorities.includes(priority) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        const newPriorities = selectedPriorities.includes(priority)
+                          ? selectedPriorities.filter(p => p !== priority)
+                          : [...selectedPriorities, priority];
+                        handlePriorityFilterChange(newPriorities);
+                      }}
+                      className={cn(
+                        "text-xs gap-1.5",
+                        selectedPriorities.includes(priority) && priority === 'CRITICAL' && "bg-red-600 hover:bg-red-700",
+                        selectedPriorities.includes(priority) && priority === 'HIGH' && "bg-orange-600 hover:bg-orange-700",
+                        selectedPriorities.includes(priority) && priority === 'MEDIUM' && "bg-yellow-600 hover:bg-yellow-700",
+                        selectedPriorities.includes(priority) && priority === 'LOW' && "bg-green-600 hover:bg-green-700",
+                        !selectedPriorities.includes(priority) && priority === 'CRITICAL' && "border-red-200 text-red-700 hover:bg-red-50",
+                        !selectedPriorities.includes(priority) && priority === 'HIGH' && "border-orange-200 text-orange-700 hover:bg-orange-50",
+                        !selectedPriorities.includes(priority) && priority === 'MEDIUM' && "border-yellow-200 text-yellow-700 hover:bg-yellow-50",
+                        !selectedPriorities.includes(priority) && priority === 'LOW' && "border-green-200 text-green-700 hover:bg-green-50"
+                      )}
+                    >
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PRIORITY_COLORS[priority] }} />
+                      {priority.charAt(0) + priority.slice(1).toLowerCase()}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Date Range Filter Group */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium flex items-center gap-1.5">
+                    <CalendarIcon className="h-3.5 w-3.5 text-purple-600" />
+                    Date Range
+                  </Label>
+                  {dateRange.start && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDateRangeChange(null, null)}
+                      className="h-6 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      Reset
+                    </Button>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal">
+                        <CalendarIcon className="h-4 w-4 mr-2" />
+                        {dateRange.start && dateRange.end
+                          ? `${format(dateRange.start, 'MMM dd')} - ${format(dateRange.end, 'MMM dd')}`
+                          : dateRange.start
+                          ? `From ${format(dateRange.start, 'MMM dd')}`
+                          : 'Pick a date range'
+                        }
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="range"
+                        numberOfMonths={2}
+                        selected={{ from: dateRange.start || undefined, to: dateRange.end || undefined }}
+                        onSelect={(range) => {
+                          handleDateRangeChange(range?.from || null, range?.to || null);
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {dateRange.start && (
+                    <Badge variant="secondary" className="text-xs whitespace-nowrap">
+                      {Math.ceil(
+                        ((dateRange.end || new Date()).getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24)
+                      )}d
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              {/* Clear all */}
+              {(selectedPriorities.length > 0 || dateRange.start) && (
+                <div className="md:col-span-2 flex justify-end pt-2 border-t">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={() => {
                       handlePriorityFilterChange([]);
                       handleDateRangeChange(null, null);
                     }}
-                    className="text-xs flex items-center gap-1 h-6 px-2"
+                    className="gap-1.5"
                   >
-                    <X className="h-3 w-3" />
-                    Clear All
+                    <X className="h-3.5 w-3.5" />
+                    Clear All Filters
                   </Button>
-                )}
-              </div>
-              
-              <div className="flex gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3 text-orange-600" />
-                  {selectedPriorities.length} priority
-                </span>
-                {dateRange.start && (
-                  <span className="flex items-center gap-1">
-                    <CalendarIcon className="h-3 w-3" />
-                    date range
-                  </span>
-                )}
-              </div>
+                </div>
+              )}
             </div>
-
-            {/* Date Range */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  Date Range
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="range"
-                  numberOfMonths={2}
-                  onSelect={(range) => {
-                    handleDateRangeChange(range?.from || null, range?.to || null);
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
-
-            {/* Refresh Button */}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => {
-                window.location.reload();
-              }}
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
+          )}
 
           {/* Selected Incident Info */}
           {selectedIncident && (
-            <div className="p-4 bg-muted/50 rounded-lg">
+            <div className="p-4 bg-muted/50 rounded-lg border">
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold">{selectedIncident.type} Incident</h3>
-                  <p className="text-sm text-muted-foreground">{selectedIncident.description}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Location: {selectedIncident.location} | 
-                    Created: {format(new Date(selectedIncident.createdAt), 'MMM dd, yyyy')}
-                  </p>
+                <div className="min-w-0">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    {selectedIncident.type} Incident
+                    <StatusBadge 
+                      status={selectedIncident.severity} 
+                      domain="severity" 
+                    />
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1 truncate">{selectedIncident.description}</p>
+                  <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {selectedIncident.location}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <CalendarIcon className="h-3 w-3" />
+                      {format(new Date(selectedIncident.createdAt), 'MMM dd, yyyy')}
+                    </span>
+                  </div>
                 </div>
-                <StatusBadge 
-                  status={selectedIncident.severity} 
-                  domain="severity" 
-                />
               </div>
             </div>
           )}

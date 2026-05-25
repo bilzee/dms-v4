@@ -94,7 +94,8 @@ export function CommitmentDashboard({ donorId, preSelectedEntityId }: Commitment
     queryFn: async () => {
       const result = await apiGet('/api/v1/entities')
       if (!result.success) return []
-      return result.data
+      const data = result.data
+      return Array.isArray(data) ? data : data?.items || []
     }
   })
 
@@ -104,7 +105,8 @@ export function CommitmentDashboard({ donorId, preSelectedEntityId }: Commitment
     queryFn: async () => {
       const result = await apiGet('/api/v1/incidents')
       if (!result.success) return []
-      return result.data
+      const data = result.data
+      return Array.isArray(data) ? data : data?.items || []
     }
   })
 
@@ -298,7 +300,7 @@ export function CommitmentDashboard({ donorId, preSelectedEntityId }: Commitment
           <CardTitle>Commitments</CardTitle>
           <CardDescription>
             {commitmentsData?.pagination ? 
-              `Showing ${commitmentsData.data.length} of ${commitmentsData.pagination.total} commitments` :
+              `Showing ${commitmentsData.items?.length || 0} of ${commitmentsData.pagination.total} commitments` :
               'Your aid commitments'
             }
           </CardDescription>
@@ -327,7 +329,7 @@ export function CommitmentDashboard({ donorId, preSelectedEntityId }: Commitment
                 Failed to load commitments. Please try again later.
               </AlertDescription>
             </Alert>
-          ) : commitmentsData?.data?.length === 0 ? (
+          ) : commitmentsData?.items?.length === 0 ? (
             <div className="text-center py-12">
               <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-muted-foreground mb-2">
@@ -342,7 +344,7 @@ export function CommitmentDashboard({ donorId, preSelectedEntityId }: Commitment
             </div>
           ) : (
             <div className="space-y-4">
-              {commitmentsData?.data?.map((commitment: DonorCommitment) => (
+              {commitmentsData?.items?.map((commitment: DonorCommitment) => (
                 <Card key={commitment.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">

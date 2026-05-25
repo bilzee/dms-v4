@@ -14,7 +14,7 @@ import { SafeDataLoader } from '@/components/shared/SafeDataLoader'
 import { EmptyState } from '@/components/shared/EmptyState'
 
 // Icons
-import { Plus, Edit, Package, CheckCircle, User, Shield, RefreshCw, AlertTriangle } from 'lucide-react'
+import { Plus, Edit, Package, CheckCircle, User, Shield, RefreshCw, AlertTriangle, ArrowLeft } from 'lucide-react'
 
 // Forms and components
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
@@ -102,7 +102,7 @@ function ResponsePlanningPageContent() {
                   onClick={handleBackToList}
                   className="flex items-center gap-2"
                 >
-                  <Package className="h-4 w-4" />
+                  <ArrowLeft className="h-4 w-4" />
                   Back to Response Plans
                 </Button>
                 <Badge variant="outline">

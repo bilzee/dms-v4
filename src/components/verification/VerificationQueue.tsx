@@ -98,7 +98,7 @@ export function VerificationQueue({
   return (
     <DataCardList
       className={className}
-      title="Verification Queue"
+      title="Assessment Verification Queue"
       headerActions={
         <div className="flex items-center gap-2">
           {queueData?.pagination && (

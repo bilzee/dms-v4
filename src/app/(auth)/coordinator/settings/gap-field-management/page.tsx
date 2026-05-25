@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Settings, AlertTriangle, Info, ArrowLeft } from 'lucide-react'
+import { Settings, AlertTriangle, Info, ArrowLeft, Heart, UtensilsCrossed, Droplets, Home, Shield } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { GapFieldTable } from '@/components/settings/GapFieldTable'
 
@@ -25,32 +25,32 @@ export default function GapFieldManagementPage() {
   const assessmentTypes = [
     { 
       key: 'HEALTH', 
-      label: 'Health Services', 
-      icon: '🏥', 
+      label: 'Health', 
+      icon: Heart, 
       description: 'Medical facilities, staff, supplies, and emergency services'
     },
     { 
       key: 'FOOD', 
-      label: 'Food Security', 
-      icon: '🍲', 
+      label: 'Food', 
+      icon: UtensilsCrossed, 
       description: 'Food sufficiency, distribution, and nutritional support'
     },
     { 
       key: 'WASH', 
-      label: 'Water & Sanitation', 
-      icon: '💧', 
+      label: 'WASH', 
+      icon: Droplets, 
       description: 'Water access, sanitation facilities, and hygiene practices'
     },
     { 
       key: 'SHELTER', 
-      label: 'Shelter & Housing', 
-      icon: '🏠', 
+      label: 'Shelter', 
+      icon: Home, 
       description: 'Housing capacity, safety, and weather protection'
     },
     { 
       key: 'SECURITY', 
-      label: 'Security & Protection', 
-      icon: '🛡️', 
+      label: 'Security', 
+      icon: Shield, 
       description: 'Safety measures, protection services, and vulnerability support'
     }
   ]
@@ -125,24 +125,27 @@ export default function GapFieldManagementPage() {
         <CardContent>
           <Tabs defaultValue="HEALTH" className="w-full">
             <TabsList className="grid w-full grid-cols-5 mb-6">
-              {assessmentTypes.map((type) => (
-                <TabsTrigger 
-                  key={type.key} 
-                  value={type.key}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <span>{type.icon}</span>
-                  <span className="hidden sm:inline">{type.label}</span>
-                  <span className="sm:hidden">{type.key}</span>
-                </TabsTrigger>
-              ))}
+              {assessmentTypes.map((type) => {
+                const Icon = type.icon
+                return (
+                  <TabsTrigger 
+                    key={type.key} 
+                    value={type.key}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="hidden sm:inline">{type.label}</span>
+                    <span className="sm:hidden">{type.key.slice(0, 3)}</span>
+                  </TabsTrigger>
+                )
+              })}
             </TabsList>
 
             {assessmentTypes.map((type) => (
               <TabsContent key={type.key} value={type.key} className="space-y-4">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <span>{type.icon}</span>
+                    <type.icon className="h-5 w-5" />
                     {type.label}
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">{type.description}</p>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useVerificationMetrics } from '@/hooks/useVerification';
+import { useVerifyResponse, useRejectResponse } from '@/hooks/useResponseVerification';
 import { VerificationQueue } from './VerificationQueue';
 import { VerificationActions } from './VerificationActions';
 import { StatusIndicator } from './StatusIndicator';
@@ -14,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
 import { 
   CheckCircle, 
   Clock, 
@@ -25,14 +27,18 @@ import {
   FileText,
   Users,
   BarChart3,
-  Package
+  Package,
+  MapPin
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { VerificationQueueItem } from '@/types/verification';
+import type { ResponseVerificationQueueItem } from '@/types/response-verification';
 
 export function VerificationDashboard() {
   const router = useRouter();
   const [selectedAssessment, setSelectedAssessment] = useState<VerificationQueueItem | null>(null);
+  const [selectedResponse, setSelectedResponse] = useState<ResponseVerificationQueueItem | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
 
   const { 
@@ -41,6 +47,9 @@ export function VerificationDashboard() {
     error: metricsError,
     refetch: refetchMetrics 
   } = useVerificationMetrics();
+
+  const verifyResponse = useVerifyResponse();
+  const rejectResponse = useRejectResponse();
 
   const handleAssessmentSelect = (assessment: VerificationQueueItem) => {
     setSelectedAssessment(assessment);
@@ -52,14 +61,46 @@ export function VerificationDashboard() {
     refetchMetrics();
   };
 
+  const handleResponseVerify = async () => {
+    if (!selectedResponse) return;
+    try {
+      await verifyResponse.mutateAsync({
+        responseId: selectedResponse.id,
+        data: { notes: '' }
+      });
+      setSelectedResponse(null);
+      refetchMetrics();
+    } catch (error) {
+      console.error('Failed to verify response:', error);
+    }
+  };
+
+  const handleResponseReject = async () => {
+    if (!selectedResponse || !rejectReason.trim()) return;
+    try {
+      await rejectResponse.mutateAsync({
+        responseId: selectedResponse.id,
+        data: {
+          rejectionReason: rejectReason,
+          notes: ''
+        }
+      });
+      setSelectedResponse(null);
+      setRejectReason('');
+      refetchMetrics();
+    } catch (error) {
+      console.error('Failed to reject response:', error);
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Assessment Verification</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Verification Queue</h1>
           <p className="text-muted-foreground">
-            Review and approve assessment submissions from field assessors
+            Review and verify assessment submissions and response deliveries
           </p>
         </div>
         
@@ -145,7 +186,6 @@ export function VerificationDashboard() {
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Quick Actions */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -164,6 +204,15 @@ export function VerificationDashboard() {
                 >
                   <Clock className="h-4 w-4 mr-2" />
                   View Pending Assessments ({metrics?.totalPending || 0})
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => setActiveTab('responses')}
+                >
+                  <Package className="h-4 w-4 mr-2" />
+                  View Response Queue
                 </Button>
                 
                 <Button 
@@ -195,7 +244,6 @@ export function VerificationDashboard() {
               </CardContent>
             </Card>
 
-            {/* Assessment Types Breakdown */}
             <Card>
               <CardHeader>
                 <CardTitle>Pending by Assessment Type</CardTitle>
@@ -226,7 +274,6 @@ export function VerificationDashboard() {
 
         <TabsContent value="queue" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Verification Queue */}
             <div className="lg:col-span-2">
               <VerificationQueue 
                 onAssessmentSelect={handleAssessmentSelect}
@@ -234,7 +281,6 @@ export function VerificationDashboard() {
               />
             </div>
 
-            {/* Selected Assessment Actions */}
             <div className="space-y-4">
               {selectedAssessment ? (
                 <Card>
@@ -245,7 +291,6 @@ export function VerificationDashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {/* Status */}
                     <div>
                       <label className="text-sm font-medium text-gray-600">Status</label>
                       <div className="mt-1">
@@ -256,7 +301,6 @@ export function VerificationDashboard() {
                       </div>
                     </div>
 
-                    {/* Priority */}
                     <div>
                       <label className="text-sm font-medium text-gray-600">Priority</label>
                       <div className="mt-1">
@@ -264,7 +308,6 @@ export function VerificationDashboard() {
                       </div>
                     </div>
 
-                    {/* Assessment Details */}
                     <div>
                       <label className="text-sm font-medium text-gray-600">Assessor</label>
                       <p className="text-sm text-gray-900 mt-1">
@@ -282,7 +325,6 @@ export function VerificationDashboard() {
                       </p>
                     </div>
 
-                    {/* Actions */}
                     <VerificationActions 
                       assessment={selectedAssessment}
                       inline={false}
@@ -295,6 +337,125 @@ export function VerificationDashboard() {
                   <div className="text-center text-muted-foreground">
                     <FileText className="h-8 w-8 mx-auto mb-2" />
                     <p>Select an assessment to view details</p>
+                  </div>
+                </Card>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="responses" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <ResponseVerificationQueue 
+                onResponseSelect={setSelectedResponse}
+                selectedResponseId={selectedResponse?.id}
+              />
+            </div>
+
+            <div className="space-y-4">
+              {selectedResponse ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Response Details</CardTitle>
+                    <CardDescription>
+                      {selectedResponse.entity.name} - {selectedResponse.type} Response
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Status</label>
+                      <div className="mt-1">
+                        <Badge variant="outline" className={cn(
+                          selectedResponse.verificationStatus === 'VERIFIED' && 'bg-green-50 text-green-700 border-green-300',
+                          selectedResponse.verificationStatus === 'REJECTED' && 'bg-red-50 text-red-700 border-red-300',
+                          selectedResponse.verificationStatus === 'AUTO_VERIFIED' && 'bg-blue-50 text-blue-700 border-blue-300',
+                          selectedResponse.verificationStatus === 'SUBMITTED' && 'bg-yellow-50 text-yellow-700 border-yellow-300',
+                        )}>
+                          {selectedResponse.verificationStatus.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Priority</label>
+                      <div className="mt-1">
+                        <Badge variant="outline">{selectedResponse.priority}</Badge>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Responder</label>
+                      <p className="text-sm text-gray-900 mt-1">{selectedResponse.responder.name}</p>
+                      <p className="text-xs text-gray-600">{selectedResponse.responder.email}</p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Location</label>
+                      <div className="flex items-center gap-1 mt-1 text-sm text-gray-900">
+                        <MapPin className="h-3 w-3" />
+                        {selectedResponse.entity.location || 'Not specified'}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Date</label>
+                      <p className="text-sm text-gray-900 mt-1">
+                        {new Date(selectedResponse.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                    {selectedResponse.description && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Description</label>
+                        <p className="text-sm text-gray-900 mt-1">{selectedResponse.description}</p>
+                      </div>
+                    )}
+
+                    {selectedResponse.verificationStatus === 'SUBMITTED' && (
+                      <div className="space-y-3 pt-4 border-t">
+                        <Button
+                          className="w-full"
+                          onClick={handleResponseVerify}
+                          disabled={verifyResponse.isPending}
+                        >
+                          {verifyResponse.isPending ? (
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                          )}
+                          Verify Response
+                        </Button>
+
+                        <div className="space-y-2">
+                          <Input
+                            placeholder="Rejection reason (required to reject)..."
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                          />
+                          <Button
+                            variant="destructive"
+                            className="w-full"
+                            onClick={handleResponseReject}
+                            disabled={!rejectReason.trim() || rejectResponse.isPending}
+                          >
+                            {rejectResponse.isPending ? (
+                              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <XCircle className="h-4 w-4 mr-2" />
+                            )}
+                            Reject Response
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="h-64 flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <Package className="h-8 w-8 mx-auto mb-2" />
+                    <p>Select a response to view details</p>
                   </div>
                 </Card>
               )}
@@ -318,25 +479,6 @@ export function VerificationDashboard() {
                 <BarChart3 className="h-12 w-12 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Analytics Coming Soon</h3>
                 <p>Detailed verification analytics and reporting will be available here.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="responses" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Response Verification Queue
-              </CardTitle>
-              <CardDescription>
-                Review and verify humanitarian response deliveries
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div data-testid="response-verification-queue-wrapper">
-                <ResponseVerificationQueue />
               </div>
             </CardContent>
           </Card>

@@ -146,6 +146,13 @@ export default function PreliminaryAssessmentPage() {
           </Button>
         </div>
 
+        <StatCardGrid columns={4} gap="lg">
+          <StatCard label="Total Assessments" value={filteredAssessments.length} severity="info" icon={FileText} />
+          <StatCard label="Lives Affected" value={filteredAssessments.reduce((sum, a) => sum + (a.numberLivesLost || 0), 0)} severity="critical" icon={Users} />
+          <StatCard label="People Displaced" value={filteredAssessments.reduce((sum, a) => sum + (a.numberDisplaced || 0), 0)} severity="warning" icon={Home} />
+          <StatCard label="Houses Affected" value={filteredAssessments.reduce((sum, a) => sum + (a.numberHousesAffected || 0), 0)} severity="high" icon={Home} />
+        </StatCardGrid>
+
         {/* Filters Section */}
         <Card>
           <CardHeader>
@@ -237,13 +244,6 @@ export default function PreliminaryAssessmentPage() {
             </CardContent>
           )}
         </Card>
-
-        <StatCardGrid columns={4} gap="lg">
-          <StatCard label="Total Assessments" value={filteredAssessments.length} severity="info" icon={FileText} />
-          <StatCard label="Lives Affected" value={filteredAssessments.reduce((sum, a) => sum + (a.numberLivesLost || 0), 0)} severity="critical" icon={Users} />
-          <StatCard label="People Displaced" value={filteredAssessments.reduce((sum, a) => sum + (a.numberDisplaced || 0), 0)} severity="warning" icon={Home} />
-          <StatCard label="Houses Affected" value={filteredAssessments.reduce((sum, a) => sum + (a.numberHousesAffected || 0), 0)} severity="high" icon={Home} />
-        </StatCardGrid>
 
         <DataCardList
           title="Preliminary Assessments"
