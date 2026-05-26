@@ -21,7 +21,7 @@ export const ROLE_PATH_PATTERNS: Record<RoleName, RegExp[]> = {
   COORDINATOR: [/^\/coordinator\//, /^\/reports/, /^\/verification/, /^\/dashboard$/, /^\/profile$/, /^\/help$/],
   RESPONDER: [/^\/responder\//, /^\/rapid-assessments/, /^\/dashboard$/, /^\/profile$/, /^\/help$/],
   DONOR: [/^\/donor\//, /^\/dashboard$/, /^\/profile$/, /^\/help$/],
-  ADMIN: [/^\/admin\//, /^\/roles/, /^\/system\//, /^\/reports/, /^\/dashboard$/, /^\/profile$/, /^\/help$/],
+  ADMIN: [/^\/admin\//, /^\/roles/, /^\/system\//, /^\/reports/, /^\/coordinator\//, /^\/verification/, /^\/dashboard$/, /^\/profile$/, /^\/help$/],
 };
 
 export const ROLE_ACCESSIBLE_PATHS: Record<RoleName, string[]> = {

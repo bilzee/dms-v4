@@ -7,12 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Trophy,
-  HandHeart,
-  Star,
+  Medal,
+  Award,
   Loader2,
   AlertCircle,
-  Users
+  Users,
+  Info
 } from '@/lib/icons';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { apiGet, extractArray } from '@/lib/api';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 
@@ -45,7 +47,7 @@ const fetchTopDonors = async (incidentId?: string): Promise<TopDonor[]> => {
  * TopDonorsSection Component
  * 
  * Displays the top 3 performing donors for the selected incident
- * using the updated ranking formula: responseVerificationRate + totalCommitments
+ * using the weighted ranking formula: Delivery (40%) + Value (30%) + Consistency (20%) + Speed (10%)
  */
 export function TopDonorsSection({ incidentId, className }: TopDonorsProps) {
   const {
@@ -126,9 +128,9 @@ export function TopDonorsSection({ incidentId, className }: TopDonorsProps) {
   // Define ranking colors and icons
   const getRankingConfig = (index: number) => {
     const configs = [
-      { icon: Trophy, bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', textColor: 'text-yellow-700', iconColor: 'text-yellow-600' },
-      { icon: Star, bgColor: 'bg-muted', borderColor: 'border-border', textColor: 'text-foreground', iconColor: 'text-muted-foreground' },
-      { icon: HandHeart, bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700', iconColor: 'text-orange-600' }
+      { icon: Trophy, bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', textColor: 'text-yellow-700', iconColor: 'text-yellow-500' },
+      { icon: Medal, bgColor: 'bg-muted', borderColor: 'border-border', textColor: 'text-foreground', iconColor: 'text-gray-400' },
+      { icon: Award, bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700', iconColor: 'text-amber-600' }
     ];
     return configs[index] || configs[2];
   };
@@ -179,7 +181,7 @@ export function TopDonorsSection({ incidentId, className }: TopDonorsProps) {
               
               <div className="text-right">
                 <div className={cn("text-sm font-bold", config.textColor)}>
-                  {donor.successRate.toFixed(2)}
+                  {donor.successRate.toFixed(1)}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   score
@@ -191,9 +193,22 @@ export function TopDonorsSection({ incidentId, className }: TopDonorsProps) {
         
         {/* Formula explanation */}
         <div className="pt-2 border-t border-border">
-          <div className="text-xs text-muted-foreground text-center">
-            Ranking: (Verification Rate × 100) + Total Commitments
-          </div>
+          <TooltipProvider delayDuration={0}>
+            <div className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
+              <span>Ranking formula</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="inline-flex items-center">
+                    <Info className="w-3.5 h-3.5 cursor-help" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="font-medium mb-1">Score = (Delivery × 0.6) + (Speed × 0.2) + (Value × 0.1) + (Consistency × 0.1)</p>
+                  <p className="text-xs">Delivery: verified / committed items. Speed: response time. Value: ₦ commitment value. Consistency: activity frequency.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
         </div>
       </CardContent>
     </Card>

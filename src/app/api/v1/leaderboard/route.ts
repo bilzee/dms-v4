@@ -171,7 +171,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
 
       // Keep normalized scores for backward compatibility with UI components
       const normalizedDeliveryScore = Math.min(100, verifiedDeliveryRate);
-      const normalizedValueScore = Math.min(100, (totalCommitmentValue / 10000) * 100);
+      const normalizedValueScore = Math.min(100, (totalCommitmentValue / 1000000) * 100);
       const normalizedConsistencyScore = Math.min(100, activityFrequency * 1000);
       const normalizedSpeedScore = Math.max(0, 100 - (avgResponseTime / 24) * 20);
 
@@ -260,9 +260,22 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         break;
     }
 
-    // Add ranking and trend information
-    const rankings = sortedData.slice(0, limit).map((item, index) => {
-      const currentRank = index + 1;
+    // Add ranking and trend information with tie handling
+    const sliced = sortedData.slice(0, limit);
+    const getScore = (item: typeof sliced[number]) => {
+      switch (sortBy) {
+        case 'delivery_rate': return item.metrics.deliveryRates.verified;
+        case 'commitment_value': return item.metrics.commitments.totalValue;
+        case 'consistency': return item.metrics.performance.activityFrequency;
+        default: return item.metrics.performance.overallScore;
+      }
+    };
+    const rankings: (typeof sliced[number] & { rank: number; trend: 'up' | 'down' | 'stable'; previousRank: number })[] = [];
+    for (let index = 0; index < sliced.length; index++) {
+      const item = sliced[index];
+      const currentRank = (index > 0 && getScore(item) === getScore(sliced[index - 1]))
+        ? rankings[index - 1].rank
+        : index + 1;
       const previousRank = item.donor.id ? 
         donorsWithMetrics.find(d => d.id === item.donor.id)?.leaderboardRank || currentRank 
         : currentRank;
@@ -271,13 +284,13 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       if (currentRank < previousRank) trend = 'up';
       else if (currentRank > previousRank) trend = 'down';
 
-      return {
+      rankings.push({
         rank: currentRank,
         ...item,
         trend,
         previousRank
-      };
-    });
+      });
+    }
 
     // Update leaderboard ranks in database (async, don't wait)
     rankings.forEach(async (item) => {

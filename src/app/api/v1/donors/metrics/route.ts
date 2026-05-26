@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { prisma } from '@/lib/db/client';
-import { handleApiError } from '@/lib/api/response'
+import { handleApiError } from '@/lib/api/response';
+import { computeOverallScore } from '@/lib/services/gamification.service';
 
 // Helper function to safely convert BigInt to Number
 const safeJsonParse = (data: any): any => {
@@ -143,6 +144,9 @@ export const GET = withAuth(async (request: NextRequest, context) => {
           select: {
             id: true,
             totalCommittedQuantity: true,
+            deliveredQuantity: true,
+            verifiedDeliveredQuantity: true,
+            totalValueEstimated: true,
             status: true
           }
         },
@@ -186,6 +190,15 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       const totalCommittedItems = Number(donor.commitments.reduce((sum, c) => 
         sum + Number(c.totalCommittedQuantity || 0), 0
       ));
+      const totalDeliveredItems = Number(donor.commitments.reduce((sum, c) => 
+        sum + Number((c as any).deliveredQuantity || 0), 0
+      ));
+      const totalVerifiedItems = Number(donor.commitments.reduce((sum, c) => 
+        sum + Number((c as any).verifiedDeliveredQuantity || 0), 0
+      ));
+      const totalCommitmentValue = Number(donor.commitments.reduce((sum, c) => 
+        sum + Number((c as any).totalValueEstimated || 0), 0
+      ));
 
       const verificationRate = totalResponses > 0 ? verifiedResponses / totalResponses : 0;
       const commitmentFulfillmentRate = totalCommitments > 0 ? (totalCommitments - availableCommitments) / totalCommitments : 0;
@@ -201,7 +214,10 @@ export const GET = withAuth(async (request: NextRequest, context) => {
             available: availableCommitments,
             fulfilled: Number(totalCommitments - availableCommitments),
             totalItems: totalCommittedItems,
-            fulfillmentRate: commitmentFulfillmentRate
+            fulfillmentRate: commitmentFulfillmentRate,
+            totalValue: totalCommitmentValue,
+            deliveredItems: totalDeliveredItems,
+            verifiedItems: totalVerifiedItems
           },
           responses: {
             total: totalResponses,
@@ -231,22 +247,38 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         ? donorMetrics.reduce((sum, d) => sum + d.metrics.responses.verificationRate, 0) / donorMetrics.length
         : 0,
       totalVerifiedResponses: donorMetrics.reduce((sum, d) => sum + Number(d.metrics.responses.verified || 0), 0),
-      topPerformers: donorMetrics
-        .sort((a, b) => {
-          // New formula: (responseVerificationRate * 100) + totalCommitments
-          const scoreA = (a.metrics.responses.verificationRate * 100) + a.metrics.commitments.total;
-          const scoreB = (b.metrics.responses.verificationRate * 100) + b.metrics.commitments.total;
-          return scoreB - scoreA;
-        })
-        .slice(0, 5)
-        .map(d => ({
+      topPerformers: (() => {
+        const scored = donorMetrics.map(d => {
+          const verifiedDeliveryRate = d.metrics.commitments.totalItems > 0
+            ? (d.metrics.commitments.verifiedItems / d.metrics.commitments.totalItems) * 100
+            : 0;
+          const daysSinceCreated = Math.max(1, Math.ceil((now.getTime() - new Date(d.donorSince).getTime()) / (1000 * 60 * 60 * 24)));
+          const activityFrequency = (d.metrics.commitments.total + d.metrics.responses.total) / daysSinceCreated;
+          const overallScore = computeOverallScore({
+            verifiedDeliveryRate,
+            totalCommitmentValue: d.metrics.commitments.totalValue,
+            activityFrequency,
+            avgResponseTimeHours: 24
+          });
+          return { ...d, overallScore };
+        });
+        scored.sort((a, b) => b.overallScore - a.overallScore);
+        const ranked: (typeof scored[number] & { rank: number })[] = [];
+        for (let i = 0; i < scored.length; i++) {
+          const rank = (i > 0 && scored[i].overallScore === scored[i - 1].overallScore)
+            ? ranked[i - 1].rank
+            : i + 1;
+          ranked.push({ ...scored[i], rank });
+        }
+        return ranked.slice(0, 5).map(d => ({
           donorName: d.donorName,
-          successRate: Number((d.metrics.responses.verificationRate * 100) + d.metrics.commitments.total),
+          successRate: Number(d.overallScore.toFixed(1)),
           verifiedActivities: Number(d.metrics.combined.verifiedActivities),
           totalActivities: Number(d.metrics.combined.totalActivities),
           responseVerificationRate: Number(d.metrics.responses.verificationRate * 100),
           totalCommitments: Number(d.metrics.commitments.total)
-        }))
+        }));
+      })()
     };
 
     // Create JSON-safe response to prevent BigInt serialization

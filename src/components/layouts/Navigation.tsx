@@ -374,6 +374,25 @@ const getNavigationItems = (role: string | null): NavItem[] => {
         ]
       },
       {
+        name: 'Reports',
+        href: '#admin-reports',
+        icon: FileText,
+        children: [
+          { 
+            name: 'Report Management', 
+            href: '/coordinator/reports', 
+            icon: FileText,
+            description: 'View and manage report configurations' 
+          },
+          { 
+            name: 'Report Builder', 
+            href: '/reports/builder', 
+            icon: BarChart3,
+            description: 'Create and edit report templates' 
+          }
+        ]
+      },
+      {
         name: 'System Administration',
         href: '#admin-system',
         icon: Settings,

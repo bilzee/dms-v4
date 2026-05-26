@@ -315,7 +315,7 @@ export function LeaderboardDisplay({
                 
                 <div className="text-center">
                   <div className="font-semibold text-gray-900">
-                    ${entry.metrics.commitments.totalValue.toLocaleString()}
+                    ₦{entry.metrics.commitments.totalValue.toLocaleString()}
                   </div>
                   <div className="text-xs text-gray-500">Total Value</div>
                 </div>

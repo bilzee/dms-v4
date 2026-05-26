@@ -16,12 +16,17 @@ import {
   HandHeart, 
   CheckCircle, 
   Star,
+  Trophy,
+  Medal,
+  Award,
+  Info,
   Shield,
   BarChart3,
   RefreshCw,
   Calendar,
   Activity
 } from '@/lib/icons';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 
@@ -173,8 +178,11 @@ export function DonorMetricsDashboard() {
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0 flex items-center justify-center min-w-8 min-h-8 w-8 h-8 rounded-full bg-gray-100 text-gray-700 text-sm font-bold">
-                            {index + 1}
+                          <div className="flex-shrink-0 flex items-center justify-center min-w-8 min-h-8 w-8 h-8">
+                            {index === 0 ? <Trophy className="w-6 h-6 text-yellow-500" /> :
+                             index === 1 ? <Medal className="w-6 h-6 text-gray-400" /> :
+                             index === 2 ? <Award className="w-6 h-6 text-amber-600" /> :
+                             <div className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full text-sm font-semibold text-gray-600">{index + 1}</div>}
                           </div>
                           <div>
                             <p className="font-medium">{donor.donorName}</p>
@@ -186,13 +194,23 @@ export function DonorMetricsDashboard() {
                         
                         <div className="text-right">
                           <div className="font-semibold text-lg">
-                            {donor.successRate.toFixed(2)}
+                            {donor.successRate.toFixed(1)}
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            performance score
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            Rate: {(donor.responseVerificationRate * 100).toFixed(1)}% + {donor.totalCommitments} commits
+                          <div className="text-sm text-muted-foreground flex items-center gap-1">
+                            <span>score</span>
+                            <TooltipProvider delayDuration={0}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button type="button" className="inline-flex items-center">
+                                    <Info className="w-3 h-3 cursor-help" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-xs">
+                                  <p className="font-medium mb-1">Score = (Delivery × 0.6) + (Speed × 0.2) + (Value × 0.1) + (Consistency × 0.1)</p>
+                                  <p className="text-xs">Delivery: verified / committed items. Speed: response time. Value: ₦ commitment value. Consistency: activity frequency.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </div>
                         </div>
                       </div>

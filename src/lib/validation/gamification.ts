@@ -217,8 +217,10 @@ export const BADGE_THRESHOLDS = {
 
 // Ranking calculation weights (as specified in story requirements)
 export const RANKING_WEIGHTS = {
-  VERIFIED_DELIVERY_RATE: 0.4,  // 40% - Primary importance
-  COMMITMENT_VALUE: 0.3,         // 30% - Secondary importance  
-  CONSISTENCY: 0.2,              // 20% - Tertiary importance
-  RESPONSE_SPEED: 0.1            // 10% - Quaternary importance
+  VERIFIED_DELIVERY_RATE: 0.6,  // 60% - Primary importance
+  RESPONSE_SPEED: 0.2,          // 20% - Secondary importance
+  COMMITMENT_VALUE: 0.1,        // 10% - Tertiary importance
+  CONSISTENCY: 0.1              // 10% - Quaternary importance
 } as const;
+
+export const VALUE_CAP_NGN = 1_000_000;

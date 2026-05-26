@@ -3,19 +3,25 @@
 import React from 'react';
 import { LeaderboardDisplay } from '@/components/donor/LeaderboardDisplay';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Info } from '@/lib/icons';
+import { Trophy, Info, Users, TrendingUp, Clock } from '@/lib/icons';
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ExportButton } from '@/components/dashboards/shared/exports/ExportButton';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 export default function LeaderboardPage() {
-  // Fetch leaderboard ranking criteria from backend
   const { 
     data: criteriaData, 
     isLoading: criteriaLoading, 
-    error: criteriaError,
-    refetch: refetchCriteria
   } = useQuery({
     queryKey: ['leaderboard-criteria'],
     queryFn: async () => {
@@ -25,8 +31,8 @@ export default function LeaderboardPage() {
       }
       return result.data || null;
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    refetchInterval: 15 * 60 * 1000 // Refresh every 15 minutes
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 15 * 60 * 1000
   });
 
   const criteria = criteriaData?.criteria;
@@ -34,34 +40,47 @@ export default function LeaderboardPage() {
 
   return (
     <div className="py-8 space-y-6">
-      {/* Page Header */}
       <div className="relative">
-      <div className="text-center space-y-4">
-        <div className="flex items-center justify-center gap-2">
-          <Trophy className="w-8 h-8 text-yellow-500" />
-          <h1 className="text-4xl font-bold text-foreground">Donor Leaderboard</h1>
-        </div>
-        <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-          Recognizing and celebrating our most dedicated disaster response partners. 
-          Rankings are updated {criteria?.calculation?.updateFrequency || 'every 15 minutes'} based on response verification rate 
-          and total commitments made to ensure both reliability and volume are rewarded.
-        </p>
-        {stats && (
-          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-            <span>{stats.totalActiveDonors} active donors</span>
-            <span>•</span>
-            <span>Avg. delivery rate: {stats.averageDeliveryRate}%</span>
-            <span>•</span>
-            <span>Updated {new Date(stats.lastCalculated).toLocaleTimeString()}</span>
+        <div className="text-center space-y-4">
+          <div className="flex items-center justify-center gap-2">
+            <Trophy className="w-8 h-8 text-yellow-500" />
+            <h1 className="text-4xl font-bold text-foreground">Donor Leaderboard</h1>
           </div>
-        )}
-      </div>
-      <div className="absolute top-0 right-0">
-        <ExportButton dataType="commitments" size="sm" />
-      </div>
+        </div>
+        <div className="absolute top-0 right-0">
+          <ExportButton dataType="commitments" size="sm" />
+        </div>
       </div>
 
-      {/* Leaderboard Explanation */}
+      {stats && (
+        <StatCardGrid columns={3} className="max-w-2xl mx-auto">
+          <StatCard
+            label="Active Donors"
+            value={stats.totalActiveDonors}
+            icon={Users}
+            severity="info"
+            variant="compact"
+            loading={criteriaLoading}
+          />
+          <StatCard
+            label="Avg Delivery Rate"
+            value={`${stats.averageDeliveryRate}%`}
+            icon={TrendingUp}
+            severity="success"
+            variant="compact"
+            loading={criteriaLoading}
+          />
+          <StatCard
+            label="Last Updated"
+            value={new Date(stats.lastCalculated).toLocaleTimeString()}
+            icon={Clock}
+            severity="neutral"
+            variant="compact"
+            loading={criteriaLoading}
+          />
+        </StatCardGrid>
+      )}
+
       {criteriaLoading ? (
         <div className="max-w-4xl mx-auto flex justify-center gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -70,43 +89,60 @@ export default function LeaderboardPage() {
         </div>
       ) : criteria ? (
         <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-3 text-sm">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Info className="w-4 h-4 shrink-0" />
-            <span>Ranked by</span>
-          </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                <Info className="w-4 h-4 shrink-0" />
+                <span>Ranked by</span>
+              </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>How Rankings Are Calculated</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 text-sm text-muted-foreground">
+                <p>
+                  Each donor&apos;s score is a weighted sum of four factors, each normalized to 0–100 before weighting:
+                </p>
+                <div className="space-y-3">
+                  <div className="border rounded-lg p-3">
+                    <p className="font-semibold text-foreground">Delivery (60%)</p>
+                    <p>Verified delivered items ÷ total committed items × 100. Measures how reliably commitments are fulfilled and verified.</p>
+                  </div>
+                  <div className="border rounded-lg p-3">
+                    <p className="font-semibold text-foreground">Response Speed (20%)</p>
+                    <p>100 − (average response hours ÷ 24 × 20). Every 24 hours of delay costs 20 points. Responding within 6 hours scores ~95; after 5 days scores 0.</p>
+                  </div>
+                  <div className="border rounded-lg p-3">
+                    <p className="font-semibold text-foreground">Commitment Value (10%)</p>
+                    <p>Total commitment value in Naira ÷ ₦1,000,000 × 100, capped at 100. Donors contributing ₦1M or more receive full marks.</p>
+                  </div>
+                  <div className="border rounded-lg p-3">
+                    <p className="font-semibold text-foreground">Consistency (10%)</p>
+                    <p>(Total commitments + responses) ÷ days active × 1000, capped at 100. Rewards donors who contribute regularly over time.</p>
+                  </div>
+                </div>
+                <p className="text-xs border-t pt-3">
+                  Ties receive the same rank. Updated every 15 minutes.
+                </p>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-500/10 dark:border-blue-500/20 dark:text-blue-400">
-            Verification Rate + Commitments
+            {criteria.weights.deliveryRate.percentage}% Delivery
           </Badge>
-          <span className="text-muted-foreground">•</span>
-          <Badge variant="outline" className="bg-yellow-50 border-yellow-300 text-yellow-700 dark:bg-yellow-500/10 dark:border-yellow-500/20 dark:text-yellow-400">
-            {criteria.badgeThresholds.gold.icon} Gold {criteria.badgeThresholds.gold.minDeliveryRate}%+
+          <Badge variant="outline" className="bg-orange-50 border-orange-200 text-orange-700 dark:bg-orange-500/10 dark:border-orange-500/20 dark:text-orange-400">
+            {criteria.weights.responseSpeed.percentage}% Speed
           </Badge>
-          <Badge variant="outline" className="bg-gray-50 border-gray-300 text-gray-700 dark:bg-gray-500/10 dark:border-gray-500/20 dark:text-gray-400">
-            {criteria.badgeThresholds.silver.icon} Silver {criteria.badgeThresholds.silver.minDeliveryRate}%+
+          <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700 dark:bg-green-500/10 dark:border-green-500/20 dark:text-green-400">
+            {criteria.weights.commitmentValue.percentage}% Value
           </Badge>
-          <Badge variant="outline" className="bg-amber-50 border-amber-300 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-400">
-            {criteria.badgeThresholds.bronze.icon} Bronze {criteria.badgeThresholds.bronze.minDeliveryRate}%+
+          <Badge variant="outline" className="bg-purple-50 border-purple-200 text-purple-700 dark:bg-purple-500/10 dark:border-purple-500/20 dark:text-purple-400">
+            {criteria.weights.consistency.percentage}% Consistency
           </Badge>
-          {stats && (
-            <>
-              <span className="text-muted-foreground">•</span>
-              <span className="text-muted-foreground">
-                {stats.badgeDistribution.gold}G {stats.badgeDistribution.silver}S {stats.badgeDistribution.bronze}B
-              </span>
-            </>
-          )}
-          {criteria?.calculation?.formula && (
-            <>
-              <span className="text-muted-foreground">•</span>
-              <span className="text-xs text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded">
-                {criteria.calculation.formula}
-              </span>
-            </>
-          )}
         </div>
       ) : null}
 
-      {/* Main Leaderboard */}
       <div className="max-w-6xl mx-auto">
         <LeaderboardDisplay
           timeframe="30d"

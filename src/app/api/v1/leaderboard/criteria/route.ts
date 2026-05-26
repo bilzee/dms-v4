@@ -21,25 +21,25 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     const rankingCriteria = {
       weights: {
         deliveryRate: {
-          percentage: 40,
+          percentage: 60,
           name: "Verified Delivery Rate",
           description: "Percentage of commitments successfully delivered and verified",
           color: "blue"
         },
         commitmentValue: {
-          percentage: 30,
+          percentage: 10,
           name: "Commitment Value",
-          description: "Total monetary value of commitments made and fulfilled",
+          description: "Total monetary value of commitments made and fulfilled (capped at ₦1,000,000)",
           color: "green"
         },
         consistency: {
-          percentage: 20,
+          percentage: 10,
           name: "Consistency",
           description: "Regularity of contributions and response frequency",
           color: "purple"
         },
         responseSpeed: {
-          percentage: 10,
+          percentage: 20,
           name: "Response Speed",
           description: "Average time to respond to new incidents and requests",
           color: "orange"
@@ -69,26 +69,36 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         }
       },
       calculation: {
-        formula: "Overall Score = (Response Verification Rate × 100) + Total Commitments",
+        formula: "Score = (Delivery Rate × 0.6) + (Response Speed × 0.2) + (Commitment Value × 0.1) + (Consistency × 0.1)",
         updateFrequency: "Every 15 minutes",
         dataSource: "Real-time verification and commitment data",
         scoringPeriod: "Rolling 30-day period (configurable)"
       },
       performanceMetrics: {
-        responseVerificationRate: {
-          calculation: "Verified responses ÷ Total responses × 100",
-          description: "Percentage of donor responses that have been verified",
-          contribution: "Direct addition to overall score"
+        deliveryRate: {
+          calculation: "Verified delivered items ÷ Total committed items × 100",
+          description: "Percentage of committed items successfully delivered and verified",
+          contribution: "60% weight in overall score (primary factor)"
         },
-        totalCommitments: {
-          calculation: "Count of all commitments made by donor",
-          description: "Total number of commitments regardless of status",
-          contribution: "Direct addition to overall score"
+        commitmentValue: {
+          calculation: "Total estimated value ÷ ₦1,000,000 × 100 (capped at 100)",
+          description: "Monetary value of commitments in NGN, capped at ₦1,000,000",
+          contribution: "10% weight in overall score"
+        },
+        consistency: {
+          calculation: "(Commitments + Responses) ÷ Days since first activity × 1000 (capped at 100)",
+          description: "Regularity of contributions and response frequency",
+          contribution: "10% weight in overall score"
+        },
+        responseSpeed: {
+          calculation: "100 − (Avg response hours ÷ 24 × 20), minimum 0",
+          description: "Average time to respond to new incidents (every 24h costs 20 points)",
+          contribution: "20% weight in overall score (secondary factor)"
         },
         overallScore: {
-          calculation: "(Response Verification Rate × 100) + Total Commitments",
-          description: "Simple additive formula prioritizing both verification rate and commitment volume",
-          note: "Higher verification rates and more commitments lead to higher rankings"
+          calculation: "(Delivery Rate × 0.6) + (Response Speed × 0.2) + (Commitment Value × 0.1) + (Consistency × 0.1)",
+          description: "Weighted composite score prioritizing delivery reliability and response speed",
+          note: "Each factor is normalized to 0–100 before weighting. Ties receive the same rank."
         }
       }
     };

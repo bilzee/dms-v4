@@ -4,6 +4,7 @@ import {
   DonorMetrics, 
   BADGE_THRESHOLDS, 
   RANKING_WEIGHTS,
+  VALUE_CAP_NGN,
   Achievement 
 } from '@/lib/validation/gamification';
 
@@ -16,7 +17,7 @@ export interface OverallScoreInputs {
 
 export function computeOverallScore(metrics: OverallScoreInputs): number {
   const normalizedDeliveryScore = Math.min(100, metrics.verifiedDeliveryRate);
-  const normalizedValueScore = Math.min(100, (metrics.totalCommitmentValue / 10000) * 100);
+  const normalizedValueScore = Math.min(100, (metrics.totalCommitmentValue / VALUE_CAP_NGN) * 100);
   const normalizedConsistencyScore = Math.min(100, metrics.activityFrequency * 1000);
   const normalizedSpeedScore = Math.max(0, 100 - (metrics.avgResponseTimeHours / 24) * 20);
 
