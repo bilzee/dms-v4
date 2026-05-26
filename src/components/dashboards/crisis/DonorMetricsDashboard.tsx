@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useDonorMetrics, useVerifiedBadgeDisplay, type DonorMetrics } from '@/hooks/useDonorMetrics';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatCard } from '@/components/shared/StatCard';
@@ -29,11 +30,26 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
+import { apiGet } from '@/lib/api';
 
 
 export function DonorMetricsDashboard() {
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [selectedDonor, setSelectedDonor] = useState<string | null>(null);
+
+  const { data: criteriaData } = useQuery({
+    queryKey: ['leaderboard-criteria'],
+    queryFn: async () => {
+      const result = await apiGet('/api/v1/leaderboard/criteria');
+      return result.success ? result.data : null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const formulaText = criteriaData?.criteria?.calculation?.formula || 'Score = (Delivery \u00d7 0.6) + (Speed \u00d7 0.2) + (Value \u00d7 0.1) + (Consistency \u00d7 0.1)';
+  const config = criteriaData?.criteria?.config;
+  const curSym = config?.valueCurrency === 'NGN' ? '\u20a6' : config?.valueCurrency === 'USD' ? '$' : config?.valueCurrency === 'EUR' ? '\u20ac' : '\u20a6';
+  const valueDesc = config ? `Value: ${curSym} commitment value (cap ${curSym}${(config.valueCap / 1000000).toFixed(1)}M).` : 'Value: \u20a6 commitment value.';
+  const speedDesc = config ? `Speed: score drops to 0 after ${config.speedZeroScoreHours}h.` : 'Speed: response time.';
 
   const { 
     data: donorMetrics, 
@@ -206,8 +222,8 @@ export function DonorMetricsDashboard() {
                                   </button>
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="max-w-xs">
-                                  <p className="font-medium mb-1">Score = (Delivery × 0.6) + (Speed × 0.2) + (Value × 0.1) + (Consistency × 0.1)</p>
-                                  <p className="text-xs">Delivery: verified / committed items. Speed: response time. Value: ₦ commitment value. Consistency: activity frequency.</p>
+                                  <p className="font-medium mb-1">{formulaText}</p>
+                                  <p className="text-xs">Delivery: verified / committed items. {speedDesc} {valueDesc} Consistency: activity frequency.</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>

@@ -193,6 +193,12 @@ const getNavigationItems = (role: string | null): NavItem[] => {
             href: '/coordinator/settings/severity-thresholds',
             icon: Settings,
             description: 'Configure severity thresholds for impact badges'
+          },
+          {
+            name: 'Scoring Configuration',
+            href: '/coordinator/settings/scoring',
+            icon: Trophy,
+            description: 'Configure donor scoring formula weights and parameters'
           }
         ]
       },

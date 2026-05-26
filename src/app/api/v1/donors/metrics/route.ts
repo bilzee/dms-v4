@@ -3,6 +3,7 @@ import { withAuth } from '@/lib/auth/middleware';
 import { prisma } from '@/lib/db/client';
 import { handleApiError } from '@/lib/api/response';
 import { computeOverallScore } from '@/lib/services/gamification.service';
+import { getScoringConfig } from '@/lib/services/scoring-config.service';
 
 // Helper function to safely convert BigInt to Number
 const safeJsonParse = (data: any): any => {
@@ -33,6 +34,8 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         { status: 403 }
       );
     }
+
+    const scoringConfig = await getScoringConfig();
 
     const { searchParams } = new URL(request.url);
     const dateRange = searchParams.get('dateRange') || '30d';
@@ -259,7 +262,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
             totalCommitmentValue: d.metrics.commitments.totalValue,
             activityFrequency,
             avgResponseTimeHours: 24
-          });
+          }, scoringConfig);
           return { ...d, overallScore };
         });
         scored.sort((a, b) => b.overallScore - a.overallScore);

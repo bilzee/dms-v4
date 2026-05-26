@@ -106,20 +106,20 @@ export default function LeaderboardPage() {
                 </p>
                 <div className="space-y-3">
                   <div className="border rounded-lg p-3">
-                    <p className="font-semibold text-foreground">Delivery (60%)</p>
-                    <p>Verified delivered items ÷ total committed items × 100. Measures how reliably commitments are fulfilled and verified.</p>
+                    <p className="font-semibold text-foreground">Delivery ({criteria.weights.deliveryRate.percentage}%)</p>
+                    <p>{criteria.performanceMetrics.deliveryRate.description}</p>
                   </div>
                   <div className="border rounded-lg p-3">
-                    <p className="font-semibold text-foreground">Response Speed (20%)</p>
-                    <p>100 − (average response hours ÷ 24 × 20). Every 24 hours of delay costs 20 points. Responding within 6 hours scores ~95; after 5 days scores 0.</p>
+                    <p className="font-semibold text-foreground">Response Speed ({criteria.weights.responseSpeed.percentage}%)</p>
+                    <p>{criteria.performanceMetrics.responseSpeed.description}</p>
                   </div>
                   <div className="border rounded-lg p-3">
-                    <p className="font-semibold text-foreground">Commitment Value (10%)</p>
-                    <p>Total commitment value in Naira ÷ ₦1,000,000 × 100, capped at 100. Donors contributing ₦1M or more receive full marks.</p>
+                    <p className="font-semibold text-foreground">Commitment Value ({criteria.weights.commitmentValue.percentage}%)</p>
+                    <p>{criteria.performanceMetrics.commitmentValue.description}</p>
                   </div>
                   <div className="border rounded-lg p-3">
-                    <p className="font-semibold text-foreground">Consistency (10%)</p>
-                    <p>(Total commitments + responses) ÷ days active × 1000, capped at 100. Rewards donors who contribute regularly over time.</p>
+                    <p className="font-semibold text-foreground">Consistency ({criteria.weights.consistency.percentage}%)</p>
+                    <p>{criteria.performanceMetrics.consistency.description}</p>
                   </div>
                 </div>
                 <p className="text-xs border-t pt-3">

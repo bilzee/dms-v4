@@ -7,6 +7,7 @@ import {
   VALUE_CAP_NGN,
   Achievement 
 } from '@/lib/validation/gamification';
+import type { ScoringConfig } from '@/lib/services/scoring-config.service';
 
 export interface OverallScoreInputs {
   verifiedDeliveryRate: number;
@@ -15,17 +16,28 @@ export interface OverallScoreInputs {
   avgResponseTimeHours: number;
 }
 
-export function computeOverallScore(metrics: OverallScoreInputs): number {
+export function computeOverallScore(metrics: OverallScoreInputs, config?: ScoringConfig): number {
+  const valueCap = config?.valueCap ?? VALUE_CAP_NGN;
+  const consistencyMultiplier = config?.consistencyMaxActivitiesPerDay
+    ? 1 / config.consistencyMaxActivitiesPerDay
+    : 1000;
+  const speedZeroHours = config?.speedZeroScoreHours ?? 120;
+
   const normalizedDeliveryScore = Math.min(100, metrics.verifiedDeliveryRate);
-  const normalizedValueScore = Math.min(100, (metrics.totalCommitmentValue / VALUE_CAP_NGN) * 100);
-  const normalizedConsistencyScore = Math.min(100, metrics.activityFrequency * 1000);
-  const normalizedSpeedScore = Math.max(0, 100 - (metrics.avgResponseTimeHours / 24) * 20);
+  const normalizedValueScore = Math.min(100, (metrics.totalCommitmentValue / valueCap) * 100);
+  const normalizedConsistencyScore = Math.min(100, metrics.activityFrequency * consistencyMultiplier);
+  const normalizedSpeedScore = Math.max(0, 100 - (metrics.avgResponseTimeHours / speedZeroHours) * 100);
+
+  const wDelivery = (config?.deliveryWeight ?? RANKING_WEIGHTS.VERIFIED_DELIVERY_RATE * 100) / 100;
+  const wSpeed = (config?.speedWeight ?? RANKING_WEIGHTS.RESPONSE_SPEED * 100) / 100;
+  const wValue = (config?.valueWeight ?? RANKING_WEIGHTS.COMMITMENT_VALUE * 100) / 100;
+  const wConsistency = (config?.consistencyWeight ?? RANKING_WEIGHTS.CONSISTENCY * 100) / 100;
 
   return (
-    (normalizedDeliveryScore * RANKING_WEIGHTS.VERIFIED_DELIVERY_RATE) +
-    (normalizedValueScore * RANKING_WEIGHTS.COMMITMENT_VALUE) +
-    (normalizedConsistencyScore * RANKING_WEIGHTS.CONSISTENCY) +
-    (normalizedSpeedScore * RANKING_WEIGHTS.RESPONSE_SPEED)
+    (normalizedDeliveryScore * wDelivery) +
+    (normalizedValueScore * wValue) +
+    (normalizedConsistencyScore * wConsistency) +
+    (normalizedSpeedScore * wSpeed)
   );
 }
 

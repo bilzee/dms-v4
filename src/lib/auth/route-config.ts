@@ -46,6 +46,7 @@ export const ROLE_ACCESSIBLE_PATHS: Record<RoleName, string[]> = {
     '/coordinator/resource-management',
     '/coordinator/settings/gap-field-management',
     '/coordinator/settings/severity-thresholds',
+    '/coordinator/settings/scoring',
     '/coordinator/reports',
     '/coordinator/entity-incident-map',
     '/coordinator/auto-approval',

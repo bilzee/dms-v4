@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db/client';
 import { z } from 'zod';
 import { handleApiError } from '@/lib/api/response';
 import { computeOverallScore } from '@/lib/services/gamification.service';
+import { getScoringConfig } from '@/lib/services/scoring-config.service';
 
 const LeaderboardQuerySchema = z.object({
   limit: z.string().optional().transform(val => val ? parseInt(val) : 50),
@@ -23,6 +24,8 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         { status: 403 }
       );
     }
+
+    const scoringConfig = await getScoringConfig();
 
     const { searchParams } = new URL(request.url);
     const queryParams = LeaderboardQuerySchema.safeParse(Object.fromEntries(searchParams));
@@ -167,13 +170,13 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         totalCommitmentValue,
         activityFrequency,
         avgResponseTimeHours: avgResponseTime
-      });
+      }, scoringConfig);
 
-      // Keep normalized scores for backward compatibility with UI components
+      const consistencyMultiplier = 1 / scoringConfig.consistencyMaxActivitiesPerDay;
       const normalizedDeliveryScore = Math.min(100, verifiedDeliveryRate);
-      const normalizedValueScore = Math.min(100, (totalCommitmentValue / 1000000) * 100);
-      const normalizedConsistencyScore = Math.min(100, activityFrequency * 1000);
-      const normalizedSpeedScore = Math.max(0, 100 - (avgResponseTime / 24) * 20);
+      const normalizedValueScore = Math.min(100, (totalCommitmentValue / scoringConfig.valueCap) * 100);
+      const normalizedConsistencyScore = Math.min(100, activityFrequency * consistencyMultiplier);
+      const normalizedSpeedScore = Math.max(0, 100 - (avgResponseTime / scoringConfig.speedZeroScoreHours) * 100);
 
       // Achievement badges
       const badges: string[] = [];
