@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useFilters } from '@/hooks/useFilters'
 import { apiGet } from '@/lib/api'
 import { Edit, Users, UserCheck, UserX, Plus, Pencil } from '@/lib/icons'
+import { ExportButton } from '@/components/dashboards/shared/exports/ExportButton'
 import { DataTable, type ColumnDef, type RowAction } from '@/components/shared/DataTable'
 import type { AdminFilters, FilterConfig, ToolbarAction } from '@/types/filters'
 
@@ -253,6 +254,7 @@ export default function UsersPage() {
               <p className="text-gray-600">Manage system users and their role assignments</p>
             </div>
             
+            <div className="flex items-center gap-3">
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
@@ -267,6 +269,8 @@ export default function UsersPage() {
                 <RegisterForm onSuccess={handleCreateSuccess} />
               </DialogContent>
             </Dialog>
+            <ExportButton dataType="assessments" size="sm" />
+            </div>
           </div>
 
           {/* Summary Tiles */}

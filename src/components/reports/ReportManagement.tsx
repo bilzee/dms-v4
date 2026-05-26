@@ -8,7 +8,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +18,7 @@ import { StatusBadge, getBadgeClasses } from '@/components/shared/StatusBadge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   FileText, 
   Clock, 
@@ -41,7 +41,9 @@ import {
   MoreHorizontal,
   Copy,
   Share,
-  DownloadCloud
+  DownloadCloud,
+  Plus,
+  Loader2
 } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { ReportExecutionStatus } from '@prisma/client';
@@ -49,9 +51,12 @@ import {
   useReportConfigurations,
   useReportExecutions,
   useReportStatistics,
+  useReportTemplates,
   useDeleteConfiguration,
   useDeleteExecution,
   useDuplicateConfiguration,
+  useGenerateReport,
+  useCreateConfiguration,
 } from '@/hooks/useReportManagement'
 import { createAuthenticatedFetch } from '@/lib/auth/token-utils'
 
@@ -130,6 +135,26 @@ export function ReportManagement({ className }: ReportManagementProps) {
   const deleteConfigurationMutation = useDeleteConfiguration();
   const deleteExecutionMutation = useDeleteExecution();
   const duplicateConfigurationMutation = useDuplicateConfiguration();
+  const generateReportMutation = useGenerateReport();
+  const createConfigurationMutation = useCreateConfiguration();
+
+  const [showNewConfigDialog, setShowNewConfigDialog] = useState(false);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
+  const [generatingConfigId, setGeneratingConfigId] = useState<string | null>(null);
+  const [generateFormat, setGenerateFormat] = useState<'PDF' | 'CSV' | 'HTML' | 'EXCEL'>('PDF');
+  const [newConfigStep, setNewConfigStep] = useState(0);
+  const [newConfigForm, setNewConfigForm] = useState({
+    templateId: '',
+    name: '',
+    dateFrom: '',
+    dateTo: '',
+    entityFilter: '',
+    scheduleFrequency: '' as '' | 'once' | 'daily' | 'weekly' | 'monthly',
+    scheduleStartDate: '',
+  });
+
+  const { data: templatesData } = useReportTemplates();
+  const templates = (templatesData as any)?.templates || (Array.isArray(templatesData) ? templatesData : []);
 
   // Refresh data
   const refreshData = useCallback(() => {
@@ -137,6 +162,60 @@ export function ReportManagement({ className }: ReportManagementProps) {
     queryClient.invalidateQueries({ queryKey: ['report-executions'] });
     queryClient.invalidateQueries({ queryKey: ['report-statistics'] });
   }, [queryClient]);
+
+  const handleGenerateReport = useCallback((configId: string) => {
+    setGeneratingConfigId(configId);
+    setGenerateFormat('PDF');
+    setShowGenerateDialog(true);
+  }, []);
+
+  const confirmGenerate = useCallback(async () => {
+    if (!generatingConfigId) return;
+    try {
+      await generateReportMutation.mutateAsync({
+        configurationId: generatingConfigId,
+        format: generateFormat,
+      });
+      setShowGenerateDialog(false);
+      setGeneratingConfigId(null);
+      setActiveTab('executions');
+    } catch {}
+  }, [generatingConfigId, generateFormat, generateReportMutation]);
+
+  const handleCreateConfig = useCallback(async () => {
+    if (!newConfigForm.templateId || !newConfigForm.name) return;
+    try {
+      const filters: any = { filters: [], aggregations: [], limit: 1000 };
+      if (newConfigForm.dateFrom || newConfigForm.dateTo) {
+        filters.filters.push({
+          field: 'createdAt',
+          operator: newConfigForm.dateFrom && newConfigForm.dateTo ? 'between' : 'gte',
+          value: newConfigForm.dateFrom || newConfigForm.dateTo,
+          ...(newConfigForm.dateTo ? { valueEnd: newConfigForm.dateTo } : {}),
+        });
+      }
+      if (newConfigForm.entityFilter) {
+        filters.filters.push({ field: 'entityId', operator: 'eq', value: newConfigForm.entityFilter });
+      }
+      const schedule = newConfigForm.scheduleFrequency ? {
+        frequency: newConfigForm.scheduleFrequency,
+        startDate: newConfigForm.scheduleStartDate || new Date().toISOString(),
+        enabled: true,
+      } : undefined;
+
+      await createConfigurationMutation.mutateAsync({
+        templateId: newConfigForm.templateId,
+        name: newConfigForm.name,
+        filters,
+        aggregations: [],
+        visualizations: [],
+        schedule,
+      });
+      setShowNewConfigDialog(false);
+      setNewConfigStep(0);
+      setNewConfigForm({ templateId: '', name: '', dateFrom: '', dateTo: '', entityFilter: '', scheduleFrequency: '', scheduleStartDate: '' });
+    } catch {}
+  }, [newConfigForm, createConfigurationMutation]);
 
   // Download report
   const downloadReport = useCallback(async (executionId: string, format: FormatType) => {
@@ -212,6 +291,10 @@ export function ReportManagement({ className }: ReportManagementProps) {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
+          <Button size="sm" onClick={() => { setNewConfigStep(0); setNewConfigForm({ templateId: '', name: '', dateFrom: '', dateTo: '', entityFilter: '', scheduleFrequency: '', scheduleStartDate: '' }); setShowNewConfigDialog(true); }}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Configuration
+          </Button>
         </div>
       </div>
 
@@ -236,7 +319,7 @@ export function ReportManagement({ className }: ReportManagementProps) {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{statistics?.executionsInPeriod || 0}</div>
+            <div className="text-2xl font-bold">{statistics?.totalExecutions || 0}</div>
             <p className="text-xs text-muted-foreground">
               In the last {timeRange.days} days
             </p>
@@ -387,7 +470,7 @@ export function ReportManagement({ className }: ReportManagementProps) {
                 <p className="text-gray-600">Failed to load configurations</p>
               </div>
             </div>
-          ) : configurations?.items?.length === 0 ? (
+          ) : !configurations?.configurations?.length ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -404,7 +487,7 @@ export function ReportManagement({ className }: ReportManagementProps) {
           ) : (
             <ScrollArea className="h-[600px]">
               <div className="space-y-4">
-                {configurations.items.map((config: any) => (
+                {configurations.configurations.map((config: any) => (
                   <Card key={config.id} className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="space-y-3 flex-1">
@@ -479,6 +562,14 @@ export function ReportManagement({ className }: ReportManagementProps) {
                       {/* Actions */}
                       <div className="flex flex-col gap-2 ml-4">
                         <Button
+                          size="sm"
+                          onClick={() => handleGenerateReport(config.id)}
+                          disabled={generateReportMutation.isPending}
+                        >
+                          <Play className="h-4 w-4 mr-1" />
+                          Generate
+                        </Button>
+                        <Button
                           variant="outline"
                           size="sm"
                           onClick={() => router.push(`/reports/builder?id=${config.id}`)}
@@ -531,7 +622,7 @@ export function ReportManagement({ className }: ReportManagementProps) {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Report Executions</h3>
             <div className="text-sm text-gray-600">
-              Showing {executions?.items?.length || 0} executions
+              Showing {executions?.executions?.length || 0} executions
             </div>
           </div>
 
@@ -549,7 +640,7 @@ export function ReportManagement({ className }: ReportManagementProps) {
                 <p className="text-gray-600">Failed to load executions</p>
               </div>
             </div>
-          ) : executions?.items?.length === 0 ? (
+          ) : !executions?.executions?.length ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <Clock className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -565,7 +656,7 @@ export function ReportManagement({ className }: ReportManagementProps) {
           ) : (
             <ScrollArea className="h-[600px]">
               <div className="space-y-4">
-                {executions.items.map((execution: any) => (
+                {executions.executions.map((execution: any) => (
                   <Card key={execution.id} className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="space-y-3 flex-1">
@@ -693,6 +784,182 @@ export function ReportManagement({ className }: ReportManagementProps) {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Generate Report Dialog */}
+      <Dialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Generate Report</DialogTitle>
+            <DialogDescription>
+              Choose a format and generate a report from this configuration.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Output Format</Label>
+              <Select value={generateFormat} onValueChange={(v: any) => setGenerateFormat(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PDF">PDF Document</SelectItem>
+                  <SelectItem value="CSV">CSV Spreadsheet</SelectItem>
+                  <SelectItem value="HTML">HTML Report</SelectItem>
+                  <SelectItem value="EXCEL">Excel Workbook</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {generateReportMutation.isError && (
+              <p className="text-sm text-red-600">
+                {(generateReportMutation.error as Error)?.message || 'Generation failed'}
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowGenerateDialog(false)}>Cancel</Button>
+            <Button onClick={confirmGenerate} disabled={generateReportMutation.isPending}>
+              {generateReportMutation.isPending ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating...</>
+              ) : (
+                <><Play className="h-4 w-4 mr-2" />Generate</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Configuration Dialog */}
+      <Dialog open={showNewConfigDialog} onOpenChange={setShowNewConfigDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>New Report Configuration</DialogTitle>
+            <DialogDescription>
+              Create a configuration from a template. Step {newConfigStep + 1} of 3.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {newConfigStep === 0 && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Report Template</Label>
+                  <Select value={newConfigForm.templateId} onValueChange={(v) => setNewConfigForm(f => ({ ...f, templateId: v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a template..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map((t: any) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.name} ({t.type})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Configuration Name</Label>
+                  <Input
+                    value={newConfigForm.name}
+                    onChange={(e) => setNewConfigForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="e.g. Monthly Assessment Summary"
+                  />
+                </div>
+              </div>
+            )}
+            {newConfigStep === 1 && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Date From</Label>
+                    <Input
+                      type="date"
+                      value={newConfigForm.dateFrom}
+                      onChange={(e) => setNewConfigForm(f => ({ ...f, dateFrom: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Date To</Label>
+                    <Input
+                      type="date"
+                      value={newConfigForm.dateTo}
+                      onChange={(e) => setNewConfigForm(f => ({ ...f, dateTo: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Entity Filter (optional)</Label>
+                  <Input
+                    value={newConfigForm.entityFilter}
+                    onChange={(e) => setNewConfigForm(f => ({ ...f, entityFilter: e.target.value }))}
+                    placeholder="Entity ID to filter by"
+                  />
+                </div>
+              </div>
+            )}
+            {newConfigStep === 2 && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Schedule (optional)</Label>
+                  <Select
+                    value={newConfigForm.scheduleFrequency || 'none'}
+                    onValueChange={(v) => setNewConfigForm(f => ({ ...f, scheduleFrequency: v === 'none' ? '' : v as any }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="No schedule" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No schedule (generate manually)</SelectItem>
+                      <SelectItem value="once">One-time</SelectItem>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {newConfigForm.scheduleFrequency && (
+                  <div className="space-y-2">
+                    <Label>Start Date</Label>
+                    <Input
+                      type="date"
+                      value={newConfigForm.scheduleStartDate}
+                      onChange={(e) => setNewConfigForm(f => ({ ...f, scheduleStartDate: e.target.value }))}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+            {createConfigurationMutation.isError && (
+              <p className="text-sm text-red-600">
+                {(createConfigurationMutation.error as Error)?.message || 'Failed to create configuration'}
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewConfigDialog(false)}>Cancel</Button>
+            {newConfigStep > 0 && (
+              <Button variant="outline" onClick={() => setNewConfigStep(s => s - 1)}>Back</Button>
+            )}
+            {newConfigStep < 2 ? (
+              <Button
+                onClick={() => setNewConfigStep(s => s + 1)}
+                disabled={newConfigStep === 0 && (!newConfigForm.templateId || !newConfigForm.name)}
+              >
+                Next
+              </Button>
+            ) : (
+              <Button
+                onClick={handleCreateConfig}
+                disabled={createConfigurationMutation.isPending}
+              >
+                {createConfigurationMutation.isPending ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating...</>
+                ) : (
+                  'Create Configuration'
+                )}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

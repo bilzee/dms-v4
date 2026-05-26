@@ -54,6 +54,27 @@ model ReportExecution {
   @@map("report_executions")
 }
 
+model ScheduledReport {
+  id              String    @id @default(uuid())
+  userId          String
+  reportType      String
+  schedule        Json
+  recipients      Json
+  filters         Json?
+  defaultDateRange Json
+  options         Json?
+  isActive        Boolean   @default(true)
+  lastRunAt       DateTime?
+  nextRunAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  user            User      @relation("UserScheduledReports", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isActive, nextRunAt])
+  @@map("scheduled_reports")
+}
+
 model User {
   id                        String                @id @default(uuid())
   email                     String                @unique
@@ -75,6 +96,7 @@ model User {
   responses                 RapidResponse[]       @relation("UserResponses")
   reportConfigurations      ReportConfiguration[] @relation("ReportConfigurations")
   reportTemplates           ReportTemplate[]      @relation("ReportTemplates")
+  scheduledReports          ScheduledReport[]     @relation("UserScheduledReports")
   roles                     UserRole[]
 
   @@map("users")
@@ -415,6 +437,7 @@ model Donor {
   leaderboardRank          Int?              @default(0)
   selfReportedDeliveryRate Float?            @default(0)
   verifiedDeliveryRate     Float?            @default(0)
+  achievementBadges        Json?
   commitments              DonorCommitment[]
   responses                RapidResponse[]   @relation("DonorResponses")
 

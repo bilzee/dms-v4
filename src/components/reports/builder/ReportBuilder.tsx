@@ -520,13 +520,44 @@ export function ReportBuilder({
     return template;
   }, [elements, initialTemplate, onPreview]);
 
-  // Save template
+  const buildTemplate = useCallback(() => {
+    const layout: ReportLayout[] = elements.map(el => ({
+      id: el.id,
+      type: el.type as ReportLayout['type'],
+      position: el.position,
+      config: {
+        ...el.config,
+        title: el.title,
+        description: el.description,
+        ...el.style
+      },
+      dataSource: el.dataSource,
+      visualization: el.visualization ? {
+        ...el.visualization,
+        type: el.visualization.type as ReportLayout['visualization'] extends undefined ? never : NonNullable<ReportLayout['visualization']>['type'],
+        config: el.visualization.config ?? {}
+      } : undefined
+    }));
+
+    return {
+      id: initialTemplate?.id || `template_${Date.now()}`,
+      name: initialTemplate?.name || 'Custom Report',
+      description: initialTemplate?.description || 'Generated custom report',
+      type: initialTemplate?.type || 'CUSTOM',
+      layout,
+      createdById: 'current_user',
+      isPublic: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    } as ReportTemplate;
+  }, [elements, initialTemplate]);
+
   const saveTemplate = useCallback(() => {
-    const template = generatePreview();
+    const template = buildTemplate();
     if (onSave) {
       onSave(template);
     }
-  }, [generatePreview, onSave]);
+  }, [buildTemplate, onSave]);
 
   return (
     <div className={cn("flex h-screen bg-muted", className)}>

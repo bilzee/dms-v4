@@ -163,10 +163,8 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
  */
 export const POST = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const hasPermission = context.permissions.includes('REPORT_CREATE') ||
-                          context.permissions.includes('ADMIN');
-
-    if (!hasPermission) {
+    const allowedRoles = ['ADMIN', 'COORDINATOR'];
+    if (!context.roles.some(role => allowedRoles.includes(role))) {
       return NextResponse.json(
         createApiResponse(false, null, 'Insufficient permissions to create report templates'),
         { status: 403 }

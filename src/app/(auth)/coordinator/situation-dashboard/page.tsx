@@ -12,6 +12,7 @@ import { TopDonorsSection } from '@/components/dashboards/situation/components/T
 import { ModeToggle, type DashboardMode } from '@/components/dashboards/situation/shared/ModeToggle';
 import { useIncidentSelection, useIncidentActions } from '@/stores/dashboardLayout.store';
 import { apiGet } from '@/lib/api';
+import { ExportButton } from '@/components/dashboards/shared/exports/ExportButton';
 
 // Fetch incident data for dynamic incident name
 const fetchIncidentData = async (incidentId: string) => {
@@ -84,11 +85,14 @@ export default function SituationDashboardPage() {
                 Real-time disaster situation monitoring and analysis
               </p>
             </div>
-            <ModeToggle 
-              mode={dashboardMode} 
-              onModeChange={handleModeChange}
-              className="flex-shrink-0"
-            />
+            <div className="flex items-center gap-2">
+              <ExportButton dataType="incidents" size="sm" />
+              <ModeToggle 
+                mode={dashboardMode} 
+                onModeChange={handleModeChange}
+                className="flex-shrink-0"
+              />
+            </div>
           </div>
         </div>
         

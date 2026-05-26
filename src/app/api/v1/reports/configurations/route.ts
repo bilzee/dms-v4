@@ -9,7 +9,7 @@ import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { z } from 'zod';
 import { prisma } from '@/lib/db/client';
 import { DataAggregator, ReportFilters, AggregationConfig, FilterConfig, ReportFiltersSchema, AggregationConfigSchema } from '@/lib/reports/data-aggregator';
-import { ReportTemplateEngine, ReportTemplate } from '@/lib/reports/template-engine';
+import { ReportTemplateEngine, ReportTemplate, DEFAULT_TEMPLATES } from '@/lib/reports/template-engine';
 import { createApiResponse } from '@/types/api';
 import { handleApiError } from '@/lib/api/response'
 
@@ -58,8 +58,6 @@ const UpdateConfigurationSchema = z.object({
 const ListConfigurationsSchema = z.object({
   templateId: z.string().optional(),
   search: z.string().optional(),
-  status: z.enum(['active', 'paused', 'archived']).optional(),
-  isPublic: z.boolean().optional(),
   page: z.number().min(1).default(1),
   limit: z.number().min(1).max(100).default(20)
 });
@@ -73,10 +71,8 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
 
   try {
     // Check user permissions
-    const hasPermission = context.permissions.includes('REPORT_CREATE') ||
-                          context.permissions.includes('ADMIN');
-
-    if (!hasPermission) {
+    const allowedRoles = ['ADMIN', 'COORDINATOR'];
+    if (!context.roles.some(role => allowedRoles.includes(role))) {
       return NextResponse.json(
         createApiResponse(false, null, 'Insufficient permissions to create report configurations'),
         { status: 403 }
@@ -86,40 +82,62 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
     const body = await request.json();
     const validatedData = CreateConfigurationSchema.parse(body);
 
-    // Validate template exists and user has access
-    const template = await prisma.reportTemplate.findFirst({
-      where: {
+    let template: any;
+    let templateType: string;
+
+    if (validatedData.templateId.startsWith('default_')) {
+      const defaultTemplate = DEFAULT_TEMPLATES.find(t =>
+        `default_${t.name?.toLowerCase().replace(/\s+/g, '_')}` === validatedData.templateId
+      );
+      if (!defaultTemplate) {
+        return NextResponse.json(
+          createApiResponse(false, null, 'Default template not found'),
+          { status: 404 }
+        );
+      }
+      template = {
         id: validatedData.templateId,
-        OR: [
-          { createdById: context.userId },
-          { isPublic: true }
-        ]
-      },
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true
+        type: defaultTemplate.type,
+        name: defaultTemplate.name,
+        isPublic: true,
+        layout: defaultTemplate.layout,
+        createdBy: { id: 'system', name: 'System', email: 'system@disaster-management.com' }
+      };
+      templateType = defaultTemplate.type || 'ASSESSMENT';
+    } else {
+      template = await prisma.reportTemplate.findFirst({
+        where: {
+          id: validatedData.templateId,
+          OR: [
+            { createdById: context.userId },
+            { isPublic: true }
+          ]
+        },
+        include: {
+          createdBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
           }
         }
-      }
-    });
+      });
 
-    if (!template) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Report template not found or access denied'),
-        { status: 404 }
-      );
+      if (!template) {
+        return NextResponse.json(
+          createApiResponse(false, null, 'Report template not found or access denied'),
+          { status: 404 }
+        );
+      }
+      templateType = template.type;
     }
 
-    // Validate filters against template
     if (validatedData.filters) {
-      // Get available fields for template's primary data source
-      const dataSourceType = template.type === 'ASSESSMENT' ? 'assessments' :
-                           template.type === 'RESPONSE' ? 'responses' :
-                           template.type === 'ENTITY' ? 'entities' :
-                           template.type === 'DONOR' ? 'donors' : 'assessments';
+      const dataSourceType = templateType === 'ASSESSMENT' ? 'assessments' :
+                           templateType === 'RESPONSE' ? 'responses' :
+                           templateType === 'ENTITY' ? 'entities' :
+                           templateType === 'DONOR' ? 'donors' : 'assessments';
       
       const availableFields = DataAggregator.getAvailableFields(dataSourceType as any);
       
@@ -153,10 +171,32 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
       );
     }
 
+    let resolvedTemplateId = validatedData.templateId;
+
+    if (validatedData.templateId.startsWith('default_')) {
+      const existingTemplate = await prisma.reportTemplate.findFirst({
+        where: { id: validatedData.templateId }
+      });
+      if (!existingTemplate) {
+        const created = await prisma.reportTemplate.create({
+          data: {
+            id: validatedData.templateId,
+            name: template.name || 'Default Template',
+            description: (template as any).description || '',
+            type: templateType as any,
+            layout: template.layout || [],
+            isPublic: true,
+            createdById: context.userId
+          }
+        });
+        resolvedTemplateId = created.id;
+      }
+    }
+
     // Create report configuration
     const configuration = await prisma.reportConfiguration.create({
       data: {
-        templateId: validatedData.templateId,
+        templateId: resolvedTemplateId,
         name: validatedData.name,
         filters: validatedData.filters,
         aggregations: validatedData.aggregations,
@@ -233,9 +273,6 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
     const params = ListConfigurationsSchema.parse({
       templateId: searchParams.get('templateId') || undefined,
       search: searchParams.get('search') || undefined,
-      status: searchParams.get('status') || undefined,
-      isPublic: searchParams.get('public') === 'true' ? true : 
-                     searchParams.get('public') === 'false' ? false : undefined,
       page: parseInt(searchParams.get('page') || '1'),
       limit: parseInt(searchParams.get('limit') || '20')
     });
@@ -250,31 +287,10 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
     }
     
     if (params.search) {
-      where.OR = [
-        { name: { contains: params.search, mode: 'insensitive' } },
-        { description: { contains: params.search, mode: 'insensitive' } }
-      ];
+      where.name = { contains: params.search, mode: 'insensitive' };
     }
     
-    if (params.status) {
-      where.status = params.status.toUpperCase() + 'D'; // Map to enum
-    }
-    
-    if (params.isPublic !== undefined) {
-      if (params.isPublic) {
-        where.isPublic = true;
-      } else {
-        where.OR = [
-          { createdBy: context.userId },
-          { isPublic: true }
-        ];
-      }
-    } else {
-      where.OR = [
-        { createdBy: context.userId },
-        { isPublic: true }
-      ];
-    }
+    where.createdBy = context.userId;
 
     // Get configurations
     const [configurations, total] = await Promise.all([
@@ -327,6 +343,7 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       const latestExecution = config.executions?.[0];
       return {
         ...config,
+        latestExecution: latestExecution || null,
         latestExecutionStatus: latestExecution?.status,
         latestExecutionDate: latestExecution?.createdAt,
         executionInProgress: latestExecution?.status === 'PENDING' || latestExecution?.status === 'RUNNING'

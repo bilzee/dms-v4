@@ -147,7 +147,8 @@ export const GET = withAuth(async (
     const originalName = stats.isFile() ? path.basename(filePath) : `report.${execution.format.toLowerCase()}`;
     const displayName = execution.configuration.template?.name || 'Report';
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const downloadName = `${displayName}_${timestamp}.${execution.format.toLowerCase()}`;
+    const formatExt: Record<string, string> = { PDF: 'pdf', CSV: 'csv', HTML: 'html', EXCEL: 'xlsx' };
+    const downloadName = `${displayName}_${timestamp}.${formatExt[execution.format] || execution.format.toLowerCase()}`;
 
     // Log download for audit
     await prisma.auditLog.create({
@@ -202,8 +203,8 @@ export const GET = withAuth(async (
       headers['Referrer-Policy'] = 'no-referrer';
     }
 
-    // Create response - Convert Buffer to ArrayBuffer for NextResponse
-    const response = new NextResponse(new Uint8Array(fileBuffer).buffer, {
+    // Create response - pass Buffer directly to avoid ArrayBuffer offset issues
+    const response = new NextResponse(fileBuffer, {
       status: 200,
       headers
     });

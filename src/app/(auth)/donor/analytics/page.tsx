@@ -31,6 +31,7 @@ import { EntityInsightsCards } from '@/components/donor/EntityInsightsCards'
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '@/lib/api'
 import { useDonorMetrics } from '@/hooks/useDonorMetrics'
+import { ExportButton } from '@/components/dashboards/shared/exports/ExportButton'
 
 interface EntityData {
   id: string
@@ -123,6 +124,7 @@ export default function DonorAnalyticsPage() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
+            <ExportButton dataType="commitments" size="sm" />
           </div>
         </div>
 

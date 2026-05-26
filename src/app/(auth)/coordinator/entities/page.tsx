@@ -15,6 +15,7 @@ import { DataTable, type ColumnDef, type RowAction } from '@/components/shared/D
 import { StatCard } from '@/components/shared/StatCard';
 import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { Users, MapPin, UserPlus, Trash2, Loader2, CheckCircle, AlertTriangle, Shield, User as UserIcon } from '@/lib/icons';
+import { ExportButton } from '@/components/dashboards/shared/exports/ExportButton';
 
 interface Entity {
   id: string;
@@ -197,6 +198,7 @@ function CoordinatorEntitiesPageContent() {
               Assign entities to assessors, responders, and donors for role-based access control
             </p>
           </div>
+          <ExportButton dataType="entities" size="sm" />
         </div>
 
         {/* Statistics */}

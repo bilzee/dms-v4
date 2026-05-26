@@ -5,7 +5,7 @@ import { ReportManagement } from '@/components/reports/ReportManagement'
 
 export default function CoordinatorReportsPage() {
   return (
-    <RoleBasedRoute requiredRole="COORDINATOR">
+    <RoleBasedRoute requiredRoles={['ADMIN', 'COORDINATOR']}>
       <div className="container mx-auto py-8">
         <ReportManagement />
       </div>

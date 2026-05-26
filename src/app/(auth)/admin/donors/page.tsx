@@ -20,6 +20,7 @@ import {
   CheckCircle
 } from '@/lib/icons'
 import Link from 'next/link'
+import { ExportButton } from '@/components/dashboards/shared/exports/ExportButton'
 
 interface Donor {
   id: string
@@ -189,6 +190,7 @@ export default function DonorManagementPage() {
               Register New Donor
             </Button>
           </Link>
+          <ExportButton dataType="entities" size="sm" />
         </div>
       </div>
 

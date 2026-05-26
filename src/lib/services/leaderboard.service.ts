@@ -1,7 +1,9 @@
 import { db } from '@/lib/db/client';
+import { notificationService } from './notification.service';
 import { 
   calculateDonorMetrics,
   calculateAchievementBadges,
+  calculateLeaderboardRankings,
   updateDonorRankings
 } from './gamification.service';
 import { 
@@ -343,11 +345,24 @@ class LeaderboardService {
     badgeType: BadgeType, 
     metrics: any
   ): Promise<void> {
-    // Check if badge already awarded
-    // In a real implementation, you'd have a BadgeAward table to track awards
-    console.log(`Awarding badge ${badgeType} to donor ${donorId}`);
-    
-    // Send notification
+    const donor = await db.donor.findUnique({
+      where: { id: donorId },
+      select: { achievementBadges: true }
+    });
+
+    const existingBadges: string[] = Array.isArray(donor?.achievementBadges) 
+      ? donor.achievementBadges as string[] 
+      : [];
+
+    if (existingBadges.includes(badgeType)) return;
+
+    const updatedBadges = [...new Set([...existingBadges, badgeType])];
+
+    await db.donor.update({
+      where: { id: donorId },
+      data: { achievementBadges: updatedBadges }
+    });
+
     await this.sendAchievementNotification(donorId, badgeType, metrics);
   }
 
@@ -355,25 +370,18 @@ class LeaderboardService {
    * Update rankings for a donor
    */
   private async updateRankings(donorId: string, metrics: any): Promise<void> {
-    // Get current rank
     const currentDonor = await db.donor.findUnique({
       where: { id: donorId },
       select: { leaderboardRank: true }
     });
 
-    // Calculate new rank (simplified - in real implementation would use complex ranking algorithm)
-    const newRank = Math.ceil(metrics.overallScore * 0.1); // Simplified ranking
-
-    if (currentDonor?.leaderboardRank !== newRank) {
-      await db.donor.update({
-        where: { id: donorId },
-        data: { 
-          leaderboardRank: newRank,
-          verifiedDeliveryRate: metrics.verifiedDeliveryRate,
-          selfReportedDeliveryRate: metrics.selfReportedDeliveryRate
-        }
-      });
-    }
+    await db.donor.update({
+      where: { id: donorId },
+      data: {
+        verifiedDeliveryRate: metrics.verifiedDeliveryRate,
+        selfReportedDeliveryRate: metrics.selfReportedDeliveryRate
+      }
+    });
   }
 
   /**
@@ -386,7 +394,7 @@ class LeaderboardService {
     });
 
     const previousRank = currentDonor?.leaderboardRank;
-    const currentRank = Math.ceil(metrics.overallScore * 0.1); // Simplified ranking
+    const currentRank = previousRank ?? 0;
 
     let trend: 'up' | 'down' | 'stable' = 'stable';
     if (previousRank && currentRank < previousRank) trend = 'up';
@@ -405,20 +413,8 @@ class LeaderboardService {
    * Update global rankings
    */
   private async updateGlobalRankings(timeframe: { start: Date; end: Date }): Promise<void> {
-    const rankings = await db.donor.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true },
-      orderBy: { name: 'asc' }
-    });
-
-    await Promise.all(
-      rankings.map((donor, index) =>
-        db.donor.update({
-          where: { id: donor.id },
-          data: { leaderboardRank: index + 1 }
-        })
-      )
-    );
+    const rankings = await calculateLeaderboardRankings(timeframe);
+    await updateDonorRankings(rankings.map(r => ({ donorId: r.donorId, rank: r.rank, score: r.score })));
   }
 
   /**
@@ -429,15 +425,27 @@ class LeaderboardService {
     badgeType: BadgeType,
     metrics: any
   ): Promise<void> {
-    // Implementation would send notification via email, in-app, or SMS
-    console.log(`Achievement notification sent to donor ${donorId}: ${badgeType}`);
+    await notificationService.send({
+      recipientId: donorId,
+      type: 'achievement_unlocked',
+      title: 'New Achievement Unlocked!',
+      message: `You earned the "${badgeType}" badge. Keep up the great work!`,
+      data: { badgeType, metrics }
+    });
   }
 
   /**
    * Send ranking change notification
    */
   private async sendRankingChangeNotification(donorId: string, metrics: any): Promise<void> {
-    console.log(`Ranking change notification sent to donor ${donorId}`);
+    const direction = metrics.rankChange > 0 ? 'improved' : 'changed';
+    await notificationService.send({
+      recipientId: donorId,
+      type: 'ranking_change',
+      title: 'Leaderboard Ranking Updated',
+      message: `Your ranking has ${direction}! You're now rank #${metrics.currentRank || metrics.overallScore}.`,
+      data: { rankChange: metrics.rankChange, currentRank: metrics.currentRank }
+    });
   }
 
   /**

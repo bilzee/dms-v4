@@ -17,7 +17,7 @@ interface ChartExportRequest {
     title?: string;
     width?: number;
     height?: number;
-    format?: 'png' | 'svg' | 'pdf';
+    format?: 'svg';
     quality?: number;
     backgroundColor?: string;
     theme?: 'light' | 'dark';
@@ -34,10 +34,9 @@ interface ChartDataPoint {
 
 export const POST = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const userRole = (context.user as any).role as string;
-    const permissions = ROLE_PERMISSIONS[userRole as keyof typeof ROLE_PERMISSIONS] || [];
+    const userPermissions = context.roles.flatMap(role => ROLE_PERMISSIONS[role.toLowerCase() as keyof typeof ROLE_PERMISSIONS] || []);
 
-    if (!permissions.includes('export')) {
+    if (!userPermissions.includes('export')) {
       return NextResponse.json(
         { success: false, error: 'Insufficient permissions for chart export' },
         { status: 403 }
@@ -82,8 +81,8 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
     const filename = `${chartType}_chart_${timestamp}.${exportOptions.format}`;
 
-    // Return chart file - Convert Buffer to ArrayBuffer for NextResponse
-    return new NextResponse(new Uint8Array(chartData).buffer, {
+    // Return chart file - pass Buffer directly
+    return new NextResponse(chartData, {
       headers: {
         'Content-Type': getContentType(exportOptions.format),
         'Content-Disposition': `attachment; filename="${filename}"`,
@@ -159,13 +158,7 @@ function generateBarChart(data: ChartDataPoint[], options: any): Buffer {
   
   svg += '</svg>';
   
-  if (options.format === 'svg') {
-    return Buffer.from(svg, 'utf8');
-  } else {
-    // For PNG/PDF, you would typically use a library like sharp or puppeteer
-    // For now, return SVG as placeholder
-    return Buffer.from(svg, 'utf8');
-  }
+  return Buffer.from(svg, 'utf8');
 }
 
 function generatePieChart(data: ChartDataPoint[], options: any): Buffer {
@@ -219,12 +212,7 @@ function generatePieChart(data: ChartDataPoint[], options: any): Buffer {
   
   svg += '</svg>';
   
-  if (options.format === 'svg') {
-    return Buffer.from(svg, 'utf8');
-  } else {
-    // For PNG/PDF, you would use image processing libraries
-    return Buffer.from(svg, 'utf8');
-  }
+  return Buffer.from(svg, 'utf8');
 }
 
 function generateLineChart(data: ChartDataPoint[], options: any): Buffer {
@@ -281,11 +269,7 @@ function generateLineChart(data: ChartDataPoint[], options: any): Buffer {
   
   svg += '</svg>';
   
-  if (options.format === 'svg') {
-    return Buffer.from(svg, 'utf8');
-  } else {
-    return Buffer.from(svg, 'utf8');
-  }
+  return Buffer.from(svg, 'utf8');
 }
 
 function generateAreaChart(data: ChartDataPoint[], options: any): Buffer {
@@ -341,11 +325,7 @@ function generateAreaChart(data: ChartDataPoint[], options: any): Buffer {
   
   svg += '</svg>';
   
-  if (options.format === 'svg') {
-    return Buffer.from(svg, 'utf8');
-  } else {
-    return Buffer.from(svg, 'utf8');
-  }
+  return Buffer.from(svg, 'utf8');
 }
 
 function generateScatterChart(data: ChartDataPoint[], options: any): Buffer {
@@ -383,11 +363,7 @@ function generateScatterChart(data: ChartDataPoint[], options: any): Buffer {
   
   svg += '</svg>';
   
-  if (options.format === 'svg') {
-    return Buffer.from(svg, 'utf8');
-  } else {
-    return Buffer.from(svg, 'utf8');
-  }
+  return Buffer.from(svg, 'utf8');
 }
 
 function generateHeatMap(data: ChartDataPoint[], options: any): Buffer {
@@ -422,11 +398,7 @@ function generateHeatMap(data: ChartDataPoint[], options: any): Buffer {
   
   svg += '</svg>';
   
-  if (options.format === 'svg') {
-    return Buffer.from(svg, 'utf8');
-  } else {
-    return Buffer.from(svg, 'utf8');
-  }
+  return Buffer.from(svg, 'utf8');
 }
 
 function getChartColor(index: number): string {
@@ -466,7 +438,7 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       success: true,
       data: {
         chartTypes: ['bar', 'pie', 'line', 'area', 'scatter', 'heat-map'],
-        formats: ['png', 'svg', 'pdf'],
+        formats: ['svg'],
         maxDataPoints: 10000,
         defaultOptions: {
           width: 800,

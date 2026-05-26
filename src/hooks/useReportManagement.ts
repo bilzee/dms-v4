@@ -85,7 +85,7 @@ export function useDuplicateConfiguration() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const result = await apiPost(`/api/v1/reports/configurations/${id}/duplicate`)
+      const result = await apiPost(`/api/v1/reports/configurations/${id}?action=duplicate`)
       if (!result.success) throw new Error(result.error || 'Failed to duplicate')
       return result.data!
     },
@@ -96,9 +96,49 @@ export function useDuplicateConfiguration() {
 export function useDownloadExecution() {
   return useMutation({
     mutationFn: async (id: string) => {
-      const result = await apiGet(`/api/v1/reports/executions/${id}/download`)
+      const result = await apiGet(`/api/v1/reports/download/${id}`)
       if (!result.success) throw new Error(result.error || 'Failed to download')
       return result.data!
+    },
+  })
+}
+
+export function useGenerateReport() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (params: {
+      configurationId: string
+      format: 'PDF' | 'CSV' | 'HTML' | 'EXCEL'
+    }) => {
+      const result = await apiPost('/api/v1/reports/generate', params)
+      if (!result.success) throw new Error(result.error || 'Failed to generate report')
+      return result.data!
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['report-executions'] })
+      queryClient.invalidateQueries({ queryKey: ['report-statistics'] })
+    },
+  })
+}
+
+export function useCreateConfiguration() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: {
+      templateId: string
+      name: string
+      filters: any
+      aggregations?: any[]
+      visualizations?: any[]
+      schedule?: any
+    }) => {
+      const result = await apiPost('/api/v1/reports/configurations', data)
+      if (!result.success) throw new Error(result.error || 'Failed to create configuration')
+      return result.data!
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['report-configurations'] })
+      queryClient.invalidateQueries({ queryKey: ['report-statistics'] })
     },
   })
 }

@@ -75,10 +75,8 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
   const startTime = Date.now();
 
   try {
-    const hasPermission = context.permissions.includes('REPORT_GENERATE') ||
-                          context.permissions.includes('ADMIN');
-
-    if (!hasPermission) {
+    const allowedRoles = ['ADMIN', 'COORDINATOR'];
+    if (!context.roles.some(role => allowedRoles.includes(role))) {
       return NextResponse.json(
         createApiResponse(false, null, 'Insufficient permissions to generate reports'),
         { status: 403 }
@@ -242,10 +240,8 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
  */
 export const PUT = withAuth(async (request: NextRequest, context: AuthContext) => {
   try {
-    const hasPermission = context.permissions.includes('REPORT_SCHEDULE') ||
-                          context.permissions.includes('ADMIN');
-
-    if (!hasPermission) {
+    const allowedRoles = ['ADMIN', 'COORDINATOR'];
+    if (!context.roles.some(role => allowedRoles.includes(role))) {
       return NextResponse.json(
         createApiResponse(false, null, 'Insufficient permissions to schedule reports'),
         { status: 403 }
@@ -412,7 +408,7 @@ async function generateReportBackground({
     const finalPath = path.join(
       process.cwd(), 
       'reports', 
-      `${executionId}.${format.toLowerCase()}`
+      `${executionId}.${formatToExtension(format)}`
     );
     
     await fs.mkdir(path.dirname(finalPath), { recursive: true });
@@ -468,43 +464,240 @@ async function generatePDFReport({
   options: any;
   executionId: string;
 }) {
-  const PDFDocument = require('pdfkit').default;
-  const fs = require('fs');
+  const { PDFDocument: PdfDoc, StandardFonts, rgb } = require('pdf-lib');
 
-  const doc = new PDFDocument({
-    size: options.pageSize || 'A4',
-    layout: options.orientation || 'portrait',
-    margins: options.margins || {
-      top: 20,
-      right: 20,
-      bottom: 20,
-      left: 20
-    },
-    info: {
-      Title: template.name || 'Report',
-      Author: 'Disaster Management System',
-      Subject: template.description || 'Generated Report',
-      Creator: 'Disaster Management PWA',
-      Producer: 'Custom Report Builder'
+  const pdfDoc = await PdfDoc.create();
+  pdfDoc.setTitle(template.name || 'Report');
+  pdfDoc.setAuthor('Disaster Management System');
+  pdfDoc.setSubject(template.description || 'Generated Report');
+  pdfDoc.setCreator('Disaster Management PWA');
+  pdfDoc.setProducer('Custom Report Builder');
+
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  const pageWidth = 595.28;
+  const pageHeight = 841.89;
+  const margin = 40;
+  let currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
+  let currentY = pageHeight - margin;
+
+  const checkPageBreak = (neededHeight: number) => {
+    if (currentY - neededHeight < margin) {
+      currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
+      currentY = pageHeight - margin;
     }
-  });
-
-  const tempPath = path.join(process.cwd(), 'temp', `${executionId}_temp.pdf`);
-  await fs.mkdir(path.dirname(tempPath), { recursive: true });
-
-  doc.pipe(fs.createWriteStream(tempPath));
+  };
 
   if (template.layout) {
     for (const element of template.layout) {
-      await addPDFElement(doc, element, data, options);
+      const pos = element.position || { x: 0, y: 0, width: 12, height: 4 };
+      const x = margin + (pos.x * 42);
+      const width = (pos.width || 12) * 42;
+
+      switch (element.type) {
+        case 'header': {
+          const title = element.config?.title || template.name || 'Report';
+          const fontSize = options?.fontSize === 'large' ? 24 : 18;
+          checkPageBreak(fontSize + 30);
+          currentPage.drawText(title, {
+            x, y: currentY, size: fontSize, font: boldFont, color: rgb(0.1, 0.1, 0.1)
+          });
+          currentY -= fontSize + 4;
+
+          if (element.config?.showDate) {
+            currentPage.drawText(`Generated: ${new Date().toLocaleDateString()}`, {
+              x, y: currentY, size: 10, font, color: rgb(0.4, 0.4, 0.4)
+            });
+            currentY -= 20;
+          }
+          if (element.config?.showFilters && template.description) {
+            currentPage.drawText(template.description, {
+              x, y: currentY, size: 9, font, color: rgb(0.5, 0.5, 0.5)
+            });
+            currentY -= 20;
+          }
+          currentY -= 10;
+          break;
+        }
+        case 'text':
+        case 'section': {
+          const text = element.config?.content || element.config?.subtitle || '';
+          if (text) {
+            checkPageBreak(20);
+            currentPage.drawText(text, {
+              x, y: currentY, size: 11, font, color: rgb(0.2, 0.2, 0.2)
+            });
+            currentY -= 20;
+          }
+          break;
+        }
+        case 'kpi': {
+          const title = element.config?.title || 'KPI';
+          checkPageBreak(50);
+          currentPage.drawRectangle({
+            x, y: currentY - 45, width: Math.min(width, pageWidth - margin - x), height: 55,
+            color: rgb(0.91, 0.95, 0.98), borderColor: rgb(0.78, 0.86, 0.93), borderWidth: 0.5
+          });
+          currentPage.drawText(title, {
+            x: x + 10, y: currentY, size: 11, font: boldFont, color: rgb(0.15, 0.25, 0.4)
+          });
+          currentY -= 18;
+
+          const vizMetrics = element.visualization?.config?.metrics || [];
+          if (vizMetrics.length > 0) {
+            let metricX = x + 10;
+            for (const metric of vizMetrics) {
+              let value = 0;
+              if (metric.field === 'totalAssessments') {
+                value = data.length;
+              } else if (metric.field === 'completedAssessments') {
+                value = data.filter((d: any) => d.verificationStatus === 'VERIFIED' || d.verificationStatus === 'AUTO_VERIFIED').length;
+              } else if (metric.field === 'pendingVerification') {
+                value = data.filter((d: any) => d.verificationStatus === 'PENDING' || d.verificationStatus === 'SUBMITTED').length;
+              } else if (metric.aggregation === 'count') {
+                value = data.length;
+              }
+              if (metricX + 140 > pageWidth - margin) break;
+              currentPage.drawText(String(value), {
+                x: metricX, y: currentY, size: 20, font: boldFont, color: rgb(0.1, 0.35, 0.6)
+              });
+              currentPage.drawText(String(metric.label || ''), {
+                x: metricX, y: currentY - 14, size: 8, font, color: rgb(0.45, 0.45, 0.45)
+              });
+              metricX += 140;
+            }
+            currentY -= 30;
+          } else {
+            const total = data.length;
+            const verified = data.filter((d: any) => d.verificationStatus === 'VERIFIED' || d.verificationStatus === 'AUTO_VERIFIED').length;
+            currentPage.drawText(String(total), {
+              x: x + 10, y: currentY, size: 20, font: boldFont, color: rgb(0.1, 0.35, 0.6)
+            });
+            currentPage.drawText('Total', {
+              x: x + 10, y: currentY - 14, size: 8, font, color: rgb(0.45, 0.45, 0.45)
+            });
+            currentPage.drawText(String(verified), {
+              x: x + 150, y: currentY, size: 20, font: boldFont, color: rgb(0.1, 0.5, 0.3)
+            });
+            currentPage.drawText('Verified', {
+              x: x + 150, y: currentY - 14, size: 8, font, color: rgb(0.45, 0.45, 0.45)
+            });
+            currentY -= 30;
+          }
+          currentY -= 10;
+          break;
+        }
+        case 'chart': {
+          const chartTitle = element.config?.title || 'Chart';
+          checkPageBreak(60);
+          currentPage.drawRectangle({
+            x, y: currentY - 40, width: Math.min(width, pageWidth - margin - x), height: 50,
+            color: rgb(0.95, 0.95, 0.95), borderColor: rgb(0.85, 0.85, 0.85), borderWidth: 0.5
+          });
+          currentPage.drawText(chartTitle, {
+            x: x + 8, y: currentY - 10, size: 10, font: boldFont, color: rgb(0.3, 0.3, 0.3)
+          });
+          currentPage.drawText('[Chart visualization - see interactive version]', {
+            x: x + 8, y: currentY - 30, size: 8, font, color: rgb(0.6, 0.6, 0.6)
+          });
+          currentY -= 60;
+          break;
+        }
+        case 'table': {
+          const tableTitle = element.config?.title || 'Data';
+          checkPageBreak(40);
+          currentPage.drawText(tableTitle, {
+            x, y: currentY, size: 11, font: boldFont, color: rgb(0.2, 0.2, 0.2)
+          });
+          currentY -= 16;
+
+          const columns = element.config?.columns || (data.length > 0 ? Object.keys(data[0]) : []);
+          const colHeaders = columns.map((c: any) => c.header || c.field || c);
+          const colFields = columns.map((c: any) => c.field || c);
+          const colWidth = Math.min(Math.floor((pageWidth - 2 * margin) / colHeaders.length), 120);
+
+          if (colHeaders.length > 0) {
+            checkPageBreak(16);
+            currentPage.drawRectangle({
+              x, y: currentY - 4, width: colHeaders.length * colWidth, height: 16,
+              color: rgb(0.94, 0.94, 0.94)
+            });
+            colHeaders.forEach((h: string, i: number) => {
+              if (x + i * colWidth < pageWidth - margin) {
+                const truncated = h.length > 15 ? h.substring(0, 14) + '..' : h;
+                currentPage.drawText(truncated, {
+                  x: x + i * colWidth + 4, y: currentY, size: 8, font: boldFont, color: rgb(0.2, 0.2, 0.2)
+                });
+              }
+            });
+            currentY -= 18;
+          }
+
+          const rows = data.slice(0, element.config?.pagination?.pageSize || 20);
+          for (const row of rows) {
+            checkPageBreak(14);
+            colFields.forEach((field: string, i: number) => {
+              if (x + i * colWidth < pageWidth - margin) {
+                const val = String(row[field] ?? '');
+                const truncated = val.length > 18 ? val.substring(0, 17) + '..' : val;
+                currentPage.drawText(truncated, {
+                  x: x + i * colWidth + 4, y: currentY, size: 8, font, color: rgb(0.3, 0.3, 0.3)
+                });
+              }
+            });
+            currentY -= 14;
+          }
+          currentY -= 10;
+          break;
+        }
+        case 'map': {
+          const mapTitle = element.config?.title || 'Map';
+          checkPageBreak(60);
+          currentPage.drawRectangle({
+            x, y: currentY - 50, width: Math.min(width, pageWidth - margin - x), height: 60,
+            color: rgb(0.93, 0.95, 0.97), borderColor: rgb(0.8, 0.85, 0.9), borderWidth: 0.5
+          });
+          currentPage.drawText(mapTitle, {
+            x: x + 8, y: currentY - 10, size: 10, font: boldFont, color: rgb(0.2, 0.3, 0.4)
+          });
+          currentPage.drawText('[Map visualization - see interactive version]', {
+            x: x + 8, y: currentY - 30, size: 8, font, color: rgb(0.5, 0.6, 0.65)
+          });
+          currentY -= 70;
+          break;
+        }
+        default: {
+          checkPageBreak(20);
+          currentPage.drawText(`[${(element.type || 'unknown').toUpperCase()}]`, {
+            x, y: currentY, size: 10, font, color: rgb(0.6, 0.6, 0.6)
+          });
+          currentY -= 20;
+          break;
+        }
+      }
     }
   }
 
-  doc.end();
+  if (data.length === 0) {
+    checkPageBreak(20);
+    currentPage.drawText('No data available for the selected filters.', {
+      x: margin, y: currentY, size: 11, font, color: rgb(0.5, 0.5, 0.5)
+    });
+  }
+
+  currentPage.drawText(`Page 1 of ${pdfDoc.getPageCount()}`, {
+    x: pageWidth / 2 - 30, y: 20, size: 8, font, color: rgb(0.6, 0.6, 0.6)
+  });
+
+  const pdfBytes = await pdfDoc.save();
+  const tempPath = path.join(process.cwd(), 'temp', `${executionId}_temp.pdf`);
+  await fs.mkdir(path.dirname(tempPath), { recursive: true });
+  await fs.writeFile(tempPath, Buffer.from(pdfBytes));
 
   return {
     filePath: tempPath,
-    fileSize: (await fs.stat(tempPath)).size
+    fileSize: pdfBytes.length
   };
 }
 
@@ -525,17 +718,74 @@ async function generateCSVReport({
   const tempPath = path.join(process.cwd(), 'temp', `${executionId}_temp.csv`);
   await fs.mkdir(path.dirname(tempPath), { recursive: true });
 
+  const tableElement = (template.layout || []).find((el: any) => el.type === 'table');
+  const columnDefs: Array<{ field: string; header: string }> = tableElement?.visualization?.config?.columns || [];
+
+  const fieldAliases: Record<string, string[]> = {
+    status: ['verificationStatus', 'deliveryStatus', 'status'],
+    date: ['rapidAssessmentDate', 'responseDate', 'date', 'createdAt'],
+    type: ['rapidAssessmentType', 'type', 'responseType'],
+  };
+
+  const resolveField = (obj: any, fieldPath: string): string => {
+    if (!obj) return '';
+    const parts = fieldPath.split('.');
+    let current: any = obj;
+    for (const part of parts) {
+      if (current == null) return '';
+      current = current[part];
+    }
+    if (current == null || current === '') return '';
+    if (current instanceof Date) return current.toISOString().split('T')[0];
+    if (typeof current === 'object') return JSON.stringify(current);
+    return String(current);
+  };
+
+  const flattenValue = (obj: any, fieldPath: string): string => {
+    const direct = resolveField(obj, fieldPath);
+    if (direct) return direct;
+    const aliases = fieldAliases[fieldPath];
+    if (aliases) {
+      for (const alias of aliases) {
+        if (alias === fieldPath) continue;
+        const val = resolveField(obj, alias);
+        if (val) return val;
+      }
+    }
+    return '';
+  };
+
+  let columns: Array<{ field: string; header: string }>;
+  if (columnDefs.length > 0) {
+    columns = columnDefs.map((c: any) => ({
+      field: c.field || c,
+      header: c.header || c.field || c
+    }));
+  } else if (data.length > 0) {
+    const flatKeys = new Set<string>();
+    for (const row of data.slice(0, 10)) {
+      for (const key of Object.keys(row)) {
+        if (row[key] == null || typeof row[key] !== 'object') {
+          flatKeys.add(key);
+        }
+      }
+    }
+    columns = Array.from(flatKeys).map(k => ({ field: k, header: k }));
+  } else {
+    columns = [];
+  }
+
   let csvContent = '';
 
-  if (options.includeHeaders && data.length > 0) {
-    const headers = Object.keys(data[0]);
-    csvContent += headers.join(',') + '\n';
+  if (options.includeHeaders !== false && columns.length > 0) {
+    csvContent += columns.map(c => `"${c.header.replace(/"/g, '""')}"`).join(',') + '\n';
   }
 
   for (const row of data) {
-    const values = Object.values(row).map(value => 
-      value === null || value === undefined ? '' : `"${String(value).replace(/"/g, '""')}"`
-    );
+    const values = columns.map(col => {
+      const val = flattenValue(row, col.field);
+      return val === '' ? '' : `"${val.replace(/"/g, '""')}"`;
+    });
     csvContent += values.join(',') + '\n';
   }
 
@@ -564,48 +814,54 @@ async function generateHTMLReport({
   const tempPath = path.join(process.cwd(), 'temp', `${executionId}_temp.html`);
   await fs.mkdir(path.dirname(tempPath), { recursive: true });
 
-  const htmlContent = await ReportTemplateEngine.renderTemplatePreview({
+  const previewJson = ReportTemplateEngine.renderTemplatePreview({
     ...template,
     layout: template.layout || [],
-    data
-  });
+  }, { assessments: data });
 
-  const fullHtml = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>${template.name || 'Report'}</title>
-      <style>
-        body { 
-          font-family: Arial, sans-serif; 
-          margin: 0; 
-          padding: ${options.margins?.top || 20}px ${options.margins?.right || 20}px;
-        }
-        .report-container { 
-          max-width: 1200px; 
-          margin: 0 auto; 
-          padding: 20px; 
-        }
-        @media print { 
-          body { margin: 0; }
-          .report-container { max-width: 100%; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="report-container">
-        ${htmlContent}
-        ${options.includeFooter ? `
-          <footer style="margin-top: 40px; text-align: center; font-size: 12px; color: #666;">
-            Generated on ${new Date().toLocaleDateString()} by Disaster Management System
-          </footer>
-        ` : ''}
-      </div>
-    </body>
-    </html>
-  `;
+  let previewHtml = '';
+  try {
+    const parsed = JSON.parse(previewJson);
+    previewHtml = parsed.preview || '';
+  } catch {
+    previewHtml = previewJson;
+  }
+
+  const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${template.name || 'Report'}</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 0; 
+      padding: ${options.margins?.top || 20}px ${options.margins?.right || 20}px;
+      background: #ffffff;
+      color: #1a1a1a;
+    }
+    .report-container { 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      padding: 20px; 
+    }
+    @media print { 
+      body { margin: 0; }
+      .report-container { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="report-container">
+    ${previewHtml}
+    ${options.includeFooter !== false ? `
+    <footer style="margin-top: 40px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee; padding-top: 12px;">
+      Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} by Disaster Management System
+    </footer>` : ''}
+  </div>
+</body>
+</html>`;
 
   await fs.writeFile(tempPath, fullHtml, 'utf8');
 
@@ -634,10 +890,65 @@ async function generateExcelReport({
 
   const worksheet = workbook.addWorksheet(template.name || 'Report');
 
-  if (options.includeHeaders && data.length > 0) {
-    const headers = Object.keys(data[0]);
-    worksheet.addRow(headers);
-    
+  const tableElement = (template.layout || []).find((el: any) => el.type === 'table');
+  const columnDefs: Array<{ field: string; header: string }> = tableElement?.visualization?.config?.columns || [];
+
+  const fieldAliases: Record<string, string[]> = {
+    status: ['verificationStatus', 'deliveryStatus', 'status'],
+    date: ['rapidAssessmentDate', 'responseDate', 'date', 'createdAt'],
+    type: ['rapidAssessmentType', 'type', 'responseType'],
+  };
+
+  const resolveField = (obj: any, fieldPath: string): string => {
+    if (!obj) return '';
+    const parts = fieldPath.split('.');
+    let current: any = obj;
+    for (const part of parts) {
+      if (current == null) return '';
+      current = current[part];
+    }
+    if (current == null || current === '') return '';
+    if (current instanceof Date) return current.toISOString().split('T')[0];
+    if (typeof current === 'object') return JSON.stringify(current);
+    return String(current);
+  };
+
+  const flattenValue = (obj: any, fieldPath: string): string => {
+    const direct = resolveField(obj, fieldPath);
+    if (direct) return direct;
+    const aliases = fieldAliases[fieldPath];
+    if (aliases) {
+      for (const alias of aliases) {
+        if (alias === fieldPath) continue;
+        const val = resolveField(obj, alias);
+        if (val) return val;
+      }
+    }
+    return '';
+  };
+
+  let columns: Array<{ field: string; header: string }>;
+  if (columnDefs.length > 0) {
+    columns = columnDefs.map((c: any) => ({
+      field: c.field || c,
+      header: c.header || c.field || c
+    }));
+  } else if (data.length > 0) {
+    const flatKeys = new Set<string>();
+    for (const row of data.slice(0, 10)) {
+      for (const key of Object.keys(row)) {
+        if (row[key] == null || typeof row[key] !== 'object') {
+          flatKeys.add(key);
+        }
+      }
+    }
+    columns = Array.from(flatKeys).map(k => ({ field: k, header: k }));
+  } else {
+    columns = [];
+  }
+
+  if (options.includeHeaders !== false && columns.length > 0) {
+    worksheet.addRow(columns.map(c => c.header));
     worksheet.getRow(1).eachCell((cell: any) => {
       cell.font = { bold: true };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } };
@@ -645,7 +956,7 @@ async function generateExcelReport({
   }
 
   for (const row of data) {
-    worksheet.addRow(Object.values(row));
+    worksheet.addRow(columns.map(col => flattenValue(row, col.field)));
   }
 
   worksheet.columns.forEach((column: any) => {
@@ -668,74 +979,6 @@ async function generateExcelReport({
     filePath: tempPath,
     fileSize: (await fs.stat(tempPath)).size
   };
-}
-
-/**
- * Add element to PDF
- */
-async function addPDFElement(doc: any, element: any, data: any[], options: any) {
-  const position = element.position;
-  
-  switch (element.type) {
-    case 'header':
-      doc.fontSize(options.fontSize === 'large' ? 24 : 18);
-      doc.font('Helvetica-Bold');
-      doc.text(element.config.title || 'Report', position.x * 50, position.y * 20 + 40);
-      
-      if (element.config.showDate) {
-        doc.fontSize(12);
-        doc.font('Helvetica');
-        doc.text(`Generated: ${new Date().toLocaleDateString()}`, position.x * 50, position.y * 20 + 70);
-      }
-      break;
-
-    case 'text':
-      doc.fontSize(12);
-      doc.font('Helvetica');
-      const text = element.config.content || '';
-      doc.text(text, position.x * 50, position.y * 20 + 20);
-      break;
-
-    case 'kpi':
-      doc.fontSize(16);
-      doc.font('Helvetica-Bold');
-      doc.text(element.config.title || 'KPI', position.x * 50, position.y * 20 + 20);
-      
-      doc.fontSize(24);
-      doc.text(element.config.value?.toString() || '0', position.x * 50, position.y * 20 + 50);
-      break;
-
-    case 'table':
-      if (data.length > 0) {
-        const columns = element.config.columns || Object.keys(data[0]);
-        const startY = position.y * 20 + 20;
-        
-        doc.fontSize(10);
-        doc.font('Helvetica-Bold');
-        let currentY = startY;
-        
-        columns.forEach((column: string, index: number) => {
-          doc.text(column, position.x * 50 + index * 100, currentY);
-        });
-        
-        currentY += 20;
-        
-        doc.font('Helvetica');
-        data.slice(0, 20).forEach((row) => {
-          columns.forEach((column: string, index: number) => {
-            doc.text(String(row[column] || ''), position.x * 50 + index * 100, currentY);
-          });
-          currentY += 15;
-        });
-      }
-      break;
-
-    default:
-      doc.fontSize(12);
-      doc.font('Helvetica');
-      doc.text(`[${element.type.toUpperCase()}]`, position.x * 50, position.y * 20 + 20);
-      break;
-  }
 }
 
 function inferDataSourceFromTemplate(template: any): string {
@@ -768,10 +1011,15 @@ function getEstimatedGenerationTime(template: any, filters: any, format: string)
   return (baseTime[format as keyof typeof baseTime] || 30) * complexityMultiplier * dataMultiplier;
 }
 
+function formatToExtension(format: string): string {
+  const map: Record<string, string> = { PDF: 'pdf', CSV: 'csv', HTML: 'html', EXCEL: 'xlsx' };
+  return map[format] || format.toLowerCase();
+}
+
 function generateFilename(template: any, format: string): string {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
   const name = template.name?.replace(/[^a-zA-Z0-9]/g, '_') || 'report';
-  return `${name}_${timestamp}.${format.toLowerCase()}`;
+  return `${name}_${timestamp}.${formatToExtension(format)}`;
 }
 
 function getNextScheduledRun(schedule: any): Date {

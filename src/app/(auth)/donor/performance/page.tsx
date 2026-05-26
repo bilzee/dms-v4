@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 
 // API utilities
 import { apiGet } from '@/lib/api';
+import { ExportButton } from '@/components/dashboards/shared/exports/ExportButton';
 
 // Component to fetch and display performance data
 function PerformanceDashboardContent() {
@@ -112,6 +113,7 @@ export default function PerformancePage() {
                 Track your donation performance, achievements, and ranking over time.
               </p>
             </div>
+            <ExportButton dataType="commitments" size="sm" />
           </div>
         </div>
       </div>

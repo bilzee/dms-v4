@@ -8,7 +8,7 @@ export const GET = withAuth(async (request, context) => {
     const { roles } = context;
     
     // Check if user has coordinator role
-    if (!roles.includes('COORDINATOR')) {
+    if (!roles.includes('COORDINATOR') && !roles.includes('ADMIN')) {
       return NextResponse.json(
         { success: false, error: 'Insufficient permissions. Coordinator role required.' },
         { status: 403 }

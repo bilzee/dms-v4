@@ -26,7 +26,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     const { roles } = context;
     
     // Check if user has coordinator or donor role
-    if (!roles.includes('COORDINATOR') && !roles.includes('DONOR')) {
+    if (!roles.includes('COORDINATOR') && !roles.includes('DONOR') && !roles.includes('ADMIN')) {
       return NextResponse.json(
         { success: false, error: 'Insufficient permissions. Coordinator or Donor role required.' },
         { status: 403 }

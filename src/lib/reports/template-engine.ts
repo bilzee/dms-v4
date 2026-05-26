@@ -172,7 +172,7 @@ export const DEFAULT_TEMPLATES: Partial<ReportTemplate>[] = [
               { field: 'rapidAssessmentType', header: 'Type' },
               { field: 'rapidAssessmentDate', header: 'Date' },
               { field: 'entity.name', header: 'Entity' },
-              { field: 'status', header: 'Status' }
+              { field: 'verificationStatus', header: 'Status' }
             ],
             pagination: { pageSize: 10 }
           }
@@ -394,12 +394,12 @@ export class ReportTemplateEngine {
     );
   }
 
-  static renderTemplatePreview(template: Partial<ReportTemplate>): string {
-    const mockData = this.generateMockData(template);
+  static renderTemplatePreview(template: Partial<ReportTemplate>, realData?: Record<string, any>): string {
+    const data = realData || this.generateMockData(template);
     return JSON.stringify({
       template,
-      mockData,
-      preview: this.generatePreviewHTML(template, mockData)
+      data,
+      preview: this.generatePreviewHTML(template, data)
     }, null, 2);
   }
 
@@ -458,20 +458,19 @@ export class ReportTemplateEngine {
             ${item.config.showDate ? `<p>Generated: ${new Date().toLocaleDateString()}</p>` : ''}
           </div>`;
         
-        case 'kpi':
+        case 'kpi': {
+          const assessments = data.assessments || [];
+          const responses = data.responses || [];
+          const kpiValues = [
+            { label: 'Total', value: assessments.length || responses.length || 0 },
+            { label: 'Verified', value: assessments.filter((a: any) => a.verificationStatus === 'VERIFIED' || a.verificationStatus === 'AUTO_VERIFIED').length || responses.filter((r: any) => r.deliveryStatus === 'DELIVERED').length || 0 },
+          ];
+          const kpiHtml = kpiValues.map(kv => `<div class="metric"><span class="value">${kv.value}</span><span class="label">${kv.label}</span></div>`).join('');
           return `<div class="report-kpi" style="grid-column: ${item.position.x + 1} / span ${item.position.width}; grid-row: ${item.position.y + 1};">
             <h3>${item.config.title}</h3>
-            <div class="kpi-metrics">
-              <div class="metric">
-                <span class="value">150</span>
-                <span class="label">Total</span>
-              </div>
-              <div class="metric">
-                <span class="value">85%</span>
-                <span class="label">Complete</span>
-              </div>
-            </div>
+            <div class="kpi-metrics">${kpiHtml}</div>
           </div>`;
+        }
         
         case 'chart':
           return `<div class="report-chart" style="grid-column: ${item.position.x + 1} / span ${item.position.width}; grid-row: ${item.position.y + 1};">
@@ -479,14 +478,47 @@ export class ReportTemplateEngine {
             <div class="chart-placeholder">📊 Chart Preview</div>
           </div>`;
         
-        case 'table':
+        case 'table': {
+          const columns = item.visualization?.config?.columns || [];
+          const tableData = data.assessments || data.responses || data.entities || data.donors || [];
+          const pageSize = item.visualization?.config?.pagination?.pageSize || 5;
+          const rows = tableData.slice(0, pageSize);
+          
+          let tableHtml: string;
+          if (columns.length > 0 && rows.length > 0) {
+            const headerCells = columns.map((col: any) => `<th>${col.header || col.field}</th>`).join('');
+            const bodyRows = rows.map((row: any) => {
+              const cells = columns.map((col: any) => {
+                const fieldAliases: Record<string, string[]> = {
+                  status: ['verificationStatus', 'deliveryStatus', 'status'],
+                  date: ['rapidAssessmentDate', 'responseDate', 'date'],
+                  type: ['rapidAssessmentType', 'type', 'responseType'],
+                };
+                let val = col.field.split('.').reduce((obj: any, key: string) => obj?.[key], row);
+                if (val == null || val === '') {
+                  const aliases = fieldAliases[col.field];
+                  if (aliases) {
+                    for (const alias of aliases) {
+                      val = alias.split('.').reduce((obj: any, key: string) => obj?.[key], row);
+                      if (val != null && val !== '') break;
+                    }
+                  }
+                }
+                if (val instanceof Date) val = val.toISOString().split('T')[0];
+                return `<td>${val ?? ''}</td>`;
+              }).join('');
+              return `<tr>${cells}</tr>`;
+            }).join('');
+            tableHtml = `<table class="data-table"><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+          } else {
+            tableHtml = `<table class="data-table"><thead><tr><th>No data</th></tr></thead><tbody><tr><td>Configure columns and data source</td></tr></tbody></table>`;
+          }
+          
           return `<div class="report-table" style="grid-column: ${item.position.x + 1} / span ${item.position.width}; grid-row: ${item.position.y + 1};">
             <h3>${item.config.title}</h3>
-            <table class="data-table">
-              <thead><tr><th>Column 1</th><th>Column 2</th></tr></thead>
-              <tbody><tr><td>Data 1</td><td>Data 2</td></tr></tbody>
-            </table>
+            ${tableHtml}
           </div>`;
+        }
         
         case 'map':
           return `<div class="report-map" style="grid-column: ${item.position.x + 1} / span ${item.position.width}; grid-row: ${item.position.y + 1};">

@@ -236,3 +236,4 @@ const ExportButton = ({
 };
 
 export default ExportButton;
+export { ExportButton };

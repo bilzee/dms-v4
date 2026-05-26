@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { prisma } from '@/lib/db/client';
 import { z } from 'zod';
-import { handleApiError } from '@/lib/api/response'
+import { handleApiError } from '@/lib/api/response';
+import { computeOverallScore } from '@/lib/services/gamification.service';
 
 const LeaderboardQuerySchema = z.object({
   limit: z.string().optional().transform(val => val ? parseInt(val) : 50),
@@ -59,9 +60,8 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         startDate.setDate(now.getDate() - 30);
     }
 
-    // Build entity filter for regional leaderboard
-    // Note: Donor model doesn't have entityAssignments, so region filtering is not implemented yet
-    const entityFilter = {};
+    // Region filter: filter donors whose commitments target entities in a specific location
+    // Derived from commitment -> entity -> location field
 
     // Fetch donors with comprehensive metrics data
     // Note: We don't require donors to have commitments in the date range at the top level.
@@ -70,7 +70,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     const donorsWithMetrics = await prisma.donor.findMany({
       where: {
         isActive: true,
-        ...entityFilter,
       },
       select: {
         id: true,
@@ -85,7 +84,12 @@ export const GET = withAuth(async (request: NextRequest, context) => {
             commitmentDate: {
               gte: startDate,
               lte: now
-            }
+            },
+            ...(region ? {
+              entity: {
+                location: { contains: region, mode: 'insensitive' as const }
+              }
+            } : {})
           },
           select: {
             id: true,
@@ -95,7 +99,10 @@ export const GET = withAuth(async (request: NextRequest, context) => {
             verifiedDeliveredQuantity: true,
             totalValueEstimated: true,
             commitmentDate: true,
-            lastUpdated: true
+            lastUpdated: true,
+            entity: {
+              select: { location: true }
+            }
           }
         },
         responses: {
@@ -108,7 +115,10 @@ export const GET = withAuth(async (request: NextRequest, context) => {
           select: {
             id: true,
             verificationStatus: true,
-            createdAt: true
+            createdAt: true,
+            assessment: {
+              select: { createdAt: true }
+            }
           }
         }
       }
@@ -142,17 +152,22 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         : 1;
       const activityFrequency = (totalCommitments + totalResponses) / daysSinceFirstActivity;
 
-      // Speed metrics (average response time to new incidents)
+      // Speed metrics (response time = response created - assessment created)
       const avgResponseTime = donor.responses.length > 0
         ? donor.responses.reduce((sum, r) => {
-            const responseHours = Math.ceil((new Date(r.createdAt).getTime() - new Date(r.createdAt).getTime()) / (1000 * 60 * 60));
-            return sum + Math.min(responseHours, 168); // Cap at 1 week
+            const responseMs = new Date(r.createdAt).getTime();
+            const assessmentMs = r.assessment ? new Date(r.assessment.createdAt).getTime() : responseMs;
+            const responseHours = Math.max(0, (responseMs - assessmentMs) / (1000 * 60 * 60));
+            return sum + Math.min(responseHours, 168);
           }, 0) / donor.responses.length
-        : 24; // Default to 24h if no responses
+        : 24;
 
-      // Calculate composite score using new simple formula: (responseVerificationRate * 100) + totalCommitments
-      // This matches the updated donor metrics API and situation dashboard formula
-      const overallScore = (responseVerificationRate * 100) + totalCommitments;
+      const overallScore = computeOverallScore({
+        verifiedDeliveryRate,
+        totalCommitmentValue,
+        activityFrequency,
+        avgResponseTimeHours: avgResponseTime
+      });
 
       // Keep normalized scores for backward compatibility with UI components
       const normalizedDeliveryScore = Math.min(100, verifiedDeliveryRate);
@@ -170,9 +185,9 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       else if (completedCommitments >= 25) badges.push('High Volume Silver');
       else if (completedCommitments >= 10) badges.push('High Volume Bronze');
 
-      if (avgResponseTime <= 6) badges.push('Quick Response Gold');
-      else if (avgResponseTime <= 12) badges.push('Quick Response Silver');
-      else if (avgResponseTime <= 24) badges.push('Quick Response Bronze');
+      if (totalResponses > 0 && avgResponseTime <= 6) badges.push('Quick Response Gold');
+      else if (totalResponses > 0 && avgResponseTime <= 12) badges.push('Quick Response Silver');
+      else if (totalResponses > 0 && avgResponseTime <= 24) badges.push('Quick Response Bronze');
 
       const monthsActive = Math.ceil(daysSinceFirstActivity / 30);
       if (monthsActive >= 12) badges.push('Consistency Gold');
@@ -184,7 +199,9 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         donor: {
           id: donor.id,
           organizationName: donor.organization || donor.name,
-          region: 'Unassigned' // Donor model doesn't have entityAssignments yet
+          region: donor.commitments.length > 0
+            ? donor.commitments[0].entity?.location || 'Unknown'
+            : 'Unassigned'
         },
         metrics: {
           commitments: {

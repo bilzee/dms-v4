@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { StatCard } from '@/components/shared/StatCard'
 import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Badge } from '@/components/ui/badge'
-import { Activity, Database, Users, HardDrive, Clock, Shield, RefreshCw, Server } from '@/lib/icons'
+import { Activity, Database, HardDrive, Clock, Shield, RefreshCw, Server } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -32,9 +32,10 @@ function SystemHealthContent() {
   const fetchHealth = () => { refetch() }
 
   const getStatusVariant = (status: string) => {
-    if (status === 'Healthy') return 'default' as const
+    if (status === 'Running' || status === 'Healthy') return 'default' as const
     if (status === 'Degraded') return 'secondary' as const
-    return 'destructive' as const
+    if (status === 'Down') return 'destructive' as const
+    return 'outline' as const
   }
 
 
@@ -58,7 +59,7 @@ function SystemHealthContent() {
         </div>
       </div>
 
-      <StatCardGrid columns={5} gap="lg">
+      <StatCardGrid columns={4} gap="lg">
         <StatCard
           label="Database Status"
           value={health?.databaseSync || 'Unknown'}
@@ -71,13 +72,6 @@ function SystemHealthContent() {
           value={`${health?.apiResponseTime || 0}ms`}
           severity="info"
           icon={Activity}
-          loading={loading}
-        />
-        <StatCard
-          label="Active Users (24h)"
-          value={health?.activeUsers || 0}
-          severity="info"
-          icon={Users}
           loading={loading}
         />
         <StatCard
@@ -117,14 +111,12 @@ function SystemHealthContent() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {/* TODO: Replace with real health check API data */}
-            {/* Placeholder service status data - statuses are hardcoded mock values */}
-            {[
-              { name: 'Web Server', status: 'Running', uptime: '99.9%' },
-              { name: 'Database', status: health?.databaseSync || 'Checking...', uptime: '99.8%' },
-              { name: 'Authentication', status: 'Running', uptime: '100%' },
-              { name: 'File Storage', status: 'Running', uptime: '99.7%' },
-            ].map((service) => (
+            {(health?.services || [
+              { name: 'Web Server', status: 'Checking...', uptime: '...' },
+              { name: 'Database', status: 'Checking...', uptime: '...' },
+              { name: 'Authentication', status: 'Checking...', uptime: '...' },
+              { name: 'File Storage', status: 'Checking...', uptime: '...' },
+            ]).map((service: { name: string; status: string; uptime: string }) => (
               <div key={service.name} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className={cn(

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatCard } from '@/components/shared/StatCard'
 import { StatCardGrid } from '@/components/shared/StatCardGrid'
@@ -10,16 +10,17 @@ import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/hooks/useAuth'
-import { 
-  Database, 
-  Download, 
-  Upload, 
-  RefreshCw, 
-  Trash2, 
-  Settings, 
+import { toast } from 'sonner'
+import { useRef } from 'react'
+import {
+  Database,
+  Download,
+  Upload,
+  RefreshCw,
+  Trash2,
+  Settings,
   HardDrive,
   Server,
   Activity,
@@ -30,17 +31,16 @@ import {
   BarChart3
 } from '@/lib/icons'
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
-import { cn } from '@/lib/utils'
 
 interface DatabaseStats {
   totalSize: string
+  totalSizeBytes: number
   tablesCount: number
   recordsCount: number
-  lastBackup: string
-  backupStatus: 'success' | 'failed' | 'in-progress'
-  optimizationStatus: 'good' | 'warning' | 'critical'
   indexesCount: number
   activeConnections: number
+  optimizationStatus: 'good' | 'warning' | 'critical'
+  lastBackup: string
 }
 
 interface BackupRecord {
@@ -56,7 +56,8 @@ interface TableInfo {
   name: string
   records: number
   size: string
-  lastModified: string
+  sizeBytes: number
+  lastModified: string | null
   hasIndexes: boolean
 }
 
@@ -64,154 +65,226 @@ export default function DatabaseManagementPage() {
   const [activeTab, setActiveTab] = useState('overview')
   const [isCreatingBackup, setIsCreatingBackup] = useState(false)
   const [isRestoring, setIsRestoring] = useState(false)
+  const [isOptimizing, setIsOptimizing] = useState(false)
   const [sqlQuery, setSqlQuery] = useState('')
   const [queryResults, setQueryResults] = useState<any[] | null>(null)
+  const [queryRowCount, setQueryRowCount] = useState(0)
   const [isExecutingQuery, setIsExecutingQuery] = useState(false)
-  const { hasPermission } = useAuth()
+  const [stats, setStats] = useState<DatabaseStats | null>(null)
+  const [tables, setTables] = useState<TableInfo[]>([])
+  const [backups, setBackups] = useState<BackupRecord[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { hasPermission, token } = useAuth()
 
-  // Mock data - replace with actual API calls
-  const mockStats: DatabaseStats = {
-    totalSize: '2.4 GB',
-    tablesCount: 15,
-    recordsCount: 125432,
-    lastBackup: '2 hours ago',
-    backupStatus: 'success',
-    optimizationStatus: 'good',
-    indexesCount: 28,
-    activeConnections: 12
-  }
-
-  const mockBackups: BackupRecord[] = [
-    {
-      id: '1',
-      timestamp: '2025-01-05 14:00:00',
-      size: '245 MB',
-      type: 'automatic',
-      status: 'success',
-      location: 'cloud'
-    },
-    {
-      id: '2',
-      timestamp: '2025-01-05 13:00:00',
-      size: '248 MB',
-      type: 'automatic',
-      status: 'success',
-      location: 'cloud'
-    },
-    {
-      id: '3',
-      timestamp: '2025-01-05 09:00:00',
-      size: '242 MB',
-      type: 'manual',
-      status: 'success',
-      location: 'local'
-    },
-    {
-      id: '4',
-      timestamp: '2025-01-04 09:00:00',
-      size: '238 MB',
-      type: 'automatic',
-      status: 'failed',
-      location: 'cloud'
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await fetch('/api/v1/admin/database/stats', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const json = await res.json()
+        setStats(json.data)
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error)
     }
-  ]
+  }, [token])
 
-  const mockTables: TableInfo[] = [
-    { name: 'users', records: 125, size: '2.1 MB', lastModified: '2025-01-05 10:30:00', hasIndexes: true },
-    { name: 'assessments', records: 342, size: '5.8 MB', lastModified: '2025-01-05 11:15:00', hasIndexes: true },
-    { name: 'incidents', records: 89, size: '1.2 MB', lastModified: '2025-01-05 12:45:00', hasIndexes: true },
-    { name: 'entities', records: 456, size: '3.4 MB', lastModified: '2025-01-05 09:20:00', hasIndexes: true },
-    { name: 'responses', records: 1234, size: '8.9 MB', lastModified: '2025-01-05 13:30:00', hasIndexes: true },
-    { name: 'audit_logs', records: 125432, size: '245 MB', lastModified: '2025-01-05 14:00:00', hasIndexes: true }
-  ]
+  const fetchTables = useCallback(async () => {
+    try {
+      const res = await fetch('/api/v1/admin/database/tables', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const json = await res.json()
+        setTables(json.data)
+      }
+    } catch (error) {
+      console.error('Error fetching tables:', error)
+    }
+  }, [token])
+
+  const fetchBackups = useCallback(async () => {
+    try {
+      const res = await fetch('/api/v1/admin/database/backup', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const json = await res.json()
+        setBackups(json.data)
+      }
+    } catch (error) {
+      console.error('Error fetching backups:', error)
+    }
+  }, [token])
+
+  useEffect(() => {
+    if (token) {
+      setIsLoading(true)
+      Promise.all([fetchStats(), fetchTables(), fetchBackups()]).finally(() => setIsLoading(false))
+    }
+  }, [token, fetchStats, fetchTables, fetchBackups])
 
   const handleCreateBackup = async () => {
     setIsCreatingBackup(true)
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      // Replace with actual API call
-      // const response = await fetch('/api/v1/admin/database/backup', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`
-      //   }
-      // })
+      const res = await fetch('/api/v1/admin/database/backup', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const json = await res.json()
+        setBackups(prev => [json.data, ...prev])
+        toast.success('Backup created successfully')
+      } else {
+        toast.error('Failed to create backup')
+      }
     } catch (error) {
-      console.error('Error creating backup:', error)
+      toast.error('Error creating backup')
     } finally {
       setIsCreatingBackup(false)
     }
   }
 
   const handleRestoreBackup = async (backupId: string) => {
+    if (!confirm('Are you sure? This will overwrite current data.')) return
     setIsRestoring(true)
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 3000))
-      // Replace with actual API call
-      // const response = await fetch(`/api/v1/admin/database/restore/${backupId}`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`
-      //   }
-      // })
+      const res = await fetch(`/api/v1/admin/database/restore/${backupId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const json = await res.json()
+      if (json.success) {
+        toast.success(json.data.message || 'Database restored successfully')
+        await fetchStats()
+      } else {
+        toast.error(json.error || 'Failed to restore backup')
+      }
     } catch (error) {
-      console.error('Error restoring backup:', error)
+      toast.error('Error restoring backup')
     } finally {
       setIsRestoring(false)
     }
   }
 
+  const handleDownloadBackup = async (backupId: string) => {
+    try {
+      const res = await fetch(`/api/v1/admin/database/backup?id=${backupId}&action=download`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const blob = await res.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        const cd = res.headers.get('Content-Disposition')
+        const fname = cd ? cd.split('filename=')[1]?.replace(/\"/g, '') : `${backupId}.sql`
+        a.download = fname || `${backupId}.sql`
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        window.URL.revokeObjectURL(url)
+      } else {
+        toast.error('Failed to download backup')
+      }
+    } catch (error) {
+      toast.error('Error downloading backup')
+    }
+  }
+
+  const handleDeleteBackup = async (backupId: string) => {
+    if (!confirm('Delete this backup permanently?')) return
+    try {
+      const res = await fetch(`/api/v1/admin/database/backup?id=${backupId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        setBackups(prev => prev.filter(b => b.id !== backupId))
+        toast.success('Backup deleted')
+      } else {
+        toast.error('Failed to delete backup')
+      }
+    } catch (error) {
+      toast.error('Error deleting backup')
+    }
+  }
+
+  const handleUploadBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/v1/admin/database/backup', {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+      const json = await res.json()
+      if (json.success) {
+        setBackups(prev => [json.data, ...prev])
+        toast.success('Backup uploaded successfully')
+      } else {
+        toast.error(json.error || 'Failed to upload backup')
+      }
+    } catch (error) {
+      toast.error('Error uploading backup')
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
   const executeQuery = async () => {
     if (!sqlQuery.trim()) return
-
     setIsExecutingQuery(true)
+    setQueryResults(null)
     try {
-      // Simulate API call for SQL execution (admin-only)
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Mock result for demonstration - replace with actual API call
-      setQueryResults([
-        { id: 1, name: 'John Doe', email: 'john@example.com' },
-        { id: 2, name: 'Jane Smith', email: 'jane@example.com' }
-      ])
-      
-      // Replace with actual API call
-      // const response = await fetch('/api/v1/admin/database/query', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${token}`
-      //   },
-      //   body: JSON.stringify({ query: sqlQuery })
-      // })
-      
-      // if (response.ok) {
-      //   const data = await response.json()
-      //   setQueryResults(data.results)
-      // }
+      const res = await fetch('/api/v1/admin/database/query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ query: sqlQuery }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setQueryResults(json.data.results)
+        setQueryRowCount(json.data.rowCount)
+      } else {
+        toast.error(json.error || 'Query failed')
+      }
     } catch (error) {
-      console.error('Error executing query:', error)
-      setQueryResults(null)
+      toast.error('Error executing query')
     } finally {
       setIsExecutingQuery(false)
     }
   }
 
   const handleOptimizeDatabase = async () => {
+    setIsOptimizing(true)
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      // Replace with actual API call
-      // const response = await fetch('/api/v1/admin/database/optimize', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`
-      //   }
-      // })
+      const res = await fetch('/api/v1/admin/database/optimize', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const json = await res.json()
+        toast.success(json.data.message)
+        await fetchStats()
+      } else {
+        toast.error('Optimization failed')
+      }
     } catch (error) {
-      console.error('Error optimizing database:', error)
+      toast.error('Error optimizing database')
+    } finally {
+      setIsOptimizing(false)
     }
   }
 
@@ -230,30 +303,33 @@ export default function DatabaseManagementPage() {
   return (
     <RoleBasedRoute requiredRole="ADMIN" fallbackPath="/dashboard">
       <div className="container mx-auto py-8 space-y-6">
-        {/* Header */}
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">Database Management</h1>
             <p className="text-gray-600">Database administration and maintenance tools</p>
           </div>
+          <Button variant="outline" onClick={() => { fetchStats(); fetchTables(); fetchBackups(); }}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
         </div>
 
         <StatCardGrid columns={4}>
           <StatCard
             label="Database Size"
-            value={mockStats.totalSize}
+            value={stats?.totalSize ?? '...'}
             severity="neutral"
             icon={HardDrive}
           />
           <StatCard
             label="Total Records"
-            value={mockStats.recordsCount.toLocaleString()}
+            value={(stats?.recordsCount ?? 0).toLocaleString()}
             severity="info"
             icon={FileText}
           />
           <StatCard
             label="Active Connections"
-            value={mockStats.activeConnections}
+            value={stats?.activeConnections ?? 0}
             severity="success"
             icon={Server}
           />
@@ -262,8 +338,8 @@ export default function DatabaseManagementPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Optimization</p>
-                  <Badge variant={mockStats.optimizationStatus === 'good' ? 'default' : 'secondary'}>
-                    {mockStats.optimizationStatus}
+                  <Badge variant={stats?.optimizationStatus === 'good' ? 'default' : 'secondary'}>
+                    {stats?.optimizationStatus ?? '...'}
                   </Badge>
                 </div>
                 <Activity className="h-6 w-6 text-orange-600" />
@@ -272,7 +348,6 @@ export default function DatabaseManagementPage() {
           </Card>
         </StatCardGrid>
 
-        {/* Database Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -284,7 +359,6 @@ export default function DatabaseManagementPage() {
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Database Health */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -303,25 +377,24 @@ export default function DatabaseManagementPage() {
                       </Badge>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>Last Optimization</span>
-                      <span>3 days ago</span>
+                      <span>Tables</span>
+                      <span>{stats?.tablesCount ?? 0}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>Query Performance</span>
-                      <Badge variant="default">Good</Badge>
+                      <span>Indexes</span>
+                      <span>{stats?.indexesCount ?? 0}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Storage Usage</span>
                       <div className="flex items-center space-x-2">
-                        <Progress value={75} className="w-16 h-2" />
-                        <span>75%</span>
+                        <Progress value={Math.min(100, ((stats?.totalSizeBytes ?? 0) / (5 * 1024 * 1024 * 1024)) * 100)} className="w-16 h-2" />
+                        <span>{stats?.totalSize ?? '...'}</span>
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Quick Actions */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -332,21 +405,21 @@ export default function DatabaseManagementPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" onClick={handleOptimizeDatabase} className="h-16 flex-col">
-                      <RefreshCw className="h-4 w-4 mb-1" />
+                    <Button variant="outline" onClick={handleOptimizeDatabase} disabled={isOptimizing} className="h-16 flex-col">
+                      <RefreshCw className={`h-4 w-4 mb-1 ${isOptimizing ? 'animate-spin' : ''}`} />
                       <span className="text-xs">Optimize</span>
                     </Button>
-                    <Button variant="outline" className="h-16 flex-col">
+                    <Button variant="outline" onClick={handleCreateBackup} disabled={isCreatingBackup} className="h-16 flex-col">
+                      <Database className="h-4 w-4 mb-1" />
+                      <span className="text-xs">Backup</span>
+                    </Button>
+                    <Button variant="outline" onClick={() => setActiveTab('tables')} className="h-16 flex-col">
                       <BarChart3 className="h-4 w-4 mb-1" />
-                      <span className="text-xs">Analyze</span>
+                      <span className="text-xs">Tables</span>
                     </Button>
-                    <Button variant="outline" className="h-16 flex-col">
-                      <Clock className="h-4 w-4 mb-1" />
-                      <span className="text-xs">Schedule</span>
-                    </Button>
-                    <Button variant="outline" className="h-16 flex-col">
-                      <Download className="h-4 w-4 mb-1" />
-                      <span className="text-xs">Export</span>
+                    <Button variant="outline" onClick={() => setActiveTab('query')} className="h-16 flex-col">
+                      <FileText className="h-4 w-4 mb-1" />
+                      <span className="text-xs">Query</span>
                     </Button>
                   </div>
                 </CardContent>
@@ -360,61 +433,88 @@ export default function DatabaseManagementPage() {
                 <h3 className="text-lg font-semibold">Backup & Restore</h3>
                 <p className="text-gray-600">Database backup and recovery operations</p>
               </div>
+              <div className="flex gap-2">
+              <input ref={fileInputRef} type="file" accept=".sql" className="hidden" onChange={handleUploadBackup} />
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                <Upload className="mr-2 h-4 w-4" />
+                {isUploading ? 'Uploading...' : 'Upload Backup'}
+              </Button>
               <Button onClick={handleCreateBackup} disabled={isCreatingBackup}>
                 <Database className="mr-2 h-4 w-4" />
                 {isCreatingBackup ? 'Creating...' : 'Create Backup'}
               </Button>
             </div>
+            </div>
 
-            {/* Backup History */}
             <Card>
               <CardHeader>
                 <CardTitle>Backup History</CardTitle>
                 <CardDescription>Recent database backups</CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date/Time</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Size</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {mockBackups.map((backup) => (
-                      <TableRow key={backup.id}>
-                        <TableCell>{new Date(backup.timestamp).toLocaleString()}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {backup.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{backup.size}</TableCell>
-                        <TableCell>
-                          <Badge variant={backup.status === 'success' ? 'default' : backup.status === 'failed' ? 'destructive' : 'secondary'}>
-                            {backup.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{backup.location}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRestoreBackup(backup.id)}
-                            disabled={isRestoring || backup.status !== 'success'}
-                          >
-                            <Upload className="h-3 w-3 mr-1" />
-                            {isRestoring ? 'Restoring...' : 'Restore'}
-                          </Button>
-                        </TableCell>
+                {backups.length === 0 ? (
+                  <p className="text-sm text-gray-500 py-4 text-center">No backups recorded yet. Click &quot;Create Backup&quot; to start.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date/Time</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Size</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {backups.map((backup) => (
+                        <TableRow key={backup.id}>
+                          <TableCell>{new Date(backup.timestamp).toLocaleString()}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{backup.type}</Badge>
+                          </TableCell>
+                          <TableCell>{backup.size}</TableCell>
+                          <TableCell>
+                            <Badge variant={backup.status === 'success' ? 'default' : backup.status === 'failed' ? 'destructive' : 'secondary'}>
+                              {backup.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{backup.location}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDownloadBackup(backup.id)}
+                                disabled={backup.status !== 'success'}
+                                title="Download"
+                              >
+                                <Download className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleRestoreBackup(backup.id)}
+                                disabled={isRestoring || backup.status !== 'success'}
+                                title="Restore"
+                              >
+                                <Upload className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteBackup(backup.id)}
+                                title="Delete"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -434,26 +534,19 @@ export default function DatabaseManagementPage() {
                       <TableHead>Size</TableHead>
                       <TableHead>Last Modified</TableHead>
                       <TableHead>Indexes</TableHead>
-                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockTables.map((table) => (
+                    {tables.map((table) => (
                       <TableRow key={table.name}>
                         <TableCell className="font-medium">{table.name}</TableCell>
                         <TableCell>{table.records.toLocaleString()}</TableCell>
                         <TableCell>{table.size}</TableCell>
-                        <TableCell>{new Date(table.lastModified).toLocaleString()}</TableCell>
+                        <TableCell>{table.lastModified ? new Date(table.lastModified).toLocaleString() : 'N/A'}</TableCell>
                         <TableCell>
                           <Badge variant={table.hasIndexes ? 'default' : 'secondary'}>
                             {table.hasIndexes ? 'Yes' : 'No'}
                           </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="outline" size="sm">
-                            <BarChart3 className="h-3 w-3 mr-1" />
-                            Analyze
-                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -467,7 +560,7 @@ export default function DatabaseManagementPage() {
             <Card>
               <CardHeader>
                 <CardTitle>SQL Query Executor</CardTitle>
-                <CardDescription>Execute custom SQL queries (admin only)</CardDescription>
+                <CardDescription>Execute custom SELECT queries (admin only)</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -481,50 +574,50 @@ export default function DatabaseManagementPage() {
                   />
                 </div>
                 <div className="flex space-x-2">
-                  <Button 
+                  <Button
                     onClick={executeQuery}
                     disabled={isExecutingQuery || !sqlQuery.trim()}
                   >
-                    <RefreshCw className={cn('mr-2 h-4 w-4', isExecutingQuery && 'animate-spin')} />
+                    <RefreshCw className={`mr-2 h-4 w-4 ${isExecutingQuery ? 'animate-spin' : ''}`} />
                     {isExecutingQuery ? 'Executing...' : 'Execute Query'}
                   </Button>
-                  <Button 
+                  <Button
                     variant="outline"
-                    onClick={() => {
-                      setSqlQuery('')
-                      setQueryResults(null)
-                    }}
+                    onClick={() => { setSqlQuery(''); setQueryResults(null); setQueryRowCount(0); }}
                   >
                     Clear
                   </Button>
                 </div>
 
-                {/* Query Results */}
                 {queryResults && (
                   <div className="mt-4">
                     <h4 className="font-medium mb-2">Query Results</h4>
-                    <div className="border rounded-lg overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            {Object.keys(queryResults[0] || {}).map((key) => (
-                              <TableHead key={key}>{key}</TableHead>
-                            ))}
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {queryResults.map((row, index) => (
-                            <TableRow key={index}>
-                              {Object.values(row).map((value, i) => (
-                                <TableCell key={i}>{String(value)}</TableCell>
+                    {queryResults.length > 0 ? (
+                      <div className="border rounded-lg overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              {Object.keys(queryResults[0]).map((key) => (
+                                <TableHead key={key}>{key}</TableHead>
                               ))}
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                          </TableHeader>
+                          <TableBody>
+                            {queryResults.map((row, index) => (
+                              <TableRow key={index}>
+                                {Object.values(row).map((value, i) => (
+                                  <TableCell key={i}>{String(value ?? 'NULL')}</TableCell>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">No results returned</p>
+                    )}
                     <div className="mt-2 text-sm text-gray-600">
-                      {queryResults.length} row{queryResults.length !== 1 ? 's' : ''} returned
+                      {queryRowCount} row{queryRowCount !== 1 ? 's' : ''} returned
                     </div>
                   </div>
                 )}
@@ -532,7 +625,7 @@ export default function DatabaseManagementPage() {
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    SQL Query Executor is for advanced users only. Be careful when executing queries as they can modify or delete data.
+                    Only SELECT queries are allowed. Write operations are blocked for safety.
                   </AlertDescription>
                 </Alert>
               </CardContent>
@@ -541,7 +634,6 @@ export default function DatabaseManagementPage() {
 
           <TabsContent value="maintenance" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Database Maintenance */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -554,69 +646,50 @@ export default function DatabaseManagementPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <div>
-                        <h4 className="font-medium">Index Optimization</h4>
-                        <p className="text-sm text-gray-600">Rebuild and optimize database indexes</p>
+                        <h4 className="font-medium">VACUUM ANALYZE</h4>
+                        <p className="text-sm text-gray-600">Reclaim storage and update planner statistics</p>
                       </div>
-                      <Button variant="outline" size="sm" onClick={handleOptimizeDatabase}>
-                        <RefreshCw className="h-3 w-3 mr-1" />
-                        Optimize
+                      <Button variant="outline" size="sm" onClick={handleOptimizeDatabase} disabled={isOptimizing}>
+                        <RefreshCw className={`h-3 w-3 mr-1 ${isOptimizing ? 'animate-spin' : ''}`} />
+                        Run
                       </Button>
                     </div>
                     <div className="flex justify-between items-center">
                       <div>
-                        <h4 className="font-medium">Query Cache</h4>
-                        <p className="text-sm text-gray-600">Clear query cache to improve performance</p>
+                        <h4 className="font-medium">Statistics</h4>
+                        <p className="text-sm text-gray-600">{stats?.tablesCount ?? 0} tables, {stats?.indexesCount ?? 0} indexes</p>
                       </div>
-                      <Button variant="outline" size="sm">
-                        <Trash2 className="h-3 w-3 mr-1" />
-                        Clear
-                      </Button>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h4 className="font-medium">Statistics Update</h4>
-                        <p className="text-sm text-gray-600">Update table statistics</p>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        <RefreshCw className="h-3 w-3 mr-1" />
-                        Update
-                      </Button>
+                      <Badge variant="default">{stats?.optimizationStatus ?? '...'}</Badge>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Automated Tasks */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <Clock className="mr-2 h-5 w-5" />
-                    Automated Tasks
+                    <Database className="mr-2 h-5 w-5" />
+                    Database Info
                   </CardTitle>
-                  <CardDescription>Scheduled maintenance tasks</CardDescription>
+                  <CardDescription>Current database configuration</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h4 className="font-medium">Log Cleanup</h4>
-                        <p className="text-sm text-gray-600">Auto-remove old logs</p>
-                      </div>
-                      <span className="text-sm text-green-600">Daily</span>
+                    <div className="flex justify-between text-sm">
+                      <span>Total Size</span>
+                      <span className="font-medium">{stats?.totalSize ?? '...'}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h4 className="font-medium">Backup</h4>
-                        <p className="text-sm text-gray-600">Automated backups</p>
-                      </div>
-                      <span className="text-sm text-blue-600">Hourly</span>
+                    <div className="flex justify-between text-sm">
+                      <span>Total Records</span>
+                      <span className="font-medium">{(stats?.recordsCount ?? 0).toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h4 className="font-medium">Optimization</h4>
-                        <p className="text-sm text-gray-600">Weekly optimization</p>
-                      </div>
-                      <span className="text-sm text-purple-600">Weekly</span>
+                    <div className="flex justify-between text-sm">
+                      <span>Active Connections</span>
+                      <span className="font-medium">{stats?.activeConnections ?? 0}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Last Backup</span>
+                      <span className="font-medium">{backups.length > 0 ? new Date(backups[0].timestamp).toLocaleString() : 'Never'}</span>
                     </div>
                   </div>
                 </CardContent>

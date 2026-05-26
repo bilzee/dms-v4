@@ -197,6 +197,25 @@ const getNavigationItems = (role: string | null): NavItem[] => {
         ]
       },
       {
+        name: 'Reports',
+        href: '#coordinator-reports',
+        icon: FileText,
+        children: [
+          {
+            name: 'Report Management',
+            href: '/coordinator/reports',
+            icon: FileText,
+            description: 'View and manage report configurations'
+          },
+          {
+            name: 'Report Builder',
+            href: '/reports/builder',
+            icon: BarChart3,
+            description: 'Create and edit report templates'
+          }
+        ]
+      },
+      {
         name: 'Mapping & Visualization',
         href: '#coordinator-mapping',
         icon: MapPin,
@@ -376,6 +395,12 @@ const getNavigationItems = (role: string | null): NavItem[] => {
             href: '/system/database', 
             icon: FileText,
             description: 'Database administration' 
+          },
+          { 
+            name: 'System Health', 
+            href: '/system/health', 
+            icon: Monitor,
+            description: 'System monitoring and health status' 
           }
         ]
       }

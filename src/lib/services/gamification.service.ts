@@ -7,6 +7,27 @@ import {
   Achievement 
 } from '@/lib/validation/gamification';
 
+export interface OverallScoreInputs {
+  verifiedDeliveryRate: number;
+  totalCommitmentValue: number;
+  activityFrequency: number;
+  avgResponseTimeHours: number;
+}
+
+export function computeOverallScore(metrics: OverallScoreInputs): number {
+  const normalizedDeliveryScore = Math.min(100, metrics.verifiedDeliveryRate);
+  const normalizedValueScore = Math.min(100, (metrics.totalCommitmentValue / 10000) * 100);
+  const normalizedConsistencyScore = Math.min(100, metrics.activityFrequency * 1000);
+  const normalizedSpeedScore = Math.max(0, 100 - (metrics.avgResponseTimeHours / 24) * 20);
+
+  return (
+    (normalizedDeliveryScore * RANKING_WEIGHTS.VERIFIED_DELIVERY_RATE) +
+    (normalizedValueScore * RANKING_WEIGHTS.COMMITMENT_VALUE) +
+    (normalizedConsistencyScore * RANKING_WEIGHTS.CONSISTENCY) +
+    (normalizedSpeedScore * RANKING_WEIGHTS.RESPONSE_SPEED)
+  );
+}
+
 export interface CalculatedMetrics {
   donorId: string;
   totalCommitments: number;
@@ -65,7 +86,10 @@ export async function calculateDonorMetrics(
         select: {
           id: true,
           verificationStatus: true,
-          createdAt: true
+          createdAt: true,
+          assessment: {
+            select: { createdAt: true }
+          }
         }
       }
     }
@@ -100,26 +124,22 @@ export async function calculateDonorMetrics(
     : 1;
   const activityFrequency = (totalCommitments + totalResponses) / daysSinceFirstActivity;
 
-  // Calculate average response time
+  // Calculate average response time (response created - assessment created)
   const avgResponseTimeHours = donor.responses.length > 0
     ? donor.responses.reduce((sum, r) => {
-        // Simplified calculation - in real implementation, would compare against incident creation time
-        const responseHours = 24; // Default assumption
-        return sum + Math.min(responseHours, 168); // Cap at 1 week
+        const responseMs = new Date(r.createdAt).getTime();
+        const assessmentMs = r.assessment ? new Date(r.assessment.createdAt).getTime() : responseMs;
+        const responseHours = Math.max(0, (responseMs - assessmentMs) / (1000 * 60 * 60));
+        return sum + Math.min(responseHours, 168);
       }, 0) / donor.responses.length
-    : 24; // Default to 24h if no responses
+    : 24;
 
-  // Calculate overall score using weighted formula
-  const normalizedDeliveryScore = Math.min(100, verifiedDeliveryRate);
-  const normalizedValueScore = Math.min(100, (totalCommitmentValue / 10000) * 100); // Scale based on $10k units
-  const normalizedConsistencyScore = Math.min(100, activityFrequency * 1000); // Scale activity frequency
-  const normalizedSpeedScore = Math.max(0, 100 - (avgResponseTimeHours / 24) * 20); // Lower time = higher score
-
-  const overallScore = 
-    (normalizedDeliveryScore * RANKING_WEIGHTS.VERIFIED_DELIVERY_RATE) +
-    (normalizedValueScore * RANKING_WEIGHTS.COMMITMENT_VALUE) +
-    (normalizedConsistencyScore * RANKING_WEIGHTS.CONSISTENCY) +
-    (normalizedSpeedScore * RANKING_WEIGHTS.RESPONSE_SPEED);
+  const overallScore = computeOverallScore({
+    verifiedDeliveryRate,
+    totalCommitmentValue,
+    activityFrequency,
+    avgResponseTimeHours
+  });
 
   // Calculate achievement badges
   const achievementBadges = calculateAchievementBadges({

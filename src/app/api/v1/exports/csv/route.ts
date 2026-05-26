@@ -8,9 +8,21 @@ const CSVExportRequestSchema = z.object({
   dataType: z.enum(['assessments', 'responses', 'entities', 'incidents', 'commitments']),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
-  format: z.enum(['csv', 'xlsx']).default('csv'),
+  format: z.enum(['csv']).default('csv'),
   filters: z.record(z.any()).optional(),
 });
+
+function escapeCsvValue(value: any): string {
+  const str = String(value ?? '');
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+function toCsvRow(row: any[]): string {
+  return row.map(escapeCsvValue).join(',');
+}
 
 const ROLE_PERMISSIONS: Record<string, string[]> = {
   ASSESSOR: ['assessments'],
@@ -128,7 +140,7 @@ async function generateAssessmentsCSV(startDate?: string, endDate?: string, filt
     assessment.verifiedAt?.toISOString() || '',
   ]);
 
-  return [headers, ...csvRows].map(row => row.join(',')).join('\n');
+  return [headers, ...csvRows].map(row => toCsvRow(row)).join('\n');
 }
 
 async function generateResponsesCSV(startDate?: string, endDate?: string, filters?: Record<any, any>): Promise<string> {
@@ -196,7 +208,7 @@ async function generateResponsesCSV(startDate?: string, endDate?: string, filter
     response.assessment?.location || 'Unknown',
   ]);
 
-  return [headers, ...csvRows].map(row => row.join(',')).join('\n');
+  return [headers, ...csvRows].map(row => toCsvRow(row)).join('\n');
 }
 
 async function generateEntitiesCSV(startDate?: string, endDate?: string, filters?: Record<any, any>): Promise<string> {
@@ -240,7 +252,7 @@ async function generateEntitiesCSV(startDate?: string, endDate?: string, filters
     entity.updatedAt.toISOString(),
   ]);
 
-  return [headers, ...csvRows].map(row => row.join(',')).join('\n');
+  return [headers, ...csvRows].map(row => toCsvRow(row)).join('\n');
 }
 
 async function generateIncidentsCSV(startDate?: string, endDate?: string, filters?: Record<any, any>): Promise<string> {
@@ -289,7 +301,7 @@ async function generateIncidentsCSV(startDate?: string, endDate?: string, filter
     incident._count.preliminaryAssessments,
   ]);
 
-  return [headers, ...csvRows].map(row => row.join(',')).join('\n');
+  return [headers, ...csvRows].map(row => toCsvRow(row)).join('\n');
 }
 
 async function generateCommitmentsCSV(userRole: string, startDate?: string, endDate?: string, filters?: Record<any, any>): Promise<string> {
@@ -369,7 +381,7 @@ async function generateCommitmentsCSV(userRole: string, startDate?: string, endD
     commitment._count.responses,
   ]);
 
-  return [headers, ...csvRows].map(row => row.join(',')).join('\n');
+  return [headers, ...csvRows].map(row => toCsvRow(row)).join('\n');
 }
 
 // Get available export types for current user

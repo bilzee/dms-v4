@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { BarChart3, CheckCircle, XCircle, Clock, Users, FileText } from '@/lib/icons'
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet } from '@/lib/api'
+import { ExportButton } from '@/components/dashboards/shared/exports/ExportButton'
 
 interface VerificationMetrics {
   totalPending: number
@@ -80,12 +81,15 @@ export default function VerificationMetricsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <BarChart3 className="h-8 w-8" />
-          Verification Metrics
-        </h1>
-        <p className="text-muted-foreground">Assessment verification performance and statistics</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <BarChart3 className="h-8 w-8" />
+            Verification Metrics
+          </h1>
+          <p className="text-muted-foreground">Assessment verification performance and statistics</p>
+        </div>
+        <ExportButton dataType="assessments" size="sm" />
       </div>
 
       <StatCardGrid columns={4}>
