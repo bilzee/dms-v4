@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/client';
 import { withAuth } from '@/lib/auth/middleware';
 import { UpdateCommitmentSchema, CommitmentStatusUpdateSchema, EntityAssignmentSchema } from '@/lib/validation/commitment';
-import { AuditLogServiceImpl } from '@/lib/services/audit-log.service';
+import { auditLogService } from '@/lib/services/audit-log.service';
 import { EntityAssignmentServiceImpl } from '@/lib/services/entity-assignment.service';
 import { handleApiError } from '@/lib/api/response'
 
@@ -215,12 +215,11 @@ export const PATCH = withAuth(async (request: NextRequest, context, { params }: 
     });
 
     // Log audit trail
-    const auditLogService = new AuditLogServiceImpl();
     await auditLogService.logAction({
       userId: user.id,
       action: 'UPDATE_COMMITMENT',
-      entityType: 'DonorCommitment',
-      entityId: commitmentId,
+      resource: 'DonorCommitment',
+      resourceId: commitmentId,
       oldValues: {
         status: existingCommitment.status,
         deliveredQuantity: existingCommitment.deliveredQuantity,
@@ -329,12 +328,11 @@ export const DELETE = withAuth(async (request: NextRequest, context, { params }:
     });
 
     // Log audit trail
-    const auditLogService = new AuditLogServiceImpl();
     await auditLogService.logAction({
       userId: user.id,
       action: 'DELETE_COMMITMENT',
-      entityType: 'DonorCommitment',
-      entityId: commitmentId,
+      resource: 'DonorCommitment',
+      resourceId: commitmentId,
       oldValues: {
         status: existingCommitment.status,
         totalCommittedQuantity: existingCommitment.totalCommittedQuantity

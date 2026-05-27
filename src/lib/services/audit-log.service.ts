@@ -1,77 +1,81 @@
-import { randomUUID } from 'crypto'
+import { db } from '@/lib/db/client'
 
 export interface AuditLogEntry {
   id: string
-  userId: string
+  userId: string | null
   action: string
-  entityType: string
-  entityId: string
+  resource: string
+  resourceId: string | null
   oldValues: any
   newValues: any
-  ipAddress: string
-  userAgent: string
+  ipAddress: string | null
+  userAgent: string | null
   timestamp: Date
 }
 
 export interface AuditLogCreateParams {
-  userId: string
+  userId?: string
   action: string
-  entityType: string
-  entityId: string
-  oldValues: any
-  newValues: any
-  ipAddress: string
-  userAgent: string
+  resource: string
+  resourceId?: string
+  oldValues?: any
+  newValues?: any
+  ipAddress?: string
+  userAgent?: string
 }
 
 export interface IAuditLogService {
   logAction(params: AuditLogCreateParams): Promise<void>
-  getAuditHistory(entityType: string, entityId: string): Promise<AuditLogEntry[]>
+  getAuditHistory(resource: string, resourceId: string, limit?: number): Promise<AuditLogEntry[]>
   getUserAuditHistory(userId: string, limit?: number): Promise<AuditLogEntry[]>
 }
 
-export class AuditLogServiceImpl implements IAuditLogService {
+class AuditLogServiceImpl implements IAuditLogService {
   async logAction(params: AuditLogCreateParams): Promise<void> {
     try {
-      const auditEntry: AuditLogEntry = {
-        id: randomUUID(),
-        timestamp: new Date(),
-        ...params
-      }
-
-      // For now, log to console - in production this would go to database
-      console.log('AUDIT LOG:', {
-        id: auditEntry.id,
-        userId: auditEntry.userId,
-        action: auditEntry.action,
-        entityType: auditEntry.entityType,
-        entityId: auditEntry.entityId,
-        timestamp: auditEntry.timestamp.toISOString(),
-        ipAddress: auditEntry.ipAddress,
-        userAgent: auditEntry.userAgent
+      await db.auditLog.create({
+        data: {
+          userId: params.userId,
+          action: params.action,
+          resource: params.resource,
+          resourceId: params.resourceId,
+          oldValues: params.oldValues,
+          newValues: params.newValues,
+          ipAddress: params.ipAddress,
+          userAgent: params.userAgent,
+          timestamp: new Date()
+        }
       })
-
-      // TODO: Store in database when audit log table is available
-      // await prisma.auditLog.create({ data: auditEntry })
-      
     } catch (error) {
       console.error('Failed to log audit action:', error)
-      // Audit logging failures should not crash the application
     }
   }
 
-  async getAuditHistory(entityType: string, entityId: string): Promise<AuditLogEntry[]> {
-    // TODO: Implement database query when audit log table is available
-    console.log(`Getting audit history for ${entityType}:${entityId}`)
-    return []
+  async getAuditHistory(resource: string, resourceId: string, limit: number = 100): Promise<AuditLogEntry[]> {
+    try {
+      return await db.auditLog.findMany({
+        where: { resource, resourceId },
+        orderBy: { timestamp: 'desc' },
+        take: limit
+      })
+    } catch (error) {
+      console.error('Failed to get audit history:', error)
+      return []
+    }
   }
 
   async getUserAuditHistory(userId: string, limit: number = 100): Promise<AuditLogEntry[]> {
-    // TODO: Implement database query when audit log table is available
-    console.log(`Getting user audit history for ${userId}, limit: ${limit}`)
-    return []
+    try {
+      return await db.auditLog.findMany({
+        where: { userId },
+        orderBy: { timestamp: 'desc' },
+        take: limit
+      })
+    } catch (error) {
+      console.error('Failed to get user audit history:', error)
+      return []
+    }
   }
 }
 
-// Singleton instance
 export const auditLogService = new AuditLogServiceImpl()

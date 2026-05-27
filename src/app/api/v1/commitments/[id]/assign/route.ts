@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/client';
 import { withAuth } from '@/lib/auth/middleware';
 import { EntityAssignmentSchema } from '@/lib/validation/commitment';
-import { AuditLogServiceImpl } from '@/lib/services/audit-log.service';
+import { auditLogService } from '@/lib/services/audit-log.service';
 import { EntityAssignmentServiceImpl } from '@/lib/services/entity-assignment.service';
 import { handleApiError } from '@/lib/api/response'
 
@@ -131,12 +131,11 @@ export const POST = withAuth(async (request: NextRequest, context, { params }: R
     });
 
     // Log audit trail
-    const auditLogService = new AuditLogServiceImpl();
     await auditLogService.logAction({
       userId: user.id,
       action: 'REASSIGN_COMMITMENT_ENTITY',
-      entityType: 'DonorCommitment',
-      entityId: commitmentId,
+      resource: 'DonorCommitment',
+      resourceId: commitmentId,
       oldValues: {
         entityId: oldEntityId,
         entityName: existingCommitment.entity.name
@@ -208,9 +207,6 @@ export const GET = withAuth(async (request: NextRequest, context, { params }: Ro
         { status: 403 }
       );
     }
-
-    // Log this reassignment action
-    const auditLogService = new AuditLogServiceImpl();
 
     return NextResponse.json({
       success: true,

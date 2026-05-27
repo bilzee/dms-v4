@@ -4,7 +4,7 @@ import { withAuth } from '@/lib/auth/middleware';
 import { successResponse, createdResponse, errorResponse, handleApiError, paginatedResponse } from '@/lib/api/response';
 import { EntityAssignmentServiceImpl } from '@/lib/services/entity-assignment.service';
 import { CreateCommitmentSchema, CommitmentQuerySchema } from '@/lib/validation/commitment';
-import { AuditLogServiceImpl } from '@/lib/services/audit-log.service';
+import { auditLogService } from '@/lib/services/audit-log.service';
 
 interface RouteParams {
   params: { id: string }
@@ -255,12 +255,11 @@ export const POST = withAuth(async (request: NextRequest, context, { params }: R
       }
     });
 
-    const auditLogService = new AuditLogServiceImpl();
     await auditLogService.logAction({
       userId: user.id,
       action: 'CREATE_COMMITMENT',
-      entityType: 'DonorCommitment',
-      entityId: commitment.id,
+      resource: 'DonorCommitment',
+      resourceId: commitment.id,
       oldValues: null,
       newValues: {
         donorId,
