@@ -1,8 +1,6 @@
 import { MediaAttachment, GPSMetadata, DeliveryMediaMetadata, MediaService, MediaSyncStatus, SyncStatus } from '@/types/media'
 import { PrismaClient } from '@prisma/client'
 import Dexie from 'dexie'
-import { storageService } from '@/lib/storage/storage.service'
-import { isS3Enabled } from '@/lib/storage/s3-client'
 import { STORAGE_PATHS, getStorageKey } from '@/lib/storage/paths'
 
 const prisma = new PrismaClient()
@@ -285,11 +283,17 @@ class DeliveryMediaService implements MediaService {
     const fileExtension = file.name.split('.').pop()
     const fileName = `${mediaId}.${fileExtension}`
 
-    if (isS3Enabled()) {
-      const key = getStorageKey(STORAGE_PATHS.deliveryMedia, String(new Date().getFullYear()), fileName)
-      const buffer = Buffer.from(await file.arrayBuffer())
-      await storageService.uploadBuffer(key, buffer, file.type)
-      return key
+    try {
+      const { isS3Enabled } = await import('@/lib/storage/s3-client')
+      if (isS3Enabled()) {
+        const { storageService } = await import('@/lib/storage/storage.service')
+        const key = getStorageKey(STORAGE_PATHS.deliveryMedia, String(new Date().getFullYear()), fileName)
+        const buffer = Buffer.from(await file.arrayBuffer())
+        await storageService.uploadBuffer(key, buffer, file.type)
+        return key
+      }
+    } catch (e) {
+      console.warn('[Storage] S3 upload failed, using local path:', e)
     }
 
     const filePath = `uploads/delivery-media/${new Date().getFullYear()}/${fileName}`
@@ -309,9 +313,15 @@ class DeliveryMediaService implements MediaService {
   }
 
   private async deleteFileFromStorage(filePath: string): Promise<void> {
-    if (isS3Enabled()) {
-      await storageService.deleteFile(filePath)
-      return
+    try {
+      const { isS3Enabled } = await import('@/lib/storage/s3-client')
+      if (isS3Enabled()) {
+        const { storageService } = await import('@/lib/storage/storage.service')
+        await storageService.deleteFile(filePath)
+        return
+      }
+    } catch (e) {
+      console.warn('[Storage] S3 delete failed:', e)
     }
     console.log(`Deleting file at ${filePath}`)
   }

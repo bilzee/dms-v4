@@ -191,7 +191,7 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
         return NextResponse.json({ success: false, error: 'Backup file not found on disk' }, { status: 404 });
       }
       const fileBuffer = await readFile(filePath);
-      return new NextResponse(fileBuffer, {
+      return new NextResponse(new Uint8Array(fileBuffer), {
         status: 200,
         headers: {
           'Content-Type': 'application/sql',

@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
 import { ConfirmDeliveryInput } from '@/lib/validation/response'
-import { deliveryMediaService } from './delivery-media.service'
 import { offlineDB } from '@/lib/db/offline'
 import { GPSLocation } from '@/hooks/useGPS'
 import { apiPost } from '@/lib/api'
@@ -496,6 +495,7 @@ export class DeliveryOfflineService {
     
     // Upload each media file
     for (const mediaFile of operation.metadata.mediaFiles) {
+      const { deliveryMediaService } = await import('./delivery-media.service')
       await deliveryMediaService.uploadDeliveryMedia(
         mediaFile.file,
         {

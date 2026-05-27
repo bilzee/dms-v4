@@ -89,7 +89,14 @@ const nextConfig = {
   // Output configuration for production
   output: 'standalone',
   webpack: (config, { isServer, dev }) => {
-    // Exclude test files and directories from production build
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        'fs/promises': false,
+        'fs': false,
+        'path': false,
+      }
+    }
     if (!dev) {
       config.module.rules.push({
         test: /[\\/](tests?|__tests__|spec|__spec__)[\\/]/,
