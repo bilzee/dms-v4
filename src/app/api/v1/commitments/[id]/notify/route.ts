@@ -3,6 +3,8 @@ import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { prisma } from '@/lib/db/client';
 import { auditLog } from '@/lib/services/audit.service';
 import { handleApiError } from '@/lib/api/response'
+import { emailService } from '@/lib/email/email.service'
+import { commitmentNotificationEmail } from '@/lib/email/templates/commitment-notification'
 
 export const POST = withAuth(async (
   request: NextRequest,
@@ -170,49 +172,36 @@ export const POST = withAuth(async (
   }
 })
 
-// Notification service implementation
 async function sendNotification(notificationData: any): Promise<{ success: boolean; method: string; details?: string }> {
   try {
-    // For now, we'll simulate email notification
-    // In a real implementation, this would integrate with:
-    // - Email service (SendGrid, AWS SES, etc.)
-    // - SMS service (Twilio, etc.)
-    // - In-app notification system
-    
-    const { donorEmail, donorName, entityName, incidentType, items, totalQuantity } = notificationData;
+    const { donorEmail, donorName, entityName, commitmentType, status, totalQuantity, items } = notificationData;
 
-    // Prepare email content
-    const emailContent = {
-      to: donorEmail,
-      subject: `New Commitment Assignment - ${entityName}`,
-      body: `
-Dear ${donorName},
+    if (donorEmail) {
+      const template = commitmentNotificationEmail({
+        donorName,
+        commitmentType: commitmentType || entityName,
+        quantity: totalQuantity || 0,
+        unit: 'units',
+        status: status || 'Planned',
+        link: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/commitments`,
+      })
 
-You have been assigned a new commitment for the ${incidentType} response at ${entityName}.
+      const result = await emailService.send({
+        to: donorEmail,
+        subject: template.subject,
+        html: template.html,
+        text: template.text,
+      })
 
-Commitment Details:
-- Total Quantity: ${totalQuantity} units
-- Items: ${items.map((item: any) => `${item.quantity} ${item.unit} of ${item.name}`).join(', ')}
-- Status: Ready for your review and action
-
-Please log in to your dashboard to review this commitment and plan your delivery.
-
-Thank you for your continued support in disaster response efforts.
-
-Best regards,
-Disaster Management Coordination Team
-      `.trim()
-    };
-
-    // Log the email (in production, this would send via email service)
-
-    // Simulate successful email send
-    // const emailResult = await emailService.send(emailContent);
+      if (!result.success) {
+        console.error('[Email] Failed to send commitment notification:', result.error)
+      }
+    }
 
     return {
       success: true,
       method: 'email',
-      details: `Email sent to ${donorEmail}`
+      details: `Notification processed for ${donorEmail || 'donor'}`
     };
 
   } catch (error) {

@@ -14,6 +14,9 @@ import { exec } from 'child_process';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { handleApiError } from '@/lib/api/response'
+import { storageService } from '@/lib/storage/storage.service'
+import { isS3Enabled } from '@/lib/storage/s3-client'
+import { STORAGE_PATHS, getStorageKey } from '@/lib/storage/paths'
 
 // Validation schemas
 const GenerateReportSchema = z.object({
@@ -415,17 +418,32 @@ async function generateReportBackground({
     await fs.rename(filePath, finalPath);
 
     const fileStats = await fs.stat(finalPath);
+    let storageKey: string | null = null;
+
+    if (isS3Enabled()) {
+      try {
+        const buffer = await fs.readFile(finalPath);
+        const ext = formatToExtension(format);
+        const contentTypes: Record<string, string> = {
+          pdf: 'application/pdf', csv: 'text/csv', html: 'text/html', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        };
+        storageKey = getStorageKey(STORAGE_PATHS.reports, `${executionId}.${ext}`);
+        await storageService.uploadBuffer(storageKey, buffer, contentTypes[ext] || 'application/octet-stream');
+      } catch (s3Err) {
+        console.error('[S3] Report upload failed, keeping local file:', s3Err);
+      }
+    }
 
     await prisma.reportExecution.update({
       where: { id: executionId },
       data: {
         status: 'COMPLETED',
-        filePath: finalPath,
+        filePath: storageKey || finalPath,
         generatedAt: new Date()
       }
     });
 
-    await sendReportNotifications(executionId, finalPath, filename, fileSize);
+    await sendReportNotifications(executionId, storageKey || finalPath, filename, fileStats.size);
 
     return {
       success: true,

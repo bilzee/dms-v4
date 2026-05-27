@@ -38,10 +38,12 @@ docs
 Thumbs.db
 
 # Docker
-docker-compose*.yml
-Dockerfile*
+docker-compose.yml
+.env.docker
+pgdata/
 
 # Files that shouldn't be in production
 .env.local
 .env.development
 .env.test
+.env.docker

@@ -124,4 +124,20 @@ const nextConfig = {
   },
 };
 
-module.exports = withPWA(nextConfig);
+const SENTRY_ENABLED = process.env.SENTRY_ENABLED === 'true' && !!process.env.SENTRY_DSN;
+
+let finalConfig = withPWA(nextConfig);
+
+if (SENTRY_ENABLED) {
+  try {
+    const { withSentryConfig } = require('@sentry/nextjs');
+    finalConfig = withSentryConfig(finalConfig, {
+      silent: true,
+      hideSourceMaps: true,
+    });
+  } catch (e) {
+    console.warn('[Sentry] Failed to apply Sentry webpack plugin:', e.message);
+  }
+}
+
+module.exports = finalConfig;

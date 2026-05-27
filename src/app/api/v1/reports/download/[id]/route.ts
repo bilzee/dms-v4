@@ -10,6 +10,8 @@ import { createApiResponse } from '@/types/api';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { handleApiError } from '@/lib/api/response'
+import { storageService } from '@/lib/storage/storage.service'
+import { isS3Enabled } from '@/lib/storage/s3-client'
 
 /**
  * GET /api/v1/reports/download/[id]
@@ -89,40 +91,56 @@ export const GET = withAuth(async (
     let filePath = execution.filePath;
     const reportsDir = path.join(process.cwd(), 'reports');
     
-    // Handle both relative and absolute paths
-    if (!path.isAbsolute(filePath)) {
-      filePath = path.join(reportsDir, filePath);
-    }
+    const isS3Key = isS3Enabled() && filePath && !path.isAbsolute(filePath) && !filePath.includes(':\\') && !filePath.startsWith('reports/') && !filePath.includes('\\reports\\');
 
-    // Validate file path is within reports directory
-    const normalizedReportsDir = path.normalize(reportsDir);
-    const normalizedFilePath = path.normalize(filePath);
+    let fileBuffer: Buffer;
+    let fileSize: number;
+
+    if (isS3Key) {
+      try {
+        fileBuffer = await storageService.downloadToBuffer(filePath);
+        fileSize = fileBuffer.length;
+      } catch (error) {
+        return NextResponse.json(
+          createApiResponse(false, null, 'Report file not found in storage'),
+          { status: 404 }
+        );
+      }
+    } else {
+      if (!path.isAbsolute(filePath)) {
+        filePath = path.join(reportsDir, filePath);
+      }
+
+      const normalizedReportsDir = path.normalize(reportsDir);
+      const normalizedFilePath = path.normalize(filePath);
+      
+      if (!normalizedFilePath.startsWith(normalizedReportsDir)) {
+        return NextResponse.json(
+          createApiResponse(false, null, 'Invalid file path'),
+          { status: 403 }
+        );
+      }
+
+      try {
+        await fs.access(filePath);
+      } catch (error) {
+        return NextResponse.json(
+          createApiResponse(false, null, 'Report file not found on disk'),
+          { status: 404 }
+        );
+      }
+
+      const stats = await fs.stat(filePath);
+      fileSize = stats.size;
+      fileBuffer = await fs.readFile(filePath);
+    }
     
-    if (!normalizedFilePath.startsWith(normalizedReportsDir)) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Invalid file path'),
-        { status: 403 }
-      );
-    }
-
-    // Check if file exists
-    try {
-      await fs.access(filePath);
-    } catch (error) {
-      return NextResponse.json(
-        createApiResponse(false, null, 'Report file not found on disk'),
-        { status: 404 }
-      );
-    }
-
-    // Get file stats
-    const stats = await fs.stat(filePath);
-    
-    // Determine content type based on file extension
-    const fileExtension = path.extname(filePath).toLowerCase();
+    const fileExtension = (execution.format || path.extname(filePath).toLowerCase()).toLowerCase();
+    const extMap: Record<string, string> = { pdf: '.pdf', csv: '.csv', html: '.html', xlsx: '.xlsx' };
+    const normalizedExt = fileExtension.startsWith('.') ? fileExtension : (extMap[fileExtension] || `.${fileExtension}`);
     let contentType = 'application/octet-stream';
     
-    switch (fileExtension) {
+    switch (normalizedExt) {
       case '.pdf':
         contentType = 'application/pdf';
         break;
@@ -143,8 +161,7 @@ export const GET = withAuth(async (
         contentType = 'application/octet-stream';
     }
 
-    // Generate filename if not available
-    const originalName = stats.isFile() ? path.basename(filePath) : `report.${execution.format.toLowerCase()}`;
+    const originalName = isS3Key ? `report.${execution.format.toLowerCase()}` : path.basename(filePath);
     const displayName = execution.configuration.template?.name || 'Report';
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const formatExt: Record<string, string> = { PDF: 'pdf', CSV: 'csv', HTML: 'html', EXCEL: 'xlsx' };
@@ -160,7 +177,7 @@ export const GET = withAuth(async (
         newValues: {
           filename: originalName,
           contentType,
-          fileSize: stats.size
+          fileSize: fileSize
         },
         ipAddress: request.ip,
         userAgent: request.headers.get('user-agent')
@@ -177,13 +194,9 @@ export const GET = withAuth(async (
       });
     }
 
-    // Create file stream for download
-    const fileBuffer = await fs.readFile(filePath);
-
-    // Set appropriate headers for download
     const headers: Record<string, string> = {
       'Content-Type': contentType,
-      'Content-Length': stats.size.toString(),
+      'Content-Length': fileSize.toString(),
       'Cache-Control': 'private, max-age=0, must-revalidate',
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',
@@ -197,19 +210,15 @@ export const GET = withAuth(async (
       
     headers['Content-Disposition'] = contentDisposition;
 
-    // For HTML files, add security headers to prevent script execution
-    if (fileExtension === '.html' || fileExtension === '.htm') {
+    if (normalizedExt === '.html' || normalizedExt === '.htm') {
       headers['X-XSS-Protection'] = '1; mode=block';
       headers['Referrer-Policy'] = 'no-referrer';
     }
 
-    // Create response - pass Buffer directly to avoid ArrayBuffer offset issues
-    const response = new NextResponse(fileBuffer, {
+    return new NextResponse(new Uint8Array(fileBuffer), {
       status: 200,
       headers
     });
-
-    return response;
 
   } catch (error) {
     return handleApiError(error)

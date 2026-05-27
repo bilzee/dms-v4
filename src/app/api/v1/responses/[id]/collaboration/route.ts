@@ -3,38 +3,58 @@ import { v4 as uuidv4 } from 'uuid'
 import { withAuth, AuthContext } from '@/lib/auth/middleware'
 import { ResponseService } from '@/lib/services/response.service'
 import { handleApiError } from '@/lib/api/response'
+import { cacheService } from '@/lib/cache/cache.service'
 
 interface RouteParams {
   params: { id: string }
 }
 
-// Simple in-memory collaboration tracking (in production, use Redis or WebSocket)
-const activeCollaborations = new Map<string, {
+interface CollaborationData {
   responseId: string
   collaborators: Array<{
     userId: string
     userName: string
     email: string
-    joinedAt: Date
-    lastSeen: Date
+    joinedAt: string
+    lastSeen: string
     isEditing: boolean
   }>
-  createdAt: Date
-}>()
+  createdAt: string
+}
 
-const COLLABORATION_TIMEOUT = 30 * 60 * 1000 // 30 minutes
+const activeCollaborations = new Map<string, CollaborationData>()
 
-// Clean up expired collaborations
+const COLLABORATION_TIMEOUT = 30 * 60 * 1000
+
+function collabKey(responseId: string) {
+  return `collab:${responseId}`
+}
+
+async function getCollaboration(responseId: string): Promise<CollaborationData | undefined> {
+  const cached = await cacheService.getJSON<CollaborationData>(collabKey(responseId))
+  if (cached) return cached
+  return activeCollaborations.get(responseId)
+}
+
+async function setCollaboration(responseId: string, data: CollaborationData) {
+  activeCollaborations.set(responseId, data)
+  await cacheService.setJSON(collabKey(responseId), data, 1800)
+}
+
+async function removeCollaboration(responseId: string) {
+  activeCollaborations.delete(responseId)
+  await cacheService.del(collabKey(responseId))
+}
+
 function cleanupExpiredCollaborations() {
   const now = Date.now()
   for (const [responseId, collaboration] of activeCollaborations.entries()) {
-    if (now - collaboration.createdAt.getTime() > COLLABORATION_TIMEOUT) {
+    if (now - new Date(collaboration.createdAt).getTime() > COLLABORATION_TIMEOUT) {
       activeCollaborations.delete(responseId)
     }
     
-    // Clean up inactive collaborators
     collaboration.collaborators = collaboration.collaborators.filter(
-      collaborator => now - collaborator.lastSeen.getTime() < 5 * 60 * 1000 // 5 minutes
+      collaborator => now - new Date(collaborator.lastSeen).getTime() < 5 * 60 * 1000
     )
     
     if (collaboration.collaborators.length === 0) {
@@ -62,7 +82,7 @@ export const GET = withAuth(
         const response = await ResponseService.getResponseById(responseId, context.userId)
         
         // Get collaboration status
-        const collaboration = activeCollaborations.get(responseId)
+        const collaboration = await getCollaboration(responseId)
         const isCurrentUserCollaborating = collaboration?.collaborators.some(
           c => c.userId === context.userId
         ) || false
@@ -121,28 +141,26 @@ export const POST = withAuth(
           throw new Error('Only planned responses can be collaborated on')
         }
 
-        let collaboration = activeCollaborations.get(responseId)
+        let collaboration = await getCollaboration(responseId)
         
         if (!collaboration) {
           collaboration = {
             responseId,
             collaborators: [],
-            createdAt: new Date()
+            createdAt: new Date().toISOString()
           }
-          activeCollaborations.set(responseId, collaboration)
+          await setCollaboration(responseId, collaboration)
         }
 
-        const now = Date.now()
         const userCollaborator = {
           userId: context.userId,
           userName: (context.user as any).name,
           email: (context.user as any).email,
-          joinedAt: new Date(),
-          lastSeen: new Date(),
+          joinedAt: new Date().toISOString(),
+          lastSeen: new Date().toISOString(),
           isEditing: false
         }
 
-        // Find existing collaborator
         const existingCollaboratorIndex = collaboration.collaborators.findIndex(
           c => c.userId === context.userId
         )
@@ -152,7 +170,7 @@ export const POST = withAuth(
             if (existingCollaboratorIndex === -1) {
               collaboration.collaborators.push(userCollaborator)
             } else {
-              collaboration.collaborators[existingCollaboratorIndex].lastSeen = new Date()
+              collaboration.collaborators[existingCollaboratorIndex].lastSeen = new Date().toISOString()
             }
             break
             
@@ -165,14 +183,14 @@ export const POST = withAuth(
           case 'start_editing':
             if (existingCollaboratorIndex !== -1) {
               collaboration.collaborators[existingCollaboratorIndex].isEditing = true
-              collaboration.collaborators[existingCollaboratorIndex].lastSeen = new Date()
+              collaboration.collaborators[existingCollaboratorIndex].lastSeen = new Date().toISOString()
             }
             break
             
           case 'stop_editing':
             if (existingCollaboratorIndex !== -1) {
               collaboration.collaborators[existingCollaboratorIndex].isEditing = false
-              collaboration.collaborators[existingCollaboratorIndex].lastSeen = new Date()
+              collaboration.collaborators[existingCollaboratorIndex].lastSeen = new Date().toISOString()
             }
             break
             
@@ -180,9 +198,10 @@ export const POST = withAuth(
             throw new Error('Invalid collaboration action')
         }
 
-        // Clean up if no collaborators left
         if (collaboration.collaborators.length === 0) {
-          activeCollaborations.delete(responseId)
+          await removeCollaboration(responseId)
+        } else {
+          await setCollaboration(responseId, collaboration)
         }
 
         const responseData = {

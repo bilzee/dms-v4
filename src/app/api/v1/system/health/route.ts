@@ -5,6 +5,9 @@ import { prisma } from '@/lib/db/client'
 import { readFile } from 'fs/promises'
 import { existsSync } from 'fs'
 import path from 'path'
+import { checkS3Health, isS3Enabled } from '@/lib/storage/s3-client'
+import { checkRedisHealth, isRedisEnabled } from '@/lib/cache/redis-client'
+import { checkBackupHealth, isBackupEnabled } from '@/lib/storage/backup-sync.service'
 
 let cachedHealth: any = null
 let cacheTimestamp = 0
@@ -40,6 +43,40 @@ async function getLastBackupTime(): Promise<string> {
   }
 }
 
+async function getFileStorageStatus(): Promise<{ status: string; uptime: string }> {
+  if (!isS3Enabled()) {
+    return { status: 'Running (local)', uptime: getUptimeString() }
+  }
+  const health = await checkS3Health()
+  return {
+    status: health.healthy ? 'Healthy (S3)' : 'Degraded (S3)',
+    uptime: health.healthy ? getUptimeString() : 'N/A'
+  }
+}
+
+async function getRedisStatus(): Promise<{ status: string; uptime: string; enabled: boolean }> {
+  if (!isRedisEnabled()) {
+    return { status: 'Disabled', uptime: 'N/A', enabled: false }
+  }
+  const health = await checkRedisHealth()
+  return {
+    status: health.healthy ? 'Healthy' : 'Degraded',
+    uptime: health.healthy ? getUptimeString() : 'N/A',
+    enabled: true
+  }
+}
+
+async function getExternalBackupStatus(): Promise<{ status: string; enabled: boolean }> {
+  if (!isBackupEnabled()) {
+    return { status: 'Disabled', enabled: false }
+  }
+  const health = await checkBackupHealth()
+  return {
+    status: health.healthy ? 'Connected' : 'Unreachable',
+    enabled: true
+  }
+}
+
 export const GET = withAuth(async (request: NextRequest, context) => {
   const now = Date.now()
   if (cachedHealth && (now - cacheTimestamp) < CACHE_TTL) {
@@ -65,11 +102,19 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     const storageUsage = totalUsers > 0 ? Math.min(100, Math.round((activeUsersCount / totalUsers) * 100)) : 0
     const lastBackup = await getLastBackupTime()
 
+    const [fileStorage, redisStatus, externalBackup] = await Promise.all([
+      getFileStorageStatus(),
+      getRedisStatus(),
+      getExternalBackupStatus(),
+    ])
+
     const services = [
       { name: 'Web Server', status: 'Running', uptime: getUptimeString() },
       { name: 'Database', status: databaseSync, uptime: databaseSync === 'Down' ? 'N/A' : getUptimeString() },
       { name: 'Authentication', status: 'Running', uptime: getUptimeString() },
-      { name: 'File Storage', status: 'Running', uptime: getUptimeString() }
+      { name: 'File Storage', status: fileStorage.status, uptime: fileStorage.uptime },
+      { name: 'Redis Cache', status: redisStatus.status, uptime: redisStatus.uptime },
+      { name: 'External Backup', status: externalBackup.status, uptime: getUptimeString() },
     ]
 
     const healthData = {
@@ -78,7 +123,14 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       activeUsers: activeUsersCount,
       storageUsage,
       lastBackup,
-      services
+      services,
+      integrations: {
+        s3: { enabled: isS3Enabled(), status: fileStorage.status },
+        redis: { enabled: redisStatus.enabled, status: redisStatus.status },
+        backup: { enabled: externalBackup.enabled, status: externalBackup.status },
+        sentry: { enabled: process.env.SENTRY_ENABLED === 'true' },
+        email: { enabled: process.env.EMAIL_ENABLED === 'true', provider: process.env.EMAIL_PROVIDER || 'resend' },
+      }
     }
 
     cachedHealth = healthData
@@ -97,8 +149,17 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         { name: 'Web Server', status: 'Running', uptime: getUptimeString() },
         { name: 'Database', status: 'Down', uptime: 'N/A' },
         { name: 'Authentication', status: 'Degraded', uptime: getUptimeString() },
-        { name: 'File Storage', status: 'Degraded', uptime: getUptimeString() }
-      ]
+        { name: 'File Storage', status: 'Degraded', uptime: getUptimeString() },
+        { name: 'Redis Cache', status: 'Disabled', uptime: 'N/A' },
+        { name: 'External Backup', status: 'Disabled', uptime: 'N/A' },
+      ],
+      integrations: {
+        s3: { enabled: false, status: 'Disabled' },
+        redis: { enabled: false, status: 'Disabled' },
+        backup: { enabled: false, status: 'Disabled' },
+        sentry: { enabled: false },
+        email: { enabled: false, provider: 'none' },
+      }
     })
   }
 })

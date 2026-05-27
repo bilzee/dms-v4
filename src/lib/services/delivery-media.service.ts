@@ -1,6 +1,9 @@
 import { MediaAttachment, GPSMetadata, DeliveryMediaMetadata, MediaService, MediaSyncStatus, SyncStatus } from '@/types/media'
 import { PrismaClient } from '@prisma/client'
 import Dexie from 'dexie'
+import { storageService } from '@/lib/storage/storage.service'
+import { isS3Enabled } from '@/lib/storage/s3-client'
+import { STORAGE_PATHS, getStorageKey } from '@/lib/storage/paths'
 
 const prisma = new PrismaClient()
 
@@ -279,15 +282,18 @@ class DeliveryMediaService implements MediaService {
   }
 
   private async uploadFileToStorage(file: File, mediaId: string): Promise<string> {
-    // This would integrate with your storage provider (AWS S3, Cloudinary, etc.)
-    // For now, return a mock path
     const fileExtension = file.name.split('.').pop()
     const fileName = `${mediaId}.${fileExtension}`
+
+    if (isS3Enabled()) {
+      const key = getStorageKey(STORAGE_PATHS.deliveryMedia, String(new Date().getFullYear()), fileName)
+      const buffer = Buffer.from(await file.arrayBuffer())
+      await storageService.uploadBuffer(key, buffer, file.type)
+      return key
+    }
+
     const filePath = `uploads/delivery-media/${new Date().getFullYear()}/${fileName}`
-    
-    // Mock upload process
     console.log(`Uploading file ${file.name} to ${filePath}`)
-    
     return filePath
   }
 
@@ -303,7 +309,10 @@ class DeliveryMediaService implements MediaService {
   }
 
   private async deleteFileFromStorage(filePath: string): Promise<void> {
-    // This would integrate with your storage provider
+    if (isS3Enabled()) {
+      await storageService.deleteFile(filePath)
+      return
+    }
     console.log(`Deleting file at ${filePath}`)
   }
 
