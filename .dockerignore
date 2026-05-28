@@ -2,26 +2,67 @@
 node_modules
 npm-debug.log
 yarn-error.log
-pnpm-lock.yaml
 
-# Next.js
+# Next.js build output
 .next
 out
 
 # Testing
 coverage
 .nyc_output
+tests
+playwright-report
+qa
+
+# Debug / temp files
+*.log
+*.png
+*.jpg
+*.jpeg
+*.tar.gz
+logs
+temp
+.backups
+reports
+audit-screenshots
+screenshots
+
+# Snapshot / debug files
+debug-*
+snapshot-*
+temp-*
+*-snapshot.txt
+*-snapshot.json
+*-debug.png
+build*.log
+unit-test.log
+living-test-report.json
+
+# SQL backups
+backup_*.sql
+backup_*.prisma
+schema-*.prisma
+
+# Test scripts
+test-*.js
+test-*.ts
+verify-*.js
+validate-*.js
+show-*.js
+update-*.ts
+debug-e2e.js
 
 # Misc
 .DS_Store
 *.pem
-.env*.local
+Thumbs.db
+nul
+.mcp*
+.claude
+.venv
+.swc
 
-# Debug
-*.log
-logs
-
-# VPS
+# IDE
 .vscode
 .idea
 
@@ -29,21 +70,34 @@ logs
 .git
 .gitignore
 
-# Documentation
+# Docker (avoid recursive copies)
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+.env.docker
+
+# Documentation & plans (not needed at runtime)
 docs
+_bmad
+_bmad-output
+.bmad-core
 *.md
 !README.md
 
-# OS files
-Thumbs.db
-
-# Docker
-docker-compose.yml
-.env.docker
-pgdata/
-
-# Files that shouldn't be in production
+# Env files with secrets
+.env
 .env.local
 .env.development
 .env.test
 .env.docker
+.env.production
+.env.sqlite.backup
+
+# Build artifacts not needed in image
+tsconfig.tsbuildinfo
+package-lock.json
+
+# Odd misplaced files
+DevClaude*
+scriptsvalidate*
+epic-*

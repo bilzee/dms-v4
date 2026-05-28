@@ -1,22 +1,24 @@
 # Production Docker Compose Configuration
 # Optimized for Dokploy / single VPS deployment (4-8GB RAM)
 #
-# Usage: docker compose -f docker-compose.production.yml up -d
+# Usage:
+#   docker compose -f docker-compose.production.yml up -d
 #
-# Required: .env.production with real secrets
-# See .env.production.template for all variables
+# Setup:
+#   1. Copy .env.production.template to .env.production
+#   2. Fill in all REPLACE-WITH-* values with real secrets
+#   3. docker compose -f docker-compose.production.yml up -d
+#
+# Services: PostgreSQL, Redis, MinIO, Next.js app, DB backup sidecar, Traefik
 
 services:
-  # ===========================================
-  # PostgreSQL Database
-  # ===========================================
   postgres:
     image: postgres:15-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-drms_prod}
       POSTGRES_USER: ${DB_USER:-drms_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.production}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -31,9 +33,6 @@ services:
     networks:
       - drms_internal
 
-  # ===========================================
-  # Redis Cache
-  # ===========================================
   redis:
     image: redis:7-alpine
     restart: unless-stopped
@@ -52,16 +51,13 @@ services:
     networks:
       - drms_internal
 
-  # ===========================================
-  # MinIO Object Storage
-  # ===========================================
   minio:
     image: minio/minio:latest
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER in .env.production}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in .env.production}
     volumes:
       - minio_data:/data
     healthcheck:
@@ -76,7 +72,6 @@ services:
     networks:
       - drms_internal
 
-  # Creates buckets on first run
   minio-init:
     image: minio/mc:latest
     depends_on:
@@ -88,14 +83,11 @@ services:
       mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
       mc mb myminio/dms-storage --ignore-existing;
       mc mb myminio/db-backups --ignore-existing;
-      echo 'Buckets ready';
+      echo 'MinIO buckets ready: dms-storage, db-backups';
       "
     networks:
       - drms_internal
 
-  # ===========================================
-  # Next.js Application
-  # ===========================================
   app:
     build:
       context: .
@@ -103,13 +95,13 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://${DB_USER:-drms_user}:${DB_PASSWORD}@postgres:5432/${POSTGRES_DB:-drms_prod}?schema=public&sslmode=require
-      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=postgresql://${DB_USER:-drms_user}:${DB_PASSWORD}@postgres:5432/${POSTGRES_DB:-drms_prod}?schema=public
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env.production}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-24h}
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXTAUTH_URL=${NEXTAUTH_URL}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-      - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:?Set NEXTAUTH_SECRET in .env.production}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:?Set NEXTAUTH_URL in .env.production}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-${NEXTAUTH_URL}/api}
+      - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME:-Disaster Response Management System}
       - NEXT_PUBLIC_APP_VERSION=${NEXT_PUBLIC_APP_VERSION:-1.0.0}
       - NEXT_PUBLIC_PWA_ENABLED=${NEXT_PUBLIC_PWA_ENABLED:-true}
       - REDIS_URL=redis://redis:6379
@@ -146,7 +138,6 @@ services:
       - app_uploads:/app/uploads
       - app_temp:/app/temp
       - app_backups:/app/.backups
-      - app_schedules:/app/schedules
       - app_logs:/app/logs
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
@@ -168,9 +159,6 @@ services:
       - drms_internal
       - drms_proxy
 
-  # ===========================================
-  # Daily PostgreSQL Backup to MinIO
-  # ===========================================
   db-backup:
     image: postgres:15-alpine
     restart: unless-stopped
@@ -184,30 +172,32 @@ services:
       - PGUSER=${DB_USER:-drms_user}
       - PGPASSWORD=${DB_PASSWORD}
       - PGDATABASE=${POSTGRES_DB:-drms_prod}
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
     entrypoint: >
       /bin/sh -c "
       apk add --no-cache curl;
       curl -sL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc;
       chmod +x /usr/local/bin/mc;
-      mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD};
-      echo 'Backup service started. Running daily at 2AM.';
+      mc alias set myminio http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD;
+      echo 'Backup service started. Running daily at 2AM UTC.';
       while true; do
-        FILENAME=drms_backup_$$(date +%Y%m%d_%H%M%S).sql.gz;
-        echo \"[$$(date)] Starting backup: $$FILENAME\";
+        FILENAME=drms_backup_$$(date -u +%Y%m%d_%H%M%S).sql.gz;
+        echo \"[$$(date -u)] Starting backup: $$FILENAME\";
         if pg_dump -h $$PGHOST -U $$PGUSER $$PGDATABASE | gzip > /tmp/$$FILENAME; then
           if mc cp /tmp/$$FILENAME myminio/db-backups/$$FILENAME; then
-            echo \"[$$(date)] Backup uploaded: $$FILENAME\";
-            rm /tmp/$$FILENAME;
-            mc ls myminio/db-backups/ --summarize | sort -r | tail -n +31 | awk '{print $$NF}' | while read f; do
-              mc rm \"myminio/db-backups/$$f\" 2>/dev/null || true;
+            echo \"[$$(date -u)] Backup uploaded: $$FILENAME\";
+            rm -f /tmp/$$FILENAME;
+            mc ls myminio/db-backups/ --summarize 2>/dev/null | sort -r | tail -n +31 | awk '{print $$7}' | while read f; do
+              [ -n \"$$f\" ] && mc rm \"myminio/db-backups/$$f\" 2>/dev/null || true;
             done;
-            echo \"[$$(date)] Old backups pruned (30-day retention)\";
+            echo \"[$$(date -u)] Pruned backups older than 30 days\";
           else
-            echo \"[$$(date)] ERROR: Failed to upload to MinIO\";
+            echo \"[$$(date -u)] ERROR: Upload to MinIO failed\";
             rm -f /tmp/$$FILENAME;
           fi;
         else
-          echo \"[$$(date)] ERROR: pg_dump failed\";
+          echo \"[$$(date -u)] ERROR: pg_dump failed\";
           rm -f /tmp/$$FILENAME;
         fi;
         sleep 86400;
@@ -220,11 +210,6 @@ services:
     networks:
       - drms_internal
 
-  # ===========================================
-  # Traefik Reverse Proxy
-  # ===========================================
-  # Use this for standalone production.
-  # OMIT this service if Dokploy provides its own Traefik.
   traefik:
     image: traefik:v3.0
     restart: unless-stopped
@@ -268,8 +253,6 @@ volumes:
   app_temp:
     driver: local
   app_backups:
-    driver: local
-  app_schedules:
     driver: local
   app_logs:
     driver: local

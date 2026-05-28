@@ -7,9 +7,8 @@
 FROM node:18-alpine AS deps
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
-COPY package.json ./
-RUN corepack enable pnpm && pnpm install
+COPY package.json pnpm-lock.yaml* ./
+RUN corepack enable pnpm && pnpm install --frozen-lockfile
 
 # =======================================
 # Stage 2: Builder
@@ -17,44 +16,18 @@ RUN corepack enable pnpm && pnpm install
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Early debug to confirm builder stage is running
-RUN echo "=== BUILDER STAGE STARTED ==="
-RUN echo "=== Working directory: $(pwd) ==="
-RUN echo "=== Node version: $(node --version) ==="
-
-# ** Add Bash shell to the alpine linux image since it is not available by default
-RUN apk add --no-cache bash
-
-# ** Fix error caused by build stage running Prisma before environmental variables exist. The solution is to provide a dummy DATABASE_URL before the real one in Dockploy
 ARG DATABASE_URL="postgresql://user:pass@localhost:5432/db"
 ENV DATABASE_URL=$DATABASE_URL
-
-# ** Still fixing error by creating a flag that will defer calls to db until runtime
 ENV NEXT_BUILD=true
 
-# Copy dependencies
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Set production environment
 ENV NODE_ENV=production
 
-# Enable pnpm in builder stage
 RUN corepack enable pnpm
-
-# Generate Prisma client BEFORE build (required for Next.js build)
 RUN npx prisma generate
-
-# Build the application
 RUN pnpm run build:production
-
-# Debug: Check if standalone build was generated
-RUN echo "=== Checking if .next/standalone exists ===" && ls -la /app/.next/ || echo ".next directory not found"
-RUN echo "=== Checking for standalone folder ===" && ls -la /app/.next/standalone/ || echo "standalone folder not found"
-RUN echo "=== Looking for server.js ===" && find /app/.next -name "server.js" -type f || echo "server.js not found in .next"
-RUN echo "=== Checking for Prisma client in main node_modules ===" && ls -la /app/node_modules/.prisma/ || echo "Prisma client not found in main node_modules"
-RUN echo "=== Checking for Prisma client in standalone node_modules ===" && ls -la /app/.next/standalone/node_modules/.prisma/ || echo "Prisma client not found in standalone node_modules"
-RUN echo "=== Contents of .next/standalone directory ===" && ls -R /app/.next/standalone/ | head -50
 
 # =======================================
 # Stage 3: Runner (Production)
@@ -62,64 +35,36 @@ RUN echo "=== Contents of .next/standalone directory ===" && ls -R /app/.next/st
 FROM node:18-alpine AS production
 WORKDIR /app
 
-# ** Add wget for health checks
-RUN apk add --no-cache wget
+RUN apk add --no-cache wget openssl
 
-# Set production environment
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-# Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy built application
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./package.json
-
-# Copy standalone build
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Copy Prisma schema and generated client with proper ownership
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-# Install Prisma CLI and generate client in production stage
-RUN apk add --no-cache openssl && corepack enable pnpm
+RUN corepack enable pnpm
 RUN pnpm add -D prisma
 RUN npx prisma generate
 
-# Fix ownership of public directory (was owned by root)
 RUN chown -R nextjs:nodejs /app/public
 
-# Copy debug startup script (kept for debugging but not used)
-COPY start-debug.sh /app/start-debug.sh
-RUN chmod +x /app/start-debug.sh && chown nextjs:nodejs /app/start-debug.sh
-
-# Health check using wget (more reliable than curl in Alpine)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
-
-# Switch to non-root user
-USER nextjs
-
-# Copy startup script that runs migrations and set permissions
 COPY --chown=nextjs:nodejs start-with-migrations.sh /app/start-with-migrations.sh
 RUN chmod +x /app/start-with-migrations.sh
 
-# Expose port
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+
+USER nextjs
+
 EXPOSE 3000
 
-# Set environment variables
-ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-ENV NEXT_TELEMETRY_DISABLED=1
-
-# Debug: Check what files exist before starting
-RUN echo "=== Production stage files ===" && ls -la /app || true
-RUN echo "=== Checking for server.js ===" && ls -la /app/server.js || true
-RUN echo "=== User permissions ===" && whoami && id
-
-# Start the application with database migrations
 CMD ["/app/start-with-migrations.sh"]
