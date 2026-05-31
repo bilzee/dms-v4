@@ -41,12 +41,8 @@ export const POST = withAuth(async (request: NextRequest, context) => {
             metadata: true
           }
         },
-        donor: {
-          select: {
-            id: true,
-            name: true,
-            contactEmail: true
-          }
+        planCommitments: {
+          select: { commitment: { select: { donor: { select: { id: true, name: true, contactEmail: true } } } } }
         }
       }
     });
@@ -70,7 +66,7 @@ export const POST = withAuth(async (request: NextRequest, context) => {
     }
 
     // Check if entity has auto-approval enabled
-    if (!response.entity.autoApproveEnabled) {
+    if (!(response as any).entity?.autoApproveEnabled) {
       return NextResponse.json(
         { success: false, error: 'Entity does not have auto-approval enabled' },
         { status: 400 }
@@ -78,7 +74,7 @@ export const POST = withAuth(async (request: NextRequest, context) => {
     }
 
     // Get auto-approval configuration from entity metadata
-    const metadata = response.entity.metadata as any;
+    const metadata = (response as any).entity?.metadata as any;
     const autoApprovalConfig = metadata?.autoApproval || {};
 
     // Check if response auto-approval is enabled for this scope
@@ -92,7 +88,7 @@ export const POST = withAuth(async (request: NextRequest, context) => {
 
     // Check response type conditions
     if (autoApprovalConfig.responseTypes && autoApprovalConfig.responseTypes.length > 0) {
-      if (!autoApprovalConfig.responseTypes.includes(response.type)) {
+      if (!autoApprovalConfig.responseTypes.includes(response.type as any)) {
         return NextResponse.json(
           { success: false, error: `Response type ${response.type} is not configured for auto-approval` },
           { status: 400 }
@@ -143,8 +139,8 @@ export const POST = withAuth(async (request: NextRequest, context) => {
         entity: {
           select: { id: true, name: true, type: true }
         },
-        donor: {
-          select: { id: true, name: true, contactEmail: true }
+        planCommitments: {
+          select: { commitment: { select: { donor: { select: { id: true, name: true, contactEmail: true } } } } }
         }
       }
     });

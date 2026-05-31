@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 
 // UI components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,13 +15,24 @@ import { SafeDataLoader } from '@/components/shared/SafeDataLoader'
 import { EmptyState } from '@/components/shared/EmptyState'
 
 // Icons
-import { Plus, Edit, Package, CheckCircle, User, Shield, RefreshCw, AlertTriangle } from '@/lib/icons'
+import { Plus, Edit, Package, CheckCircle, User, Shield, RefreshCw, AlertTriangle, FileText, Truck, Clock } from '@/lib/icons'
 
 // Forms and components
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { useAuth } from '@/hooks/useAuth'
 import { ResponsePlanningForm } from '@/components/forms/response'
 import { ResponsePlanningDashboard } from '@/components/response/ResponsePlanningDashboard'
+import { ActionQueue } from '@/components/dashboards/shared/action-queue'
+import { deriveMapPropsFromSignals } from '@/components/dashboards/shared/action-queue/map-utils'
+import { StatCard } from '@/components/shared/StatCard'
+
+const ActionQueueMapPanel = dynamic(
+  () => import('@/components/dashboards/shared/action-queue/ActionQueueMapPanel').then(m => ({ default: m.ActionQueueMapPanel })),
+  { ssr: false }
+)
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
+import { useActionSignals } from '@/hooks/useActionSignals'
+import type { ActionSignalItem } from '@/types/action-signal'
 
 // Hooks and utilities
 import { apiGet, extractArray } from '@/lib/api'
@@ -31,6 +43,9 @@ function ResponderDashboardContent() {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingResponse, setEditingResponse] = useState<string | null>(null)
   const [isClient, setIsClient] = useState(false)
+  const [selectedSignal, setSelectedSignal] = useState<ActionSignalItem | null>(null)
+  const { data: signalsData } = useActionSignals({ unresolvedOnly: true, limit: 100, activeRole: 'RESPONDER' })
+  const mapProps = useMemo(() => deriveMapPropsFromSignals(signalsData?.signals ?? []), [signalsData?.signals])
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -97,6 +112,27 @@ function ResponderDashboardContent() {
   const handleBackToList = () => {
     setShowCreateForm(false)
     setEditingResponse(null)
+  }
+
+  const handleSignalAction = (signal: ActionSignalItem) => {
+    const params = new URLSearchParams({ entityId: signal.entityId })
+    if (signal.incidentId) params.set('incidentId', signal.incidentId)
+    if (signal.context?.assessmentId) params.set('assessmentId', signal.context.assessmentId)
+    if (signal.context?.commitmentId) params.set('commitmentId', signal.context.commitmentId)
+    if (signal.responseType) params.set('type', signal.responseType)
+    switch (signal.signalReason) {
+      case 'awaiting-plan':
+      case 'awaiting-plan-for-commitment':
+        router.push(`/responder/planning/new?${params.toString()}`)
+        break
+      case 'awaiting-delivery':
+        if (signal.context?.responseId) {
+          router.push(`/responder/responses/${signal.context.responseId}/deliver`)
+        }
+        break
+      default:
+        break
+    }
   }
 
   // Show create/edit form
@@ -206,10 +242,55 @@ function ResponderDashboardContent() {
               </Button>
             </div>
             
-            <ResponsePlanningDashboard
-              onCreateResponse={handleCreateResponse}
-              onEditResponse={handleEditResponse}
-            />
+            <StatCardGrid columns={4}>
+              <StatCard
+                label="Awaiting Plans"
+                value={signalsData?.unresolvedCount ?? 0}
+                severity="high"
+                icon={FileText}
+                loading={!signalsData}
+              />
+              <StatCard
+                label="Awaiting Delivery"
+                value={0}
+                severity="warning"
+                icon={Truck}
+              />
+              <StatCard
+                label="Completed Today"
+                value={0}
+                severity="success"
+                icon={CheckCircle}
+              />
+              <StatCard
+                label="Active Plans"
+                value={responses.length}
+                severity="info"
+                icon={Clock}
+              />
+            </StatCardGrid>
+
+            <div className="flex flex-col md:flex-row gap-4 min-h-[400px]">
+              <div className="w-full md:w-[55%] lg:w-[45%] shrink-0 border rounded-lg bg-card">
+                <ActionQueue
+                  role="RESPONDER"
+                  onItemSelect={setSelectedSignal}
+                  onItemAction={handleSignalAction}
+                  selectedSignalId={selectedSignal?.id}
+                />
+              </div>
+              <div className="hidden md:block md:w-[45%] lg:w-[55%] border rounded-lg bg-card overflow-hidden relative">
+                <ActionQueueMapPanel
+                  activeEntityIds={mapProps.activeEntityIds}
+                  entityPriorities={mapProps.entityPriorities}
+                  selectedEntityId={selectedSignal?.entityId}
+                  onEntitySelect={(entityId) => {
+                    const s = signalsData?.signals?.find(sig => sig.entityId === entityId)
+                    if (s) setSelectedSignal(s)
+                  }}
+                />
+              </div>
+            </div>
           </div>
         )
       }}

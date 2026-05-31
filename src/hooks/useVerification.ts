@@ -103,11 +103,11 @@ export function useVerificationMetrics() {
   return useQuery({
     queryKey: ['verification-metrics'],
     queryFn: async (): Promise<VerificationMetrics> => {
-      const result = await apiGet<{ metrics: VerificationMetrics }>('/api/v1/verification/metrics');
+      const result = await apiGet<VerificationMetrics>('/api/v1/verification/metrics');
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch verification metrics');
       }
-      return result.data!.metrics;
+      return result.data!;
     },
     staleTime: 300000, // 5 minutes
     refetchInterval: 300000, // Auto-refresh every 5 minutes

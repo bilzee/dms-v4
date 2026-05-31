@@ -7,7 +7,7 @@ import { apiGet, extractArray } from '@/lib/api'
 import { getAuthToken } from '@/lib/auth/token-utils'
 
 export interface BootstrapProgress {
-  stage: 'initializing' | 'entities' | 'incidents' | 'assessments' | 'config' | 'completed';
+  stage: 'initializing' | 'entities' | 'incidents' | 'assessments' | 'signals' | 'config' | 'completed';
   progress: number; // 0-100
   message: string;
   errors: string[];
@@ -116,8 +116,12 @@ export class OfflineBootstrapService {
         await this.loadVerifiedAssessments();
       }
 
-      // Stage 5: System configuration
-      this.updateProgress('config', 85, 'Loading system configuration...');
+      // Stage 5: Cache action signals
+      this.updateProgress('signals', 75, 'Caching action signals...');
+      await this.loadActionSignals(userRole);
+
+      // Stage 6: System configuration
+      this.updateProgress('config', 90, 'Loading system configuration...');
       await this.loadSystemConfig();
 
       // Complete
@@ -342,6 +346,54 @@ export class OfflineBootstrapService {
       }
     } catch (error) {
       console.warn('⚠️ Failed to load verified assessments:', error);
+    }
+  }
+
+  private async loadActionSignals(userRole: string): Promise<void> {
+    try {
+      const isOnline = navigator.onLine;
+      if (!isOnline) {
+        console.log('📡 Skipping signal cache (offline)');
+        return;
+      }
+
+      if (!getAuthToken()) {
+        console.log('📡 Skipping signal cache (not authenticated)');
+        return;
+      }
+
+      const userId = this.getCurrentUserId();
+      if (!userId) {
+        console.log('📡 Skipping signal cache (no user ID)');
+        return;
+      }
+
+      const params = new URLSearchParams({
+        unresolvedOnly: 'true',
+        limit: '500',
+      });
+
+      const result = await apiGet(`/api/v1/action-signals?${params}`);
+      if (result.success) {
+        const data = (result as any).data;
+        const signals = data?.signals ?? [];
+        await offlineDB.cacheSignals(signals, userId);
+        console.log(`📡 Cached ${signals.length} action signals for offline use`);
+      }
+    } catch (error) {
+      console.warn('⚠️ Failed to cache action signals:', error);
+    }
+  }
+
+  private getCurrentUserId(): string | null {
+    try {
+      if (typeof window === 'undefined') return null;
+      const stored = localStorage.getItem('auth-storage');
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      return parsed?.state?.user?.id ?? null;
+    } catch {
+      return null;
     }
   }
 

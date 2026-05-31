@@ -9,9 +9,9 @@ import { handleApiError } from '@/lib/api/response'
 export const GET = withAuth(async (request: NextRequest, context: AuthContext) => {
   const { user, roles } = context;
   
-  if (!roles.includes('RESPONDER')) {
+  if (!roles.includes('RESPONDER') && !roles.includes('DONOR')) {
     return NextResponse.json(
-      { success: false, error: 'Insufficient permissions. Responder role required.' },
+      { success: false, error: 'Insufficient permissions. Responder or Donor role required.' },
       { status: 403 }
     );
   }
@@ -23,6 +23,7 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
     const query = {
       assessmentId: searchParams.get('assessmentId') || undefined,
       entityId: searchParams.get('entityId') || undefined,
+      incidentId: searchParams.get('incidentId') || undefined,
       status: searchParams.get('status') as any || undefined,
       type: searchParams.get('type') as any || undefined,
       page: parseInt(searchParams.get('page') || '1'),

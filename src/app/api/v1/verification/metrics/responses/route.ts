@@ -52,7 +52,13 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     }
 
     if (donorId) {
-      baseWhereClause.donorId = donorId;
+      baseWhereClause.planCommitments = {
+        some: {
+          commitment: {
+            donorId: donorId
+          }
+        }
+      };
     }
 
     // Get status counts
@@ -147,7 +153,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         },
         _count: true
       }),
-      
+
       // Verified by type
       prisma.rapidResponse.groupBy({
         by: ['type'],
@@ -157,7 +163,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         },
         _count: true
       }),
-      
+
       // Auto-verified by type
       prisma.rapidResponse.groupBy({
         by: ['type'],
@@ -167,33 +173,65 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         },
         _count: true
       }),
-      
-      // Pending by donor
-      prisma.rapidResponse.groupBy({
-        by: ['donorId'],
+
+      // Pending by donor - query through PlanCommitment
+      prisma.planCommitment.groupBy({
+        by: ['commitmentId'],
         where: {
-          ...baseWhereClause,
-          verificationStatus: 'SUBMITTED',
-          donorId: {
-            not: null
-          }
-        },
-        _count: true
-      }),
-      
-      // Verified by donor
-      prisma.rapidResponse.groupBy({
-        by: ['donorId'],
-        where: {
-          ...baseWhereClause,
-          verificationStatus: {
-            in: ['VERIFIED', 'AUTO_VERIFIED']
+          plan: {
+            ...baseWhereClause,
+            verificationStatus: 'SUBMITTED'
           },
-          donorId: {
-            not: null
+          commitment: {
+            donorId: { not: undefined }
           }
         },
-        _count: true
+        _count: {
+          id: true
+        }
+      }).then(async (results) => {
+        // Map commitmentId to donorId
+        const commitmentIds = results.map(r => r.commitmentId);
+        const commitments = await prisma.donorCommitment.findMany({
+          where: { id: { in: commitmentIds } },
+          select: { id: true, donorId: true }
+        });
+        const commitmentToDonor = new Map(commitments.map(c => [c.id, c.donorId]));
+        return results.map(r => ({
+          donorId: commitmentToDonor.get(r.commitmentId) || null,
+          _count: r._count.id
+        }));
+      }),
+
+      // Verified by donor - query through PlanCommitment
+      prisma.planCommitment.groupBy({
+        by: ['commitmentId'],
+        where: {
+          plan: {
+            ...baseWhereClause,
+            verificationStatus: {
+              in: ['VERIFIED', 'AUTO_VERIFIED']
+            }
+          },
+          commitment: {
+            donorId: { not: undefined }
+          }
+        },
+        _count: {
+          id: true
+        }
+      }).then(async (results) => {
+        // Map commitmentId to donorId
+        const commitmentIds = results.map(r => r.commitmentId);
+        const commitments = await prisma.donorCommitment.findMany({
+          where: { id: { in: commitmentIds } },
+          select: { id: true, donorId: true }
+        });
+        const commitmentToDonor = new Map(commitments.map(c => [c.id, c.donorId]));
+        return results.map(r => ({
+          donorId: commitmentToDonor.get(r.commitmentId) || null,
+          _count: r._count.id
+        }));
       })
     ]);
 
@@ -263,13 +301,13 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       }, {} as Record<string, number>),
       pendingByDonor: pendingByDonor.reduce((acc, item) => {
         if (item.donorId && donorMap.has(item.donorId)) {
-          acc[donorMap.get(item.donorId)!] = item._count;
+          acc[donorMap.get(item.donorId)!] = item._count as number;
         }
         return acc;
       }, {} as Record<string, number>),
       verifiedByDonor: verifiedByDonor.reduce((acc, item) => {
         if (item.donorId && donorMap.has(item.donorId)) {
-          acc[donorMap.get(item.donorId)!] = item._count;
+          acc[donorMap.get(item.donorId)!] = item._count as number;
         }
         return acc;
       }, {} as Record<string, number>),

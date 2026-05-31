@@ -18,7 +18,7 @@ export const GET = withAuth(async (
 ) => {
   try {
     // RBAC: COORDINATOR, ADMIN, DONOR can view entity donors
-    if (!context.roles.some(r => ['COORDINATOR', 'ADMIN', 'DONOR'].includes(r))) {
+    if (!context.roles.some(r => ['COORDINATOR', 'ADMIN', 'DONOR', 'RESPONDER'].includes(r))) {
       return NextResponse.json(
         { error: 'Insufficient permissions to view entity donors', meta: { timestamp: new Date().toISOString(), version: '1.0.0' } },
         { status: 403 }

@@ -180,7 +180,6 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
         _count: {
           select: {
             commitments: true,
-            responses: true
           }
         }
       },

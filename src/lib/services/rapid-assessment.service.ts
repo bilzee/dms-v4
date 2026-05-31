@@ -258,6 +258,20 @@ export class RapidAssessmentService {
     // Automatically trigger gap analysis calculation after successful creation
     await this.triggerGapAnalysis(result.rapidAssessment.id)
 
+    try {
+      const { ActionSignalService } = await import('@/lib/services/action-signal.service');
+      await ActionSignalService.evaluateAndGenerate({
+        trigger: entity.autoApproveEnabled ? 'assessment-verified' : 'assessment-created',
+        entityId: input.entityId,
+        incidentId: input.incidentId,
+        assessmentId: result.rapidAssessment.id,
+        assessmentType: type,
+        assessmentPriority: input.priority,
+      });
+    } catch (e) {
+      console.error('[RapidAssessmentService] signal hook error:', e);
+    }
+
     // Return the combined assessment
     return {
       ...result.rapidAssessment,
@@ -531,6 +545,20 @@ export class RapidAssessmentService {
 
     // Automatically trigger gap analysis calculation after successful submission
     await this.triggerGapAnalysis(id)
+
+    try {
+      const { ActionSignalService } = await import('@/lib/services/action-signal.service');
+      await ActionSignalService.evaluateAndGenerate({
+        trigger: 'assessment-submitted',
+        entityId: updatedAssessment.entityId,
+        incidentId: updatedAssessment.incidentId,
+        assessmentId: id,
+        assessmentType: updatedAssessment.rapidAssessmentType,
+        assessmentPriority: updatedAssessment.priority,
+      });
+    } catch (e) {
+      console.error('[RapidAssessmentService] signal hook error:', e);
+    }
 
     return updatedAssessment as unknown as RapidAssessmentWithData
   }

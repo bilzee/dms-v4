@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 // UI components
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
@@ -20,6 +20,12 @@ import { ResponsePlanningForm } from '@/components/forms/response'
 
 function NewResponsePlanningPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const preselectedEntityId = searchParams.get('entityId') || undefined
+  const preselectedAssessmentId = searchParams.get('assessmentId') || undefined
+  const preselectedIncidentId = searchParams.get('incidentId') || undefined
+  const preselectedCommitmentId = searchParams.get('commitmentId') || undefined
+  const preselectedType = searchParams.get('type') as any || undefined
 
   const handleCancel = () => {
     router.push('/responder/planning')
@@ -53,6 +59,11 @@ function NewResponsePlanningPageContent() {
             mode="create"
             onCancel={handleCancel}
             onSuccess={handleSuccess}
+            entityId={preselectedEntityId}
+            assessmentId={preselectedAssessmentId}
+            incidentId={preselectedIncidentId}
+            commitmentId={preselectedCommitmentId}
+            responseType={preselectedType}
           />
         </CardContent>
       </Card>

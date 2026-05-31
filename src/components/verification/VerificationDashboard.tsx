@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useVerificationMetrics } from '@/hooks/useVerification';
-import { useVerifyResponse, useRejectResponse } from '@/hooks/useResponseVerification';
+import { useVerificationMetrics, useVerificationQueue } from '@/hooks/useVerification';
+import { useVerifyResponse, useRejectResponse, useResponseVerificationQueue } from '@/hooks/useResponseVerification';
 import { VerificationQueue } from './VerificationQueue';
 import { VerificationActions } from './VerificationActions';
 import { StatusIndicator } from './StatusIndicator';
@@ -34,12 +34,18 @@ import { cn } from '@/lib/utils';
 import type { VerificationQueueItem } from '@/types/verification';
 import type { ResponseVerificationQueueItem } from '@/types/response-verification';
 
-export function VerificationDashboard() {
+interface VerificationDashboardProps {
+  initialTab?: string;
+  highlightId?: string;
+}
+
+export function VerificationDashboard({ initialTab, highlightId }: VerificationDashboardProps) {
   const router = useRouter();
   const [selectedAssessment, setSelectedAssessment] = useState<VerificationQueueItem | null>(null);
   const [selectedResponse, setSelectedResponse] = useState<ResponseVerificationQueueItem | null>(null);
   const [rejectReason, setRejectReason] = useState('');
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(initialTab || 'overview');
+  const [autoSelectAttempted, setAutoSelectAttempted] = useState(false);
 
   const { 
     data: metrics, 
@@ -50,6 +56,34 @@ export function VerificationDashboard() {
 
   const verifyResponse = useVerifyResponse();
   const rejectResponse = useRejectResponse();
+
+  const { 
+    data: assessmentQueueData 
+  } = useVerificationQueue({ page: 1, limit: 50 });
+
+  const {
+    data: responseQueueData
+  } = useResponseVerificationQueue({ page: 1, limit: 50 });
+
+  useEffect(() => {
+    if (autoSelectAttempted || !highlightId) return;
+
+    if (initialTab === 'queue' && assessmentQueueData?.data) {
+      const match = assessmentQueueData.data.find((a: VerificationQueueItem) => a.id === highlightId);
+      if (match) {
+        setSelectedAssessment(match);
+        setAutoSelectAttempted(true);
+      }
+    }
+
+    if (initialTab === 'responses' && responseQueueData?.data) {
+      const match = responseQueueData.data.find((r: ResponseVerificationQueueItem) => r.id === highlightId);
+      if (match) {
+        setSelectedResponse(match);
+        setAutoSelectAttempted(true);
+      }
+    }
+  }, [autoSelectAttempted, highlightId, initialTab, assessmentQueueData, responseQueueData]);
 
   const handleAssessmentSelect = (assessment: VerificationQueueItem) => {
     setSelectedAssessment(assessment);

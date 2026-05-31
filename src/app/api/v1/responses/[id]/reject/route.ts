@@ -37,11 +37,8 @@ export const POST = withAuth(async (request: NextRequest, context, { params }) =
         entity: {
           select: { id: true, name: true, type: true }
         },
-        donor: {
-          select: { id: true, name: true, contactEmail: true }
-        },
-        commitment: {
-          select: { id: true, totalCommittedQuantity: true, items: true }
+        planCommitments: {
+          select: { commitment: { select: { id: true, totalCommittedQuantity: true, items: true, donor: { select: { id: true, name: true, contactEmail: true } } } } }
         }
       }
     });
@@ -79,11 +76,8 @@ export const POST = withAuth(async (request: NextRequest, context, { params }) =
         entity: {
           select: { id: true, name: true, type: true }
         },
-        donor: {
-          select: { id: true, name: true, contactEmail: true }
-        },
-        commitment: {
-          select: { id: true, totalCommittedQuantity: true, items: true }
+        planCommitments: {
+          select: { commitment: { select: { id: true, totalCommittedQuantity: true, items: true, donor: { select: { id: true, name: true, contactEmail: true } } } } }
         }
       }
     });
@@ -101,6 +95,20 @@ export const POST = withAuth(async (request: NextRequest, context, { params }) =
         rejectionReason: validatedData.rejectionReason 
       }
     });
+
+    try {
+      const { ActionSignalService } = await import('@/lib/services/action-signal.service');
+      await ActionSignalService.evaluateAndGenerate({
+        trigger: 'response-rejected',
+        entityId: response.entityId,
+        incidentId: (response as any).incidentId,
+        responseId: id,
+        responseType: response.type,
+        responsePriority: response.priority,
+      });
+    } catch (e) {
+      console.error('[ResponseReject] signal hook error:', e);
+    }
 
     return NextResponse.json({
       success: true,

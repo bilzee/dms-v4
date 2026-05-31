@@ -1,52 +1,92 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 
-// UI components
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { FormCard } from '@/components/shared/FormCard'
 import { FormActionBar } from '@/components/shared/FormActionBar'
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
-// Icons
-import { Package, AlertTriangle, Search, Filter, Users, MapPin, Calendar, CheckCircle, AlertCircle, Plus, Minus, Eye, EyeOff } from '@/lib/icons'
+import {
+  Package,
+  Users,
+  MapPin,
+  Calendar,
+  CheckCircle,
+  AlertCircle,
+  Plus,
+  Minus,
+  Eye,
+  Info,
+  ArrowLeft,
+  Shield,
+} from '@/lib/icons'
 
-// Shared components
 import { AssessmentSelector } from '@/components/response/AssessmentSelector'
 
-// Services and types
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet, apiPost, extractArray } from '@/lib/api'
 import { getDotColor } from '@/components/shared/StatusBadge'
-import { CommitmentService, type CommitmentItem } from '@/lib/services/commitment.service'
-import { ResponseService } from '@/lib/services/response.service'
-import { CreateDeliveredResponseInput } from '@/lib/validation/response'
 
-// Validation schema
 const CommitmentImportSchema = z.object({
   commitmentId: z.string().min(1, 'Please select a commitment'),
   assessmentId: z.string().min(1, 'Please select an assessment'),
-  type: z.enum(['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION', 'LOGISTICS']),
+  entityId: z.string().min(1, 'Please select an entity'),
+  incidentId: z.string().min(1, 'Please select an incident'),
+  type: z.enum([
+    'HEALTH',
+    'WASH',
+    'SHELTER',
+    'FOOD',
+    'SECURITY',
+    'POPULATION',
+    'LOGISTICS',
+  ]),
   priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).default('MEDIUM'),
-  items: z.array(z.object({
-    name: z.string(),
-    quantity: z.number().positive(),
-    unit: z.string()
-  })).min(1, 'At least one item must be selected'),
-  notes: z.string().optional()
+  items: z
+    .array(
+      z.object({
+        name: z.string(),
+        quantity: z.number().positive(),
+        unit: z.string(),
+      })
+    )
+    .min(1, 'At least one item must be selected'),
+  notes: z.string().optional(),
 })
 
 type FormData = z.infer<typeof CommitmentImportSchema>
@@ -58,276 +98,391 @@ interface DonorCommitmentImportFormProps {
   incidentId?: string
 }
 
-export function DonorCommitmentImportForm({ 
+export function DonorCommitmentImportForm({
   onSuccess,
   onCancel,
   entityId: preselectedEntityId,
-  incidentId: preselectedIncidentId
+  incidentId: preselectedIncidentId,
 }: DonorCommitmentImportFormProps) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const [selectedCommitment, setSelectedCommitment] = useState<any>(null)
-  const [selectedItems, setSelectedItems] = useState<CommitmentItem[]>([])
+  const [selectedItems, setSelectedItems] = useState<any[]>([])
   const [isPreviewOpen, setIsPreviewOpen] = useState(false)
-  const [filters, setFilters] = useState({
-    entityId: preselectedEntityId || 'all',
-    incidentId: preselectedIncidentId || 'all',
-    deliveryStatus: 'PLANNED'
-  })
+  const [circularRefError, setCircularRefError] = useState<string | null>(null)
 
-  // Form setup
   const form = useForm<FormData>({
     resolver: zodResolver(CommitmentImportSchema),
     defaultValues: {
       commitmentId: '',
       assessmentId: '',
+      entityId: preselectedEntityId || '',
+      incidentId: preselectedIncidentId || '',
       type: 'LOGISTICS',
       priority: 'MEDIUM',
       items: [],
-      notes: ''
-    }
-  })
-
-  // Query available commitments
-  const { data: commitmentsData, isLoading, error } = useQuery({
-    queryKey: ['available-commitments', filters],
-    queryFn: async () => {
-      const params = new URLSearchParams()
-      if (filters.entityId && filters.entityId !== 'all') params.append('entityId', filters.entityId)
-      if (filters.incidentId && filters.incidentId !== 'all') params.append('incidentId', filters.incidentId)
-      if (filters.deliveryStatus) params.append('status', filters.deliveryStatus)
-      const result = await apiGet(`/api/v1/commitments/available?${params}`)
-      if (!result.success) throw new Error('Failed to fetch commitments')
-      return result.data
+      notes: '',
     },
   })
 
-  // Query assigned entities for filtering
-  const { data: entitiesData } = useQuery({
+  const selectedEntityId = form.watch('entityId')
+  const selectedIncidentId = form.watch('incidentId')
+
+  const { data: entitiesData, isLoading: entitiesLoading } = useQuery({
     queryKey: ['assigned-entities', user?.id],
     queryFn: async () => {
-      if (!user?.id) throw new Error('User ID not available')
-      const result = await apiGet(`/api/v1/entities/assigned?userId=${user.id}`)
+      if (!user?.id) return { data: [] }
+      const result = await apiGet(
+        `/api/v1/entities/assigned?userId=${user.id}`
+      )
       if (!result.success) throw new Error('Failed to fetch entities')
       return result.data
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
   })
 
-  // Query verified assessments for the selected entity
-  const { data: assessmentsData = [] } = useQuery({
-    queryKey: ['verified-assessments', filters.entityId],
+  const entities = entitiesData?.data || []
+
+  const { data: incidentsData, isLoading: incidentsLoading } = useQuery({
+    queryKey: ['incidents', selectedEntityId],
     queryFn: async () => {
-      if (!filters.entityId || filters.entityId === 'all') return []
-      const result = await apiGet(`/api/v1/assessments/verified?entityId=${filters.entityId}`)
-      if (!result.success) throw new Error('Failed to fetch verified assessments')
+      if (!selectedEntityId) return []
+      const result = await apiGet(
+        `/api/v1/incidents?entityId=${selectedEntityId}`
+      )
+      if (!result.success)
+        throw new Error(result.error || 'Failed to fetch incidents')
+      return extractArray(result.data)
+    },
+    enabled: !!selectedEntityId,
+  })
+
+  const incidents = incidentsData || []
+
+  const { data: assessmentsData = [] } = useQuery({
+    queryKey: ['verified-assessments', selectedEntityId],
+    queryFn: async () => {
+      if (!selectedEntityId) return []
+      const result = await apiGet(
+        `/api/v1/assessments/verified?entityId=${selectedEntityId}`
+      )
+      if (!result.success)
+        throw new Error('Failed to fetch verified assessments')
       return extractArray(result.data as any)
     },
-    enabled: !!filters.entityId && filters.entityId !== 'all'
+    enabled: !!selectedEntityId,
   })
 
-  // Import commitment mutation
-  const importMutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      const result = await apiPost('/api/v1/responses/from-commitment', data)
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to import commitment')
+  const commitmentsEnabled = !!selectedEntityId && !!selectedIncidentId
+
+  const { data: commitmentsData, isLoading: commitmentsLoading } = useQuery({
+    queryKey: [
+      'orphaned-commitments',
+      selectedEntityId,
+      selectedIncidentId,
+    ],
+    queryFn: async () => {
+      const result = await apiGet(
+        `/api/v1/donors/commitments?entityId=${selectedEntityId}&incidentId=${selectedIncidentId}&status=PLANNED&limit=100`
+      )
+      if (!result.success) return []
+
+      const allCommitments = extractArray(result.data)
+      if (allCommitments.length === 0) return []
+
+      const planCommitmentsResult = await apiGet(
+        `/api/v1/donors/commitments?entityId=${selectedEntityId}&incidentId=${selectedIncidentId}&includeResponses=true&limit=100`
+      )
+      if (!planCommitmentsResult.success) return allCommitments
+
+      const withResponses = extractArray(planCommitmentsResult.data)
+      const linkedCommitmentIds = new Set<string>()
+
+      for (const c of withResponses) {
+        if (c.planCommitments && Array.isArray(c.planCommitments)) {
+          for (const pc of c.planCommitments) {
+            linkedCommitmentIds.add(pc.commitmentId)
+          }
+        }
+        if (c.responses && Array.isArray(c.responses)) {
+          linkedCommitmentIds.add(c.id)
+        }
       }
-      return result.data
+
+      return allCommitments.filter(
+        (c: any) => !linkedCommitmentIds.has(c.id)
+      )
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['available-commitments'] })
-      queryClient.invalidateQueries({ queryKey: ['planned-responses'] })
-      onSuccess?.(data)
-    }
+    enabled: commitmentsEnabled,
   })
 
-  // Create delivered response mutation
-  const createDeliveredMutation = useMutation({
-    mutationFn: async (data: CreateDeliveredResponseInput) => {
-      if (!user) throw new Error('User not authenticated')
-      
-      // Add user ID to data
-      const dataWithUser = { ...data, responderId: user.id }
-      
-      return await ResponseService.createDeliveredResponse(dataWithUser, user.id)
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['available-commitments'] })
-      queryClient.invalidateQueries({ queryKey: ['delivered-responses'] })
-      onSuccess?.(data)
-    },
-    onError: (error: any) => {
-      console.error('Error creating delivered response:', error)
-      // You might want to set an error state here
-    }
-  })
+  const commitments = commitmentsData || []
 
-  // Handle commitment selection
-  const handleCommitmentSelect = (commitment: any) => {
-    setSelectedCommitment(commitment)
-    setSelectedItems(commitment.items || [])
-    form.setValue('commitmentId', commitment.id)
-    form.setValue('items', commitment.items || [])
+  const handleEntityChange = (value: string) => {
+    form.setValue('entityId', value)
+    form.setValue('incidentId', '')
+    form.setValue('assessmentId', '')
+    setSelectedCommitment(null)
+    setSelectedItems([])
+    setCircularRefError(null)
   }
 
-  // Handle item quantity change
-  const handleItemQuantityChange = (itemIndex: number, newQuantity: number) => {
-    const maxAvailable = selectedCommitment?.availableQuantity || 0
-    const totalSelected = selectedItems.reduce((sum, item, index) => 
-      index === itemIndex ? sum + newQuantity : sum + item.quantity, 0
-    )
+  const handleIncidentChange = (value: string) => {
+    form.setValue('incidentId', value)
+    setSelectedCommitment(null)
+    setSelectedItems([])
+    setCircularRefError(null)
+  }
 
-    if (totalSelected > maxAvailable) {
-      form.setError('items', { 
-        message: `Total quantity (${totalSelected}) exceeds available (${maxAvailable})` 
-      })
+  const handleCommitmentSelect = (commitment: any) => {
+    if (commitment.sourcePlanId) {
+      setCircularRefError(
+        'This commitment was created from a response plan and cannot be used to create another plan (circular reference prevention).'
+      )
+      setSelectedCommitment(null)
+      setSelectedItems([])
+      form.setValue('commitmentId', '')
+      form.setValue('items', [])
       return
     }
 
+    setCircularRefError(null)
+    setSelectedCommitment(commitment)
+    setSelectedItems(
+      (commitment.items || []).map((item: any) => ({
+        name: item.name,
+        quantity: item.quantity,
+        unit: item.unit,
+      }))
+    )
+    form.setValue('commitmentId', commitment.id)
+    form.setValue(
+      'items',
+      (commitment.items || []).map((item: any) => ({
+        name: item.name,
+        quantity: item.quantity,
+        unit: item.unit,
+      }))
+    )
+  }
+
+  const handleItemQuantityChange = (itemIndex: number, newQuantity: number) => {
     const updatedItems = [...selectedItems]
     updatedItems[itemIndex] = {
       ...updatedItems[itemIndex],
-      quantity: newQuantity
+      quantity: newQuantity,
     }
     setSelectedItems(updatedItems)
     form.setValue('items', updatedItems)
     form.clearErrors('items')
   }
 
-  // Handle form submission
+  const importMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      const payload: any = {
+        commitmentId: data.commitmentId,
+        items: data.items,
+        notes: data.notes,
+      }
+      const result = await apiPost('/api/v1/responses/from-commitment', payload)
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to import commitment')
+      }
+      return result.data
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['orphaned-commitments'] })
+      queryClient.invalidateQueries({ queryKey: ['planned-responses'] })
+      onSuccess?.(data)
+    },
+  })
+
   const onSubmit = (data: FormData) => {
     if (selectedItems.length === 0) {
       form.setError('items', { message: 'Please select at least one item' })
       return
     }
-
-    // Open preview dialog before submission
     setIsPreviewOpen(true)
   }
 
-  // Confirm import after preview
   const handleConfirmImport = () => {
     const data = form.getValues()
-    data.items = selectedItems.filter(item => item.quantity > 0)
-    
+    data.items = selectedItems.filter((item) => item.quantity > 0)
     importMutation.mutate(data)
     setIsPreviewOpen(false)
   }
 
-  // Handle creating delivered response directly
-  const handleCreateDelivery = () => {
-    const data = form.getValues()
-    data.items = selectedItems.filter(item => item.quantity > 0)
-    
-    const dataWithEntityId = {
-      ...data,
-      entityId: filters.entityId && filters.entityId !== 'all' ? filters.entityId : ''
-    }
-    
-    createDeliveredMutation.mutate(dataWithEntityId)
-    setIsPreviewOpen(false)
-  }
-
-  if (isLoading) {
+  if (entitiesLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <Package className="mx-auto h-12 w-12 animate-pulse text-muted-foreground" />
-          <p className="mt-2 text-sm text-muted-foreground">Loading available commitments...</p>
-        </div>
-      </div>
+      <Card className="w-full max-w-4xl mx-auto">
+        <CardContent className="p-6 space-y-6">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </CardContent>
+      </Card>
     )
   }
-
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          Failed to load commitments. Please try again later.
-        </AlertDescription>
-      </Alert>
-    )
-  }
-
-  const commitments = commitmentsData?.data || []
-  const entities = entitiesData?.data || []
 
   return (
     <div className="space-y-6">
       <FormCard
         title="Import from Donor Commitment"
-        description="Select a donor commitment to auto-populate response details with available items."
+        description="Select an entity and incident to find orphaned commitments, then create a response plan from the selected commitment."
         variant="dialog"
       >
-          {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium">Entity</label>
-              <Select value={filters.entityId} onValueChange={(value) => setFilters(prev => ({ ...prev, entityId: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select entity" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Entities</SelectItem>
-                  {entities.filter((entity: any) => entity.id && entity.id !== '').map((entity: any) => (
-                    <SelectItem key={entity.id} value={entity.id}>
-                      {entity.name} ({entity.type})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Status</label>
-              <Select value={filters.deliveryStatus} onValueChange={(value) => setFilters(prev => ({ ...prev, deliveryStatus: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PLANNED">Planned</SelectItem>
-                  <SelectItem value="PARTIAL">Partial</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Search</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search commitments..."
-                  className="pl-10"
-                />
-              </div>
-            </div>
+        {onCancel && (
+          <div className="-mt-2 mb-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onCancel}
+              className="p-0 h-8"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back
+            </Button>
           </div>
+        )}
 
-          <Separator />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <FormField
+                control={form.control}
+                name="entityId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Target Entity *</FormLabel>
+                    <Select
+                      onValueChange={(val) => {
+                        field.onChange(val)
+                        handleEntityChange(val)
+                      }}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an entity" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {entities
+                          .filter(
+                            (entity: any) => entity.id && entity.id !== ''
+                          )
+                          .map((entity: any) => (
+                            <SelectItem key={entity.id} value={entity.id}>
+                              {entity.name} ({entity.type})
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          {/* Available Commitments */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium">Available Commitments</h3>
-              <Badge variant="secondary">
-                {commitments.length} commitments
-              </Badge>
+              <FormField
+                control={form.control}
+                name="incidentId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Incident *</FormLabel>
+                    <Select
+                      onValueChange={(val) => {
+                        field.onChange(val)
+                        handleIncidentChange(val)
+                      }}
+                      value={field.value}
+                      disabled={!selectedEntityId || incidentsLoading}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              !selectedEntityId
+                                ? 'Select an entity first'
+                                : incidentsLoading
+                                  ? 'Loading incidents...'
+                                  : 'Select an incident'
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {incidents?.map((incident: any) => (
+                          <SelectItem key={incident.id} value={incident.id}>
+                            <div className="flex items-center gap-2">
+                              <span>{incident.type}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {incident.severity}
+                              </Badge>
+                            </div>
+                          </SelectItem>
+                        ))}
+                        {incidents?.length === 0 &&
+                          selectedEntityId &&
+                          !incidentsLoading && (
+                            <div className="px-2 py-1 text-sm text-muted-foreground">
+                              No incidents found for this entity
+                            </div>
+                          )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            {commitments.length === 0 ? (
-              <Alert>
+            {!selectedEntityId || !selectedIncidentId ? (
+              <Alert className="mb-6">
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  {!selectedEntityId
+                    ? 'Select a target entity and incident to see available orphaned commitments.'
+                    : 'Now select an incident to see available orphaned commitments for this entity.'}
+                </AlertDescription>
+              </Alert>
+            ) : commitmentsLoading ? (
+              <div className="space-y-3 mb-6">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-24 w-full" />
+                ))}
+              </div>
+            ) : commitments.length === 0 ? (
+              <Alert className="mb-6">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  No available commitments found for the selected filters.
+                  No orphaned commitments found for this entity and incident.
+                  Commitments that are already linked to response plans are
+                  excluded.
                 </AlertDescription>
               </Alert>
             ) : (
-              <div className="grid gap-4">
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium">
+                    Orphaned Commitments
+                  </h3>
+                  <Badge variant="secondary">
+                    {commitments.length} available
+                  </Badge>
+                </div>
                 {commitments.map((commitment: any) => (
-                  <Card 
-                    key={commitment.id} 
+                  <Card
+                    key={commitment.id}
                     className={`cursor-pointer transition-all hover:shadow-md ${
-                      selectedCommitment?.id === commitment.id ? 'ring-2 ring-blue-500' : ''
+                      selectedCommitment?.id === commitment.id
+                        ? 'ring-2 ring-primary'
+                        : ''
+                    } ${
+                      commitment.sourcePlanId
+                        ? 'opacity-60 border-red-200'
+                        : ''
                     }`}
                     onClick={() => handleCommitmentSelect(commitment)}
                   >
@@ -336,47 +491,73 @@ export function DonorCommitmentImportForm({
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <Users className="h-4 w-4 text-blue-500" />
-                            <span className="font-medium">{commitment.donor.name}</span>
-                            <Badge variant={commitment.donor.type === 'ORGANIZATION' ? 'default' : 'secondary'}>
-                              {commitment.donor.type}
-                            </Badge>
+                            <span className="font-medium">
+                              {commitment.donor?.name || 'Unknown Donor'}
+                            </span>
+                            {commitment.donor?.type && (
+                              <Badge
+                                variant={
+                                  commitment.donor.type === 'ORGANIZATION'
+                                    ? 'default'
+                                    : 'secondary'
+                                }
+                              >
+                                {commitment.donor.type}
+                              </Badge>
+                            )}
+                            {commitment.type && (
+                              <Badge variant="outline">{commitment.type}</Badge>
+                            )}
                           </div>
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground mb-3">
                             <div className="flex items-center gap-1">
                               <MapPin className="h-3 w-3" />
-                              {commitment.entity.name}
+                              {commitment.entity?.name || 'Unknown Entity'}
                             </div>
                             <div className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              {new Date(commitment.commitmentDate).toLocaleDateString()}
+                              {new Date(
+                                commitment.commitmentDate
+                              ).toLocaleDateString()}
                             </div>
                             <div className="flex items-center gap-1">
                               <Package className="h-3 w-3" />
-                              {commitment.availableQuantity} units available
+                              {commitment.totalCommittedQuantity ||
+                                0}{' '}
+                              units committed
                             </div>
                           </div>
 
-                          {commitment.isPartiallyDelivered && (
-                            <Badge variant="secondary" className="mb-2">
-                              Partially Delivered ({commitment.utilizationRate.toFixed(1)}% used)
-                            </Badge>
-                          )}
-
                           <div className="text-sm text-foreground">
-                            {commitment.items?.slice(0, 3).map((item: any, index: number) => (
-                              <span key={index} className="inline-block mr-2">
-                                {item.name} ({item.quantity} {item.unit})
-                              </span>
-                            ))}
-                            {commitment.items?.length > 3 && (
-                              <span className="text-muted-foreground">
-                                +{commitment.items.length - 3} more
-                              </span>
-                            )}
+                            {Array.isArray(commitment.items) &&
+                              commitment.items
+                                .slice(0, 3)
+                                .map((item: any, index: number) => (
+                                  <Badge
+                                    key={index}
+                                    variant="outline"
+                                    className="mr-1 mb-1"
+                                  >
+                                    {item.name} ({item.quantity} {item.unit})
+                                  </Badge>
+                                ))}
+                            {Array.isArray(commitment.items) &&
+                              commitment.items.length > 3 && (
+                                <Badge variant="outline" className="mr-1 mb-1">
+                                  +{commitment.items.length - 3} more
+                                </Badge>
+                              )}
                           </div>
+
+                          {commitment.sourcePlanId && (
+                            <div className="mt-2 flex items-center gap-1 text-xs text-red-600">
+                              <Shield className="h-3 w-3" />
+                              Derived from a response plan (circular reference)
+                            </div>
+                          )}
                         </div>
-                        
+
                         <div className="ml-4">
                           {selectedCommitment?.id === commitment.id ? (
                             <CheckCircle className="h-5 w-5 text-green-500" />
@@ -390,17 +571,21 @@ export function DonorCommitmentImportForm({
                 ))}
               </div>
             )}
-          </div>
 
-          {/* Selected Items Section */}
-          {selectedCommitment && (
-            <>
-              <Separator />
-              <div>
-                <h3 className="text-lg font-medium mb-4">Response Details</h3>
-                
-                {/* Assessment Selection */}
-                <div className="space-y-4 mb-6">
+            {circularRefError && (
+              <Alert variant="destructive" className="mb-6">
+                <Shield className="h-4 w-4" />
+                <AlertDescription>{circularRefError}</AlertDescription>
+              </Alert>
+            )}
+
+            {selectedCommitment && !circularRefError && (
+              <>
+                <Separator className="my-6" />
+
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium">Response Details</h3>
+
                   <FormField
                     control={form.control}
                     name="assessmentId"
@@ -409,22 +594,31 @@ export function DonorCommitmentImportForm({
                         <FormLabel>Assessment *</FormLabel>
                         <FormControl>
                           <AssessmentSelector
-                            entityId={filters.entityId}
+                            entityId={selectedEntityId}
                             value={field.value}
-                            onValueChange={(assessmentId, assessment) => {
+                            onValueChange={(
+                              assessmentId: string,
+                              assessment: any
+                            ) => {
                               field.onChange(assessmentId)
-                              // Auto-match response type to assessment type
-                              if (assessment && assessment.rapidAssessmentType) {
-                                form.setValue('type', assessment.rapidAssessmentType)
+                              if (
+                                assessment &&
+                                assessment.rapidAssessmentType
+                              ) {
+                                form.setValue(
+                                  'type',
+                                  assessment.rapidAssessmentType
+                                )
                               }
-                              // Set response priority to match assessment priority
                               if (assessment && assessment.priority) {
                                 form.setValue('priority', assessment.priority)
                               }
                             }}
-                            disabled={!filters.entityId || filters.entityId === 'all'}
+                            disabled={!selectedEntityId}
                             showConflictWarning={true}
-                            selectedAssessment={assessmentsData.find((a: any) => a.id === field.value)}
+                            selectedAssessment={assessmentsData.find(
+                              (a: any) => a.id === field.value
+                            )}
                           />
                         </FormControl>
                         <FormDescription>
@@ -435,7 +629,6 @@ export function DonorCommitmentImportForm({
                     )}
                   />
 
-                  {/* Response Type and Priority */}
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -443,24 +636,32 @@ export function DonorCommitmentImportForm({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Response Type *</FormLabel>
-                          <FormControl>
-                            <Select value={field.value} onValueChange={field.onChange} disabled={true}>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            disabled={true}
+                          >
+                            <FormControl>
                               <SelectTrigger className="bg-muted">
                                 <SelectValue placeholder="Auto-populated from assessment..." />
                               </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="HEALTH">Health</SelectItem>
-                                <SelectItem value="WASH">WASH</SelectItem>
-                                <SelectItem value="SHELTER">Shelter</SelectItem>
-                                <SelectItem value="FOOD">Food</SelectItem>
-                                <SelectItem value="SECURITY">Security</SelectItem>
-                                <SelectItem value="POPULATION">Population</SelectItem>
-                                <SelectItem value="LOGISTICS">Logistics</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="HEALTH">Health</SelectItem>
+                              <SelectItem value="WASH">WASH</SelectItem>
+                              <SelectItem value="SHELTER">Shelter</SelectItem>
+                              <SelectItem value="FOOD">Food</SelectItem>
+                              <SelectItem value="SECURITY">Security</SelectItem>
+                              <SelectItem value="POPULATION">
+                                Population
+                              </SelectItem>
+                              <SelectItem value="LOGISTICS">
+                                Logistics
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormDescription>
-                            Auto-populated from selected assessment type
+                            Auto-populated from assessment
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -473,144 +674,196 @@ export function DonorCommitmentImportForm({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Priority *</FormLabel>
-                          <FormControl>
-                            <Select value={field.value} onValueChange={field.onChange} disabled={true}>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            disabled={true}
+                          >
+                            <FormControl>
                               <SelectTrigger className="bg-muted">
                                 <SelectValue placeholder="Auto-populated from assessment..." />
                               </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="CRITICAL">
-                                  <span className="flex items-center gap-2">
-                                    <div className={`w-3 h-3 ${getDotColor('severity', 'CRITICAL')} rounded-full`}></div>
-                                    Critical
-                                  </span>
-                                </SelectItem>
-                                <SelectItem value="HIGH">
-                                  <span className="flex items-center gap-2">
-                                    <div className={`w-3 h-3 ${getDotColor('severity', 'HIGH')} rounded-full`}></div>
-                                    High
-                                  </span>
-                                </SelectItem>
-                                <SelectItem value="MEDIUM">
-                                  <span className="flex items-center gap-2">
-                                    <div className={`w-3 h-3 ${getDotColor('severity', 'MEDIUM')} rounded-full`}></div>
-                                    Medium
-                                  </span>
-                                </SelectItem>
-                                <SelectItem value="LOW">
-                                  <span className="flex items-center gap-2">
-                                    <div className={`w-3 h-3 ${getDotColor('severity', 'LOW')} rounded-full`}></div>
-                                    Low
-                                  </span>
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="CRITICAL">
+                                <span className="flex items-center gap-2">
+                                  <div
+                                    className={`w-3 h-3 ${getDotColor('severity', 'CRITICAL')} rounded-full`}
+                                  />
+                                  Critical
+                                </span>
+                              </SelectItem>
+                              <SelectItem value="HIGH">
+                                <span className="flex items-center gap-2">
+                                  <div
+                                    className={`w-3 h-3 ${getDotColor('severity', 'HIGH')} rounded-full`}
+                                  />
+                                  High
+                                </span>
+                              </SelectItem>
+                              <SelectItem value="MEDIUM">
+                                <span className="flex items-center gap-2">
+                                  <div
+                                    className={`w-3 h-3 ${getDotColor('severity', 'MEDIUM')} rounded-full`}
+                                  />
+                                  Medium
+                                </span>
+                              </SelectItem>
+                              <SelectItem value="LOW">
+                                <span className="flex items-center gap-2">
+                                  <div
+                                    className={`w-3 h-3 ${getDotColor('severity', 'LOW')} rounded-full`}
+                                  />
+                                  Low
+                                </span>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormDescription>
-                            Auto-populated from selected assessment priority
+                            Auto-populated from assessment
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
-                </div>
 
-                <h3 className="text-lg font-medium mb-4">Select Items to Import</h3>
-                
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="items"
-                      render={() => (
-                        <FormItem>
-                          <FormLabel>Items</FormLabel>
-                          <FormDescription>
-                            Adjust quantities as needed. Total: {selectedItems.reduce((sum, item) => sum + item.quantity, 0)} units
-                          </FormDescription>
-                          <FormControl>
-                            <div className="space-y-3">
-                              {selectedItems.map((item, index) => (
-                                <div key={index} className="flex items-center gap-4 p-3 border rounded-lg">
-                                  <div className="flex-1">
-                                    <div className="font-medium">{item.name}</div>
-                                    <div className="text-sm text-muted-foreground">{item.unit}</div>
-                                  </div>
-                                  
-                                  <div className="flex items-center gap-2">
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleItemQuantityChange(index, Math.max(1, item.quantity - 1))}
-                                      disabled={item.quantity <= 1}
-                                    >
-                                      <Minus className="h-3 w-3" />
-                                    </Button>
-                                    
-                                    <Input
-                                      type="number"
-                                      value={item.quantity}
-                                      onChange={(e) => handleItemQuantityChange(index, parseInt(e.target.value) || 1)}
-                                      className="w-20 text-center"
-                                      min="1"
-                                      max={selectedCommitment?.availableQuantity || 0}
-                                    />
-                                    
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleItemQuantityChange(index, item.quantity + 1)}
-                                      disabled={item.quantity >= (selectedCommitment?.availableQuantity || 0)}
-                                    >
-                                      <Plus className="h-3 w-3" />
-                                    </Button>
+                  <h3 className="text-sm font-medium pt-2">
+                    Adjust Item Quantities
+                  </h3>
+
+                  <FormField
+                    control={form.control}
+                    name="items"
+                    render={() => (
+                      <FormItem>
+                        <FormDescription>
+                          Total:{' '}
+                          {selectedItems.reduce(
+                            (sum, item) => sum + item.quantity,
+                            0
+                          )}{' '}
+                          units
+                        </FormDescription>
+                        <FormControl>
+                          <div className="space-y-3">
+                            {selectedItems.map((item, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-4 p-3 border rounded-lg"
+                              >
+                                <div className="flex-1">
+                                  <div className="font-medium">{item.name}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {item.unit}
                                   </div>
                                 </div>
-                              ))}
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
 
-                    <FormField
-                      control={form.control}
-                      name="notes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Notes (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Add any additional notes about this import..."
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleItemQuantityChange(
+                                        index,
+                                        Math.max(1, item.quantity - 1)
+                                      )
+                                    }
+                                    disabled={item.quantity <= 1}
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
 
-                    <FormMessage>{form.formState.errors.items?.message}</FormMessage>
+                                  <Input
+                                    type="number"
+                                    value={item.quantity}
+                                    onChange={(e) =>
+                                      handleItemQuantityChange(
+                                        index,
+                                        parseInt(e.target.value) || 1
+                                      )
+                                    }
+                                    className="w-20 text-center"
+                                    min="1"
+                                  />
 
-                    <FormActionBar
-                      onCancel={onCancel}
-                      submitLabel="Preview Import"
-                      loading={importMutation.isPending}
-                      disabled={importMutation.isPending || selectedItems.length === 0}
-                      variant="default"
-                    />
-                  </form>
-                </Form>
-              </div>
-            </>
-          )}
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleItemQuantityChange(
+                                        index,
+                                        item.quantity + 1
+                                      )
+                                    }
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notes (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Add any additional notes about this import..."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormMessage>
+                    {form.formState.errors.items?.message}
+                  </FormMessage>
+
+                  <FormActionBar
+                    onCancel={onCancel}
+                    submitLabel="Preview Import"
+                    loading={importMutation.isPending}
+                    disabled={
+                      importMutation.isPending ||
+                      selectedItems.length === 0 ||
+                      !!circularRefError
+                    }
+                    variant="default"
+                  />
+                </div>
+              </>
+            )}
+
+            {selectedEntityId &&
+              selectedIncidentId &&
+              !selectedCommitment &&
+              !commitmentsLoading &&
+              commitments.length > 0 && (
+                <Alert className="mt-4">
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    Select a commitment above to configure the response details
+                    and import items.
+                  </AlertDescription>
+                </Alert>
+              )}
+          </form>
+        </Form>
       </FormCard>
 
-      {/* Preview Dialog */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="max-w-2xl bg-card dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 shadow-2xl">
           <DialogHeader>
@@ -619,40 +872,60 @@ export function DonorCommitmentImportForm({
               Preview Commitment Import
             </DialogTitle>
             <DialogDescription className="text-base">
-              Review the details below before importing the commitment.
+              Review the details below before creating a response plan from
+              this commitment.
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedCommitment && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Donor</label>
-                  <p className="text-sm">{selectedCommitment.donor.name}</p>
+                  <p className="text-sm">
+                    {selectedCommitment.donor?.name || 'Unknown'}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Entity</label>
-                  <p className="text-sm">{selectedCommitment.entity.name}</p>
+                  <p className="text-sm">
+                    {selectedCommitment.entity?.name || 'Unknown'}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Incident</label>
-                  <p className="text-sm">{selectedCommitment.incident.type}</p>
+                  <p className="text-sm">
+                    {selectedCommitment.incident?.type || 'Unknown'}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Total Quantity</label>
-                  <p className="text-sm">{selectedItems.reduce((sum, item) => sum + item.quantity, 0)} units</p>
+                  <p className="text-sm">
+                    {selectedItems.reduce(
+                      (sum, item) => sum + item.quantity,
+                      0
+                    )}{' '}
+                    units
+                  </p>
                 </div>
               </div>
 
               <div>
                 <label className="text-sm font-medium">Items to Import</label>
                 <div className="mt-2 space-y-2">
-                  {selectedItems.filter(item => item.quantity > 0).map((item, index) => (
-                    <div key={index} className="flex justify-between p-2 bg-muted rounded">
-                      <span>{item.name}</span>
-                      <span>{item.quantity} {item.unit}</span>
-                    </div>
-                  ))}
+                  {selectedItems
+                    .filter((item) => item.quantity > 0)
+                    .map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex justify-between p-2 bg-muted rounded"
+                      >
+                        <span>{item.name}</span>
+                        <span>
+                          {item.quantity} {item.unit}
+                        </span>
+                      </div>
+                    ))}
                 </div>
               </div>
 
@@ -674,16 +947,9 @@ export function DonorCommitmentImportForm({
               {importMutation.isPending ? 'Creating...' : 'Create Plan'}
             </Button>
             <Button
-              onClick={handleCreateDelivery}
-              disabled={createDeliveredMutation.isPending}
-              className="min-w-40 bg-green-600 hover:bg-green-700 text-white font-semibold"
-            >
-              {createDeliveredMutation.isPending ? 'Creating...' : 'Create Delivery Directly'}
-            </Button>
-            <Button
               variant="outline"
               onClick={() => setIsPreviewOpen(false)}
-              disabled={importMutation.isPending || createDeliveredMutation.isPending}
+              disabled={importMutation.isPending}
               className="min-w-20"
             >
               Cancel

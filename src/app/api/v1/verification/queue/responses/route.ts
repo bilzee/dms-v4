@@ -35,7 +35,13 @@ export const GET = withAuth(async (request, context) => {
     }
 
     if (donorId) {
-      baseWhereClause.donorId = donorId;
+      baseWhereClause.planCommitments = {
+        some: {
+          commitment: {
+            donorId: donorId
+          }
+        }
+      };
     }
 
     // Build filtered where clause for pagination
@@ -85,19 +91,23 @@ export const GET = withAuth(async (request, context) => {
             email: true
           }
         },
-        donor: {
-          select: {
-            id: true,
-            name: true,
-            contactEmail: true
-          }
-        },
-        commitment: {
-          select: {
-            id: true,
-            totalCommittedQuantity: true,
-            items: true,
-            notes: true
+        planCommitments: {
+          include: {
+            commitment: {
+              select: {
+                id: true,
+                totalCommittedQuantity: true,
+                items: true,
+                notes: true,
+                donor: {
+                  select: {
+                    id: true,
+                    name: true,
+                    contactEmail: true
+                  }
+                }
+              }
+            }
           }
         },
         assessment: {

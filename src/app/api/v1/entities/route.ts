@@ -6,8 +6,8 @@ import { paginatedResponse, errorResponse, handleApiError } from '@/lib/api/resp
 export const GET = withAuth(async (request: NextRequest, context) => {
   const { user, roles } = context;
 
-  if (!roles.includes('COORDINATOR') && !roles.includes('ADMIN')) {
-    return errorResponse('Insufficient permissions. Coordinator or Admin role required.', 403);
+  if (!roles || roles.length === 0) {
+    return errorResponse('Authentication required.', 401);
   }
     try {
       const url = new URL(request.url);

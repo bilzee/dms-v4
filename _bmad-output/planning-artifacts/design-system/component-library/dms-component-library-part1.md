@@ -26,7 +26,7 @@ npx shadcn-ui@latest add textarea
 npx shadcn-ui@latest add skeleton
 
 # Additional dependencies
-npm install lucide-react react-hook-form zod @hookform/resolvers
+npm install @hugeicons/react @hugeicons/core-free-icons react-hook-form zod @hookform/resolvers
 ```
 
 ---
@@ -37,7 +37,7 @@ npm install lucide-react react-hook-form zod @hookform/resolvers
 ```tsx
 // components/ui/button-extended.tsx
 import { Button as BaseButton } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2 } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 interface ButtonProps extends React.ComponentPropsWithoutRef<typeof BaseButton> {
@@ -199,7 +199,7 @@ export function StatusBadge({ status, count, className }: StatusBadgeProps) {
 ### Implementation
 ```tsx
 // components/ui/connection-indicator.tsx
-import { WifiOff, Wifi, AlertCircle, RefreshCw } from "lucide-react";
+import { WifiOff, Wifi, AlertCircle, RefreshCw } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 interface ConnectionIndicatorProps {
@@ -311,7 +311,7 @@ export function ConnectionIndicator({
 // components/ui/form-field-enhanced.tsx
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { AlertCircle, CheckCircle } from "lucide-react";
+import { AlertCircle, CheckCircle } from "@/lib/icons";
 
 interface FormFieldProps {
   label: string;
@@ -475,7 +475,7 @@ export function BooleanField({
 ### Implementation
 ```tsx
 // components/forms/gps-field.tsx
-import { MapPin, Loader2, AlertCircle } from "lucide-react";
+import { MapPin, Loader2, AlertCircle } from "@/lib/icons";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button-extended";
 import { FormField } from "@/components/ui/form-field-enhanced";
@@ -607,7 +607,7 @@ export function GPSField({
 ### Implementation
 ```tsx
 // components/forms/media-field.tsx
-import { Camera, X, Upload } from "lucide-react";
+import { Camera, X, Upload } from "@/lib/icons";
 import { Button } from "@/components/ui/button-extended";
 import { FormField } from "@/components/ui/form-field-enhanced";
 import { useState, useRef } from "react";
@@ -731,7 +731,7 @@ export function MediaField({
 ### Implementation
 ```tsx
 // components/ui/sync-queue-item.tsx
-import { RefreshCw, CheckCircle, AlertCircle, X } from "lucide-react";
+import { RefreshCw, CheckCircle, AlertCircle, X } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -818,7 +818,7 @@ export function SyncQueueItem({ item, onRetry, onRemove }: SyncQueueItemProps) {
 ### Implementation
 ```tsx
 // components/ui/entity-card.tsx
-import { MapPin, Users, AlertTriangle } from "lucide-react";
+import { MapPin, Users, AlertTriangle } from "@/lib/icons";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";

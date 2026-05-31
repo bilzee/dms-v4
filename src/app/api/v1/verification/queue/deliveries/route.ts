@@ -74,12 +74,10 @@ export const GET = withAuth(
       }
 
       // Build order by clause
-      const orderBy: any = {};
-      orderBy[sortBy] = sortOrder;
+      const orderBy: any[] = [{ [sortBy]: sortOrder }];
       
-      // Add secondary sort by priority for stable ordering
       if (sortBy !== 'priority') {
-        orderBy.priority = 'desc';
+        orderBy.push({ priority: 'desc' });
       }
       
       // Get total count
@@ -124,7 +122,7 @@ export const GET = withAuth(
             }
           }
         },
-        orderBy: [orderBy],
+        orderBy,
         skip: (page - 1) * limit,
         take: Math.min(limit, 100) // Max 100 per page
       })

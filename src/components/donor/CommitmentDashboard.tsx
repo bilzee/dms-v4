@@ -24,6 +24,7 @@ import { Plus, Package, MapPin, AlertTriangle, CheckCircle2, Clock, Truck, XCirc
 
 // Components
 import { CommitmentForm } from './CommitmentForm'
+import { CommitmentFromPlanForm } from './CommitmentFromPlanForm'
 import { ProgressBar } from '@/components/shared/ProgressBar'
 
 // Types
@@ -32,14 +33,16 @@ import { DonorCommitment } from '@/types/commitment'
 interface CommitmentDashboardProps {
   donorId: string
   preSelectedEntityId?: string
+  preSelectedIncidentId?: string
+  preSelectedResponseId?: string
 }
 
 
-export function CommitmentDashboard({ donorId, preSelectedEntityId }: CommitmentDashboardProps) {
+export function CommitmentDashboard({ donorId, preSelectedEntityId, preSelectedIncidentId, preSelectedResponseId }: CommitmentDashboardProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
   
-  console.log('CommitmentDashboard received donorId:', donorId)
+  console.log('CommitmentDashboard received donorId:', donorId, 'preSelectedResponseId:', preSelectedResponseId, 'preSelectedEntityId:', preSelectedEntityId)
 
   // Helper function to handle different data structures for items
   const getItemsArray = (items: any): any[] => {
@@ -57,20 +60,13 @@ export function CommitmentDashboard({ donorId, preSelectedEntityId }: Commitment
     
     return []
   }
-  const [showForm, setShowForm] = useState(false)
+  const [showForm, setShowForm] = useState(!!(preSelectedResponseId || preSelectedEntityId))
   const [filters, setFilters] = useState({
     status: 'all',
     incidentId: 'all',
     entityId: preSelectedEntityId || 'all',
     search: ''
   })
-
-  // Auto-open form if entity is pre-selected
-  React.useEffect(() => {
-    if (preSelectedEntityId) {
-      setShowForm(true)
-    }
-  }, [preSelectedEntityId])
 
   // Fetch commitments
   const { data: commitmentsData, isLoading, error } = useQuery({
@@ -156,6 +152,17 @@ export function CommitmentDashboard({ donorId, preSelectedEntityId }: Commitment
     }, 0)
   }
 
+  if (showForm && preSelectedResponseId) {
+    return (
+      <CommitmentFromPlanForm
+        donorId={donorId}
+        responseId={preSelectedResponseId}
+        onSuccess={handleCommitmentSuccess}
+        onCancel={() => setShowForm(false)}
+      />
+    )
+  }
+
   if (showForm) {
     return (
       <div className="space-y-6">
@@ -173,6 +180,7 @@ export function CommitmentDashboard({ donorId, preSelectedEntityId }: Commitment
           onSuccess={handleCommitmentSuccess}
           onCancel={() => setShowForm(false)}
           preSelectedEntityId={preSelectedEntityId}
+          preSelectedIncidentId={preSelectedIncidentId}
         />
       </div>
     )

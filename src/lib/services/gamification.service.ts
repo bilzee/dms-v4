@@ -64,7 +64,7 @@ export async function calculateDonorMetrics(
   donorId: string, 
   timeframe: { start: Date; end: Date }
 ): Promise<CalculatedMetrics> {
-  // Fetch donor data with related commitments and responses
+  // Fetch donor data with related commitments
   const donor = await db.donor.findUnique({
     where: { id: donorId },
     select: {
@@ -88,25 +88,34 @@ export async function calculateDonorMetrics(
           commitmentDate: true,
           lastUpdated: true
         }
-      },
-      responses: {
-        where: {
-          createdAt: {
-            gte: timeframe.start,
-            lte: timeframe.end
-          }
-        },
-        select: {
-          id: true,
-          verificationStatus: true,
-          createdAt: true,
-          assessment: {
-            select: { createdAt: true }
-          }
-        }
       }
     }
   });
+
+  // Fetch responses through PlanCommitment
+  const responses = donor ? await db.rapidResponse.findMany({
+    where: {
+      planCommitments: {
+        some: {
+          commitment: {
+            donorId: donor.id
+          }
+        }
+      },
+      createdAt: {
+        gte: timeframe.start,
+        lte: timeframe.end
+      }
+    },
+    select: {
+      id: true,
+      verificationStatus: true,
+      createdAt: true,
+      assessment: {
+        select: { createdAt: true }
+      }
+    }
+  }) : [];
 
   if (!donor) {
     throw new Error(`Donor not found: ${donorId}`);
@@ -125,8 +134,8 @@ export async function calculateDonorMetrics(
   const verifiedDeliveryRate = totalCommittedItems > 0 ? (totalVerifiedItems / totalCommittedItems) * 100 : 0;
 
   // Calculate response metrics
-  const totalResponses = donor.responses.length;
-  const verifiedResponses = donor.responses.filter(r => 
+  const totalResponses = responses.length;
+  const verifiedResponses = responses.filter(r => 
     r.verificationStatus === 'VERIFIED' || r.verificationStatus === 'AUTO_VERIFIED'
   ).length;
   const responseVerificationRate = totalResponses > 0 ? (verifiedResponses / totalResponses) * 100 : 0;
@@ -138,13 +147,13 @@ export async function calculateDonorMetrics(
   const activityFrequency = (totalCommitments + totalResponses) / daysSinceFirstActivity;
 
   // Calculate average response time (response created - assessment created)
-  const avgResponseTimeHours = donor.responses.length > 0
-    ? donor.responses.reduce((sum, r) => {
+  const avgResponseTimeHours = responses.length > 0
+    ? responses.reduce((sum, r) => {
         const responseMs = new Date(r.createdAt).getTime();
         const assessmentMs = r.assessment ? new Date(r.assessment.createdAt).getTime() : responseMs;
         const responseHours = Math.max(0, (responseMs - assessmentMs) / (1000 * 60 * 60));
         return sum + Math.min(responseHours, 168);
-      }, 0) / donor.responses.length
+      }, 0) / responses.length
     : 24;
 
   const overallScore = computeOverallScore({

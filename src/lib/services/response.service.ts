@@ -53,18 +53,10 @@ interface ResponderRelation {
   email: string;
 }
 
-interface DonorRelation {
-  id: string;
-  name: string;
-  type: string;
-  contactEmail?: string | null;
-}
-
 export type RapidResponseWithData = RapidResponse & {
   assessment?: AssessmentRelation | null
   entity?: EntityRelation | null
   responder?: ResponderRelation | null
-  donor?: DonorRelation | null
 }
 
 export class ResponseService {
@@ -158,6 +150,20 @@ export class ResponseService {
 
       return response
     })
+
+    try {
+      const { ActionSignalService } = await import('@/lib/services/action-signal.service');
+      await ActionSignalService.evaluateAndGenerate({
+        trigger: 'response-created',
+        entityId: result.entityId,
+        incidentId: (result as any).incidentId,
+        responseId: result.id,
+        responseType: result.type,
+        responsePriority: result.priority,
+      });
+    } catch (e) {
+      console.error('[ResponseService] signal hook error (response-created):', e);
+    }
 
     return result as unknown as RapidResponseWithData
   }
@@ -260,14 +266,6 @@ export class ResponseService {
             email: true
           }
         },
-        donor: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
-            contactEmail: true
-          }
-        }
       }
     })
 
@@ -389,6 +387,9 @@ export class ResponseService {
     if (filters.assessmentId) where.assessmentId = filters.assessmentId
     if (filters.entityId) where.entityId = filters.entityId
     if (filters.type) where.type = filters.type
+    if ((filters as any).incidentId) {
+      where.assessment = { incidentId: (filters as any).incidentId }
+    }
 
     // Get total count
     const total = await prisma.rapidResponse.count({ where })
@@ -655,6 +656,20 @@ export class ResponseService {
 
       return response
     })
+
+    try {
+      const { ActionSignalService } = await import('@/lib/services/action-signal.service');
+      await ActionSignalService.evaluateAndGenerate({
+        trigger: 'response-delivered',
+        entityId: existingResponse.entityId,
+        incidentId: (existingResponse as any).incidentId,
+        responseId,
+        responseType: existingResponse.type,
+        responsePriority: existingResponse.priority,
+      });
+    } catch (e) {
+      console.error('[ResponseService] signal hook error:', e);
+    }
 
     return result as unknown as RapidResponseWithData
   }

@@ -65,6 +65,24 @@ export interface EncryptionKey {
   rotationSchedule?: Date;
 }
 
+export interface CachedSignal {
+  id?: number;
+  signalId: string;
+  userId: string;
+  entityId: string;
+  incidentId: string | null;
+  type: string;
+  signalReason: string;
+  priority: string;
+  context: string;
+  entity: string;
+  incident: string;
+  createdAt: string;
+  resolvedAt: string | null;
+  cachedAt: Date;
+  expiresAt: Date;
+}
+
 // Encryption utilities using Web Crypto API
 export class EncryptionManager {
   private static readonly ALGORITHM = 'AES-GCM';
@@ -157,6 +175,7 @@ export class OfflineDatabase extends Dexie {
   entities!: Table<Entity>;
   syncQueue!: Table<SyncQueueItem>;
   encryptionKeys!: Table<EncryptionKey>;
+  cachedSignals!: Table<CachedSignal>;
 
   private encryptionKey: CryptoKey | null = null;
   private currentKeyVersion: number = 1;
@@ -171,6 +190,15 @@ export class OfflineDatabase extends Dexie {
       entities: '++id, uuid, name, type, syncStatus, lastModified, keyVersion',
       syncQueue: '++id, uuid, type, action, entityUuid, priority, attempts, nextRetry, timestamp',
       encryptionKeys: '++id, keyName, version, created, lastUsed, isActive'
+    });
+
+    this.version(2).stores({
+      assessments: '++id, uuid, assessorId, entityId, assessmentType, syncStatus, timestamp, lastModified, keyVersion',
+      responses: '++id, uuid, responderId, assessmentId, syncStatus, timestamp, lastModified, keyVersion',
+      entities: '++id, uuid, name, type, syncStatus, lastModified, keyVersion',
+      syncQueue: '++id, uuid, type, action, entityUuid, priority, attempts, nextRetry, timestamp',
+      encryptionKeys: '++id, keyName, version, created, lastUsed, isActive',
+      cachedSignals: '++id, signalId, userId, entityId, signalReason, priority, cachedAt, expiresAt'
     });
   }
 
@@ -486,7 +514,8 @@ export class OfflineDatabase extends Dexie {
       this.assessments.clear(),
       this.responses.clear(),
       this.entities.clear(),
-      this.syncQueue.clear()
+      this.syncQueue.clear(),
+      this.cachedSignals.clear()
       // Don't clear encryption keys
     ]);
   }
@@ -497,6 +526,7 @@ export class OfflineDatabase extends Dexie {
     entities: number;
     syncQueue: number;
     encryptionKeys: number;
+    cachedSignals: number;
     currentKeyVersion: number;
   }> {
     return {
@@ -505,6 +535,7 @@ export class OfflineDatabase extends Dexie {
       entities: await this.entities.count(),
       syncQueue: await this.syncQueue.count(),
       encryptionKeys: await this.encryptionKeys.count(),
+      cachedSignals: await this.cachedSignals.count(),
       currentKeyVersion: this.currentKeyVersion
     };
   }
@@ -546,6 +577,55 @@ export class OfflineDatabase extends Dexie {
       throw new Error('Cannot rotate key while sync operations are pending');
     }
     await this.performKeyRotation();
+  }
+
+  async cacheSignals(signals: any[], userId: string): Promise<void> {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    await this.transaction('rw', this.cachedSignals, async () => {
+      await this.cachedSignals.where('userId').equals(userId).delete();
+
+      const rows: Omit<CachedSignal, 'id'>[] = signals.map(s => ({
+        signalId: s.id,
+        userId,
+        entityId: s.entityId,
+        incidentId: s.incidentId ?? null,
+        type: s.type ?? '',
+        signalReason: s.signalReason,
+        priority: s.priority,
+        context: JSON.stringify(s.context ?? {}),
+        entity: JSON.stringify(s.entity ?? {}),
+        incident: JSON.stringify(s.incident ?? null),
+        createdAt: typeof s.createdAt === 'string' ? s.createdAt : new Date(s.createdAt).toISOString(),
+        resolvedAt: s.resolvedAt ? (typeof s.resolvedAt === 'string' ? s.resolvedAt : new Date(s.resolvedAt).toISOString()) : null,
+        cachedAt: now,
+        expiresAt,
+      }));
+
+      await this.cachedSignals.bulkAdd(rows as any);
+    });
+  }
+
+  async getCachedSignals(userId: string): Promise<any[]> {
+    const now = new Date();
+    await this.cachedSignals.where('expiresAt').below(now).delete();
+
+    const rows = await this.cachedSignals.where('userId').equals(userId).toArray();
+    return rows.map(row => ({
+      id: row.signalId,
+      userId: row.userId,
+      entityId: row.entityId,
+      incidentId: row.incidentId,
+      type: row.type,
+      signalReason: row.signalReason,
+      priority: row.priority,
+      context: JSON.parse(row.context),
+      entity: JSON.parse(row.entity),
+      incident: JSON.parse(row.incident),
+      createdAt: row.createdAt,
+      resolvedAt: row.resolvedAt,
+    }));
   }
 }
 

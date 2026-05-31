@@ -56,7 +56,6 @@ const ResponsePlanningFormSchema = z.object({
   type: z.enum(['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION', 'LOGISTICS']),
   priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).default('MEDIUM'),
   description: z.string().optional(),
-  donorId: z.string().optional(),
   items: z.array(ResponseItemSchema).min(1, 'At least one item is required'),
   timeline: z.record(z.any()).optional()
 })
@@ -70,6 +69,9 @@ interface ResponsePlanningFormProps {
   onCancel?: () => void
   entityId?: string
   assessmentId?: string
+  incidentId?: string
+  commitmentId?: string
+  responseType?: string
 }
 
 export function ResponsePlanningForm({ 
@@ -78,7 +80,10 @@ export function ResponsePlanningForm({
   onSuccess,
   onCancel,
   entityId: preselectedEntityId,
-  assessmentId: preselectedAssessmentId
+  assessmentId: preselectedAssessmentId,
+  incidentId: preselectedIncidentId,
+  commitmentId: preselectedCommitmentId,
+  responseType: preselectedType
 }: ResponsePlanningFormProps) {
   const { user, token } = useAuth()
   const queryClient = useQueryClient()
@@ -114,7 +119,7 @@ export function ResponsePlanningForm({
   const form = useForm<FormData>({
     resolver: zodResolver(ResponsePlanningFormSchema),
     defaultValues: initialData || {
-      type: 'HEALTH' as const,
+      type: (preselectedType as any) || 'HEALTH' as const,
       priority: 'MEDIUM' as const,
       items: [{ name: '', unit: '', quantity: 1 }],
       assessmentId: preselectedAssessmentId || '',
@@ -178,7 +183,7 @@ export function ResponsePlanningForm({
         name: item.name,
         unit: item.unit,
         quantity: item.quantity,
-        notes: `Imported from ${response.donor?.name || 'donor'} commitment`
+        notes: `Imported from ${response.planCommitments?.[0]?.commitment?.donor?.name || 'donor'} commitment`
       })))
       
       // Set type to LOGISTICS for commitment-based responses
@@ -191,13 +196,9 @@ export function ResponsePlanningForm({
       if (selectedAssessment && selectedAssessment.priority) {
         // Priority from selected assessment takes precedence
         form.setValue('priority', selectedAssessment.priority)
-      } else if (response.commitment?.incident?.severity) {
-        // Fall back to incident severity if no assessment selected
-        form.setValue('priority', response.commitment.incident.severity)
       }
       
-      // Add description about the commitment import
-      form.setValue('description', `Imported from commitment by ${response.donor?.name || 'donor'}`)
+      form.setValue('description', `Imported from commitment by ${response.planCommitments?.[0]?.commitment?.donor?.name || 'donor'}`)
       
       // Switch back to manual mode to show the populated form
       setInputMode('manual')
@@ -217,15 +218,6 @@ export function ResponsePlanningForm({
       
       // Add user ID to data
       const dataWithUser = { ...data, responderId: (user as any).id }
-      
-      // Add commitment data if available
-      if (commitmentImportData) {
-        dataWithUser.commitmentId = commitmentImportData.commitmentId
-        dataWithUser.donorId = commitmentImportData.donorId
-      } else if (data.donorId) {
-        // Use manually selected donor if no commitment
-        dataWithUser.donorId = data.donorId
-      }
       
       return await responseOfflineService.createPlannedResponse(dataWithUser)
     },
@@ -279,15 +271,6 @@ export function ResponsePlanningForm({
       
       // Add user ID to data
       const dataWithUser = { ...data, responderId: (user as any).id }
-      
-      // Add commitment data if available
-      if (commitmentImportData) {
-        dataWithUser.commitmentId = commitmentImportData.commitmentId
-        dataWithUser.donorId = commitmentImportData.donorId
-      } else if (data.donorId) {
-        // Use manually selected donor if no commitment
-        dataWithUser.donorId = data.donorId
-      }
       
       return await ResponseService.createDeliveredResponse(dataWithUser)
     },
@@ -736,60 +719,6 @@ export function ResponsePlanningForm({
                     />
                   </div>
 
-                  {/* Donor Selection */}
-                  <FormField
-                    control={form.control}
-                    name="donorId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Donor (Optional)</FormLabel>
-                        <FormControl>
-                          <Select value={field.value ?? '__none__'} onValueChange={(value) => {
-                            // Handle special values
-                            if (value === '__none__') {
-                              field.onChange(undefined)
-                            } else if (value && !value.startsWith('__')) {
-                              field.onChange(value)
-                            }
-                          }}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a donor..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">
-                                <span className="text-muted-foreground">No donor assigned</span>
-                              </SelectItem>
-                              {donorsLoading ? (
-                                <SelectItem value="__loading__" disabled>
-                                  <span className="text-muted-foreground">Loading donors...</span>
-                                </SelectItem>
-                              ) : entityDonors.length === 0 ? (
-                                <SelectItem value="__empty__" disabled>
-                                  <span className="text-muted-foreground">No donors assigned to this entity</span>
-                                </SelectItem>
-                              ) : (
-                                entityDonors.map((donor: any) => (
-                                  <SelectItem key={donor.id} value={donor.id}>
-                                    <div className="flex items-center gap-2">
-                                      <span>{donor.name}</span>
-                                      <Badge variant="outline" className="text-xs">
-                                        {donor.type || 'Unknown'}
-                                      </Badge>
-                                    </div>
-                                  </SelectItem>
-                                ))
-                              )}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormDescription>
-                          Attribute this response to a specific donor assigned to this entity
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
                   {/* Description */}
                   <FormField
                     control={form.control}
@@ -996,6 +925,7 @@ export function ResponsePlanningForm({
                 onSuccess={handleCommitmentImportSuccess}
                 onCancel={handleCancel}
                 entityId={form.watch('entityId')}
+                incidentId={preselectedIncidentId}
               />
             </TabsContent>
           </Tabs>
@@ -1119,60 +1049,6 @@ export function ResponsePlanningForm({
                   )}
                 />
               </div>
-
-              {/* Donor Selection */}
-              <FormField
-                control={form.control}
-                name="donorId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Donor (Optional)</FormLabel>
-                    <FormControl>
-                      <Select value={field.value ?? '__none__'} onValueChange={(value) => {
-                        // Handle special values
-                        if (value === '__none__') {
-                          field.onChange(undefined)
-                        } else if (value && !value.startsWith('__')) {
-                          field.onChange(value)
-                        }
-                      }}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a donor..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__none__">
-                            <span className="text-muted-foreground">No donor assigned</span>
-                          </SelectItem>
-                          {donorsLoading ? (
-                            <SelectItem value="__loading__" disabled>
-                              <span className="text-muted-foreground">Loading donors...</span>
-                            </SelectItem>
-                          ) : entityDonors.length === 0 ? (
-                            <SelectItem value="__empty__" disabled>
-                              <span className="text-muted-foreground">No donors assigned to this entity</span>
-                            </SelectItem>
-                          ) : (
-                            entityDonors.map((donor: any) => (
-                              <SelectItem key={donor.id} value={donor.id}>
-                                <div className="flex items-center gap-2">
-                                  <span>{donor.name}</span>
-                                  <Badge variant="outline" className="text-xs">
-                                    {donor.type || 'Unknown'}
-                                  </Badge>
-                                </div>
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormDescription>
-                      Attribute this response to a specific donor assigned to this entity
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               {/* Description */}
               <FormField

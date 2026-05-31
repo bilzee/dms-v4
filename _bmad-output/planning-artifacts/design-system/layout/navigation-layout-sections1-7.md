@@ -165,7 +165,7 @@ export function AppShell({
 ### Header with Role Context
 ```tsx
 // components/layout/top-bar.tsx
-import { Menu, Bell, RefreshCw, Settings, User } from 'lucide-react';
+import { Menu, Bell, RefreshCw, Settings, User } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { ConnectionIndicator } from '@/components/ui/connection-indicator';
 import { RoleSwitcher } from '@/components/ui/role-switcher';
@@ -306,7 +306,7 @@ export function TopBar({
 ### Dynamic Breadcrumb Navigation
 ```tsx
 // components/layout/breadcrumbs.tsx
-import { ChevronRight, Home } from 'lucide-react';
+import { ChevronRight, Home } from '@/lib/icons';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Fragment } from 'react';
@@ -476,7 +476,7 @@ export function BreadcrumbsAdvanced() {
 // components/layout/mobile-bottom-nav.tsx
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { Home, FileText, MapPin, Cloud, MoreHorizontal } from 'lucide-react';
+import { Home, FileText, MapPin, Cloud, MoreHorizontal } from '@/lib/icons';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -749,7 +749,7 @@ export const CardGrid = ({ children }: { children: React.ReactNode }) => (
 // components/layout/split-layout.tsx
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
-import { GripVertical } from 'lucide-react';
+import { GripVertical } from '@/lib/icons';
 
 interface SplitLayoutProps {
   left: React.ReactNode;

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assessment Summary</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 0; 
+      padding: 20px 20px;
+      background: #ffffff;
+      color: #1a1a1a;
+    }
+    .report-container { 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      padding: 20px; 
+    }
+    @media print { 
+      body { margin: 0; }
+      .report-container { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="report-container">
+    
+      <div class="report-preview" style="display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; padding: 20px;">
+        <div class="report-header" style="grid-column: 1 / span 12; grid-row: 1;">
+            <h1>Assessment Summary Report</h1>
+            <p>Generated: 26/05/2026</p>
+          </div>
+<div class="report-kpi" style="grid-column: 1 / span 12; grid-row: 2;">
+            <h3>Key Metrics</h3>
+            <div class="kpi-metrics"><div class="metric"><span class="value">5</span><span class="label">Total</span></div><div class="metric"><span class="value">5</span><span class="label">Verified</span></div></div>
+          </div>
+<div class="report-chart" style="grid-column: 1 / span 8; grid-row: 4;">
+            <h3>Assessments by Type</h3>
+            <div class="chart-placeholder">📊 Chart Preview</div>
+          </div>
+<div class="report-table" style="grid-column: 9 / span 4; grid-row: 4;">
+            <h3>Recent Assessments</h3>
+            <table class="data-table"><thead><tr><th>Type</th><th>Date</th><th>Entity</th><th>Status</th></tr></thead><tbody><tr><td>SECURITY</td><td>2025-10-17</td><td>Primary Health Center Maiduguri</td><td>VERIFIED</td></tr><tr><td>FOOD</td><td>2025-10-17</td><td>Gwoza Local Government</td><td>VERIFIED</td></tr><tr><td>SHELTER</td><td>2025-10-16</td><td>IDP Camp Dalori</td><td>VERIFIED</td></tr><tr><td>WASH</td><td>2025-10-16</td><td>Jere Local Government</td><td>VERIFIED</td></tr><tr><td>HEALTH</td><td>2025-10-15</td><td>Maiduguri Metropolitan</td><td>VERIFIED</td></tr></tbody></table>
+          </div>
+      </div>
+      <style>
+        .report-preview { font-family: Arial, sans-serif; }
+        .report-header { background: #f8f9fa; padding: 16px; border-radius: 8px; }
+        .report-kpi { background: #e3f2fd; padding: 16px; border-radius: 8px; }
+        .report-chart { background: #fff3e0; padding: 16px; border-radius: 8px; }
+        .report-table { background: #f3e5f5; padding: 16px; border-radius: 8px; }
+        .report-map { background: #e8f5e8; padding: 16px; border-radius: 8px; }
+        .kpi-metrics { display: flex; gap: 20px; margin-top: 10px; }
+        .metric { text-align: center; }
+        .metric .value { display: block; font-size: 24px; font-weight: bold; }
+        .metric .label { display: block; font-size: 12px; color: #666; }
+        .chart-placeholder, .map-placeholder { 
+          background: #ddd; 
+          height: 200px; 
+          display: flex; 
+          align-items: center; 
+          justify-content: center; 
+          font-size: 48px;
+          border-radius: 4px;
+        }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .data-table th, .data-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .data-table th { background: #f5f5f5; }
+      </style>
+    
+    
+    <footer style="margin-top: 40px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee; padding-top: 12px;">
+      Generated on May 26, 2026 at 05:59 PM by Disaster Management System
+    </footer>
+  </div>
+</body>
+</html>

@@ -5,7 +5,7 @@
 ### Implementation
 ```tsx
 // components/ui/verification-queue.tsx
-import { ChevronDown, ChevronRight, Check, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Check, X } from "@/lib/icons";
 import { Button } from "@/components/ui/button-extended";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useState } from "react";
@@ -232,7 +232,7 @@ import {
   ChevronDown, Home, FileText, MapPin, Cloud, AlertTriangle, 
   CheckCircle, Users, BarChart3, Settings, HelpCircle, Menu, X,
   Bell, LogOut
-} from "lucide-react";
+} from "@/lib/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ConnectionIndicator } from "@/components/ui/connection-indicator";
 import { Button } from "@/components/ui/button";

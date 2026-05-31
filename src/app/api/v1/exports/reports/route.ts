@@ -322,8 +322,8 @@ async function collectResponseActivityData(startDate: string, endDate: string, f
       responder: {
         select: { id: true, name: true, email: true },
       },
-      commitment: {
-        select: { id: true, status: true, donor: { select: { name: true, type: true } } },
+      planCommitments: {
+        select: { commitment: { select: { id: true, status: true, donor: { select: { name: true, type: true } } } } },
       },
     },
     orderBy: { createdAt: 'desc' },

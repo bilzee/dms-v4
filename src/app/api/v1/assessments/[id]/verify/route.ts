@@ -102,6 +102,20 @@ export const POST = withAuth(async (
         }
       });
 
+      try {
+        const { ActionSignalService } = await import('@/lib/services/action-signal.service');
+        await ActionSignalService.evaluateAndGenerate({
+          trigger: 'assessment-verified',
+          entityId: assessment.entityId,
+          incidentId: assessment.incidentId,
+          assessmentId: assessmentId,
+          assessmentType: assessment.rapidAssessmentType,
+          assessmentPriority: assessment.priority,
+        }, tx);
+      } catch (e) {
+        console.error('[AssessmentVerify] signal hook error:', e);
+      }
+
       return updatedAssessment;
     });
 

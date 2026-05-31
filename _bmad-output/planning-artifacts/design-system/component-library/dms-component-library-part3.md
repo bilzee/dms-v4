@@ -6,7 +6,7 @@
 ```tsx
 // components/ui/dashboard-card.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Minus, MoreVertical } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, MoreVertical } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -129,7 +129,7 @@ export function DashboardCard({
 ### Implementation
 ```tsx
 // components/ui/gap-analysis-indicator.tsx
-import { AlertTriangle, CheckCircle, AlertCircle, HelpCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, AlertCircle, HelpCircle } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -324,7 +324,7 @@ export function GapAnalysisIndicator({
 ### Implementation
 ```tsx
 // components/ui/role-switcher.tsx
-import { ChevronDown, UserCircle, Shield, Heart, HandHeart, Settings } from "lucide-react";
+import { ChevronDown, UserCircle, Shield, Heart, HandHeart, Settings } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
@@ -520,7 +520,7 @@ export function RoleSwitcher({
 ### Implementation
 ```tsx
 // components/ui/quick-actions.tsx
-import { Plus, Upload, Download, RefreshCw } from "lucide-react";
+import { Plus, Upload, Download, RefreshCw } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { VerificationDashboard } from '@/components/verification/VerificationDashboard';
 import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,6 +13,9 @@ import Link from 'next/link';
 
 export default function VerificationPage() {
   const { currentRole, availableRoles } = useAuth();
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get('tab') || undefined;
+  const highlightId = searchParams.get('highlightId') || undefined;
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -93,7 +97,7 @@ export default function VerificationPage() {
           </Button>
         </Link>
       </div>
-      <VerificationDashboard />
+      <VerificationDashboard initialTab={initialTab} highlightId={highlightId} />
     </RoleBasedRoute>
   );
 }

@@ -36,10 +36,24 @@ export interface ResponseVerificationQueueItem {
   };
   commitment?: {
     id: string;
-    amount?: number;
-    type?: string;
-    description?: string;
+    totalCommittedQuantity: number;
+    items: any;
+    notes?: string;
   };
+  planCommitments?: Array<{
+    id: string;
+    commitment: {
+      id: string;
+      totalCommittedQuantity: number;
+      items: any;
+      notes?: string;
+      donor: {
+        id: string;
+        name: string;
+        contactEmail: string;
+      };
+    };
+  }>;
   assessment?: {
     id: string;
     rapidAssessmentType: string;

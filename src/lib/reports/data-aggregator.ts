@@ -53,8 +53,6 @@ export const DATA_SOURCE_FIELDS = {
     responderId: 'responderId',
     assessmentId: 'assessmentId',
     entityId: 'entityId',
-    commitmentId: 'commitmentId',
-    donorId: 'donorId',
     type: 'type',
     status: 'status',
     priority: 'priority',
@@ -62,7 +60,6 @@ export const DATA_SOURCE_FIELDS = {
     responseDate: 'responseDate',
     createdAt: 'createdAt',
     'entity.name': 'entity.name',
-    'donor.name': 'donor.name',
     'type.name': 'type'
   },
   [DataSourceType.ENTITIES]: {
@@ -368,7 +365,6 @@ export class DataAggregator {
       case DataSourceType.RESPONSES:
         query.include = {
           entity: { select: { id: true, name: true, type: true, location: true } },
-          donor: { select: { id: true, name: true, type: true } },
           assessment: { select: { id: true, rapidAssessmentType: true } }
         };
         break;

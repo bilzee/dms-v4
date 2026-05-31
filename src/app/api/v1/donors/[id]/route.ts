@@ -69,7 +69,6 @@ export const GET = withAuth(async (
         _count: {
           select: {
             commitments: true,
-            responses: true
           }
         }
       }
@@ -143,12 +142,26 @@ export const GET = withAuth(async (
       })
     }
 
+    // Count responses through PlanCommitment
+    const responseCount = await prisma.rapidResponse.count({
+      where: {
+        planCommitments: {
+          some: {
+            commitment: {
+              donorId: donor.id
+            }
+          }
+        }
+      }
+    })
+
     // Combine data
     const donorWithUser = {
       ...donor,
       user: linkedUser,
       _count: {
         ...donor._count,
+        responses: responseCount,
         entityAssignments: entityAssignmentCount
       }
     }
@@ -378,7 +391,6 @@ export const PUT = withAuth(async (
           _count: {
             select: {
               commitments: true,
-              responses: true
             }
           }
         }
@@ -404,7 +416,6 @@ export const PUT = withAuth(async (
             _count: {
               select: {
                 commitments: true,
-                responses: true
               }
             }
           }
@@ -446,7 +457,7 @@ export const PUT = withAuth(async (
             ...finalDonor?._count,
             entityAssignments
           }
-        }
+        } as any
       }
 
       // If no user credentials update, still need to return proper structure with user data
@@ -486,7 +497,7 @@ export const PUT = withAuth(async (
           ...updatedDonor._count,
           entityAssignments: entityAssignmentCount
         }
-      }
+      } as any
     })
 
     return NextResponse.json({

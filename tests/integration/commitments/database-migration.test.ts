@@ -480,9 +480,7 @@ describe('Database Schema - Story 4.3', () => {
       const responseId = 'response-123';
       const commitmentId = 'commitment-123';
       const expectedResponse = {
-        id: responseId,
-        commitmentId,
-        donorId: 'donor-123'
+        id: responseId
       };
       
       mockPrisma.rapidResponse.create.mockResolvedValue(expectedResponse);
@@ -491,9 +489,7 @@ describe('Database Schema - Story 4.3', () => {
       const result = await prisma.rapidResponse.create({
         data: {
           type: 'LOGISTICS',
-          status: 'DELIVERED',
-          commitmentId,
-          donorId: 'donor-123'
+          status: 'DELIVERED'
         }
       });
 
@@ -502,9 +498,7 @@ describe('Database Schema - Story 4.3', () => {
       expect(prisma.rapidResponse.create).toHaveBeenCalledWith({
         data: {
           type: 'LOGISTICS',
-          status: 'DELIVERED',
-          commitmentId,
-          donorId: 'donor-123'
+          status: 'DELIVERED'
         }
       });
     });

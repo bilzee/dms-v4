@@ -113,23 +113,26 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         newDonors: number;
       }>>),
 
-      // Response verification statistics by donor
-      prisma.rapidResponse.groupBy({
+      // Response verification statistics by donor - query through PlanCommitment
+      prisma.donorCommitment.groupBy({
         by: ['donorId'],
         where: {
-          createdAt: {
-            gte: startDate,
-            lte: now
-          },
-          donorId: {
-            not: null
+          planCommitments: {
+            some: {
+              plan: {
+                createdAt: {
+                  gte: startDate,
+                  lte: now
+                }
+              }
+            }
           }
         },
         _count: {
           id: true
         }
       }).then(results => results.map(item => ({
-        donorId: String(item.donorId), // Convert BigInt to string
+        donorId: String(item.donorId),
         _count: {
           id: Number(item._count.id)
         }
@@ -152,19 +155,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
             totalValueEstimated: true,
             status: true
           }
-        },
-        responses: {
-          where: {
-            createdAt: {
-              gte: startDate,
-              lte: now
-            }
-          },
-          select: {
-            id: true,
-            verificationStatus: true,
-            createdAt: true
-          }
         }
       },
       orderBy: {
@@ -173,16 +163,43 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       ...(donorId && { where: { id: donorId } })
     });
 
+    // Fetch responses for each donor through PlanCommitment
+    const donorResponsesMap = new Map<string, Array<{ id: string; verificationStatus: string; createdAt: Date }>>();
+    await Promise.all(donorsWithVerificationData.map(async (donor) => {
+      const responses = await prisma.rapidResponse.findMany({
+        where: {
+          planCommitments: {
+            some: {
+              commitment: {
+                donorId: donor.id
+              }
+            }
+          },
+          createdAt: {
+            gte: startDate,
+            lte: now
+          }
+        },
+        select: {
+          id: true,
+          verificationStatus: true,
+          createdAt: true
+        }
+      });
+      donorResponsesMap.set(donor.id, responses);
+    }));
+
     // Calculate verification metrics for each donor
     const donorMetrics = donorsWithVerificationData.map(donor => {
-      const totalResponses = Number(donor.responses.length);
-      const verifiedResponses = Number(donor.responses.filter(r => 
+      const donorResponses = donorResponsesMap.get(donor.id) || [];
+      const totalResponses = Number(donorResponses.length);
+      const verifiedResponses = Number(donorResponses.filter(r => 
         r.verificationStatus === 'VERIFIED' || r.verificationStatus === 'AUTO_VERIFIED'
       ).length);
-      const rejectedResponses = Number(donor.responses.filter(r => 
+      const rejectedResponses = Number(donorResponses.filter(r => 
         r.verificationStatus === 'REJECTED'
       ).length);
-      const pendingResponses = Number(donor.responses.filter(r => 
+      const pendingResponses = Number(donorResponses.filter(r => 
         r.verificationStatus === 'SUBMITTED'
       ).length);
 
@@ -227,7 +244,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
             verified: verifiedResponses,
             rejected: rejectedResponses,
             pending: pendingResponses,
-            autoVerified: Number(donor.responses.filter(r => r.verificationStatus === 'AUTO_VERIFIED').length),
+            autoVerified: Number(donorResponses.filter(r => r.verificationStatus === 'AUTO_VERIFIED').length),
             verificationRate: verificationRate
           },
           combined: {

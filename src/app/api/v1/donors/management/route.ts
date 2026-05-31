@@ -56,7 +56,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         _count: {
           select: {
             commitments: true,
-            responses: true
           }
         }
       },
@@ -75,7 +74,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
             _count: { id: true }
           }),
           prisma.rapidResponse.aggregate({
-            where: { donorId: donor.id },
+            where: { planCommitments: { some: { commitment: { donorId: donor.id } } } },
             _count: { id: true }
           })
         ]);
@@ -83,7 +82,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         const totalCommitments = commitmentStats._count.id;
         const totalCommitted = commitmentStats._sum.totalCommittedQuantity || 0;
         const totalDelivered = commitmentStats._sum.deliveredQuantity || 0;
-        const totalResponses = responseStats._count.id;
+        const totalResponses = responseStats._count?.id ?? 0;
 
         const deliveryRate = totalCommitted > 0 ? (totalDelivered / totalCommitted) * 100 : 0;
 

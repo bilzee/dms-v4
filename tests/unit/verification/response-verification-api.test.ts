@@ -186,23 +186,6 @@ describe('Response Verification API Endpoints', () => {
       });
     });
 
-    it('should filter by donor ID', async () => {
-      mockDb.rapidResponse = {
-        count: jest.fn().mockResolvedValue(2),
-        findMany: jest.fn().mockResolvedValue([mockResponse])
-      };
-
-      const request = new NextRequest('http://localhost/api/v1/verification/queue/responses?donorId=donor-1');
-      await getResponseVerificationQueue(request);
-      
-      expect(mockDb.rapidResponse.count).toHaveBeenCalledWith({
-        where: { 
-          verificationStatus: 'SUBMITTED',
-          donorId: 'donor-1'
-        }
-      });
-    });
-
     it('should support response type filtering', async () => {
       mockDb.rapidResponse = {
         count: jest.fn().mockResolvedValue(4),

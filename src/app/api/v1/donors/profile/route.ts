@@ -50,7 +50,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
           _count: {
             select: {
               commitments: true,
-              responses: true
             }
           }
         }
@@ -67,7 +66,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
           _count: {
             select: {
               commitments: true,
-              responses: true
             }
           }
         }
@@ -97,7 +95,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
           _count: {
             select: {
               commitments: true,
-              responses: true
             }
           }
         }
@@ -118,7 +115,6 @@ export const GET = withAuth(async (request: NextRequest, context) => {
             _count: {
               select: {
                 commitments: true,
-                responses: true
               }
             }
           }
@@ -141,7 +137,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
         _count: { id: true }
       }),
       prisma.rapidResponse.aggregate({
-        where: { donorId: donor.id },
+        where: { planCommitments: { some: { commitment: { donorId: donor.id } } } },
         _count: { id: true }
       })
     ]);

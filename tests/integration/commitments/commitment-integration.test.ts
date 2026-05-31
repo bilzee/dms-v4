@@ -284,8 +284,6 @@ describe('Commitment Integration Tests - Story 4.3', () => {
           priority: 'HIGH',
           description: 'Response from commitment',
           items: testCommitment.items,
-          donorId: testDonor.id,
-          commitmentId: testCommitment.id,
           responseDate: new Date(),
           plannedDate: new Date(),
           verificationStatus: 'AUTO_VERIFIED',
@@ -294,8 +292,6 @@ describe('Commitment Integration Tests - Story 4.3', () => {
         }
       });
 
-      expect(response.commitmentId).toBe(testCommitment.id);
-      expect(response.donorId).toBe(testDonor.id);
       expect(response.items).toEqual(testCommitment.items);
     });
 

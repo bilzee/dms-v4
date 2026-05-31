@@ -230,11 +230,10 @@ export const POST = withAuth(async (
         data: {
           templateId: existing.templateId,
           name: `${existing.name} (Copy)`,
-          filters: existing.filters,
-          aggregations: existing.aggregations,
-          visualizations: existing.visualizations,
-          schedule: existing.schedule,
-          options: existing.options,
+          filters: JSON.parse(JSON.stringify(existing.filters)),
+          aggregations: JSON.parse(JSON.stringify(existing.aggregations)),
+          visualizations: JSON.parse(JSON.stringify(existing.visualizations)),
+          schedule: existing.schedule ? JSON.parse(JSON.stringify(existing.schedule)) : null,
           createdBy: context.userId
         },
         include: {

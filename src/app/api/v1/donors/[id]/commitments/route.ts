@@ -184,15 +184,46 @@ export const POST = withAuth(async (request: NextRequest, context, { params }: R
     }
 
     const body = await request.json();
+    const responseIdFromBody: string | undefined = body.responseId;
     const validatedData = CreateCommitmentSchema.parse(body);
+
+    let resolvedIncidentId = validatedData.incidentId || null;
+    let resolvedEntityId = validatedData.entityId || null;
+
+    if (responseIdFromBody) {
+      const response = await prisma.rapidResponse.findUnique({
+        where: { id: responseIdFromBody },
+        select: { id: true, entityId: true, assessmentId: true, items: true, sourceCommitmentId: true }
+      });
+      if (response) {
+        if (response.sourceCommitmentId) {
+          return errorResponse('Cannot create commitment from this response plan because it was itself created from a commitment (circular reference)', 400);
+        }
+        resolvedEntityId = response.entityId;
+        const assessment = await prisma.rapidAssessment.findUnique({
+          where: { id: response.assessmentId },
+          select: { incidentId: true }
+        });
+        if (assessment?.incidentId) {
+          resolvedIncidentId = assessment.incidentId;
+        }
+      }
+    }
+
+    if (!resolvedEntityId) {
+      return errorResponse('Entity ID is required (provide entityId or responseId)', 400);
+    }
+    if (!resolvedIncidentId) {
+      return errorResponse('Incident ID could not be resolved', 400);
+    }
 
     const [entity, incident] = await Promise.all([
       prisma.entity.findUnique({
-        where: { id: validatedData.entityId },
+        where: { id: resolvedEntityId },
         select: { id: true, name: true, type: true, location: true }
       }),
       prisma.incident.findUnique({
-        where: { id: validatedData.incidentId },
+        where: { id: resolvedIncidentId },
         select: { id: true, type: true, status: true }
       })
     ]);
@@ -213,14 +244,16 @@ export const POST = withAuth(async (request: NextRequest, context, { params }: R
     const commitment = await prisma.donorCommitment.create({
       data: {
         donorId,
-        entityId: validatedData.entityId,
-        incidentId: validatedData.incidentId,
+        entityId: resolvedEntityId,
+        incidentId: resolvedIncidentId,
         status: 'PLANNED',
         items: validatedData.items,
         totalCommittedQuantity,
         deliveredQuantity: 0,
         verifiedDeliveredQuantity: 0,
-        notes: validatedData.notes
+        notes: validatedData.notes,
+        type: validatedData.type || 'LOGISTICS',
+        ...(responseIdFromBody && { sourcePlanId: responseIdFromBody }),
       },
       include: {
         donor: {
@@ -255,6 +288,15 @@ export const POST = withAuth(async (request: NextRequest, context, { params }: R
       }
     });
 
+    if (responseIdFromBody) {
+      await prisma.planCommitment.create({
+        data: {
+          planId: responseIdFromBody,
+          commitmentId: commitment.id,
+        }
+      });
+    }
+
     await auditLogService.logAction({
       userId: user.id,
       action: 'CREATE_COMMITMENT',
@@ -263,15 +305,29 @@ export const POST = withAuth(async (request: NextRequest, context, { params }: R
       oldValues: null,
       newValues: {
         donorId,
-        entityId: validatedData.entityId,
-        incidentId: validatedData.incidentId,
+        entityId: resolvedEntityId,
+        incidentId: resolvedIncidentId,
         items: validatedData.items,
         totalCommittedQuantity,
-        notes: validatedData.notes
+        notes: validatedData.notes,
+        linkedResponseId: responseIdFromBody || null,
       },
       ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
       userAgent: request.headers.get('user-agent') || 'unknown'
     });
+
+    try {
+      const { ActionSignalService } = await import('@/lib/services/action-signal.service');
+      await ActionSignalService.evaluateAndGenerate({
+        trigger: 'commitment-created',
+        entityId: resolvedEntityId,
+        incidentId: resolvedIncidentId,
+        commitmentId: commitment.id,
+        donorId: user.id,
+      });
+    } catch (e) {
+      console.error('[CommitmentAPI] signal hook error:', e);
+    }
 
     return createdResponse(commitment);
 

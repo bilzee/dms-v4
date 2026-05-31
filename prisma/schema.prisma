@@ -98,6 +98,9 @@ model User {
   reportTemplates           ReportTemplate[]      @relation("ReportTemplates")
   scheduledReports          ScheduledReport[]     @relation("UserScheduledReports")
   roles                     UserRole[]
+  actionSignals             ActionSignal[]
+  notifications             Notification[]
+  pushSubscriptions         PushSubscription[]
 
   @@map("users")
 }
@@ -165,6 +168,7 @@ model Entity {
   rapidAssessments         RapidAssessment[]
   responses                RapidResponse[]                @relation("EntityResponses")
   preliminaryAssessments   PreliminaryAssessmentEntity[]
+  actionSignals            ActionSignal[]
 
   @@unique([name, type])
   @@map("entities")
@@ -199,6 +203,7 @@ model Incident {
   commitments            DonorCommitment[]
   preliminaryAssessments PreliminaryAssessment[]
   rapidAssessments       RapidAssessment[]
+  actionSignals          ActionSignal[]
 
   @@map("incidents")
 }
@@ -403,8 +408,6 @@ model RapidResponse {
   verifiedBy         String?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
-  donorId            String?
-  commitmentId       String?
   items              Json
   offlineId          String?            @unique
   plannedDate        DateTime           @default(now())
@@ -414,13 +417,13 @@ model RapidResponse {
   syncStatus         SyncStatus         @default(LOCAL)
   mediaAttachments   MediaAttachment[]
   assessment         RapidAssessment    @relation("AssessmentResponses", fields: [assessmentId], references: [id])
-  commitment         DonorCommitment?   @relation("CommitmentResponses", fields: [commitmentId], references: [id])
-  donor              Donor?             @relation("DonorResponses", fields: [donorId], references: [id])
   entity             Entity             @relation("EntityResponses", fields: [entityId], references: [id])
   responder          User               @relation("UserResponses", fields: [responderId], references: [id])
   conflicts          SyncConflict[]     @relation("ResponseConflicts")
+  planCommitments    PlanCommitment[]
+  sourceCommitmentId String? @unique
+  sourceCommitment   DonorCommitment? @relation("PlanSourceCommitment", fields: [sourceCommitmentId], references: [id])
 
-  @@index([commitmentId])
   @@map("rapid_responses")
 }
 
@@ -439,7 +442,6 @@ model Donor {
   verifiedDeliveryRate     Float?            @default(0)
   achievementBadges        Json?
   commitments              DonorCommitment[]
-  responses                RapidResponse[]   @relation("DonorResponses")
 
   @@map("donors")
 }
@@ -449,6 +451,8 @@ model DonorCommitment {
   donorId                   String
   entityId                  String
   incidentId                String
+  type                      ResponseType?    @default(LOGISTICS)
+  sourcePlanId              String?
   status                    CommitmentStatus @default(PLANNED)
   items                     Json
   totalCommittedQuantity    Int              @default(0)
@@ -461,7 +465,8 @@ model DonorCommitment {
   donor                     Donor            @relation(fields: [donorId], references: [id])
   entity                    Entity           @relation(fields: [entityId], references: [id])
   incident                  Incident         @relation(fields: [incidentId], references: [id])
-  responses                 RapidResponse[]  @relation("CommitmentResponses")
+  planCommitments           PlanCommitment[]
+  sourcePlan                RapidResponse?   @relation("PlanSourceCommitment")
 
   @@index([donorId, entityId])
   @@index([donorId, incidentId])
@@ -551,6 +556,77 @@ model SystemSetting {
 
   @@unique([section, key])
   @@map("system_settings")
+}
+
+model ActionSignal {
+  id             String    @id @default(uuid()) @map("id")
+  userId         String    @map("user_id")
+  entityId       String    @map("entity_id")
+  incidentId     String?   @map("incident_id")
+  type           String
+  signalReason   String
+  priority       String
+  context        Json
+  createdAt      DateTime  @default(now()) @map("created_at")
+  resolvedAt     DateTime? @map("resolved_at")
+
+  user           User      @relation(fields: [userId], references: [id])
+  entity         Entity    @relation(fields: [entityId], references: [id])
+  incident       Incident? @relation(fields: [incidentId], references: [id])
+  notifications  Notification[]
+
+  @@unique([userId, entityId, incidentId, type, signalReason])
+  @@index([userId, resolvedAt])
+  @@index([userId, entityId])
+  @@index([userId, priority])
+  @@map("action_signals")
+}
+
+model Notification {
+  id          String    @id @default(uuid()) @map("id")
+  userId      String    @map("user_id")
+  signalId    String    @map("signal_id")
+  title       String
+  body        String
+  priority    String
+  readAt      DateTime? @map("read_at")
+  dismissedAt DateTime? @map("dismissed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  expiresAt   DateTime  @map("expires_at")
+
+  user        User        @relation(fields: [userId], references: [id])
+  signal      ActionSignal @relation(fields: [signalId], references: [id])
+
+  @@index([userId, readAt])
+  @@index([userId, expiresAt])
+  @@map("notifications")
+}
+
+model PushSubscription {
+  id          String   @id @default(uuid()) @map("id")
+  userId      String   @map("user_id")
+  endpoint    String   @unique
+  p256dh      String
+  auth        String
+  browserInfo String?  @map("browser_info")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("push_subscriptions")
+}
+
+model PlanCommitment {
+  id            String   @id @default(uuid()) @map("id")
+  planId        String   @map("plan_id")
+  commitmentId  String   @map("commitment_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  plan          RapidResponse   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  commitment    DonorCommitment @relation(fields: [commitmentId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, commitmentId])
+  @@map("plan_commitments")
 }
 
 enum RoleName {

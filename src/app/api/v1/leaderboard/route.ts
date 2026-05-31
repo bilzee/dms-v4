@@ -107,28 +107,42 @@ export const GET = withAuth(async (request: NextRequest, context) => {
               select: { location: true }
             }
           }
-        },
-        responses: {
-          where: {
-            createdAt: {
-              gte: startDate,
-              lte: now
-            }
-          },
-          select: {
-            id: true,
-            verificationStatus: true,
-            createdAt: true,
-            assessment: {
-              select: { createdAt: true }
-            }
-          }
         }
       }
     });
 
+    // Fetch responses for each donor through PlanCommitment
+    const donorResponsesMap = new Map<string, Array<{ id: string; verificationStatus: string; createdAt: Date; assessment?: { createdAt: Date } | null }>>();
+    await Promise.all(donorsWithMetrics.map(async (donor) => {
+      const responses = await prisma.rapidResponse.findMany({
+        where: {
+          planCommitments: {
+            some: {
+              commitment: {
+                donorId: donor.id
+              }
+            }
+          },
+          createdAt: {
+            gte: startDate,
+            lte: now
+          }
+        },
+        select: {
+          id: true,
+          verificationStatus: true,
+          createdAt: true,
+          assessment: {
+            select: { createdAt: true }
+          }
+        }
+      });
+      donorResponsesMap.set(donor.id, responses);
+    }));
+
     // Calculate comprehensive metrics for each donor
     const leaderboardData = donorsWithMetrics.map(donor => {
+      const donorResponses = donorResponsesMap.get(donor.id) || [];
       // Commitment metrics
       const totalCommitments = donor.commitments.length;
       const completedCommitments = donor.commitments.filter(c => c.status === 'COMPLETE').length;
@@ -143,8 +157,8 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       const verifiedDeliveryRate = totalCommittedItems > 0 ? (totalVerifiedItems / totalCommittedItems) * 100 : 0;
 
       // Response metrics
-      const totalResponses = donor.responses.length;
-      const verifiedResponses = donor.responses.filter(r => 
+      const totalResponses = donorResponses.length;
+      const verifiedResponses = donorResponses.filter(r => 
         r.verificationStatus === 'VERIFIED' || r.verificationStatus === 'AUTO_VERIFIED'
       ).length;
       const responseVerificationRate = totalResponses > 0 ? (verifiedResponses / totalResponses) * 100 : 0;
@@ -156,13 +170,13 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       const activityFrequency = (totalCommitments + totalResponses) / daysSinceFirstActivity;
 
       // Speed metrics (response time = response created - assessment created)
-      const avgResponseTime = donor.responses.length > 0
-        ? donor.responses.reduce((sum, r) => {
+      const avgResponseTime = donorResponses.length > 0
+        ? donorResponses.reduce((sum, r) => {
             const responseMs = new Date(r.createdAt).getTime();
             const assessmentMs = r.assessment ? new Date(r.assessment.createdAt).getTime() : responseMs;
             const responseHours = Math.max(0, (responseMs - assessmentMs) / (1000 * 60 * 60));
             return sum + Math.min(responseHours, 168);
-          }, 0) / donor.responses.length
+          }, 0) / donorResponses.length
         : 24;
 
       const overallScore = computeOverallScore({

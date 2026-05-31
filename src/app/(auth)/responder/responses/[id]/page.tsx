@@ -18,7 +18,6 @@ interface Response {
   entityId: string
   assessmentId?: string
   responderId?: string
-  donorId?: string
   plannedDate?: string
   deliveredDate?: string
   verificationStatus: string
@@ -57,12 +56,18 @@ interface Response {
     name: string
     email: string
   }
-  donor?: {
+  planCommitments?: Array<{
     id: string
-    name: string
-    type: string
-    contactEmail: string
-  }
+    commitment: {
+      id: string
+      donor: {
+        id: string
+        name: string
+        type: string
+        contactEmail: string
+      }
+    }
+  }>
 }
 
 export default function ResponseDetailsPage() {
@@ -266,14 +271,14 @@ export default function ResponseDetailsPage() {
             )}
 
             {/* Donor Information */}
-            {response.donor && (
+            {response.planCommitments?.[0]?.commitment?.donor && (
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Donor</label>
                 <div>
-                  <p className="font-semibold">{response.donor.name}</p>
-                  <p className="text-sm text-muted-foreground">{response.donor.type}</p>
-                  {response.donor.contactEmail && (
-                    <p className="text-sm text-muted-foreground">{response.donor.contactEmail}</p>
+                  <p className="font-semibold">{response.planCommitments[0].commitment.donor.name}</p>
+                  <p className="text-sm text-muted-foreground">{response.planCommitments[0].commitment.donor.type}</p>
+                  {response.planCommitments[0].commitment.donor.contactEmail && (
+                    <p className="text-sm text-muted-foreground">{response.planCommitments[0].commitment.donor.contactEmail}</p>
                   )}
                 </div>
               </div>

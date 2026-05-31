@@ -82,7 +82,7 @@ export const POST = withAuth(async (request: NextRequest, context: AuthContext) 
     const filename = `${chartType}_chart_${timestamp}.${exportOptions.format}`;
 
     // Return chart file - pass Buffer directly
-    return new NextResponse(chartData, {
+    return new NextResponse(chartData as any, {
       headers: {
         'Content-Type': getContentType(exportOptions.format),
         'Content-Disposition': `attachment; filename="${filename}"`,

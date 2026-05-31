@@ -392,9 +392,9 @@ export function EnhancedVerificationDashboard() {
                     <CardTitle className="text-lg">Response Details</CardTitle>
                     <CardDescription>
                       {selectedResponse.entity.name} - {selectedResponse.type} Response
-                      {selectedResponse.donor && (
+                      {selectedResponse.planCommitments && selectedResponse.planCommitments.length > 0 && (
                         <div className="text-sm text-blue-600 mt-1">
-                          Donor: {selectedResponse.donor.name}
+                          Donor: {selectedResponse.planCommitments[0].commitment.donor.name}
                         </div>
                       )}
                     </CardDescription>
@@ -435,17 +435,19 @@ export function EnhancedVerificationDashboard() {
                     </div>
 
                     {/* Donor Information */}
-                    {selectedResponse.donor && (
+                    {selectedResponse.planCommitments && selectedResponse.planCommitments.length > 0 && (
                       <div>
                         <label className="text-sm font-medium text-muted-foreground">Donor Information</label>
                         <div className="mt-1 p-2 bg-blue-50 rounded border border-blue-200">
-                          <p className="text-sm text-blue-900 font-medium">{selectedResponse.donor.name}</p>
-                          <p className="text-xs text-blue-700">{selectedResponse.donor.email}</p>
-                          {selectedResponse.commitment && (
-                            <p className="text-xs text-blue-600 mt-1">
-                              Commitment: {selectedResponse.commitment.amount || 0} items
-                            </p>
-                          )}
+                          {selectedResponse.planCommitments.map((pc, idx) => (
+                            <div key={idx}>
+                              <p className="text-sm text-blue-900 font-medium">{pc.commitment.donor.name}</p>
+                              <p className="text-xs text-blue-700">{pc.commitment.donor.contactEmail}</p>
+                              <p className="text-xs text-blue-600 mt-1">
+                                Commitment: {pc.commitment.totalCommittedQuantity || 0} items
+                              </p>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}

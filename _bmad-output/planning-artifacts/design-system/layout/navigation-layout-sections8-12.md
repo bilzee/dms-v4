@@ -113,7 +113,7 @@ export function TabLayout({
 ```tsx
 // components/layout/fullscreen-layout.tsx
 import { useState, useEffect } from 'react';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2, Minimize2 } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 

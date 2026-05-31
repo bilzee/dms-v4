@@ -79,7 +79,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
           prisma.rapidResponse.count({
             where: { 
               entityId: entity.id,
-              donorId: { not: null } // Has donor assigned
+              planCommitments: { some: {} } // Has donor assigned through plan commitment
             }
           }),
           prisma.donorCommitment.count({

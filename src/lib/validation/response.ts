@@ -15,10 +15,7 @@ export const CreatePlannedResponseSchema = z.object({
   priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).default('MEDIUM'),
   description: z.string().optional(),
   items: z.array(ResponseItemSchema).min(1, 'At least one item is required'),
-  timeline: z.record(z.any()).optional(),
-  // Commitment import fields
-  commitmentId: z.string().uuid().optional(),
-  donorId: z.string().optional()
+  timeline: z.record(z.any()).optional()
 })
 
 export const UpdatePlannedResponseSchema = z.object({
@@ -37,15 +34,13 @@ export const CreateDeliveredResponseSchema = z.object({
   description: z.string().optional(),
   items: z.array(ResponseItemSchema).min(1, 'At least one item is required'),
   timeline: z.record(z.any()).optional(),
-  deliveryNotes: z.string().optional(),
-  // Commitment import fields
-  commitmentId: z.string().uuid().optional(),
-  donorId: z.string().optional()
+  deliveryNotes: z.string().optional()
 })
 
 export const ResponseQuerySchema = z.object({
   assessmentId: z.string().min(1).optional(),
   entityId: z.string().min(1).optional(),
+  incidentId: z.string().min(1).optional(),
   deliveryStatus: z.enum(['PLANNED', 'DELIVERED']).optional(),
   type: z.enum(['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION', 'LOGISTICS']).optional(),
   page: z.number().positive().default(1),

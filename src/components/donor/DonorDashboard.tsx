@@ -64,8 +64,15 @@ export function DonorDashboard() {
   // Handle URL parameters for tab navigation and entity pre-selection
   useEffect(() => {
     const tabParam = searchParams.get('tab')
+    const actionParam = searchParams.get('action')
     if (tabParam && ['overview', 'entities', 'commitments', 'profile', 'analytics'].includes(tabParam)) {
       setActiveTab(tabParam)
+    }
+    if (actionParam === 'new-commitment') {
+      setActiveTab('commitments')
+    }
+    if (searchParams.get('entityId') || searchParams.get('responseId')) {
+      setActiveTab('commitments')
     }
   }, [searchParams])
 
@@ -404,6 +411,8 @@ export function DonorDashboard() {
                                     <CommitmentDashboard 
                                       donorId={donor.id}
                                       preSelectedEntityId={searchParams.get('entityId') || undefined}
+                                      preSelectedIncidentId={searchParams.get('incidentId') || undefined}
+                                      preSelectedResponseId={searchParams.get('responseId') || undefined}
                                     />
                                   ) : (
                                     <EmptyState

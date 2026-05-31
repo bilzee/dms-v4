@@ -8,10 +8,15 @@ export const CommitmentItemSchema = z.object({
 })
 
 export const CreateCommitmentSchema = z.object({
-  entityId: z.string().uuid('Invalid entity ID'),
-  incidentId: z.string().uuid('Invalid incident ID'),
+  entityId: z.string().min(1, 'Invalid entity ID').optional(),
+  incidentId: z.string().min(1, 'Invalid incident ID').optional(),
+  responseId: z.string().min(1, 'Invalid response ID').optional(),
   items: z.array(CommitmentItemSchema).min(1, 'At least one item is required'),
-  notes: z.string().max(500, 'Notes cannot exceed 500 characters').optional()
+  notes: z.string().max(500, 'Notes cannot exceed 500 characters').optional(),
+  type: z.enum(['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION', 'LOGISTICS']).optional()
+}).refine(data => data.entityId || data.responseId, {
+  message: 'Either entityId or responseId is required',
+  path: ['entityId']
 })
 
 export const UpdateCommitmentSchema = z.object({
@@ -28,16 +33,16 @@ export const CommitmentStatusUpdateSchema = z.object({
 })
 
 export const CommitmentQuerySchema = z.object({
-  entityId: z.string().uuid().optional(),
-  incidentId: z.string().uuid().optional(),
+  entityId: z.string().min(1).optional(),
+  incidentId: z.string().min(1).optional(),
   status: z.enum(['PLANNED', 'PARTIAL', 'COMPLETE', 'CANCELLED']).optional(),
   page: z.number().positive().default(1),
   limit: z.number().positive().max(100).default(50)
 })
 
 export const EntityAssignmentSchema = z.object({
-  entityId: z.string().uuid('Invalid entity ID'),
-  assignedBy: z.string().uuid('Invalid user ID')
+  entityId: z.string().min(1, 'Invalid entity ID'),
+  assignedBy: z.string().min(1, 'Invalid user ID')
 })
 
 // Type exports

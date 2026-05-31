@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { AlertTriangle, Download, RefreshCw, WifiOff, CheckCircle } from '@/lib/icons';
 import { offlineBootstrap, BootstrapProgress } from '@/lib/offline/bootstrap';
+import { offlineDB } from '@/lib/db/offline';
 import { useAuth } from '@/hooks/useAuth';
 
 interface OfflineGuardProps {
@@ -70,22 +71,18 @@ export function OfflineGuard({
 
   const verifyRequiredData = async (): Promise<boolean> => {
     try {
-      // Check entities (required for both assessments and responses)
-      const entitiesData = localStorage.getItem('drms_offline_entities');
-      if (!entitiesData) return false;
+      const entitiesCount = await offlineDB.entities.count();
+      if (entitiesCount === 0) return false;
 
-      // Check incidents (required for both)
       const incidentsData = localStorage.getItem('drms_offline_incidents');
       if (!incidentsData) return false;
 
       if (requiredFor === 'ASSESSMENT_CREATION' || requiredFor === 'BOTH') {
-        // Check assessment types
         const assessmentTypes = localStorage.getItem('drms_offline_assessment_types');
         if (!assessmentTypes) return false;
       }
 
       if (requiredFor === 'RESPONSE_PLANNING' || requiredFor === 'BOTH') {
-        // Check verified assessments for response planning
         const verifiedAssessments = localStorage.getItem('drms_offline_verified_assessments');
         if (!verifiedAssessments) return false;
       }

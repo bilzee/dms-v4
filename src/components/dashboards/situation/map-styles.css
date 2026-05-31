@@ -5,6 +5,19 @@
   height: 100%;
   width: 100%;
   background: #f8fafc;
+  z-index: 0 !important;
+}
+
+.leaflet-pane {
+  z-index: 1 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 2 !important;
+}
+
+.leaflet-popup {
+  z-index: 2 !important;
 }
 
 /* Custom marker popup styles */

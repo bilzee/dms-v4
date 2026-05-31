@@ -119,7 +119,7 @@ export function ResponseVerificationQueue({
     response.entity.name.toLowerCase().includes(effectiveSearch.toLowerCase()) ||
     response.responder.name.toLowerCase().includes(effectiveSearch.toLowerCase()) ||
     response.type.toLowerCase().includes(effectiveSearch.toLowerCase()) ||
-    (response.donor?.name && response.donor.name.toLowerCase().includes(effectiveSearch.toLowerCase()))
+    (response.planCommitments?.[0]?.commitment?.donor?.name && response.planCommitments[0].commitment.donor.name.toLowerCase().includes(effectiveSearch.toLowerCase()))
   ) || [];
 
   const getStatusIcon = (status: string) => {
@@ -266,9 +266,9 @@ export function ResponseVerificationQueue({
                   <p className="text-sm text-muted-foreground">
                     {response.type} Response &bull; {response.responder.name}
                   </p>
-                  {response.donor && (
+                  {response.planCommitments?.[0]?.commitment?.donor && (
                     <p className="text-sm text-blue-600">
-                      Donor: {response.donor.name}
+                      Donor: {response.planCommitments[0].commitment.donor.name}
                     </p>
                   )}
                 </div>
@@ -400,16 +400,16 @@ export function ResponseVerificationQueue({
             </div>
 
             {/* Donor information if available */}
-            {response.donor && (
+            {response.planCommitments?.[0]?.commitment?.donor && (
               <div className="md:col-span-2">
                 <h4 className="font-medium text-foreground mb-2">Donor Information</h4>
                 <div className="space-y-1 text-sm text-muted-foreground">
-                  <div>Name: {response.donor.name}</div>
-                  <div>Email: {response.donor.email}</div>
-                  {response.commitment && (
+                  <div>Name: {response.planCommitments[0].commitment.donor.name}</div>
+                  <div>Email: {response.planCommitments[0].commitment.donor.contactEmail}</div>
+                  {response.planCommitments[0].commitment && (
                     <div>
-                      Commitment: {response.commitment.description}
-                      {response.commitment.amount && ` ($${response.commitment.amount})`}
+                      Commitment: {response.planCommitments[0].commitment.id.slice(-6)}
+                      {response.planCommitments[0].commitment.notes && ` - ${response.planCommitments[0].commitment.notes}`}
                     </div>
                   )}
                 </div>

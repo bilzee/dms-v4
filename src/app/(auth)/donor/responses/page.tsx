@@ -69,7 +69,6 @@ function DonorResponsesPageContent() {
       if (commitment.responses && commitment.responses.length > 0) {
         return acc.concat(commitment.responses.map((resp: any) => ({
           ...resp,
-          commitmentId: commitment.id,
           donorCommitment: commitment
         })))
       }

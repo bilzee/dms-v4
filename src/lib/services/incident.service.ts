@@ -110,9 +110,8 @@ export class IncidentService {
       where.status = status
     }
 
-    // Filter by entity if specified
     if (entityId) {
-      where.entities = {
+      where.rapidAssessments = {
         some: {
           entityId: entityId
         }

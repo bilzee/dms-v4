@@ -62,6 +62,13 @@ export const POST = withAuth(async (request: NextRequest, context) => {
       );
     }
 
+    if (commitment.sourcePlanId) {
+      return NextResponse.json(
+        { success: false, error: 'Cannot create response plan from this commitment because it was itself created from a response plan (circular reference)' },
+        { status: 400 }
+      );
+    }
+
     // Check if commitment is still available
     if (commitment.status !== 'PLANNED' && commitment.status !== 'PARTIAL') {
       return NextResponse.json(
@@ -140,23 +147,29 @@ export const POST = withAuth(async (request: NextRequest, context) => {
           responderId: user.id,
           entityId: commitment.entityId,
           assessmentId: assessment.id,
-          type: 'LOGISTICS', // Default for commitment-based responses
-          deliveryStatus: 'DELIVERED', // Imported commitments are considered delivered
+          type: (commitment.type as any) || 'LOGISTICS',
+          sourceCommitmentId: commitment.id,
+          deliveryStatus: 'DELIVERED',
           priority: commitment.incident.severity,
           description: notes || `Response from ${commitment.donor.name} commitment`,
           items: items,
-          donorId: commitment.donorId,
-          commitmentId: commitment.id,
           responseDate: new Date(),
           plannedDate: new Date(),
-          verificationStatus: 'SUBMITTED', // Awaits coordinator verification
+          verificationStatus: 'SUBMITTED',
           verifiedAt: null,
           verifiedBy: null
         },
         include: {
-          donor: true,
           entity: true,
-          commitment: true
+          assessment: true,
+          responder: true
+        }
+      });
+
+      await tx.planCommitment.create({
+        data: {
+          planId: response.id,
+          commitmentId: commitment.id
         }
       });
 
@@ -191,7 +204,7 @@ export const POST = withAuth(async (request: NextRequest, context) => {
           resourceId: response.id,
           oldValues: undefined,
           newValues: {
-            commitmentId,
+            commitmentId: commitment.id,
             donorId: commitment.donorId,
             entityId: commitment.entityId,
             items,

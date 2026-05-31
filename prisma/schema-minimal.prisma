@@ -337,7 +337,6 @@ model RapidResponse {
   assessmentId    String
   entityId        String
   responderId     String
-  donorId         String?
   
   // Status and timing
   status          ResponseStatus  @default(PLANNED)
@@ -371,7 +370,6 @@ model RapidResponse {
   assessment      RapidAssessment @relation("AssessmentResponses", fields: [assessmentId], references: [id])
   entity          Entity          @relation("EntityResponses", fields: [entityId], references: [id])
   responder       User            @relation("UserResponses", fields: [responderId], references: [id])
-  donor           Donor?          @relation("DonorResponses", fields: [donorId], references: [id])
   mediaAttachments MediaAttachment[]
   conflicts        SyncConflict[] @relation("ResponseConflicts")
 
@@ -391,7 +389,6 @@ model Donor {
   updatedAt       DateTime @updatedAt
 
   // Relationships
-  responses       RapidResponse[] @relation("DonorResponses")
 
   @@map("donors")
 }

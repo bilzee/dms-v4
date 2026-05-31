@@ -241,13 +241,7 @@ export function DeliveryConfirmationForm({
   })
 
   const onSubmit = form.handleSubmit(async (data) => {
-    // Validate GPS location
-    if (!gpsLocation) {
-      form.setError('deliveryLocation', {
-        message: 'GPS location is required. Please capture your current location.'
-      })
-      return
-    }
+    // GPS location is optional - warn but don't block submission
 
     // Validate at least one delivered item
     if (data.deliveredItems.length === 0) {
@@ -660,7 +654,7 @@ export function DeliveryConfirmationForm({
             onCancel={onCancel}
             submitLabel="Confirm Delivery"
             loading={confirmDeliveryMutation.isPending}
-            disabled={confirmDeliveryMutation.isPending || !gpsLocation || fields.length === 0}
+            disabled={confirmDeliveryMutation.isPending || fields.length === 0}
             variant="bordered"
           />
         </form>

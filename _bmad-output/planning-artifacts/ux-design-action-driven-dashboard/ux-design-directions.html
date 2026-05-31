@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UX Design Directions — Action-Driven Dashboards</title>
+<style>
+/* ── Reset & Tokens ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --severity-critical: #DC2626;
+  --severity-critical-bg: #FEE2E2;
+  --severity-critical-glow: rgba(220,38,38,.25);
+  --severity-high: #EA580C;
+  --severity-high-bg: #FFF7ED;
+  --severity-warning: #D97706;
+  --severity-warning-bg: #FFFBEB;
+  --severity-neutral: #6B7280;
+  --severity-neutral-bg: #F3F4F6;
+  --offline-badge: #64748B;
+  --offline-bg: #EFF6FF;
+  --bg: #F8FAFC;
+  --surface: #FFFFFF;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --border: #E2E8F0;
+  --border-light: #F1F5F9;
+  --map-bg: #E8F0E8;
+  --map-grid: rgba(0,0,0,.04);
+  --map-water: #BFDBFE;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+  --shadow-md: 0 2px 8px rgba(0,0,0,.08);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,.12);
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --transition: 180ms ease;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: #0F172A;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* ── Top Navigation ── */
+.topnav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(15,23,42,.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding: 0 24px;
+  display: flex; align-items: center; gap: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.topnav::-webkit-scrollbar { height: 0; }
+.topnav-title {
+  font-size: 13px; font-weight: 700; color: #94A3B8;
+  text-transform: uppercase; letter-spacing: .08em;
+  white-space: nowrap; padding: 16px 20px 16px 0;
+  border-right: 1px solid rgba(255,255,255,.08);
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+.topnav a {
+  display: inline-block; padding: 16px 16px;
+  font-size: 13px; font-weight: 600;
+  color: #94A3B8; text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.topnav a:hover { color: #E2E8F0; border-bottom-color: rgba(255,255,255,.2); }
+.topnav a.active { color: #FFF; border-bottom-color: #60A5FA; }
+
+/* ── Section Wrapper ── */
+.direction {
+  min-height: 100vh;
+  padding: 48px 24px 80px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.direction:nth-child(odd) { background: #0F172A; }
+.direction:nth-child(even) { background: #131C2E; }
+
+.direction-header {
+  max-width: 720px; text-align: center; margin-bottom: 40px;
+}
+.direction-number {
+  display: inline-block;
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .12em;
+  color: #60A5FA; background: rgba(96,165,250,.12);
+  padding: 4px 12px; border-radius: 100px;
+  margin-bottom: 16px;
+}
+.direction-header h2 {
+  font-size: 28px; font-weight: 800;
+  color: #F1F5F9; margin-bottom: 8px;
+}
+.direction-header .subtitle {
+  font-size: 14px; color: #94A3B8;
+  margin-bottom: 6px;
+}
+.direction-header .bp-hint {
+  display: inline-block; font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 100px;
+  margin-top: 8px;
+}
+.bp-desktop { background: rgba(34,197,94,.12); color: #4ADE80; }
+.bp-mobile { background: rgba(251,146,60,.12); color: #FB923C; }
+.bp-tablet { background: rgba(168,85,247,.12); color: #C084FC; }
+.bp-alt { background: rgba(236,72,153,.12); color: #F472B6; }
+
+/* ── Dashboard Frame ── */
+.dashboard-frame {
+  width: 100%; max-width: 1280px;
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06), var(--shadow-lg);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Simulated top bar inside frame */
+.frame-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.frame-bar .dot { width: 10px; height: 10px; border-radius: 50%; }
+.frame-bar .dot:nth-child(1) { background: #EF4444; }
+.frame-bar .dot:nth-child(2) { background: #F59E0B; }
+.frame-bar .dot:nth-child(3) { background: #22C55E; }
+.frame-bar .frame-title {
+  margin-left: 8px; font-size: 12px; color: var(--text-muted); font-weight: 500;
+}
+.frame-bar .frame-dims {
+  margin-left: auto; font-size: 11px; color: var(--text-muted); font-weight: 600;
+  text-transform: uppercase; letter-spacing: .05em;
+}
+
+/* ── Queue Items (shared) ── */
+.queue-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  position: relative;
+  cursor: pointer;
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+.queue-item:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.priority-stripe {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 4px; border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+.priority-stripe.critical { background: var(--severity-critical); }
+.priority-stripe.high { background: var(--severity-high); }
+.priority-stripe.warning { background: var(--severity-warning); }
+.priority-stripe.neutral { background: var(--severity-neutral); }
+
+.priority-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.priority-dot.critical {
+  background: var(--severity-critical);
+  animation: pulse-critical 2s ease-in-out infinite;
+}
+.priority-dot.high { background: var(--severity-high); }
+.priority-dot.warning { background: var(--severity-warning); }
+.priority-dot.neutral { background: var(--severity-neutral); }
+
+@keyframes pulse-critical {
+  0%, 100% { box-shadow: 0 0 0 0 var(--severity-critical-glow); }
+  50% { box-shadow: 0 0 0 6px var(--severity-critical-glow); }
+}
+
+.type-badge {
+  display: inline-flex; align-items: center;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em;
+  padding: 2px 7px; border-radius: 4px;
+  white-space: nowrap;
+}
+.type-badge.health { background: #FEE2E2; color: #B91C1C; }
+.type-badge.wash { background: #DBEAFE; color: #1D4ED8; }
+.type-badge.shelter { background: #FEF3C7; color: #B45309; }
+.type-badge.food { background: #D1FAE5; color: #047857; }
+.type-badge.security { background: #FCE7F3; color: #BE185D; }
+.type-badge.population { background: #EDE9FE; color: #6D28D9; }
+
+.action-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 4px; padding: 6px 14px;
+  font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  font-family: var(--font-sans);
+}
+.action-btn:hover { background: #F1F5F9; border-color: #CBD5E1; }
+.action-btn.primary { background: #1E40AF; color: #FFF; border-color: #1E40AF; }
+.action-btn.primary:hover { background: #1E3A8A; }
+
+.offline-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 600;
+  color: var(--offline-badge);
+  background: var(--offline-bg);
+  padding: 2px 8px; border-radius: 100px;
+}
+.offline-badge svg { width: 12px; height: 12px; }
+
+.freshness {
+  font-size: 10px; color: var(--text-muted); white-space: nowrap;
+}
+
+.group-toggle {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  cursor: pointer; user-select: none;
+  background: none; border: none; font-family: var(--font-sans);
+  padding: 0;
+}
+.group-toggle .chevron {
+  display: inline-flex; width: 16px; height: 16px;
+  align-items: center; justify-content: center;
+  font-size: 10px; border-radius: 3px;
+  background: var(--border-light);
+  transition: transform var(--transition);
+}
+.group-toggle.expanded .chevron { transform: rotate(90deg); }
+
+.group-children {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 300ms ease;
+}
+.group-children.open { max-height: 600px; }
+
+.sub-card {
+  background: #FAFBFC;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-top: 6px;
+}
+
+/* ── Map placeholder ── */
+.map-placeholder {
+  background: var(--map-bg);
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.map-placeholder::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(var(--map-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--map-grid) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.map-label {
+  position: relative; z-index: 1;
+  font-size: 13px; font-weight: 600; color: #64748B;
+  background: rgba(255,255,255,.85);
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Map markers */
+.map-marker {
+  position: absolute; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: var(--shadow-sm);
+}
+.map-marker span {
+  transform: rotate(45deg);
+  font-size: 11px; font-weight: 700; color: #FFF;
+}
+.map-marker.critical { background: var(--severity-critical); }
+.map-marker.high { background: var(--severity-high); }
+.map-marker.warning { background: var(--severity-warning); }
+.map-marker.neutral { background: var(--severity-neutral); }
+.map-marker .count-badge {
+  position: absolute; top: -4px; right: -4px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #1E293B; color: #FFF;
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  transform: rotate(45deg);
+  border: 2px solid #FFF;
+}
+
+/* ── Floating detail card ── */
+.floating-detail {
+  position: absolute; z-index: 10;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  padding: 16px;
+  min-width: 260px;
+}
+
+/* ════════════════════════════════════════════════════════
+   DIRECTION 1 — Command Center (Desktop)
+   ════════════════════════════════════════════════════════ */
+.d1-layout {
+  display: flex; height: 640px;
+}
+.d1-queue {
+  width: 45%; padding: 16px; overflow-y: auto;
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+}
+.d1-map { flex: 1; }
+.d1-queue-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.d1-queue-header h3 { font-size: 15px; font-weight: 700; }
+.d1-queue-header .count { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+.d1-card {
+  padding: 14px 16px 14px 20px;
+  margin-bottom: 8px;
+}
+.d1-card .card-top { display: flex; align-items: flex-start; gap: 10px; }
+.d1-card .card-info { flex: 1; min-width: 0; }
+.d1-card .entity-name { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 3px; }
+.d1-card .signal-reason { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+.d1-card .card-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.d1-card .card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+
+/* ════════════════════════════════════════════════════════
+   DIRECTION 2 — Compact Feed (Mobile-first)
+   ════════════════════════════════════════════════════════ */
+.d2-frame { max-width: 400px; margin: 0 auto; }
+.d2-layout { height: 640px; display: flex; flex-direction: column; }
+.d2-queue { flex: 1; overflow-y: auto; padding: 12px; background: var(--bg); }
+.d2-queue-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px; padding: 8px 0;
+}
+.d2-queue-header h3 { font-size: 16px; font-weight: 700; }
+.d2-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; margin-bottom: 6px;
+  border-radius: var(--radius-sm);
+}
+.d2-row .row-dot { flex-shrink: 0; }
+.d2-row .row-info { flex: 1; min-width: 0; }
+.d2-row .row-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.d2-row .row-reason { font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.d2-row .row-type { flex-shrink: 0; }
+.d2-row .row-action {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #F1F5F9; border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--text-secondary); flex-shrink: 0;
+  cursor: pointer;
+}
+.d2-expand-strip {
+  background: #FAFBFC; border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm); padding: 10px 12px;
+  margin: -2px 12px 8px; margin-left: 32px;
+}
+.d2-expand-strip .strip-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); padding: 3px 0; }
+.d2-map-toggle {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px; background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-size: 13px; font-weight: 600; color: var(--text-secondary);
+  cursor: pointer;
+}
+.d2-map-panel {
+  height: 0; overflow: hidden;
+  transition: height 300ms ease;
+}
+.d2-map-panel.open { height: 240px; }
+
+/* ════════════════════════════════════════════════════════
+   DIRECTION 3 — Split Panel (Tablet)
+   ════════════════════════════════════════════════════════ */
+.d3-layout { display: flex; height: 640px; }
+.d3-queue { width: 55%; overflow-y: auto; padding: 16px; background: var(--bg); border-right: 1px solid var(--border); }
+.d3-map { width: 45%; }
+.d3-queue-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+.d3-queue-header h3 { font-size: 15px; font-weight: 700; }
+.d3-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px 12px 18px; margin-bottom: 6px;
+}
+.d3-card .card-icon {
+  width: 40px; height: 40px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.d3-card .card-center { flex: 1; min-width: 0; }
+.d3-card .card-center .name { font-size: 14px; font-weight: 700; }
+.d3-card .card-center .reason { font-size: 12px; color: var(--text-secondary); }
+.d3-card .card-right { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+/* Detail slide panel */
+.d3-detail {
+  position: absolute; top: 0; left: 55%; width: 45%; height: 100%;
+  background: var(--surface); border-left: 1px solid var(--border);
+  box-shadow: -4px 0 16px rgba(0,0,0,.08);
+  z-index: 10; padding: 20px;
+  transform: translateX(100%);
+  transition: transform 300ms ease;
+}
+.d3-detail.open { transform: translateX(0); }
+.d3-detail .detail-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.d3-detail .detail-header h3 { font-size: 18px; font-weight: 700; }
+.d3-detail .close-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #F1F5F9; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--text-secondary);
+}
+
+/* ════════════════════════════════════════════════════════
+   DIRECTION 4 — Map-First Spatial (Desktop)
+   ════════════════════════════════════════════════════════ */
+.d4-layout { display: flex; height: 640px; }
+.d4-queue { width: 35%; overflow-y: auto; padding: 12px; background: var(--bg); border-right: 1px solid var(--border); }
+.d4-map { flex: 1; position: relative; }
+.d4-queue-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.d4-queue-header h3 { font-size: 14px; font-weight: 700; }
+.d4-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; margin-bottom: 4px;
+}
+.d4-row .row-dot { flex-shrink: 0; }
+.d4-row .row-info { flex: 1; min-width: 0; }
+.d4-row .row-name { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.d4-row .row-reason { font-size: 10px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.d4-row .row-action { font-size: 11px; padding: 4px 10px; }
+.d4-floating {
+  position: absolute; top: 40px; right: 20px;
+  width: 280px;
+}
+
+/* ════════════════════════════════════════════════════════
+   DIRECTION 5 — Card Grid (Alternative)
+   ════════════════════════════════════════════════════════ */
+.d5-layout { padding: 16px; height: 640px; overflow-y: auto; background: var(--bg); }
+.d5-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+.d5-header h3 { font-size: 15px; font-weight: 700; }
+.d5-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.d5-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+.d5-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.d5-card .card-top-bar {
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.d5-card .card-top-bar.critical { background: var(--severity-critical); }
+.d5-card .card-top-bar.high { background: var(--severity-high); }
+.d5-card .card-top-bar.warning { background: var(--severity-warning); }
+.d5-card .card-top-bar.neutral { background: var(--severity-neutral); }
+.d5-card .card-icon-area {
+  width: 40px; height: 40px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; margin-bottom: 10px;
+}
+.d5-card .card-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.d5-card .card-reason { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.4; }
+.d5-card .card-bottom {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 10px; border-top: 1px solid var(--border-light);
+}
+
+/* ════════════════════════════════════════════════════════
+   DIRECTION 6 — Timeline View (Chronological)
+   ════════════════════════════════════════════════════════ */
+.d6-layout { display: flex; height: 640px; }
+.d6-timeline { flex: 1; overflow-y: auto; padding: 20px; background: var(--bg); }
+.d6-inset-map {
+  width: 280px; border-left: 1px solid var(--border);
+  position: relative;
+}
+.d6-date-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 20px 0 12px; font-size: 12px; font-weight: 700;
+  color: var(--text-secondary); text-transform: uppercase; letter-spacing: .06em;
+}
+.d6-date-divider:first-child { margin-top: 0; }
+.d6-date-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.d6-tl-item {
+  display: flex; gap: 14px; margin-bottom: 4px; position: relative;
+}
+.d6-tl-line {
+  display: flex; flex-direction: column; align-items: center;
+  width: 20px; flex-shrink: 0; position: relative;
+}
+.d6-tl-line .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; z-index: 1; }
+.d6-tl-line .line { width: 2px; flex: 1; background: var(--border); }
+.d6-tl-card {
+  flex: 1; background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: box-shadow var(--transition);
+}
+.d6-tl-card:hover { box-shadow: var(--shadow-sm); }
+.d6-tl-card .tl-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.d6-tl-card .tl-name { font-size: 14px; font-weight: 700; }
+.d6-tl-card .tl-reason { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+.d6-tl-card .tl-meta { display: flex; align-items: center; gap: 8px; }
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav class="topnav" role="navigation" aria-label="Design direction navigation">
+  <span class="topnav-title">UX Directions</span>
+  <a href="#d1" class="active">D1 Command Center</a>
+  <a href="#d2">D2 Compact Feed</a>
+  <a href="#d3">D3 Split Panel</a>
+  <a href="#d4">D4 Map-First</a>
+  <a href="#d5">D5 Card Grid</a>
+  <a href="#d6">D6 Timeline</a>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════
+     DIRECTION 1 — Command Center (Desktop)
+     ════════════════════════════════════════════════════════ -->
+<section id="d1" class="direction" aria-label="Direction 1: Command Center">
+  <div class="direction-header">
+    <span class="direction-number">Direction 1</span>
+    <h2>Command Center</h2>
+    <p class="subtitle">Queue 45% / Map 55% &mdash; Tall cards with priority left border, large entity names, and grouped sub-cards</p>
+    <span class="bp-hint bp-desktop">Desktop 1280px+</span>
+  </div>
+
+  <div class="dashboard-frame" role="region" aria-label="Command Center dashboard mockup">
+    <div class="frame-bar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="frame-title">Action Dashboard &mdash; Assessor View</span>
+      <span class="frame-dims">1280 &times; 640</span>
+    </div>
+    <div class="d1-layout">
+      <!-- Queue -->
+      <div class="d1-queue" role="list" aria-label="Priority signal queue">
+        <div class="d1-queue-header">
+          <h3>Signal Queue</h3>
+          <span class="count">6 signals &middot; 2 groups</span>
+        </div>
+
+        <!-- Item 1: CRITICAL Grouped -->
+        <div class="queue-item d1-card" role="listitem" aria-label="Maiduguri Camp - Critical - 2 incidents">
+          <div class="priority-stripe critical"></div>
+          <div class="card-top">
+            <div class="card-info">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span class="priority-dot critical" aria-label="Critical priority"></span>
+                <span class="entity-name">Maiduguri Camp</span>
+              </div>
+              <div class="signal-reason">Assessment overdue by 6 hours</div>
+              <div class="card-meta">
+                <span class="type-badge health">Health</span>
+                <button class="group-toggle expanded" onclick="toggleGroup(this)" aria-expanded="true" aria-controls="d1-g1">
+                  <span class="chevron">&#9654;</span> 2 incidents
+                </button>
+                <span class="offline-badge">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+                  Offline
+                </span>
+                <span class="freshness">Synced 4m ago</span>
+              </div>
+            </div>
+            <div class="card-right">
+              <button class="action-btn primary">Review Now</button>
+            </div>
+          </div>
+          <div class="group-children open" id="d1-g1">
+            <div class="sub-card">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div>
+                  <div style="font-size:12px;font-weight:600">Incident #1247</div>
+                  <div style="font-size:11px;color:var(--text-muted)">Cholera suspected &middot; Block A</div>
+                </div>
+                <button class="action-btn" style="font-size:11px;padding:4px 10px">Open</button>
+              </div>
+            </div>
+            <div class="sub-card">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div>
+                  <div style="font-size:12px;font-weight:600">Incident #1251</div>
+                  <div style="font-size:11px;color:var(--text-muted)">Measles alert &middot; Block C</div>
+                </div>
+                <button class="action-btn" style="font-size:11px;padding:4px 10px">Open</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 2: HIGH -->
+        <div class="queue-item d1-card" role="listitem" aria-label="Gwoza Settlement - High priority">
+          <div class="priority-stripe high"></div>
+          <div class="card-top">
+            <div class="card-info">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span class="priority-dot high" aria-label="High priority"></span>
+                <span class="entity-name">Gwoza Settlement</span>
+              </div>
+              <div class="signal-reason">Reassessment needed</div>
+              <div class="card-meta">
+                <span class="type-badge wash">WASH</span>
+                <span style="font-size:11px;color:var(--text-muted)">1 incident</span>
+                <span class="offline-badge">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+                  Offline
+                </span>
+                <span class="freshness">Synced 4m ago</span>
+              </div>
+            </div>
+            <div class="card-right">
+              <button class="action-btn">Action</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 3: HIGH -->
+        <div class="queue-item d1-card" role="listitem" aria-label="Monguno IDP Camp - High priority">
+          <div class="priority-stripe high"></div>
+          <div class="card-top">
+            <div class="card-info">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span class="priority-dot high" aria-label="High priority"></span>
+                <span class="entity-name">Monguno IDP Camp</span>
+              </div>
+              <div class="signal-reason">Awaiting response plan</div>
+              <div class="card-meta">
+                <span class="type-badge shelter">Shelter</span>
+                <span style="font-size:11px;color:var(--text-muted)">1 incident</span>
+                <span class="freshness">Live</span>
+              </div>
+            </div>
+            <div class="card-right">
+              <button class="action-btn">Action</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 4: MEDIUM -->
+        <div class="queue-item d1-card" role="listitem" aria-label="Bama Town - Medium priority">
+          <div class="priority-stripe warning"></div>
+          <div class="card-top">
+            <div class="card-info">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span class="priority-dot warning" aria-label="Medium priority"></span>
+                <span class="entity-name">Bama Town</span>
+              </div>
+              <div class="signal-reason">Plan needs commitment</div>
+              <div class="card-meta">
+                <span class="type-badge food">Food</span>
+                <span style="font-size:11px;color:var(--text-muted)">1 incident</span>
+                <span class="freshness">Live</span>
+              </div>
+            </div>
+            <div class="card-right">
+              <button class="action-btn">Action</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 5: MEDIUM Grouped -->
+        <div class="queue-item d1-card" role="listitem" aria-label="Dikwa Camp - Medium - 3 incidents">
+          <div class="priority-stripe warning"></div>
+          <div class="card-top">
+            <div class="card-info">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span class="priority-dot warning" aria-label="Medium priority"></span>
+                <span class="entity-name">Dikwa Camp</span>
+              </div>
+              <div class="signal-reason">Commitment awaiting plan</div>
+              <div class="card-meta">
+                <span class="type-badge security">Security</span>
+                <button class="group-toggle" onclick="toggleGroup(this)" aria-expanded="false" aria-controls="d1-g5">
+                  <span class="chevron">&#9654;</span> 3 incidents
+                </button>
+                <span class="freshness">Live</span>
+              </div>
+            </div>
+            <div class="card-right">
+              <button class="action-btn">Action</button>
+            </div>
+          </div>
+          <div class="group-children" id="d1-g5">
+            <div class="sub-card"><div style="display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:12px;font-weight:600">Incident #1189</div><div style="font-size:11px;color:var(--text-muted)">Perimeter breach &middot; North gate</div></div><button class="action-btn" style="font-size:11px;padding:4px 10px">Open</button></div></div>
+            <div class="sub-card"><div style="display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:12px;font-weight:600">Incident #1192</div><div style="font-size:11px;color:var(--text-muted)">Theft report &middot; Sector 3</div></div><button class="action-btn" style="font-size:11px;padding:4px 10px">Open</button></div></div>
+            <div class="sub-card"><div style="display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:12px;font-weight:600">Incident #1195</div><div style="font-size:11px;color:var(--text-muted)">Unauthorized entry &middot; East</div></div><button class="action-btn" style="font-size:11px;padding:4px 10px">Open</button></div></div>
+          </div>
+        </div>
+
+        <!-- Item 6: LOW -->
+        <div class="queue-item d1-card" role="listitem" aria-label="Kala Balge - Low priority">
+          <div class="priority-stripe neutral"></div>
+          <div class="card-top">
+            <div class="card-info">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                <span class="priority-dot neutral" aria-label="Low priority"></span>
+                <span class="entity-name">Kala Balge</span>
+              </div>
+              <div class="signal-reason">Assessment not yet conducted</div>
+              <div class="card-meta">
+                <span class="type-badge population">Population</span>
+                <span style="font-size:11px;color:var(--text-muted)">1 incident</span>
+                <span class="freshness">Live</span>
+              </div>
+            </div>
+            <div class="card-right">
+              <button class="action-btn">Action</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div class="d1-map map-placeholder" aria-label="Map area">
+        <div class="map-marker critical" style="top:28%;left:35%"><span>M</span><div class="count-badge">2</div></div>
+        <div class="map-marker high" style="top:50%;left:62%"><span>G</span></div>
+        <div class="map-marker high" style="top:18%;left:70%"><span>Mo</span></div>
+        <div class="map-marker warning" style="top:65%;left:40%"><span>B</span></div>
+        <div class="map-marker warning" style="top:45%;left:25%"><span>D</span><div class="count-badge">3</div></div>
+        <div class="map-marker neutral" style="top:75%;left:55%"><span>K</span></div>
+        <span class="map-label">Borno State Operations Map</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     DIRECTION 2 — Compact Feed (Mobile-first)
+     ════════════════════════════════════════════════════════ -->
+<section id="d2" class="direction" aria-label="Direction 2: Compact Feed">
+  <div class="direction-header">
+    <span class="direction-number">Direction 2</span>
+    <h2>Compact Feed</h2>
+    <p class="subtitle">Full-width queue, compact 60px rows, single-line items, map as bottom toggle panel, thumb-scroll optimized</p>
+    <span class="bp-hint bp-mobile">Mobile-first 375px+</span>
+  </div>
+
+  <div class="dashboard-frame d2-frame" role="region" aria-label="Compact Feed dashboard mockup">
+    <div class="frame-bar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="frame-title">Action Dashboard &mdash; Responder</span>
+      <span class="frame-dims">375 &times; 640</span>
+    </div>
+    <div class="d2-layout">
+      <div class="d2-queue" role="list" aria-label="Priority signal queue">
+        <div class="d2-queue-header">
+          <h3>Signals</h3>
+          <span class="offline-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+            Offline &middot; 4m ago
+          </span>
+        </div>
+
+        <!-- Row 1: CRITICAL -->
+        <div class="queue-item d2-row" role="listitem">
+          <span class="priority-dot critical row-dot" aria-label="Critical"></span>
+          <div class="row-info">
+            <div class="row-name">Maiduguri Camp</div>
+            <div class="row-reason">Assessment overdue by 6 hours</div>
+          </div>
+          <span class="type-badge health" style="font-size:9px;padding:1px 5px">Health</span>
+          <button class="row-action" aria-label="Expand actions">&#8226;&#8226;&#8226;</button>
+        </div>
+        <!-- Expanded detail strip -->
+        <div class="d2-expand-strip" aria-label="Maiduguri Camp details">
+          <div class="strip-row"><span class="priority-dot critical" style="width:8px;height:8px"></span><strong style="font-size:12px">2 incidents</strong>&middot; Cholera, Measles alerts</div>
+          <div class="strip-row" style="justify-content:space-between;margin-top:6px">
+            <span style="font-size:10px;color:var(--text-muted)">Synced 4m ago</span>
+            <button class="action-btn primary" style="font-size:11px;padding:4px 12px">Review Now</button>
+          </div>
+        </div>
+
+        <!-- Row 2: HIGH -->
+        <div class="queue-item d2-row" role="listitem">
+          <span class="priority-dot high row-dot" aria-label="High"></span>
+          <div class="row-info">
+            <div class="row-name">Gwoza Settlement</div>
+            <div class="row-reason">Reassessment needed</div>
+          </div>
+          <span class="type-badge wash" style="font-size:9px;padding:1px 5px">WASH</span>
+          <button class="row-action" aria-label="Expand actions">&#8226;&#8226;&#8226;</button>
+        </div>
+
+        <!-- Row 3: HIGH -->
+        <div class="queue-item d2-row" role="listitem">
+          <span class="priority-dot high row-dot" aria-label="High"></span>
+          <div class="row-info">
+            <div class="row-name">Monguno IDP Camp</div>
+            <div class="row-reason">Awaiting response plan</div>
+          </div>
+          <span class="type-badge shelter" style="font-size:9px;padding:1px 5px">Shelter</span>
+          <button class="row-action" aria-label="Expand actions">&#8226;&#8226;&#8226;</button>
+        </div>
+
+        <!-- Row 4: MEDIUM -->
+        <div class="queue-item d2-row" role="listitem">
+          <span class="priority-dot warning row-dot" aria-label="Medium"></span>
+          <div class="row-info">
+            <div class="row-name">Bama Town</div>
+            <div class="row-reason">Plan needs commitment</div>
+          </div>
+          <span class="type-badge food" style="font-size:9px;padding:1px 5px">Food</span>
+          <button class="row-action" aria-label="Expand actions">&#8226;&#8226;&#8226;</button>
+        </div>
+
+        <!-- Row 5: MEDIUM -->
+        <div class="queue-item d2-row" role="listitem">
+          <span class="priority-dot warning row-dot" aria-label="Medium"></span>
+          <div class="row-info">
+            <div class="row-name">Dikwa Camp</div>
+            <div class="row-reason">Commitment awaiting plan &middot; 3 incidents</div>
+          </div>
+          <span class="type-badge security" style="font-size:9px;padding:1px 5px">Security</span>
+          <button class="row-action" aria-label="Expand actions">&#8226;&#8226;&#8226;</button>
+        </div>
+
+        <!-- Row 6: LOW -->
+        <div class="queue-item d2-row" role="listitem">
+          <span class="priority-dot neutral row-dot" aria-label="Low"></span>
+          <div class="row-info">
+            <div class="row-name">Kala Balge</div>
+            <div class="row-reason">Assessment not yet conducted</div>
+          </div>
+          <span class="type-badge population" style="font-size:9px;padding:1px 5px">Pop.</span>
+          <button class="row-action" aria-label="Expand actions">&#8226;&#8226;&#8226;</button>
+        </div>
+      </div>
+
+      <!-- Map toggle -->
+      <div class="d2-map-toggle" onclick="toggleMapPanel('d2-map')" role="button" aria-label="Toggle map view">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        Show Map
+        <span style="font-size:16px">&#8593;</span>
+      </div>
+      <div class="d2-map-panel map-placeholder" id="d2-map" aria-label="Map panel">
+        <span class="map-label">Mobile Map View</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     DIRECTION 3 — Split Panel (Tablet)
+     ════════════════════════════════════════════════════════ -->
+<section id="d3" class="direction" aria-label="Direction 3: Split Panel">
+  <div class="direction-header">
+    <span class="direction-number">Direction 3</span>
+    <h2>Split Panel</h2>
+    <p class="subtitle">Queue 55% / Map 45% &mdash; Medium cards with icon left, text center, action right. Selected item slides detail panel in</p>
+    <span class="bp-hint bp-tablet">Tablet 768px+</span>
+  </div>
+
+  <div class="dashboard-frame" role="region" aria-label="Split Panel dashboard mockup">
+    <div class="frame-bar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="frame-title">Action Dashboard &mdash; Assessor</span>
+      <span class="frame-dims">768 &times; 640</span>
+    </div>
+    <div class="d3-layout" style="position:relative">
+      <!-- Queue -->
+      <div class="d3-queue" role="list" aria-label="Priority signal queue">
+        <div class="d3-queue-header">
+          <h3>Signal Queue</h3>
+          <span class="offline-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+            Offline &middot; 4m ago
+          </span>
+        </div>
+
+        <!-- Card 1: CRITICAL -->
+        <div class="queue-item d3-card" role="listitem" onclick="toggleDetail('d3-detail')" aria-label="Maiduguri Camp - Critical">
+          <div class="priority-stripe critical"></div>
+          <div class="card-icon" style="background:var(--severity-critical-bg)">
+            <span style="color:var(--severity-critical)">&#9888;</span>
+          </div>
+          <div class="card-center">
+            <div class="name">Maiduguri Camp</div>
+            <div class="reason">Assessment overdue by 6 hours &middot; 2 incidents</div>
+          </div>
+          <div class="card-right">
+            <span class="type-badge health">Health</span>
+            <button class="action-btn primary" style="font-size:11px;padding:4px 10px">Review</button>
+          </div>
+        </div>
+
+        <!-- Card 2: HIGH -->
+        <div class="queue-item d3-card" role="listitem" aria-label="Gwoza Settlement - High">
+          <div class="priority-stripe high"></div>
+          <div class="card-icon" style="background:var(--severity-high-bg)">
+            <span style="color:var(--severity-high)">&#9679;</span>
+          </div>
+          <div class="card-center">
+            <div class="name">Gwoza Settlement</div>
+            <div class="reason">Reassessment needed</div>
+          </div>
+          <div class="card-right">
+            <span class="type-badge wash">WASH</span>
+            <button class="action-btn" style="font-size:11px;padding:4px 10px">Action</button>
+          </div>
+        </div>
+
+        <!-- Card 3: HIGH -->
+        <div class="queue-item d3-card" role="listitem" aria-label="Monguno IDP Camp - High">
+          <div class="priority-stripe high"></div>
+          <div class="card-icon" style="background:var(--severity-high-bg)">
+            <span style="color:var(--severity-high)">&#9679;</span>
+          </div>
+          <div class="card-center">
+            <div class="name">Monguno IDP Camp</div>
+            <div class="reason">Awaiting response plan</div>
+          </div>
+          <div class="card-right">
+            <span class="type-badge shelter">Shelter</span>
+            <button class="action-btn" style="font-size:11px;padding:4px 10px">Action</button>
+          </div>
+        </div>
+
+        <!-- Card 4: MEDIUM -->
+        <div class="queue-item d3-card" role="listitem" aria-label="Bama Town - Medium">
+          <div class="priority-stripe warning"></div>
+          <div class="card-icon" style="background:var(--severity-warning-bg)">
+            <span style="color:var(--severity-warning)">&#9679;</span>
+          </div>
+          <div class="card-center">
+            <div class="name">Bama Town</div>
+            <div class="reason">Plan needs commitment</div>
+          </div>
+          <div class="card-right">
+            <span class="type-badge food">Food</span>
+            <button class="action-btn" style="font-size:11px;padding:4px 10px">Action</button>
+          </div>
+        </div>
+
+        <!-- Card 5: MEDIUM -->
+        <div class="queue-item d3-card" role="listitem" aria-label="Dikwa Camp - Medium">
+          <div class="priority-stripe warning"></div>
+          <div class="card-icon" style="background:var(--severity-warning-bg)">
+            <span style="color:var(--severity-warning)">&#9679;</span>
+          </div>
+          <div class="card-center">
+            <div class="name">Dikwa Camp</div>
+            <div class="reason">Commitment awaiting plan &middot; 3 incidents</div>
+          </div>
+          <div class="card-right">
+            <span class="type-badge security">Security</span>
+            <button class="action-btn" style="font-size:11px;padding:4px 10px">Action</button>
+          </div>
+        </div>
+
+        <!-- Card 6: LOW -->
+        <div class="queue-item d3-card" role="listitem" aria-label="Kala Balge - Low">
+          <div class="priority-stripe neutral"></div>
+          <div class="card-icon" style="background:var(--severity-neutral-bg)">
+            <span style="color:var(--severity-neutral)">&#9679;</span>
+          </div>
+          <div class="card-center">
+            <div class="name">Kala Balge</div>
+            <div class="reason">Assessment not yet conducted</div>
+          </div>
+          <div class="card-right">
+            <span class="type-badge population">Population</span>
+            <button class="action-btn" style="font-size:11px;padding:4px 10px">Action</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map (with overlaid detail panel) -->
+      <div class="d3-map map-placeholder" aria-label="Map area">
+        <div class="map-marker critical" style="top:30%;left:35%"><span>M</span><div class="count-badge">2</div></div>
+        <div class="map-marker high" style="top:55%;left:60%"><span>G</span></div>
+        <div class="map-marker high" style="top:20%;left:65%"><span>Mo</span></div>
+        <div class="map-marker warning" style="top:70%;left:40%"><span>B</span></div>
+        <div class="map-marker warning" style="top:48%;left:28%"><span>D</span><div class="count-badge">3</div></div>
+        <div class="map-marker neutral" style="top:78%;left:52%"><span>K</span></div>
+        <span class="map-label">Operations Map</span>
+      </div>
+
+      <!-- Slide-in detail panel -->
+      <div class="d3-detail open" id="d3-detail" aria-label="Entity detail panel">
+        <div class="detail-header">
+          <h3>Maiduguri Camp</h3>
+          <button class="close-btn" onclick="toggleDetail('d3-detail')" aria-label="Close detail panel">&times;</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <span class="type-badge health">Health</span>
+          <span class="priority-dot critical"></span>
+          <span style="font-size:12px;font-weight:600;color:var(--severity-critical)">CRITICAL</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;line-height:1.5">
+          Assessment overdue by 6 hours. Two active incidents require immediate review: suspected cholera in Block A and measles alert in Block C.
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px">Population: 24,500 &middot; Last assessed: 30 hours ago</div>
+        <div style="display:flex;gap:8px">
+          <button class="action-btn primary">Start Assessment</button>
+          <button class="action-btn">View History</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     DIRECTION 4 — Map-First Spatial (Desktop)
+     ════════════════════════════════════════════════════════ -->
+<section id="d4" class="direction" aria-label="Direction 4: Map-First Spatial">
+  <div class="direction-header">
+    <span class="direction-number">Direction 4</span>
+    <h2>Map-First Spatial</h2>
+    <p class="subtitle">Map 65% / Queue 35% narrow sidebar &mdash; Ultra-compact 48px rows, floating detail card over map, large markers with count badges</p>
+    <span class="bp-hint bp-desktop">Desktop 1440px+</span>
+  </div>
+
+  <div class="dashboard-frame" role="region" aria-label="Map-First Spatial dashboard mockup">
+    <div class="frame-bar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="frame-title">Action Dashboard &mdash; Donor Overview</span>
+      <span class="frame-dims">1440 &times; 640</span>
+    </div>
+    <div class="d4-layout">
+      <!-- Narrow queue sidebar -->
+      <div class="d4-queue" role="list" aria-label="Priority signal queue">
+        <div class="d4-queue-header">
+          <h3>Signals</h3>
+          <span class="offline-badge" style="font-size:9px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+            Offline
+          </span>
+        </div>
+
+        <div class="queue-item d4-row" role="listitem">
+          <span class="priority-dot critical row-dot" style="width:8px;height:8px" aria-label="Critical"></span>
+          <div class="row-info"><div class="row-name">Maiduguri Camp</div><div class="row-reason">Overdue 6h &middot; 2 inc.</div></div>
+          <button class="action-btn row-action primary">Open</button>
+        </div>
+        <div class="queue-item d4-row" role="listitem">
+          <span class="priority-dot high row-dot" style="width:8px;height:8px" aria-label="High"></span>
+          <div class="row-info"><div class="row-name">Gwoza Settlement</div><div class="row-reason">Reassess needed</div></div>
+          <button class="action-btn row-action">Open</button>
+        </div>
+        <div class="queue-item d4-row" role="listitem">
+          <span class="priority-dot high row-dot" style="width:8px;height:8px" aria-label="High"></span>
+          <div class="row-info"><div class="row-name">Monguno IDP Camp</div><div class="row-reason">Awaiting plan</div></div>
+          <button class="action-btn row-action">Open</button>
+        </div>
+        <div class="queue-item d4-row" role="listitem">
+          <span class="priority-dot warning row-dot" style="width:8px;height:8px" aria-label="Medium"></span>
+          <div class="row-info"><div class="row-name">Bama Town</div><div class="row-reason">Needs commitment</div></div>
+          <button class="action-btn row-action">Open</button>
+        </div>
+        <div class="queue-item d4-row" role="listitem">
+          <span class="priority-dot warning row-dot" style="width:8px;height:8px" aria-label="Medium"></span>
+          <div class="row-info"><div class="row-name">Dikwa Camp</div><div class="row-reason">3 incidents</div></div>
+          <button class="action-btn row-action">Open</button>
+        </div>
+        <div class="queue-item d4-row" role="listitem">
+          <span class="priority-dot neutral row-dot" style="width:8px;height:8px" aria-label="Low"></span>
+          <div class="row-info"><div class="row-name">Kala Balge</div><div class="row-reason">No assessment</div></div>
+          <button class="action-btn row-action">Open</button>
+        </div>
+      </div>
+
+      <!-- Large map -->
+      <div class="d4-map map-placeholder" aria-label="Map area">
+        <!-- Large markers -->
+        <div class="map-marker critical" style="top:30%;left:30%;width:44px;height:44px"><span style="font-size:13px">M</span><div class="count-badge" style="width:22px;height:22px;font-size:11px">2</div></div>
+        <div class="map-marker high" style="top:50%;left:55%;width:44px;height:44px"><span style="font-size:13px">G</span></div>
+        <div class="map-marker high" style="top:18%;left:62%;width:44px;height:44px"><span style="font-size:13px">Mo</span></div>
+        <div class="map-marker warning" style="top:65%;left:35%;width:44px;height:44px"><span style="font-size:13px">B</span></div>
+        <div class="map-marker warning" style="top:42%;left:22%;width:44px;height:44px"><span style="font-size:13px">D</span><div class="count-badge" style="width:22px;height:22px;font-size:11px">3</div></div>
+        <div class="map-marker neutral" style="top:75%;left:48%;width:44px;height:44px"><span style="font-size:13px">K</span></div>
+
+        <!-- Floating detail card -->
+        <div class="floating-detail d4-floating" aria-label="Entity detail floating card">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <span class="priority-dot critical"></span>
+            <span style="font-size:15px;font-weight:700">Maiduguri Camp</span>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <span class="type-badge health">Health</span>
+            <span style="font-size:11px;color:var(--severity-critical);font-weight:700">CRITICAL</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;line-height:1.4">Assessment overdue by 6 hours. 2 active incidents: Cholera suspected (Block A), Measles alert (Block C).</div>
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:12px">
+            <span class="offline-badge" style="font-size:9px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+              Synced 4m ago
+            </span>
+          </div>
+          <button class="action-btn primary" style="width:100%">Review Now</button>
+        </div>
+
+        <span class="map-label" style="position:absolute;bottom:16px;left:16px">Borno State &mdash; Donor Spatial View</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     DIRECTION 5 — Card Grid (Alternative)
+     ════════════════════════════════════════════════════════ -->
+<section id="d5" class="direction" aria-label="Direction 5: Card Grid">
+  <div class="direction-header">
+    <span class="direction-number">Direction 5</span>
+    <h2>Card Grid</h2>
+    <p class="subtitle">Grid of square-ish cards (2-col desktop, 1-col mobile), icon top, name, reason, priority bottom, map as full-screen toggle</p>
+    <span class="bp-hint bp-alt">Alternative Layout</span>
+  </div>
+
+  <div class="dashboard-frame" role="region" aria-label="Card Grid dashboard mockup">
+    <div class="frame-bar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="frame-title">Action Dashboard &mdash; All Roles</span>
+      <span class="frame-dims">Responsive Grid</span>
+    </div>
+    <div class="d5-layout">
+      <div class="d5-header">
+        <div>
+          <h3 style="margin-bottom:2px">Action Queue</h3>
+          <span class="offline-badge" style="font-size:9px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+            Offline &middot; 4m ago
+          </span>
+        </div>
+        <button class="action-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+          Map View
+        </button>
+      </div>
+
+      <div class="d5-grid" role="list" aria-label="Signal card grid">
+        <!-- Card 1: CRITICAL -->
+        <div class="d5-card" role="listitem" aria-label="Maiduguri Camp - Critical">
+          <div class="card-top-bar critical"></div>
+          <div class="card-icon-area" style="background:var(--severity-critical-bg)">
+            <span style="color:var(--severity-critical)">&#9888;&#65039;</span>
+          </div>
+          <div class="card-name">Maiduguri Camp</div>
+          <div class="card-reason">Assessment overdue by 6 hours. 2 incidents: Cholera suspected, Measles alert.</div>
+          <div class="card-bottom">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="type-badge health">Health</span>
+              <span style="font-size:10px;color:var(--severity-critical);font-weight:700">CRITICAL</span>
+            </div>
+            <button class="action-btn primary" style="font-size:11px;padding:4px 10px">Review</button>
+          </div>
+        </div>
+
+        <!-- Card 2: HIGH -->
+        <div class="d5-card" role="listitem" aria-label="Gwoza Settlement - High">
+          <div class="card-top-bar high"></div>
+          <div class="card-icon-area" style="background:var(--severity-high-bg)">
+            <span style="color:var(--severity-high)">&#128167;</span>
+          </div>
+          <div class="card-name">Gwoza Settlement</div>
+          <div class="card-reason">Reassessment needed for WASH infrastructure.</div>
+          <div class="card-bottom">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="type-badge wash">WASH</span>
+              <span style="font-size:10px;color:var(--severity-high);font-weight:700">HIGH</span>
+            </div>
+            <button class="action-btn" style="font-size:11px;padding:4px 10px">Action</button>
+          </div>
+        </div>
+
+        <!-- Card 3: HIGH -->
+        <div class="d5-card" role="listitem" aria-label="Monguno IDP Camp - High">
+          <div class="card-top-bar high"></div>
+          <div class="card-icon-area" style="background:var(--severity-high-bg)">
+            <span style="color:var(--severity-high)">&#127968;</span>
+          </div>
+          <div class="card-name">Monguno IDP Camp</div>
+          <div class="card-reason">Awaiting response plan for shelter needs.</div>
+          <div class="card-bottom">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="type-badge shelter">Shelter</span>
+              <span style="font-size:10px;color:var(--severity-high);font-weight:700">HIGH</span>
+            </div>
+            <button class="action-btn" style="font-size:11px;padding:4px 10px">Action</button>
+          </div>
+        </div>
+
+        <!-- Card 4: MEDIUM -->
+        <div class="d5-card" role="listitem" aria-label="Bama Town - Medium">
+          <div class="card-top-bar warning"></div>
+          <div class="card-icon-area" style="background:var(--severity-warning-bg)">
+            <span style="color:var(--severity-warning)">&#127834;</span>
+          </div>
+          <div class="card-name">Bama Town</div>
+          <div class="card-reason">Food distribution plan needs donor commitment.</div>
+          <div class="card-bottom">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="type-badge food">Food</span>
+              <span style="font-size:10px;color:var(--severity-warning);font-weight:700">MEDIUM</span>
+            </div>
+            <button class="action-btn" style="font-size:11px;padding:4px 10px">Action</button>
+          </div>
+        </div>
+
+        <!-- Card 5: MEDIUM -->
+        <div class="d5-card" role="listitem" aria-label="Dikwa Camp - Medium">
+          <div class="card-top-bar warning"></div>
+          <div class="card-icon-area" style="background:var(--severity-warning-bg)">
+            <span style="color:var(--severity-warning)">&#128737;</span>
+          </div>
+          <div class="card-name">Dikwa Camp</div>
+          <div class="card-reason">Commitment awaiting security plan. 3 active incidents.</div>
+          <div class="card-bottom">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="type-badge security">Security</span>
+              <span style="font-size:10px;color:var(--severity-warning);font-weight:700">MEDIUM</span>
+            </div>
+            <button class="action-btn" style="font-size:11px;padding:4px 10px">Action</button>
+          </div>
+        </div>
+
+        <!-- Card 6: LOW -->
+        <div class="d5-card" role="listitem" aria-label="Kala Balge - Low">
+          <div class="card-top-bar neutral"></div>
+          <div class="card-icon-area" style="background:var(--severity-neutral-bg)">
+            <span style="color:var(--severity-neutral)">&#128101;</span>
+          </div>
+          <div class="card-name">Kala Balge</div>
+          <div class="card-reason">Population assessment not yet conducted.</div>
+          <div class="card-bottom">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="type-badge population">Population</span>
+              <span style="font-size:10px;color:var(--severity-neutral);font-weight:700">LOW</span>
+            </div>
+            <button class="action-btn" style="font-size:11px;padding:4px 10px">Action</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     DIRECTION 6 — Timeline View (Chronological)
+     ════════════════════════════════════════════════════════ -->
+<section id="d6" class="direction" aria-label="Direction 6: Timeline View">
+  <div class="direction-header">
+    <span class="direction-number">Direction 6</span>
+    <h2>Timeline View</h2>
+    <p class="subtitle">Vertical timeline with date dividers, priority dots on the timeline line, map as small inset top-right</p>
+    <span class="bp-hint bp-alt">Alternative Layout</span>
+  </div>
+
+  <div class="dashboard-frame" role="region" aria-label="Timeline View dashboard mockup">
+    <div class="frame-bar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="frame-title">Action Dashboard &mdash; Chronological</span>
+      <span class="frame-dims">Desktop 1024px+</span>
+    </div>
+    <div class="d6-layout">
+      <!-- Timeline -->
+      <div class="d6-timeline" role="list" aria-label="Chronological signal timeline">
+        <div class="d6-date-divider">Today &mdash; May 29</div>
+
+        <!-- Item 1: CRITICAL -->
+        <div class="d6-tl-item" role="listitem" aria-label="Maiduguri Camp - Critical">
+          <div class="d6-tl-line">
+            <div class="dot" style="background:var(--severity-critical);box-shadow:0 0 0 3px var(--severity-critical-glow)"></div>
+            <div class="line"></div>
+          </div>
+          <div class="d6-tl-card">
+            <div class="tl-header">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span class="type-badge health">Health</span>
+                <span style="font-size:10px;color:var(--text-muted)">2h ago</span>
+              </div>
+              <span style="font-size:10px;color:var(--severity-critical);font-weight:700">CRITICAL</span>
+            </div>
+            <div class="tl-name">Maiduguri Camp</div>
+            <div class="tl-reason">Assessment overdue by 6 hours &middot; 2 incidents (Cholera, Measles)</div>
+            <div class="tl-meta">
+              <button class="action-btn primary" style="font-size:11px;padding:3px 10px">Review Now</button>
+              <span class="offline-badge" style="font-size:9px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+                Synced 4m ago
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 2: HIGH -->
+        <div class="d6-tl-item" role="listitem" aria-label="Gwoza Settlement - High">
+          <div class="d6-tl-line">
+            <div class="dot" style="background:var(--severity-high)"></div>
+            <div class="line"></div>
+          </div>
+          <div class="d6-tl-card">
+            <div class="tl-header">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span class="type-badge wash">WASH</span>
+                <span style="font-size:10px;color:var(--text-muted)">3h ago</span>
+              </div>
+              <span style="font-size:10px;color:var(--severity-high);font-weight:700">HIGH</span>
+            </div>
+            <div class="tl-name">Gwoza Settlement</div>
+            <div class="tl-reason">Reassessment needed</div>
+            <div class="tl-meta">
+              <button class="action-btn" style="font-size:11px;padding:3px 10px">Action</button>
+              <span class="offline-badge" style="font-size:9px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+                Synced 4m ago
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 3: HIGH -->
+        <div class="d6-tl-item" role="listitem" aria-label="Monguno IDP Camp - High">
+          <div class="d6-tl-line">
+            <div class="dot" style="background:var(--severity-high)"></div>
+            <div class="line"></div>
+          </div>
+          <div class="d6-tl-card">
+            <div class="tl-header">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span class="type-badge shelter">Shelter</span>
+                <span style="font-size:10px;color:var(--text-muted)">5h ago</span>
+              </div>
+              <span style="font-size:10px;color:var(--severity-high);font-weight:700">HIGH</span>
+            </div>
+            <div class="tl-name">Monguno IDP Camp</div>
+            <div class="tl-reason">Awaiting response plan</div>
+            <div class="tl-meta">
+              <button class="action-btn" style="font-size:11px;padding:3px 10px">Action</button>
+              <span class="freshness">Live</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="d6-date-divider">Yesterday &mdash; May 28</div>
+
+        <!-- Item 4: MEDIUM -->
+        <div class="d6-tl-item" role="listitem" aria-label="Bama Town - Medium">
+          <div class="d6-tl-line">
+            <div class="dot" style="background:var(--severity-warning)"></div>
+            <div class="line"></div>
+          </div>
+          <div class="d6-tl-card">
+            <div class="tl-header">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span class="type-badge food">Food</span>
+                <span style="font-size:10px;color:var(--text-muted)">Yesterday, 14:30</span>
+              </div>
+              <span style="font-size:10px;color:var(--severity-warning);font-weight:700">MEDIUM</span>
+            </div>
+            <div class="tl-name">Bama Town</div>
+            <div class="tl-reason">Plan needs commitment</div>
+            <div class="tl-meta">
+              <button class="action-btn" style="font-size:11px;padding:3px 10px">Action</button>
+              <span class="freshness">Live</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item 5: MEDIUM -->
+        <div class="d6-tl-item" role="listitem" aria-label="Dikwa Camp - Medium">
+          <div class="d6-tl-line">
+            <div class="dot" style="background:var(--severity-warning)"></div>
+            <div class="line"></div>
+          </div>
+          <div class="d6-tl-card">
+            <div class="tl-header">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span class="type-badge security">Security</span>
+                <span style="font-size:10px;color:var(--text-muted)">Yesterday, 10:15</span>
+              </div>
+              <span style="font-size:10px;color:var(--severity-warning);font-weight:700">MEDIUM</span>
+            </div>
+            <div class="tl-name">Dikwa Camp</div>
+            <div class="tl-reason">Commitment awaiting plan &middot; 3 incidents</div>
+            <div class="tl-meta">
+              <button class="action-btn" style="font-size:11px;padding:3px 10px">Action</button>
+              <span class="freshness">Live</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="d6-date-divider">Earlier</div>
+
+        <!-- Item 6: LOW -->
+        <div class="d6-tl-item" role="listitem" aria-label="Kala Balge - Low">
+          <div class="d6-tl-line">
+            <div class="dot" style="background:var(--severity-neutral)"></div>
+            <div class="line" style="background:transparent"></div>
+          </div>
+          <div class="d6-tl-card">
+            <div class="tl-header">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span class="type-badge population">Population</span>
+                <span style="font-size:10px;color:var(--text-muted)">May 26, 09:00</span>
+              </div>
+              <span style="font-size:10px;color:var(--severity-neutral);font-weight:700">LOW</span>
+            </div>
+            <div class="tl-name">Kala Balge</div>
+            <div class="tl-reason">Assessment not yet conducted</div>
+            <div class="tl-meta">
+              <button class="action-btn" style="font-size:11px;padding:3px 10px">Action</button>
+              <span class="freshness">Live</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inset map -->
+      <div class="d6-inset-map map-placeholder" aria-label="Inset map">
+        <div class="map-marker critical" style="top:28%;left:35%;width:26px;height:26px"><span style="font-size:9px">M</span></div>
+        <div class="map-marker high" style="top:48%;left:58%;width:26px;height:26px"><span style="font-size:9px">G</span></div>
+        <div class="map-marker high" style="top:16%;left:66%;width:26px;height:26px"><span style="font-size:9px">Mo</span></div>
+        <div class="map-marker warning" style="top:62%;left:38%;width:26px;height:26px"><span style="font-size:9px">B</span></div>
+        <div class="map-marker warning" style="top:42%;left:24%;width:26px;height:26px"><span style="font-size:9px">D</span></div>
+        <div class="map-marker neutral" style="top:72%;left:50%;width:26px;height:26px"><span style="font-size:9px">K</span></div>
+        <span class="map-label" style="font-size:11px;padding:5px 10px">Borno State Map</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── JavaScript ── -->
+<script>
+// Group expand/collapse
+function toggleGroup(btn) {
+  const isExpanded = btn.classList.contains('expanded');
+  const children = btn.closest('.queue-item').querySelector('.group-children');
+  if (isExpanded) {
+    btn.classList.remove('expanded');
+    btn.setAttribute('aria-expanded', 'false');
+    children.classList.remove('open');
+  } else {
+    btn.classList.add('expanded');
+    btn.setAttribute('aria-expanded', 'true');
+    children.classList.add('open');
+  }
+}
+
+// Mobile map toggle
+function toggleMapPanel(id) {
+  const panel = document.getElementById(id);
+  panel.classList.toggle('open');
+}
+
+// Direction 3 detail slide
+function toggleDetail(id) {
+  const panel = document.getElementById(id);
+  panel.classList.toggle('open');
+}
+
+// Navigation active state
+const navLinks = document.querySelectorAll('.topnav a');
+const sections = document.querySelectorAll('.direction');
+
+function updateActiveNav() {
+  let current = '';
+  sections.forEach(section => {
+    const rect = section.getBoundingClientRect();
+    if (rect.top <= 120) {
+      current = section.id;
+    }
+  });
+  navLinks.forEach(link => {
+    link.classList.remove('active');
+    if (link.getAttribute('href') === '#' + current) {
+      link.classList.add('active');
+    }
+  });
+}
+
+window.addEventListener('scroll', updateActiveNav, { passive: true });
+navLinks.forEach(link => {
+  link.addEventListener('click', () => {
+    navLinks.forEach(l => l.classList.remove('active'));
+    link.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>

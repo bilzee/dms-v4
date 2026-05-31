@@ -4,6 +4,8 @@ export interface CommitmentItem {
   name: string;
   unit: string;
   quantity: number;
+  deliveredQuantity: number;
+  estimatedValue?: number;
 }
 
 export interface CreateCommitmentData {
@@ -183,7 +185,7 @@ export class CommitmentService {
     if (!entity) throw new Error('Entity not found or inactive');
     if (!incident) throw new Error('Incident not found');
 
-    return await prisma.donorCommitment.create({
+    const commitment = await prisma.donorCommitment.create({
       data: {
         donorId: data.donorId,
         entityId: data.entityId,
@@ -199,6 +201,21 @@ export class CommitmentService {
         incident: true
       }
     });
+
+    try {
+      const { ActionSignalService } = await import('@/lib/services/action-signal.service');
+      await ActionSignalService.evaluateAndGenerate({
+        trigger: 'commitment-created',
+        entityId: data.entityId,
+        incidentId: data.incidentId,
+        commitmentId: commitment.id,
+        donorId: data.donorId,
+      });
+    } catch (e) {
+      console.error('[CommitmentService] signal hook error:', e);
+    }
+
+    return commitment;
   }
 
   /**

@@ -347,7 +347,7 @@ async function generateCommitmentsCSV(userRole: string, startDate?: string, endD
       },
       _count: {
         select: {
-          responses: true,
+          planCommitments: true,
         },
       },
     },
@@ -378,7 +378,7 @@ async function generateCommitmentsCSV(userRole: string, startDate?: string, endD
     commitment.lastUpdated.toISOString(),
     commitment.notes || '',
     commitment.totalValueEstimated || 0,
-    commitment._count.responses,
+    commitment._count.planCommitments,
   ]);
 
   return [headers, ...csvRows].map(row => toCsvRow(row)).join('\n');

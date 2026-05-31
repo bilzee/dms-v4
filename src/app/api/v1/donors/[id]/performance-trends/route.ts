@@ -107,7 +107,13 @@ export const GET = withAuth(async (request: NextRequest, context, { params }) =>
       }),
       prisma.rapidResponse.findMany({
         where: {
-          donorId,
+          planCommitments: {
+            some: {
+              commitment: {
+                donorId
+              }
+            }
+          },
           createdAt: {
             gte: startDate,
             lte: now

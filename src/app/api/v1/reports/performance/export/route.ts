@@ -139,25 +139,37 @@ export const POST = withAuth(async (request: NextRequest, context) => {
               }
             }
           }
-        },
-        responses: {
-          where: {
-            createdAt: {
-              gte: startDate,
-              lte: now
-            }
-          },
-          select: {
-            id: true,
-            verificationStatus: true,
-            createdAt: true
-          }
         }
       },
       orderBy: {
         leaderboardRank: 'asc'
       }
     });
+
+    // Fetch responses for each donor through PlanCommitment
+    const donorResponsesMap = new Map<string, Array<{ id: string; verificationStatus: string }>>();
+    await Promise.all(donorsData.map(async (donor) => {
+      const responses = await prisma.rapidResponse.findMany({
+        where: {
+          planCommitments: {
+            some: {
+              commitment: {
+                donorId: donor.id
+              }
+            }
+          },
+          createdAt: {
+            gte: startDate,
+            lte: now
+          }
+        },
+        select: {
+          id: true,
+          verificationStatus: true
+        }
+      });
+      donorResponsesMap.set(donor.id, responses);
+    }));
 
     // Process data for export
     const exportData = donorsData.map(donor => {
@@ -175,8 +187,9 @@ export const POST = withAuth(async (request: NextRequest, context) => {
       const selfReportedDeliveryRate = totalCommittedItems > 0 ? (totalDeliveredItems / totalCommittedItems) * 100 : 0;
       const verifiedDeliveryRate = totalCommittedItems > 0 ? (totalVerifiedItems / totalCommittedItems) * 100 : 0;
       
-      const totalResponses = donor.responses.length;
-      const verifiedResponses = donor.responses.filter(r => 
+      const donorResponses = donorResponsesMap.get(donor.id) || [];
+      const totalResponses = donorResponses.length;
+      const verifiedResponses = donorResponses.filter(r => 
         r.verificationStatus === 'VERIFIED' || r.verificationStatus === 'AUTO_VERIFIED'
       ).length;
       const responseVerificationRate = totalResponses > 0 ? (verifiedResponses / totalResponses) * 100 : 0;

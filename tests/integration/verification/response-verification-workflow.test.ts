@@ -62,11 +62,10 @@ describe('Response Verification Workflow Integration Tests', () => {
       where: { userId: 'coordinator-test-1' }
     });
     await db.rapidResponse.deleteMany({
-      where: { 
+      where: {
         OR: [
           { assessor: { id: 'assessor-test-1' } },
-          { verifiedBy: 'coordinator-test-1' },
-          { donorId: 'donor-test-1' }
+          { verifiedBy: 'coordinator-test-1' }
         ]
       }
     });
@@ -136,11 +135,10 @@ describe('Response Verification Workflow Integration Tests', () => {
       where: { userId: 'coordinator-test-1' }
     });
     await db.rapidResponse.deleteMany({
-      where: { 
+      where: {
         OR: [
           { assessor: { id: 'assessor-test-1' } },
-          { verifiedBy: 'coordinator-test-1' },
-          { donorId: 'donor-test-1' }
+          { verifiedBy: 'coordinator-test-1' }
         ]
       }
     });
@@ -183,7 +181,6 @@ describe('Response Verification Workflow Integration Tests', () => {
             }
           },
           entityId: 'entity-test-1',
-          donorId: 'donor-test-1',
           assessorId: 'assessor-test-1'
         }
       });
@@ -253,7 +250,6 @@ describe('Response Verification Workflow Integration Tests', () => {
             }
           },
           entityId: 'entity-test-1',
-          donorId: 'donor-test-1',
           assessorId: 'assessor-test-1'
         }
       });
@@ -325,7 +321,6 @@ describe('Response Verification Workflow Integration Tests', () => {
           priority: 'HIGH',
           responseData: { medicalSupplies: { bandages: 100 } },
           entityId: 'entity-test-1',
-          donorId: 'donor-test-1',
           assessorId: 'assessor-test-1'
         }
       });
@@ -347,7 +342,6 @@ describe('Response Verification Workflow Integration Tests', () => {
       expect(donorMetricsData.data.donors).toHaveLength(1);
       
       const donor = donorMetricsData.data.donors[0];
-      expect(donor.donorId).toBe('donor-test-1');
       expect(donor.metrics.responses.total).toBe(1);
       expect(donor.metrics.responses.verified).toBe(1);
       expect(donor.metrics.responses.verificationRate).toBe(1.0);
@@ -384,7 +378,6 @@ describe('Response Verification Workflow Integration Tests', () => {
             priority: 'HIGH',
             responseData: { medicalSupplies: { bandages: 100 } },
             entityId: 'entity-test-1',
-            donorId: 'donor-test-1',
             assessorId: 'assessor-test-1',
             verifiedBy: 'coordinator-test-1',
             verifiedAt: new Date()
@@ -396,7 +389,6 @@ describe('Response Verification Workflow Integration Tests', () => {
             priority: 'MEDIUM',
             responseData: { waterSystem: { filters: 10 } },
             entityId: 'entity-test-1',
-            donorId: 'donor-test-1',
             assessorId: 'assessor-test-1',
             verifiedBy: 'coordinator-test-1',
             verifiedAt: new Date()
@@ -463,7 +455,6 @@ describe('Response Verification Workflow Integration Tests', () => {
             }
           },
           entityId: 'entity-test-1',
-          donorId: 'donor-test-1',
           assessorId: 'assessor-test-1'
         }
       });
@@ -514,7 +505,6 @@ describe('Response Verification Workflow Integration Tests', () => {
             medicalSupplies: { bandages: 100 }
           },
           entityId: 'entity-test-1',
-          donorId: 'donor-test-1',
           assessorId: 'assessor-test-1'
         }
       });
@@ -571,7 +561,6 @@ describe('Response Verification Workflow Integration Tests', () => {
           priority: 'MEDIUM',
           responseData: { medicalSupplies: { bandages: 100 } },
           entityId: 'entity-test-1',
-          donorId: 'donor-test-1',
           assessorId: 'assessor-test-1'
         }
       });
@@ -639,7 +628,6 @@ describe('Response Verification Workflow Integration Tests', () => {
           priority: 'LOW',
           responseData: { medicalSupplies: { bandages: 100 } },
           entityId: 'entity-test-1',
-          donorId: 'donor-test-1',
           assessorId: 'assessor-test-1'
         }
       });
@@ -679,7 +667,6 @@ describe('Response Verification Workflow Integration Tests', () => {
           priority: 'HIGH',
           responseData: { medicalSupplies: { bandages: 100 } },
           entityId: 'entity-test-1',
-          donorId: 'donor-test-1',
           assessorId: 'assessor-test-1'
         }
       });
@@ -729,7 +716,6 @@ describe('Response Verification Workflow Integration Tests', () => {
             priority: 'HIGH',
             responseData: { medicalSupplies: { bandages: 100 } },
             entityId: 'entity-test-1',
-            donorId: 'donor-test-1',
             assessorId: 'assessor-test-1'
           }
         }),
@@ -741,7 +727,6 @@ describe('Response Verification Workflow Integration Tests', () => {
             priority: 'MEDIUM',
             responseData: { waterSystem: { filters: 50 } },
             entityId: 'entity-test-1',
-            donorId: 'donor-test-1',
             assessorId: 'assessor-test-1'
           }
         }),
@@ -753,7 +738,6 @@ describe('Response Verification Workflow Integration Tests', () => {
             priority: 'LOW',
             responseData: { shelterMaterials: { tents: 20 } },
             entityId: 'entity-test-1',
-            donorId: 'donor-test-1',
             assessorId: 'assessor-test-1'
           }
         })
@@ -821,7 +805,6 @@ describe('Response Verification Workflow Integration Tests', () => {
             priority: ['LOW', 'MEDIUM', 'HIGH'][i % 3] as any,
             responseData: { capacity: 100 + i },
             entityId: 'entity-test-1',
-            donorId: 'donor-test-1',
             assessorId: 'assessor-test-1'
           }
         })
@@ -867,7 +850,6 @@ describe('Response Verification Workflow Integration Tests', () => {
             priority: 'MEDIUM',
             responseData: { items: 50 + i },
             entityId: 'entity-test-1',
-            donorId: 'donor-test-1',
             assessorId: 'assessor-test-1',
             ...(i % 3 !== 2 && {
               verifiedBy: 'coordinator-test-1',
