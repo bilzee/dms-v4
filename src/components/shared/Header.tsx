@@ -6,6 +6,7 @@ import { RoleSwitcher } from '@/components/layouts/RoleSwitcher';
 import { SyncIndicator } from './SyncIndicator';
 import { OfflineIndicator } from './OfflineIndicator';
 import { ThemeToggle } from './ThemeToggle';
+import { NotificationBell } from '@/components/dashboards/shared/action-queue/NotificationBell';
 import Link from 'next/link';
 import {
   AlertDialog,
@@ -49,6 +50,9 @@ export const Header = ({ fullWidth = false }: HeaderProps) => {
               </>
             )}
             <ThemeToggle />
+            {isAuthenticated && (
+              <NotificationBell />
+            )}
             {isAuthenticated && user && (
               <div className="flex items-center gap-3">
                 <RoleSwitcher />

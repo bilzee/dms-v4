@@ -36,7 +36,9 @@ export function useSignalSSE(options: UseSignalSSEOptions = {}) {
       eventSourceRef.current.close();
     }
 
-    const es = new EventSource('/api/v1/signals/live');
+    const token = getAuthToken();
+    const url = token ? `/api/v1/signals/live?token=${encodeURIComponent(token)}` : '/api/v1/signals/live';
+    const es = new EventSource(url);
     eventSourceRef.current = es;
 
     es.onopen = () => {

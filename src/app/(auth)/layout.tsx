@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { offlineBootstrap } from '@/lib/offline/bootstrap';
+import { useSignalSSE } from '@/hooks/useSignalSSE';
+import { toast } from 'sonner';
 
 export default function AuthLayout({
   children,
@@ -13,8 +15,31 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [isOnline, setIsOnline] = useState(true);
+
+  useSignalSSE({
+    enabled: isAuthenticated,
+    onSignalCreated: (event) => {
+      const data = event.data as Record<string, string>;
+      if (data?.entityName && data?.signalReason) {
+        const title = data.signalReason.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        toast.info(title, {
+          description: data.entityName,
+          duration: 5000,
+        });
+      }
+    },
+    onNotification: (event) => {
+      const data = event.data as Record<string, string>;
+      if (data?.title) {
+        toast(data.title, {
+          description: data.body || '',
+          duration: 6000,
+        });
+      }
+    },
+  });
   
   // Detect dashboard pages that should have full width
   const isFullscreen = pathname.includes('situation-dashboard');
