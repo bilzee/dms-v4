@@ -102,7 +102,7 @@ export default function AssessorDashboard() {
 
         <StatCardGrid columns={4}>
           <StatCard
-            label="Pending Assessments"
+            label="Pending Actions"
             value={signalsData?.unresolvedCount ?? 0}
             severity="high"
             icon={FileText}
@@ -110,7 +110,7 @@ export default function AssessorDashboard() {
           />
           <StatCard
             label="Overdue"
-            value={signalsData?.criticalCount ?? 0}
+            value={signalsData?.signals?.filter(s => s.signalReason === 'overdue').length ?? 0}
             severity="critical"
             icon={Clock}
             loading={!signalsData}
@@ -129,8 +129,8 @@ export default function AssessorDashboard() {
           />
         </StatCardGrid>
 
-        <div className="flex flex-col md:flex-row gap-4 min-h-[400px]">
-          <div className="w-full md:w-[55%] lg:w-[45%] shrink-0 border rounded-lg bg-card">
+        <div className="flex flex-col md:flex-row gap-4 h-[500px]">
+          <div className="w-full md:w-[55%] lg:w-[45%] shrink-0 border rounded-lg bg-card overflow-hidden">
             <ActionQueue
               role="ASSESSOR"
               onItemSelect={setSelectedSignal}

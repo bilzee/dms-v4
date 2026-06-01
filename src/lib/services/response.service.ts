@@ -585,18 +585,17 @@ export class ResponseService {
       const updateData: Record<string, unknown> = {
         deliveryStatus: 'DELIVERED',
         verificationStatus,
-        items: input.deliveredItems, // Store delivered items in the existing JSON field
+        items: input.deliveredItems,
         resources: {
           deliveryLocation: input.deliveryLocation,
           deliveryNotes: input.deliveryNotes,
           mediaAttachmentIds: input.mediaAttachmentIds,
           deliveredAt: new Date().toISOString()
-        }, // Store delivery data in resources JSON field
-        responseDate: new Date(), // Capture delivery timestamp
+        },
+        responseDate: new Date(),
         updatedAt: new Date()
       }
 
-      // If auto-verified, add verification details
       if (verificationStatus === 'VERIFIED') {
         updateData.verifiedAt = new Date()
         updateData.verifiedBy = 'auto-approval'
@@ -627,11 +626,48 @@ export class ResponseService {
               name: true,
               email: true
             }
+          },
+          planCommitments: {
+            select: { commitmentId: true }
           }
         }
       })
 
-      // Create audit log
+      if (response.planCommitments.length > 0 && input.deliveredItems) {
+        const deliveredItems = input.deliveredItems as Array<{ name: string; quantity: number }>;
+        for (const pc of response.planCommitments) {
+          const commitment = await tx.donorCommitment.findUnique({
+            where: { id: pc.commitmentId },
+            select: { id: true, items: true, deliveredQuantity: true, totalCommittedQuantity: true, status: true },
+          });
+          if (!commitment?.items) continue;
+
+          const cItems = (commitment.items as Array<{ name: string; quantity: number; unit: string; deliveredQuantity?: number }>).map(ci => {
+            const delivered = deliveredItems.find(di => di.name === ci.name);
+            return {
+              ...ci,
+              deliveredQuantity: (ci.deliveredQuantity || 0) + (delivered?.quantity || 0),
+            };
+          });
+
+          const newDeliveredQty = cItems.reduce((s, i) => s + (i.deliveredQuantity || 0), 0);
+          let newStatus: string = commitment.status;
+          const allFullyDelivered = cItems.every(ci => (ci.deliveredQuantity || 0) >= ci.quantity);
+          const anyDelivered = cItems.some(ci => (ci.deliveredQuantity || 0) > 0);
+          if (allFullyDelivered) newStatus = 'COMPLETE';
+          else if (anyDelivered) newStatus = 'PARTIAL';
+
+          await tx.donorCommitment.update({
+            where: { id: pc.commitmentId },
+            data: {
+              items: cItems,
+              deliveredQuantity: newDeliveredQty,
+              status: newStatus as any,
+            },
+          });
+        }
+      }
+
       await this.createAuditLog(
         tx,
         requesterId,

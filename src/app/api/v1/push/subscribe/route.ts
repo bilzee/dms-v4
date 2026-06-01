@@ -10,7 +10,7 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
     const body = await request.json();
     const subscription = PushSubscriptionSchema.parse(body);
 
-    const result = await PushNotificationService.subscribe(user.userId, {
+    const result = await PushNotificationService.subscribe(user.id, {
       endpoint: subscription.endpoint,
       keys: subscription.keys,
       browserInfo: subscription.browserInfo,
@@ -39,7 +39,7 @@ export const DELETE = withAuth(async (request: NextRequest, context: any) => {
       );
     }
 
-    await PushNotificationService.unsubscribe(user.userId, endpoint);
+    await PushNotificationService.unsubscribe(user.id, endpoint);
 
     return NextResponse.json({
       success: true,

@@ -119,7 +119,7 @@ function ResponderDashboardContent() {
     if (signal.incidentId) params.set('incidentId', signal.incidentId)
     if (signal.context?.assessmentId) params.set('assessmentId', signal.context.assessmentId)
     if (signal.context?.commitmentId) params.set('commitmentId', signal.context.commitmentId)
-    if (signal.responseType) params.set('type', signal.responseType)
+    if (signal.context?.responseType) params.set('type', signal.context.responseType)
     switch (signal.signalReason) {
       case 'awaiting-plan':
       case 'awaiting-plan-for-commitment':
@@ -244,7 +244,7 @@ function ResponderDashboardContent() {
             
             <StatCardGrid columns={4}>
               <StatCard
-                label="Awaiting Plans"
+                label="Pending Actions"
                 value={signalsData?.unresolvedCount ?? 0}
                 severity="high"
                 icon={FileText}
@@ -252,15 +252,17 @@ function ResponderDashboardContent() {
               />
               <StatCard
                 label="Awaiting Delivery"
-                value={0}
+                value={signalsData?.signals?.filter(s => s.signalReason === 'awaiting-delivery').length ?? 0}
                 severity="warning"
                 icon={Truck}
+                loading={!signalsData}
               />
               <StatCard
-                label="Completed Today"
-                value={0}
+                label="Partially Covered"
+                value={signalsData?.signals?.filter(s => s.signalReason === 'partially-covered').length ?? 0}
                 severity="success"
                 icon={CheckCircle}
+                loading={!signalsData}
               />
               <StatCard
                 label="Active Plans"
@@ -270,8 +272,8 @@ function ResponderDashboardContent() {
               />
             </StatCardGrid>
 
-            <div className="flex flex-col md:flex-row gap-4 min-h-[400px]">
-              <div className="w-full md:w-[55%] lg:w-[45%] shrink-0 border rounded-lg bg-card">
+            <div className="flex flex-col md:flex-row gap-4 h-[500px]">
+              <div className="w-full md:w-[55%] lg:w-[45%] shrink-0 border rounded-lg bg-card overflow-hidden">
                 <ActionQueue
                   role="RESPONDER"
                   onItemSelect={setSelectedSignal}

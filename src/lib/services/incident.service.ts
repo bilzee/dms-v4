@@ -206,7 +206,7 @@ export class IncidentService {
 
   static async update(
     id: string,
-    data: Partial<CreateIncidentInput['data']>
+    data: Record<string, any>
   ): Promise<Incident> {
     return await prisma.incident.update({
       where: { id },

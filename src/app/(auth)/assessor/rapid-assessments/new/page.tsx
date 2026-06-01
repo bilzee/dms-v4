@@ -74,6 +74,8 @@ function NewAssessmentContent() {
   const [selectedType, setSelectedType] = useState<string>('')
   const [showForm, setShowForm] = useState(false)
   const [latestAssessmentData, setLatestAssessmentData] = useState<any>(null)
+  const prefillEntityId = searchParams.get('entityId') || ''
+  const prefillIncidentId = searchParams.get('incidentId') || ''
 
   useEffect(() => {
     const typeParam = searchParams.get('type')
@@ -82,6 +84,12 @@ function NewAssessmentContent() {
       setShowForm(true)
     }
   }, [searchParams])
+
+  useEffect(() => {
+    if (prefillEntityId && prefillIncidentId && selectedType) {
+      fetchLatestAssessment(prefillIncidentId, prefillEntityId, selectedType)
+    }
+  }, [prefillEntityId, prefillIncidentId, selectedType])
 
   // Fetch latest assessment data when incident and entity are selected
   const fetchLatestAssessment = async (incidentId: string, entityId: string, assessmentType: string) => {
@@ -182,7 +190,8 @@ function NewAssessmentContent() {
     }
 
     const commonProps = {
-      entityId: '', // This would normally be provided by the router or context
+      entityId: prefillEntityId,
+      incidentId: prefillIncidentId,
       initialData: latestAssessmentData,
       onSubmit: handleAssessmentSubmit,
       onCancel: handleGoBack,

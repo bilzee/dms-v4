@@ -45,7 +45,25 @@ export default function DonorDashboardPage() {
       if (!result.success) return null
       return result.data?.donor || null
     },
-    enabled: !!user && showCommitmentForm,
+    enabled: !!user,
+  })
+
+  const { data: commitmentsData } = useQuery({
+    queryKey: ['donor-my-commitments'],
+    queryFn: async () => {
+      const result = await apiGet('/api/v1/donors/profile')
+      if (!result.success) return { active: 0, partial: 0, fulfilledToday: 0 }
+      const commitments: any[] = (result.data as any)?.commitments ?? []
+      const now = new Date()
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      return {
+        active: commitments.filter((c: any) => c.status === 'PLANNED' || c.status === 'PARTIAL').length,
+        partial: commitments.filter((c: any) => c.status === 'PARTIAL').length,
+        fulfilledToday: commitments.filter((c: any) => c.status === 'COMPLETE' && new Date(c.updatedAt) >= todayStart).length,
+      }
+    },
+    enabled: !!user,
+    staleTime: 30000,
   })
 
   const handleSignalAction = (signal: ActionSignalItem) => {
@@ -110,7 +128,7 @@ export default function DonorDashboardPage() {
 
         <StatCardGrid columns={4}>
           <StatCard
-            label="Plans Needing Commitment"
+            label="Pending Actions"
             value={signalsData?.unresolvedCount ?? 0}
             severity="high"
             icon={DollarSign}
@@ -118,26 +136,29 @@ export default function DonorDashboardPage() {
           />
           <StatCard
             label="My Active Commitments"
-            value={0}
+            value={commitmentsData?.active ?? 0}
             severity="info"
             icon={Package}
+            loading={!commitmentsData}
           />
           <StatCard
             label="Partially Fulfilled"
-            value={0}
+            value={signalsData?.signals?.filter(s => s.signalReason === 'partially-fulfilled').length ?? 0}
             severity="warning"
             icon={Clock}
+            loading={!signalsData}
           />
           <StatCard
             label="Fulfilled Today"
-            value={0}
+            value={commitmentsData?.fulfilledToday ?? 0}
             severity="success"
             icon={CheckCircle}
+            loading={!commitmentsData}
           />
         </StatCardGrid>
 
-        <div className="flex flex-col md:flex-row gap-4 min-h-[400px]">
-          <div className="w-full md:w-[55%] lg:w-[45%] shrink-0 border rounded-lg bg-card">
+        <div className="flex flex-col md:flex-row gap-4 h-[500px]">
+          <div className="w-full md:w-[55%] lg:w-[45%] shrink-0 border rounded-lg bg-card overflow-hidden">
             <ActionQueue
               role="DONOR"
               onItemSelect={setSelectedSignal}

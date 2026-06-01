@@ -247,7 +247,7 @@ export const POST = withAuth(async (request: NextRequest, context, { params }: R
         entityId: resolvedEntityId,
         incidentId: resolvedIncidentId,
         status: 'PLANNED',
-        items: validatedData.items,
+        items: validatedData.items.map(item => ({ ...item, deliveredQuantity: 0 })),
         totalCommittedQuantity,
         deliveredQuantity: 0,
         verifiedDeliveredQuantity: 0,

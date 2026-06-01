@@ -78,6 +78,7 @@ const waterSourceOptions: WaterSourceOption[] = [
 
 export function WASHAssessmentForm({ 
   entityId, 
+  incidentId,
   initialData, 
   onSubmit, 
   onCancel, 
@@ -88,7 +89,7 @@ export function WASHAssessmentForm({
   const [gpsCoordinates, setGpsCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [mediaFiles, setMediaFiles] = useState<string[]>((initialData as any)?.mediaAttachments || [])
   const [selectedEntity, setSelectedEntity] = useState<string>(entityId)
-  const [selectedIncident, setSelectedIncident] = useState<string>('')
+  const [selectedIncident, setSelectedIncident] = useState<string>(incidentId || '')
   const [selectedEntityData, setSelectedEntityData] = useState<any>(null)
 
   // Extract WASH data from initialData

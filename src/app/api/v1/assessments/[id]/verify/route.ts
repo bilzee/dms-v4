@@ -65,7 +65,7 @@ export const POST = withAuth(async (
         data: {
           verificationStatus: 'VERIFIED',
           verifiedAt: new Date(),
-          verifiedBy: user.userId
+          verifiedBy: user.id
         },
         include: {
           entity: {
@@ -89,7 +89,7 @@ export const POST = withAuth(async (
       // Create audit log entry
       await tx.auditLog.create({
         data: {
-          userId: user.userId,
+          userId: user.id,
           action: 'ASSESSMENT_VERIFIED',
           resource: 'RapidAssessment',
           resourceId: assessmentId,

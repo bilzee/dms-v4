@@ -21,7 +21,7 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
       data: result,
       meta: {
         timestamp: new Date().toISOString(),
-        triggeredBy: context.user.userId,
+        triggeredBy: context.user.id,
       },
     });
   } catch (error) {

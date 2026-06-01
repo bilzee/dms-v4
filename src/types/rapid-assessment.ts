@@ -145,6 +145,7 @@ export interface RapidAssessmentListResponse {
 // Form Props Types
 export interface BaseAssessmentFormProps {
   entityId: string
+  incidentId?: string
   initialData?: any
   onSubmit: (data: any) => Promise<void>
   onCancel: () => void

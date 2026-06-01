@@ -9,7 +9,10 @@ export type SignalReason =
   | 'assessment-needs-response'
   | 'plan-needs-commitment'
   | 'partially-fulfilled'
-  | 'commitment-awaiting-plan';
+  | 'commitment-awaiting-plan'
+  | 'assessment-awaiting-verification'
+  | 'delivery-awaiting-verification'
+  | 'verification-overdue';
 
 export type SignalPriority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -100,7 +103,8 @@ export interface SignalTriggerPayload {
     | 'response-rejected'
     | 'response-delivered'
     | 'commitment-created'
-    | 'commitment-updated';
+    | 'commitment-updated'
+    | 'coordinator-scan';
   entityId: string;
   incidentId?: string | null;
   assessmentId?: string;
@@ -121,10 +125,13 @@ export const SIGNAL_REASON_ROLES: Record<SignalReason, SignalTargetRole[]> = {
   'awaiting-plan-for-commitment': ['RESPONDER', 'COORDINATOR'],
   'awaiting-delivery': ['RESPONDER', 'COORDINATOR'],
   'partially-covered': ['RESPONDER', 'COORDINATOR'],
-  'assessment-needs-response': ['COORDINATOR'],
+  'assessment-needs-response': ['DONOR', 'COORDINATOR'],
   'plan-needs-commitment': ['DONOR', 'COORDINATOR'],
-  'partially-fulfilled': ['COORDINATOR'],
-  'commitment-awaiting-plan': ['COORDINATOR'],
+  'partially-fulfilled': ['DONOR', 'COORDINATOR'],
+  'commitment-awaiting-plan': ['DONOR', 'COORDINATOR'],
+  'assessment-awaiting-verification': ['COORDINATOR'],
+  'delivery-awaiting-verification': ['COORDINATOR'],
+  'verification-overdue': ['COORDINATOR'],
 };
 
 export const NOTIFICATION_TEMPLATES: Record<SignalReason, { title: string; body: string }> = {
@@ -171,5 +178,17 @@ export const NOTIFICATION_TEMPLATES: Record<SignalReason, { title: string; body:
   'commitment-awaiting-plan': {
     title: 'Your commitment awaits action',
     body: '{entityName} — your commitment is awaiting a responder\'s plan.',
+  },
+  'assessment-awaiting-verification': {
+    title: 'Assessment awaiting review',
+    body: '{entityName} — {assessmentType} assessment submitted for verification.',
+  },
+  'delivery-awaiting-verification': {
+    title: 'Delivery awaiting review',
+    body: '{entityName} — {responseType} response delivery submitted for verification.',
+  },
+  'verification-overdue': {
+    title: 'Verification overdue',
+    body: '{entityName} — submission has been awaiting verification for over 48 hours.',
   },
 };

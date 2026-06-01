@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db/client';
-import { Prisma, AssessmentType } from '@prisma/client';
+import { Prisma, AssessmentType, ResponseType } from '@prisma/client';
 import type {
   SignalReason,
   SignalPriority,
@@ -13,6 +13,32 @@ import { SIGNAL_REASON_ROLES, NOTIFICATION_TEMPLATES } from '@/types/action-sign
 import type { SignalQueryInput } from '@/lib/validation/action-signal';
 
 type PrismaTransaction = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
+type SignalEventPayload = {
+  signalId: string;
+  signalReason: SignalReason;
+  entityName: string;
+  priority: SignalPriority;
+  entityId: string;
+  incidentId: string | null;
+};
+
+type SignalEventType = 'SIGNAL_CREATED' | 'SIGNAL_RESOLVED' | 'SIGNAL_UPDATED';
+
+type SignalListener = (event: SignalEventType, payload: SignalEventPayload) => void;
+
+const signalListeners = new Set<SignalListener>();
+
+export function onSignalEvent(listener: SignalListener): () => void {
+  signalListeners.add(listener);
+  return () => { signalListeners.delete(listener); };
+}
+
+function emitSignalEvent(type: SignalEventType, payload: SignalEventPayload): void {
+  for (const listener of signalListeners) {
+    try { listener(type, payload); } catch {}
+  }
+}
 
 export class ActionSignalService {
 
@@ -32,6 +58,8 @@ export class ActionSignalService {
         case 'assessment-rejected':
           break;
         case 'response-created':
+          await this.handleResponseTrigger(payload, dbClient);
+          break;
         case 'response-delivered':
         case 'response-verified':
         case 'response-rejected':
@@ -60,9 +88,9 @@ export class ActionSignalService {
     });
     if (!entity) return;
 
-    if (payload.trigger === 'assessment-verified' || payload.trigger === 'assessment-created') {
-      const verifiedStatuses = ['SUBMITTED', 'VERIFIED', 'AUTO_VERIFIED'];
+    const verifiedStatuses = ['SUBMITTED', 'VERIFIED', 'AUTO_VERIFIED'];
 
+    if (payload.trigger === 'assessment-verified' || payload.trigger === 'assessment-created' || payload.trigger === 'assessment-submitted') {
       const assessors = assignments.filter(a => a.role === 'ASSESSOR');
       for (const assessor of assessors) {
         await this.resolveSignals(
@@ -70,85 +98,89 @@ export class ActionSignalService {
           payload.entityId,
           payload.incidentId,
           payload.assessmentType || '',
-          ['unassessed'],
+          ['unassessed', 'overdue'],
+          tx
+        );
+      }
+    }
+
+    if (payload.trigger === 'assessment-verified') {
+      await this.resolveSignalsForReason('awaiting-plan', payload, tx);
+      await this.resolveSignalsForReason('assessment-needs-response', payload, tx);
+
+      const responders = assignments.filter(a => a.role === 'RESPONDER');
+      for (const responder of responders) {
+        await this.upsertSignal(
+          {
+            userId: responder.userId,
+            entityId: payload.entityId,
+            incidentId: payload.incidentId,
+            type: payload.assessmentType || 'HEALTH',
+            signalReason: 'awaiting-plan',
+            priority: (payload.assessmentPriority as SignalPriority) || 'MEDIUM',
+            context: {
+              entityName: entity.name,
+              assessmentType: payload.assessmentType,
+              assessmentId: payload.assessmentId,
+            },
+          },
           tx
         );
       }
 
-      if (payload.trigger === 'assessment-verified') {
-        await this.resolveSignalsForReason('awaiting-plan', payload, tx);
-
-        const responders = assignments.filter(a => a.role === 'RESPONDER');
-        for (const responder of responders) {
-          await this.upsertSignal(
-            {
-              userId: responder.userId,
-              entityId: payload.entityId,
-              incidentId: payload.incidentId,
-              type: payload.assessmentType || 'HEALTH',
-              signalReason: 'awaiting-plan',
-              priority: (payload.assessmentPriority as SignalPriority) || 'MEDIUM',
-              context: {
-                entityName: entity.name,
-                assessmentType: payload.assessmentType,
-                assessmentId: payload.assessmentId,
-              },
+      const donors = assignments.filter(a => a.role === 'DONOR');
+      for (const donor of donors) {
+        await this.upsertSignal(
+          {
+            userId: donor.userId,
+            entityId: payload.entityId,
+            incidentId: payload.incidentId,
+            type: payload.assessmentType || 'HEALTH',
+            signalReason: 'assessment-needs-response',
+            priority: (payload.assessmentPriority as SignalPriority) || 'MEDIUM',
+            context: {
+              entityName: entity.name,
+              assessmentType: payload.assessmentType,
+              assessmentId: payload.assessmentId,
             },
-            tx
-          );
-        }
-
-        const donors = assignments.filter(a => a.role === 'DONOR');
-        for (const donor of donors) {
-          await this.upsertSignal(
-            {
-              userId: donor.userId,
-              entityId: payload.entityId,
-              incidentId: payload.incidentId,
-              type: payload.assessmentType || 'HEALTH',
-              signalReason: 'assessment-needs-response',
-              priority: (payload.assessmentPriority as SignalPriority) || 'MEDIUM',
-              context: {
-                entityName: entity.name,
-                assessmentType: payload.assessmentType,
-                assessmentId: payload.assessmentId,
-              },
-            },
-            tx
-          );
-        }
+          },
+          tx
+        );
       }
+    }
 
-      if (payload.assessmentType && payload.assessmentType !== 'POPULATION') {
-        const types = ['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION'] as AssessmentType[];
-        const otherTypes = types.filter(t => t !== payload.assessmentType);
-        for (const type of otherTypes) {
-          const hasAssessment = await tx.rapidAssessment.findFirst({
-            where: {
-              entityId: payload.entityId,
-              incidentId: payload.incidentId,
-              rapidAssessmentType: type,
-              verificationStatus: { in: verifiedStatuses as any[] },
-            },
-          });
-          if (!hasAssessment) {
-            for (const assessor of assessors) {
-              await this.upsertSignal(
-                {
-                  userId: assessor.userId,
-                  entityId: payload.entityId,
-                  incidentId: payload.incidentId,
-                  type,
-                  signalReason: 'unassessed',
-                  priority: await this.derivePriorityFromIncident(payload.incidentId, type, tx),
-                  context: {
-                    entityName: entity.name,
-                    assessmentType: type,
-                  },
+    const assessmentType = payload.assessmentType;
+    if (assessmentType) {
+      const allTypes = ['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION'] as AssessmentType[];
+      const otherTypes = allTypes.filter(t => t !== assessmentType);
+      const assessors = assignments.filter(a => a.role === 'ASSESSOR');
+
+      for (const type of otherTypes) {
+        const hasAssessment = await tx.rapidAssessment.findFirst({
+          where: {
+            entityId: payload.entityId,
+            incidentId: payload.incidentId,
+            rapidAssessmentType: type,
+            verificationStatus: { in: verifiedStatuses as any[] },
+          },
+        });
+        if (!hasAssessment) {
+          for (const assessor of assessors) {
+            await this.upsertSignal(
+              {
+                userId: assessor.userId,
+                entityId: payload.entityId,
+                incidentId: payload.incidentId,
+                type,
+                signalReason: 'unassessed',
+                priority: await this.derivePriorityFromIncident(payload.incidentId, type, tx),
+                context: {
+                  entityName: entity.name,
+                  assessmentType: type,
                 },
-                tx
-              );
-            }
+              },
+              tx
+            );
           }
         }
       }
@@ -184,8 +216,52 @@ export class ActionSignalService {
           );
         }
 
+        const response = payload.responseId
+          ? await tx.rapidResponse.findUnique({
+              where: { id: payload.responseId },
+              select: { deliveryStatus: true, items: true, priority: true },
+            })
+          : null;
+
+        const isPlan = response?.deliveryStatus === 'PLANNED' || !response?.deliveryStatus;
+
+        if (isPlan) {
+          const responders = assignments.filter(a => a.role === 'RESPONDER');
+          const priority = (payload.responsePriority as SignalPriority) || (response?.priority as SignalPriority) || 'MEDIUM';
+          for (const responder of responders) {
+            await this.upsertSignal(
+              {
+                userId: responder.userId,
+                entityId: payload.entityId,
+                incidentId: payload.incidentId!,
+                type: payload.responseType || 'HEALTH',
+                signalReason: 'awaiting-delivery',
+                priority,
+                context: {
+                  entityName: entity.name,
+                  responseType: payload.responseType,
+                  responseId: payload.responseId,
+                },
+              },
+              tx
+            );
+          }
+
+          if (response?.items) {
+            await this.checkPartialCoverage(
+              payload.entityId,
+              payload.incidentId!,
+              payload.responseId!,
+              payload.responseType || 'HEALTH',
+              entity.name,
+              assignments,
+              tx
+            );
+          }
+        }
+
         const donors = assignments.filter(a => a.role === 'DONOR');
-        const priority = (payload.responsePriority as SignalPriority) || 'MEDIUM';
+        const planPriority = (payload.responsePriority as SignalPriority) || (response?.priority as SignalPriority) || 'MEDIUM';
         for (const donor of donors) {
           await this.upsertSignal(
             {
@@ -194,7 +270,7 @@ export class ActionSignalService {
               incidentId: payload.incidentId!,
               type: payload.responseType || 'HEALTH',
               signalReason: 'plan-needs-commitment',
-              priority,
+              priority: planPriority,
               context: {
                 entityName: entity.name,
                 responseType: payload.responseType,
@@ -219,6 +295,18 @@ export class ActionSignalService {
             payload.incidentId!,
             payload.responseType || '',
             ['awaiting-delivery', 'partially-covered'],
+            tx
+          );
+        }
+
+        const donors = assignments.filter(a => a.role === 'DONOR');
+        for (const donor of donors) {
+          await this.resolveSignals(
+            donor.userId,
+            payload.entityId,
+            payload.incidentId!,
+            payload.responseType || '',
+            ['plan-needs-commitment'],
             tx
           );
         }
@@ -288,45 +376,73 @@ export class ActionSignalService {
         id: true,
         incidentId: true,
         donorId: true,
+        status: true,
         donor: { select: { id: true, name: true } },
         planCommitments: { select: { planId: true } },
       },
     });
     if (!commitment) return;
 
-    if (commitment.planCommitments.length > 0 && commitment.incidentId && payload.donorId) {
-      const planIds = commitment.planCommitments.map(pc => pc.planId);
-      const linkedResponses = await tx.rapidResponse.findMany({
-        where: { id: { in: planIds } },
-        select: { id: true, type: true },
-      });
+    if (commitment.planCommitments.length > 0 && commitment.incidentId) {
+      if (payload.donorId) {
+        const planIds = commitment.planCommitments.map(pc => pc.planId);
+        const linkedResponses = await tx.rapidResponse.findMany({
+          where: { id: { in: planIds } },
+          select: { id: true, type: true },
+        });
 
-      const responseTypes = linkedResponses.map(r => r.type);
-      if (responseTypes.length === 0 && payload.responseType) {
-        responseTypes.push(payload.responseType);
+        const responseTypes = linkedResponses.map(r => r.type);
+        if (responseTypes.length === 0 && payload.responseType) {
+          responseTypes.push(payload.responseType as ResponseType);
+        }
+
+        for (const responseType of responseTypes) {
+          await this.resolveSignals(
+            payload.donorId,
+            payload.entityId,
+            commitment.incidentId,
+            responseType,
+            ['plan-needs-commitment'],
+            tx
+          );
+        }
+
+        if (responseTypes.length === 0) {
+          await tx.actionSignal.updateMany({
+            where: {
+              userId: payload.donorId,
+              entityId: payload.entityId,
+              incidentId: commitment.incidentId,
+              signalReason: 'plan-needs-commitment',
+              resolvedAt: null,
+            },
+            data: { resolvedAt: new Date() },
+          });
+        }
       }
 
-      for (const responseType of responseTypes) {
+      const assignments = await this.getAssignmentsForEntity(payload.entityId, tx);
+      const responders = assignments.filter(a => a.role === 'RESPONDER');
+      for (const responder of responders) {
         await this.resolveSignals(
-          payload.donorId,
+          responder.userId,
           payload.entityId,
           commitment.incidentId,
-          responseType,
-          ['plan-needs-commitment'],
+          'COMMITMENT',
+          ['awaiting-plan-for-commitment'],
           tx
         );
       }
 
-      if (responseTypes.length === 0) {
-        await tx.actionSignal.updateMany({
-          where: {
-            entityId: payload.entityId,
-            incidentId: commitment.incidentId,
-            signalReason: 'plan-needs-commitment',
-            resolvedAt: null,
-          },
-          data: { resolvedAt: new Date() },
-        });
+      if (payload.donorId) {
+        await this.resolveSignals(
+          payload.donorId,
+          payload.entityId,
+          commitment.incidentId,
+          'COMMITMENT',
+          ['commitment-awaiting-plan'],
+          tx
+        );
       }
     }
 
@@ -358,7 +474,6 @@ export class ActionSignalService {
         );
       }
 
-      const donor = commitment.donor;
       const donorAssignments = assignments.filter(
         a => a.role === 'DONOR' && a.userId === payload.donorId
       );
@@ -383,6 +498,325 @@ export class ActionSignalService {
         }
       }
     }
+
+    if (commitment.status === 'PARTIAL' && commitment.incidentId && payload.donorId) {
+      const incident = await tx.incident.findUnique({
+        where: { id: commitment.incidentId },
+        select: { severity: true },
+      });
+      const priority = this.mapSeverityToPriority(incident?.severity) || 'MEDIUM';
+
+      await this.upsertSignal(
+        {
+          userId: payload.donorId,
+          entityId: payload.entityId,
+          incidentId: commitment.incidentId,
+          type: 'COMMITMENT',
+          signalReason: 'partially-fulfilled',
+          priority,
+          context: {
+            entityName: entity.name,
+            commitmentId: commitment.id,
+          },
+        },
+        tx
+      );
+    } else if (commitment.status === 'COMPLETE' && commitment.incidentId && payload.donorId) {
+      await this.resolveSignals(
+        payload.donorId,
+        payload.entityId,
+        commitment.incidentId,
+        'COMMITMENT',
+        ['partially-fulfilled'],
+        tx
+      );
+    }
+  }
+
+  private static async checkPartialCoverage(
+    entityId: string,
+    incidentId: string,
+    responseId: string,
+    responseType: string,
+    entityName: string,
+    assignments: { userId: string; role: string }[],
+    tx: PrismaTransaction | typeof prisma
+  ): Promise<void> {
+    const plan = await tx.rapidResponse.findUnique({
+      where: { id: responseId },
+      select: { items: true, priority: true },
+    });
+    if (!plan?.items || !Array.isArray(plan.items)) return;
+
+    const linkedCommitments = await tx.planCommitment.findMany({
+      where: { planId: responseId },
+      select: { commitmentId: true },
+    });
+
+    const planItems = plan.items as Array<{ name: string; quantity: number; unit: string }>;
+    const committedByItem = new Map<string, number>();
+    for (const pi of planItems) {
+      committedByItem.set(pi.name, 0);
+    }
+
+    let hasAnyCoverage = false;
+    let hasAnyGap = false;
+
+    for (const pc of linkedCommitments) {
+      const commitment = await tx.donorCommitment.findUnique({
+        where: { id: pc.commitmentId },
+        select: { items: true },
+      });
+      if (!commitment?.items || !Array.isArray(commitment.items)) continue;
+
+      const cItems = commitment.items as Array<{ name: string; quantity: number }>;
+      for (const ci of cItems) {
+        const current = committedByItem.get(ci.name) || 0;
+        committedByItem.set(ci.name, current + (ci.quantity || 0));
+      }
+    }
+
+    const itemBreakdown: Array<{ itemName: string; plannedQuantity: number; committedQuantity: number; coveragePercent: number }> = [];
+    for (const pi of planItems) {
+      const committed = committedByItem.get(pi.name) || 0;
+      const pct = pi.quantity > 0 ? Math.round((committed / pi.quantity) * 100) : 0;
+      itemBreakdown.push({
+        itemName: pi.name,
+        plannedQuantity: pi.quantity,
+        committedQuantity: committed,
+        coveragePercent: Math.min(pct, 100),
+      });
+      if (committed > 0) hasAnyCoverage = true;
+      if (committed < pi.quantity) hasAnyGap = true;
+    }
+
+    const responders = assignments.filter(a => a.role === 'RESPONDER');
+    const priority = (plan.priority as SignalPriority) || 'MEDIUM';
+
+    if (hasAnyGap && hasAnyCoverage) {
+      const avgCoverage = itemBreakdown.reduce((s, i) => s + i.coveragePercent, 0) / itemBreakdown.length;
+      for (const responder of responders) {
+        await this.upsertSignal(
+          {
+            userId: responder.userId,
+            entityId,
+            incidentId,
+            type: responseType,
+            signalReason: 'partially-covered',
+            priority,
+            context: {
+              entityName,
+              responseType,
+              responseId,
+              coveragePercent: Math.round(avgCoverage),
+              itemBreakdown,
+            },
+          },
+          tx
+        );
+      }
+    } else if (!hasAnyGap && hasAnyCoverage) {
+      for (const responder of responders) {
+        await this.resolveSignals(
+          responder.userId,
+          entityId,
+          incidentId,
+          responseType,
+          ['partially-covered'],
+          tx
+        );
+      }
+    }
+  }
+
+  static async evaluatePopulationCadence(
+    tx?: PrismaTransaction | typeof prisma
+  ): Promise<number> {
+    const dbClient = tx || prisma;
+    let created = 0;
+
+    const entities = await dbClient.entity.findMany({
+      where: {
+        isActive: true,
+        metadata: { path: ['populationAssessmentCadenceHours'], not: Prisma.DbNull },
+      },
+      select: {
+        id: true,
+        name: true,
+        metadata: true,
+        createdAt: true,
+      },
+    });
+
+    const activeIncidents = await dbClient.incident.findMany({
+      where: { status: 'ACTIVE' },
+      select: { id: true, createdAt: true },
+    });
+
+    for (const entity of entities) {
+      const metadata = entity.metadata as Record<string, unknown> | null;
+      const cadenceHours = metadata?.populationAssessmentCadenceHours;
+      if (!cadenceHours || typeof cadenceHours !== 'number' || cadenceHours <= 0) continue;
+
+      for (const incident of activeIncidents) {
+        const lastAssessment = await dbClient.rapidAssessment.findFirst({
+          where: {
+            entityId: entity.id,
+            incidentId: incident.id,
+            rapidAssessmentType: 'POPULATION',
+            verificationStatus: { in: ['SUBMITTED', 'VERIFIED', 'AUTO_VERIFIED'] },
+          },
+          orderBy: { createdAt: 'desc' },
+          select: { createdAt: true },
+        });
+
+        const baseline = lastAssessment?.createdAt || incident.createdAt;
+        const deadline = new Date(baseline.getTime() + cadenceHours * 60 * 60 * 1000);
+
+        if (new Date() > deadline) {
+          const assignments = await this.getAssignmentsForEntity(entity.id, dbClient);
+
+          const assessors = assignments.filter(a => a.role === 'ASSESSOR');
+          for (const assessor of assessors) {
+            const existing = await dbClient.actionSignal.findFirst({
+              where: {
+                userId: assessor.userId,
+                entityId: entity.id,
+                incidentId: incident.id,
+                type: 'POPULATION',
+                signalReason: 'overdue',
+                resolvedAt: null,
+              },
+            });
+
+            if (!existing) {
+              await this.upsertSignal(
+                {
+                  userId: assessor.userId,
+                  entityId: entity.id,
+                  incidentId: incident.id,
+                  type: 'POPULATION',
+                  signalReason: 'overdue',
+                  priority: 'CRITICAL',
+                  context: {
+                    entityName: entity.name,
+                    assessmentType: 'POPULATION',
+                    deadline: deadline.toISOString(),
+                    lastAssessmentDate: lastAssessment?.createdAt?.toISOString(),
+                  },
+                },
+                dbClient
+              );
+              created++;
+            }
+          }
+        }
+      }
+    }
+
+    return created;
+  }
+
+  private static async evaluateCoordinatorSignals(): Promise<void> {
+    const coordinators = await prisma.user.findMany({
+      where: { roles: { some: { role: { name: 'COORDINATOR' } } } },
+      select: { id: true },
+    });
+    if (coordinators.length === 0) return;
+
+    const submittedAssessments = await prisma.rapidAssessment.findMany({
+      where: { verificationStatus: 'SUBMITTED' },
+      select: {
+        id: true, entityId: true, incidentId: true, rapidAssessmentType: true,
+        priority: true, createdAt: true,
+        entity: { select: { id: true, name: true, type: true, location: true, coordinates: true } },
+      },
+    });
+
+    const submittedResponses = await prisma.rapidResponse.findMany({
+      where: { verificationStatus: 'SUBMITTED' },
+      select: {
+        id: true, entityId: true, type: true, priority: true, createdAt: true,
+        deliveryStatus: true,
+        assessment: { select: { incidentId: true } },
+        entity: { select: { id: true, name: true, type: true, location: true, coordinates: true } },
+      },
+    });
+
+    for (const coordinator of coordinators) {
+      for (const a of submittedAssessments) {
+        if (!a.incidentId) continue;
+        const hoursSinceSubmit = (Date.now() - a.createdAt.getTime()) / (1000 * 60 * 60);
+        const reason: SignalReason = hoursSinceSubmit > 48 ? 'verification-overdue' : 'assessment-awaiting-verification';
+        const priority: SignalPriority = reason === 'verification-overdue' ? 'CRITICAL' : (a.priority as SignalPriority) || 'MEDIUM';
+
+        await this.upsertSignal({
+          userId: coordinator.id,
+          entityId: a.entityId,
+          incidentId: a.incidentId,
+          type: a.rapidAssessmentType,
+          signalReason: reason,
+          priority,
+          context: {
+            entityName: a.entity.name,
+            assessmentType: a.rapidAssessmentType,
+            assessmentId: a.id,
+          },
+        }, prisma);
+      }
+
+      for (const r of submittedResponses) {
+        const incidentId = r.assessment?.incidentId;
+        if (!incidentId) continue;
+        const hoursSinceSubmit = (Date.now() - r.createdAt.getTime()) / (1000 * 60 * 60);
+        const reason: SignalReason = hoursSinceSubmit > 48 ? 'verification-overdue' : 'delivery-awaiting-verification';
+        const priority: SignalPriority = reason === 'verification-overdue' ? 'CRITICAL' : (r.priority as SignalPriority) || 'MEDIUM';
+
+        await this.upsertSignal({
+          userId: coordinator.id,
+          entityId: r.entityId,
+          incidentId,
+          type: r.type,
+          signalReason: reason,
+          priority,
+          context: {
+            entityName: r.entity.name,
+            responseType: r.type,
+            responseId: r.id,
+          },
+        }, prisma);
+      }
+    }
+
+    const coordinatorIds = coordinators.map(c => c.id);
+    const knownReasons: SignalReason[] = ['assessment-awaiting-verification', 'delivery-awaiting-verification', 'verification-overdue'];
+    const activeCoordinatorSignals = await prisma.actionSignal.findMany({
+      where: {
+        userId: { in: coordinatorIds },
+        signalReason: { in: knownReasons },
+        resolvedAt: null,
+      },
+      select: { id: true, signalReason: true, type: true, context: true },
+    });
+
+    const submittedAssessmentIds = new Set(submittedAssessments.map(a => a.id));
+    const submittedResponseIds = new Set(submittedResponses.map(r => r.id));
+
+    for (const signal of activeCoordinatorSignals) {
+      const ctx = signal.context as Record<string, unknown>;
+      const isAssessment = signal.signalReason === 'assessment-awaiting-verification' || signal.signalReason === 'verification-overdue';
+      const sourceId = isAssessment ? ctx?.assessmentId : ctx?.responseId;
+      const stillExists = isAssessment
+        ? submittedAssessmentIds.has(sourceId as string)
+        : submittedResponseIds.has(sourceId as string);
+
+      if (!stillExists) {
+        await prisma.actionSignal.update({
+          where: { id: signal.id },
+          data: { resolvedAt: new Date() },
+        });
+      }
+    }
   }
 
   static async getActiveSignals(
@@ -396,8 +830,14 @@ export class ActionSignalService {
     unresolvedCount: number;
     criticalCount: number;
   }> {
-    const entityFilter = query.entityId ? { entityId: query.entityId } : {};
+    await this.evaluatePopulationCadence().catch(() => {});
+
     const activeRole = query.activeRole || roles[0] || 'COORDINATOR';
+    if (activeRole === 'COORDINATOR' || activeRole === 'ADMIN') {
+      await this.evaluateCoordinatorSignals().catch(() => {});
+    }
+
+    const entityFilter = query.entityId ? { entityId: query.entityId } : {};
     const isGlobalRole = activeRole === 'COORDINATOR' || activeRole === 'ADMIN';
 
     let assignedEntityIds: string[] | null = null;
@@ -409,8 +849,14 @@ export class ActionSignalService {
       assignedEntityIds = assignments.map(a => a.entityId);
     }
 
-    const allowedReasons = isGlobalRole
-      ? undefined
+    const coordinatorReasons: SignalReason[] = [
+      'assessment-awaiting-verification',
+      'delivery-awaiting-verification',
+      'verification-overdue',
+    ];
+
+    const allowedReasons = activeRole === 'COORDINATOR' || activeRole === 'ADMIN'
+      ? coordinatorReasons
       : Object.entries(SIGNAL_REASON_ROLES)
           .filter(([, reasonRoles]) => reasonRoles.includes(activeRole as SignalTargetRole))
           .map(([reason]) => reason as SignalReason);
@@ -471,93 +917,10 @@ export class ActionSignalService {
     let finalCritical = criticalCount;
 
     if (activeRole === 'COORDINATOR') {
-      const coordinatorReasons: SignalReason[] = [
-        'assessment-needs-response',
-        'plan-needs-commitment',
-        'partially-fulfilled',
-      ];
-      const toRemove = new Set<string>();
-
-      for (const s of mappedSignals) {
-        if (!coordinatorReasons.includes(s.signalReason)) {
-          toRemove.add(s.id);
-        }
-      }
-
-      const unassessedSignals = mappedSignals.filter(s => s.signalReason === 'unassessed');
-      if (unassessedSignals.length > 0) {
-        const entityIds = [...new Set(unassessedSignals.map(s => s.entityId))];
-        const covered = await prisma.entityAssignment.findMany({
-          where: {
-            entityId: { in: entityIds },
-            user: { roles: { some: { role: { name: 'ASSESSOR' } } } },
-          },
-          select: { entityId: true },
-          distinct: ['entityId'],
-        });
-        const coveredIds = new Set(covered.map(e => e.entityId));
-        for (const s of unassessedSignals) {
-          if (!coveredIds.has(s.entityId)) toRemove.delete(s.id);
-        }
-      }
-
-      const awaitingPlanSignals = mappedSignals.filter(s =>
-        s.signalReason === 'awaiting-plan' || s.signalReason === 'awaiting-plan-for-commitment'
-      );
-      if (awaitingPlanSignals.length > 0) {
-        const entityIds = [...new Set(awaitingPlanSignals.map(s => s.entityId))];
-        const covered = await prisma.entityAssignment.findMany({
-          where: {
-            entityId: { in: entityIds },
-            user: { roles: { some: { role: { name: 'RESPONDER' } } } },
-          },
-          select: { entityId: true },
-          distinct: ['entityId'],
-        });
-        const coveredIds = new Set(covered.map(e => e.entityId));
-        for (const s of awaitingPlanSignals) {
-          if (!coveredIds.has(s.entityId)) toRemove.delete(s.id);
-        }
-      }
-
-      const planCommitmentSignals = mappedSignals.filter(s =>
-        s.signalReason === 'plan-needs-commitment'
-      );
-      if (planCommitmentSignals.length > 0) {
-        const entityIds = [...new Set(planCommitmentSignals.map(s => s.entityId))];
-        const covered = await prisma.entityAssignment.findMany({
-          where: {
-            entityId: { in: entityIds },
-            user: { roles: { some: { role: { name: 'DONOR' } } } },
-          },
-          select: { entityId: true },
-          distinct: ['entityId'],
-        });
-        const coveredIds = new Set(covered.map(e => e.entityId));
-        for (const s of planCommitmentSignals) {
-          if (coveredIds.has(s.entityId)) toRemove.delete(s.id);
-        }
-      }
-
-      finalSignals = mappedSignals.filter(s => !toRemove.has(s.id));
-
-      const deduped = new Map<string, ActionSignalItem>();
-      for (const s of finalSignals) {
-        const key = `${s.entityId}:${s.type}:${s.signalReason}`;
-        if (!deduped.has(key)) {
-          deduped.set(key, s);
-        }
-      }
-
-      finalSignals = Array.from(deduped.values());
-      finalSignals.sort((a, b) => {
-        const pDiff = this.priorityRank(b.priority) - this.priorityRank(a.priority);
-        if (pDiff !== 0) return pDiff;
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      });
-      finalTotal = finalSignals.length;
-      finalUnresolved = finalSignals.filter(s => !s.resolvedAt).length;
-      finalCritical = finalSignals.filter(s => !s.resolvedAt && s.priority === 'CRITICAL').length;
+      finalSignals = mappedSignals;
+      finalTotal = mappedSignals.length;
+      finalUnresolved = mappedSignals.filter(s => !s.resolvedAt).length;
+      finalCritical = mappedSignals.filter(s => !s.resolvedAt && s.priority === 'CRITICAL').length;
     }
 
     let groups: SignalGroup[] = [];
@@ -648,6 +1011,14 @@ export class ActionSignalService {
           resolvedAt: null,
         },
       });
+      emitSignalEvent('SIGNAL_UPDATED', {
+        signalId: existing.id,
+        signalReason: data.signalReason,
+        entityName: data.context.entityName || '',
+        priority: data.priority,
+        entityId: data.entityId,
+        incidentId: data.incidentId,
+      });
       return;
     }
 
@@ -663,7 +1034,45 @@ export class ActionSignalService {
       },
     });
 
+    emitSignalEvent('SIGNAL_CREATED', {
+      signalId: signal.id,
+      signalReason: data.signalReason,
+      entityName: data.context.entityName || '',
+      priority: data.priority,
+      entityId: data.entityId,
+      incidentId: data.incidentId,
+    });
+
     await this.createNotification(signal.id, data.userId, data.signalReason, data.context, tx);
+
+    if (data.priority === 'CRITICAL' || data.priority === 'HIGH') {
+      this.sendPushNotification(data.userId, data.signalReason, data.context).catch(() => {});
+    }
+  }
+
+  private static async sendPushNotification(
+    userId: string,
+    reason: SignalReason,
+    context: SignalContext
+  ): Promise<void> {
+    try {
+      const { PushNotificationService } = await import('@/lib/services/push-notification.service');
+      const template = NOTIFICATION_TEMPLATES[reason];
+      if (!template) return;
+
+      const body = template.body
+        .replace('{entityName}', context.entityName || '')
+        .replace('{assessmentType}', context.assessmentType || '')
+        .replace('{responseType}', context.responseType || '')
+        .replace('{donorName}', context.donorName || '')
+        .replace('{coveragePercent}', String(context.coveragePercent || 0));
+
+      await PushNotificationService.sendToUser(userId, {
+        title: template.title,
+        body,
+        data: { signalReason: reason, entityId: context.entityName },
+      });
+    } catch {}
   }
 
   private static async createNotification(
@@ -703,7 +1112,7 @@ export class ActionSignalService {
     reasons: SignalReason[],
     tx: PrismaTransaction | typeof prisma
   ): Promise<void> {
-    await tx.actionSignal.updateMany({
+    const toResolve = await tx.actionSignal.findMany({
       where: {
         userId,
         entityId,
@@ -712,8 +1121,33 @@ export class ActionSignalService {
         signalReason: { in: reasons },
         resolvedAt: null,
       },
-      data: { resolvedAt: new Date() },
+      select: { id: true, signalReason: true, priority: true },
     });
+
+    if (toResolve.length > 0) {
+      await tx.actionSignal.updateMany({
+        where: {
+          id: { in: toResolve.map(s => s.id) },
+        },
+        data: { resolvedAt: new Date() },
+      });
+
+      const entity = await tx.entity.findUnique({
+        where: { id: entityId },
+        select: { name: true },
+      });
+
+      for (const s of toResolve) {
+        emitSignalEvent('SIGNAL_RESOLVED', {
+          signalId: s.id,
+          signalReason: s.signalReason as SignalReason,
+          entityName: entity?.name || '',
+          priority: s.priority as SignalPriority,
+          entityId,
+          incidentId,
+        });
+      }
+    }
   }
 
   private static async resolveSignalsForReason(

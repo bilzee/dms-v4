@@ -76,7 +76,7 @@ export const POST = withAuth(async (
           rejectionReason: validatedData.reason,
           rejectionFeedback: validatedData.feedback,
           verifiedAt: new Date(),
-          verifiedBy: user.userId
+          verifiedBy: user.id
         },
         include: {
           entity: {
@@ -100,7 +100,7 @@ export const POST = withAuth(async (
       // Create audit log entry
       await tx.auditLog.create({
         data: {
-          userId: user.userId,
+          userId: user.id,
           action: 'ASSESSMENT_REJECTED',
           resource: 'RapidAssessment',
           resourceId: assessmentId,

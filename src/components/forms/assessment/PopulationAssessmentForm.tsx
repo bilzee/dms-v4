@@ -110,6 +110,7 @@ type FormData = z.infer<typeof PopulationAssessmentSchema>
 
 export function PopulationAssessmentForm({ 
   entityId, 
+  incidentId,
   initialData, 
   onSubmit, 
   onCancel, 
@@ -120,7 +121,7 @@ export function PopulationAssessmentForm({
   const [gpsCoordinates, setGpsCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [mediaFiles, setMediaFiles] = useState<string[]>((initialData as any)?.mediaAttachments || [])
   const [selectedEntity, setSelectedEntity] = useState<string>(entityId)
-  const [selectedIncident, setSelectedIncident] = useState<string>('')
+  const [selectedIncident, setSelectedIncident] = useState<string>(incidentId || '')
   const [selectedEntityData, setSelectedEntityData] = useState<any>(null)
 
   // Extract population data from initialData

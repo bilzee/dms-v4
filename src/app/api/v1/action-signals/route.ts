@@ -13,7 +13,7 @@ export const GET = withAuth(async (request: NextRequest, context: any) => {
     const query = SignalQuerySchema.parse(queryParams);
 
     const result = await ActionSignalService.getActiveSignals(
-      user.userId,
+      user.id,
       roles,
       query
     );

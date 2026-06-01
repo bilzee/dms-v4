@@ -5,13 +5,12 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { ActionQueueItem } from './ActionQueueItem';
 import { useActionSignals } from '@/hooks/useActionSignals';
-import { useCoordinatorActions } from '@/hooks/useCoordinatorActions';
-import { SIGNAL_REASON_ROLES } from '@/types/action-signal';
-import type { ActionSignalItem } from '@/types/action-signal';
+import { SignalReasonIcon, REASON_LABELS } from './SignalReasonIcon';
+import { SignalPriorityBadge, SignalPriorityDot, PRIORITY_CLASSES } from './SignalPriorityBadge';
+import type { ActionSignalItem, SignalPriority } from '@/types/action-signal';
 
-type SortOption = 'priority' | 'type' | 'entity';
+type SortOption = 'priority' | 'type' | 'entity' | 'incident';
 
 interface ActionQueueProps {
   role: 'ASSESSOR' | 'RESPONDER' | 'DONOR' | 'COORDINATOR';
@@ -22,6 +21,33 @@ interface ActionQueueProps {
   className?: string;
 }
 
+const PRIORITY_ORDER: Record<string, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
+
+const ACTION_LABELS: Record<string, Record<string, string>> = {
+  ASSESSOR: {
+    'unassessed': 'Start Assessment',
+    'reassessment-needed': 'Reassess',
+    'overdue': 'Start Assessment',
+  },
+  RESPONDER: {
+    'awaiting-plan': 'Create Plan',
+    'awaiting-plan-for-commitment': 'Create Plan',
+    'awaiting-delivery': 'Confirm Delivery',
+    'partially-covered': 'View Plan',
+  },
+  DONOR: {
+    'assessment-needs-response': 'View',
+    'plan-needs-commitment': 'Make Commitment',
+    'partially-fulfilled': 'View Commitment',
+    'commitment-awaiting-plan': 'View Details',
+  },
+  COORDINATOR: {
+    'assessment-awaiting-verification': 'Review Assessment',
+    'delivery-awaiting-verification': 'Review Delivery',
+    'verification-overdue': 'Review Now',
+  },
+};
+
 export function ActionQueue({
   role,
   sortBy: initialSortBy = 'priority',
@@ -31,122 +57,46 @@ export function ActionQueue({
   className,
 }: ActionQueueProps) {
   const [sortBy, setSortBy] = useState<SortOption>(initialSortBy);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
-  const isCoordinator = role === 'COORDINATOR';
-
-  const signalsResult = useActionSignals({
+  const result = useActionSignals({
     unresolvedOnly: true,
-    grouped: true,
     limit: 100,
     activeRole: role,
-    enabled: !isCoordinator,
   });
 
-  const coordinatorResult = useCoordinatorActions({
-    enabled: isCoordinator,
-  });
-
-  const activeResult = isCoordinator ? coordinatorResult : signalsResult;
-
-  const allSignals: ActionSignalItem[] = useMemo(() => {
-    if (isCoordinator) {
-      const items = coordinatorResult.data?.items ?? [];
-      return items.map(item => ({
-        id: item.id,
-        userId: '',
-        entityId: item.entityId,
-        incidentId: null,
-        type: item.type,
-        signalReason: item.signalReason as any,
-        priority: item.priority as any,
-        context: item.context as any,
-        createdAt: new Date(item.createdAt),
-        resolvedAt: null,
-        entity: item.entity,
-      }));
-    }
-    return (signalsResult.data?.signals ?? []) as ActionSignalItem[];
-  }, [isCoordinator, coordinatorResult.data, signalsResult.data]);
-
-  const groups = useMemo(() => {
-    if (isCoordinator) {
-      const coordGroups = coordinatorResult.data?.groups ?? [];
-      return coordGroups.map(g => ({
-        entityId: g.entityId,
-        entityName: g.entityName,
-        entityType: g.entityType,
-        entityLocation: g.entityLocation,
-        entityCoordinates: g.entityCoordinates,
-        type: g.type,
-        signals: g.signals.map(item => ({
-          id: item.id,
-          userId: '',
-          entityId: item.entityId,
-          incidentId: null,
-          type: item.type,
-          signalReason: item.signalReason as any,
-          priority: item.priority as any,
-          context: item.context as any,
-          createdAt: new Date(item.createdAt),
-          resolvedAt: null,
-          entity: item.entity,
-        })),
-        count: g.count,
-        highestPriority: g.highestPriority as any,
-      }));
-    }
-
-    const allGroups = signalsResult.data?.groups ?? [];
-    return allGroups.map(g => ({
-      ...g,
-      signals: g.signals.filter(s => {
-        const allowedReasons = Object.entries(SIGNAL_REASON_ROLES)
-          .filter(([, r]) => r.includes(role as any))
-          .map(([reason]) => reason);
-        return allowedReasons.includes(s.signalReason);
-      }),
-    })).filter(g => g.signals.length > 0).map(g => ({
-      ...g,
-      count: g.signals.length,
-    }));
-  }, [isCoordinator, coordinatorResult.data, signalsResult.data, role]);
-
-  const signals = useMemo(() => {
-    if (isCoordinator) return allSignals;
-    return allSignals.filter(s => {
-      const allowedReasons = Object.entries(SIGNAL_REASON_ROLES)
-        .filter(([, r]) => r.includes(role as any))
-        .map(([reason]) => reason);
-      return allowedReasons.includes(s.signalReason);
-    });
-  }, [allSignals, role, isCoordinator]);
-
-  const isLoading = activeResult.isLoading;
-  const error = activeResult.error;
-
+  const signals = (result.data?.signals ?? []) as ActionSignalItem[];
   const unresolvedCount = signals.length;
   const criticalCount = signals.filter(s => s.priority === 'CRITICAL').length;
 
-  const sortedGroups = useMemo(() => {
-    if (sortBy === 'priority') return groups;
-    return [...groups].sort((a, b) => {
-      if (sortBy === 'type') return a.type.localeCompare(b.type);
-      if (sortBy === 'entity') return a.entityName.localeCompare(b.entityName);
+  const sortedSignals = useMemo(() => {
+    return [...signals].sort((a, b) => {
+      if (sortBy === 'priority') {
+        const pDiff = (PRIORITY_ORDER[b.priority] || 0) - (PRIORITY_ORDER[a.priority] || 0);
+        if (pDiff !== 0) return pDiff;
+        const eDiff = (a.entity?.name || '').localeCompare(b.entity?.name || '');
+        if (eDiff !== 0) return eDiff;
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+      if (sortBy === 'type') {
+        const tDiff = a.type.localeCompare(b.type);
+        if (tDiff !== 0) return tDiff;
+        return (PRIORITY_ORDER[b.priority] || 0) - (PRIORITY_ORDER[a.priority] || 0);
+      }
+      if (sortBy === 'entity') {
+        const eDiff = (a.entity?.name || '').localeCompare(b.entity?.name || '');
+        if (eDiff !== 0) return eDiff;
+        return (PRIORITY_ORDER[b.priority] || 0) - (PRIORITY_ORDER[a.priority] || 0);
+      }
+      if (sortBy === 'incident') {
+        const iDiff = (a.incident?.name || '').localeCompare(b.incident?.name || '');
+        if (iDiff !== 0) return iDiff;
+        return (PRIORITY_ORDER[b.priority] || 0) - (PRIORITY_ORDER[a.priority] || 0);
+      }
       return 0;
     });
-  }, [groups, sortBy]);
+  }, [signals, sortBy]);
 
-  const toggleGroup = (key: string) => {
-    setExpandedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  };
-
-  if (isLoading) {
+  if (result.isLoading) {
     return (
       <div className="space-y-2 p-4">
         <Skeleton className="h-8 w-48" />
@@ -157,14 +107,14 @@ export function ActionQueue({
     );
   }
 
-  if (error) {
+  if (result.error) {
     return (
       <div className="p-4">
         <EmptyState
           type="network"
           title="Failed to load action signals"
-          description={error.message}
-          action={{ label: 'Retry', onClick: () => activeResult.refetch() }}
+          description={result.error.message}
+          action={{ label: 'Retry', onClick: () => result.refetch() }}
         />
       </div>
     );
@@ -183,8 +133,8 @@ export function ActionQueue({
   }
 
   return (
-    <div className={cn('flex flex-col', className)}>
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-card sticky top-0 z-10">
+    <div className={cn('flex flex-col h-full', className)}>
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-card shrink-0 z-10">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold">
             Action Queue
@@ -194,7 +144,7 @@ export function ActionQueue({
           </span>
         </div>
         <div className="flex items-center gap-1">
-          {(['priority', 'type', 'entity'] as SortOption[]).map((option) => (
+          {(['priority', 'type', 'entity', 'incident'] as SortOption[]).map((option) => (
             <Button
               key={option}
               size="sm"
@@ -214,24 +164,70 @@ export function ActionQueue({
         aria-label={`Action queue, ${unresolvedCount} pending items`}
         aria-live="polite"
       >
-        {sortedGroups.map((group) => {
-          const groupKey = `${group.entityId}:${group.type}`;
-          const isExpanded = expandedGroups.has(groupKey);
-          const primarySignal = group.signals[0];
+        {sortedSignals.map((signal) => {
+          const priorityCls = PRIORITY_CLASSES[signal.priority as SignalPriority] || PRIORITY_CLASSES.MEDIUM;
+          const actionLabel = ACTION_LABELS[role]?.[signal.signalReason] || 'View';
+          const isSelected = selectedSignalId === signal.id;
+          const typeLabel = signal.type !== 'COMMITMENT' && signal.type !== 'GENERAL' ? signal.type : '';
 
           return (
-            <ActionQueueItem
-              key={groupKey}
-              signal={primarySignal}
-              role={role}
-              isGrouped={group.count > 1}
-              subItems={group.signals.slice(1)}
-              isExpanded={isExpanded}
-              isSelected={selectedSignalId === primarySignal.id}
-              onSelect={(s) => onItemSelect?.(s)}
-              onExpand={() => toggleGroup(groupKey)}
-              onAction={onItemAction}
-            />
+            <button
+              key={signal.id}
+              type="button"
+              className={cn(
+                'w-full text-left flex items-center gap-3 px-4 py-3 min-h-[60px] md:min-h-[72px] lg:min-h-[80px]',
+                'transition-colors duration-150 border-b border-l-3',
+                'hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                priorityCls.border,
+                isSelected && 'bg-primary/5 border-l-blue-500',
+              )}
+              onClick={() => onItemSelect?.(signal)}
+              role="option"
+              aria-selected={isSelected}
+              aria-label={`${signal.entity?.name || 'Entity'} — ${typeLabel} ${REASON_LABELS[signal.signalReason]} — ${signal.priority} priority`}
+            >
+              <SignalPriorityDot priority={signal.priority as SignalPriority} />
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium text-sm truncate">
+                    {typeLabel && <span className="text-muted-foreground">{typeLabel} · </span>}
+                    {REASON_LABELS[signal.signalReason]}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <SignalReasonIcon reason={signal.signalReason} priority={signal.priority as SignalPriority} size={14} />
+                  <span className="text-xs text-muted-foreground truncate">
+                    {signal.entity?.name || 'Unknown Entity'}
+                    {signal.entity?.type && (
+                      <span className="ml-1 opacity-60">({signal.entity.type})</span>
+                    )}
+                  </span>
+                </div>
+                {signal.incident?.name && (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="text-[11px] text-muted-foreground/70 truncate">
+                      {signal.incident.name}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <SignalPriorityBadge priority={signal.priority as SignalPriority} />
+
+                {onItemAction && (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="hidden lg:inline-flex text-xs h-7 px-2"
+                    onClick={(e) => { e.stopPropagation(); onItemAction(signal); }}
+                  >
+                    {actionLabel}
+                  </Button>
+                )}
+              </div>
+            </button>
           );
         })}
       </div>

@@ -72,6 +72,7 @@ const shelterTypeOptions: ShelterTypeOption[] = [
 
 export function ShelterAssessmentForm({ 
   entityId, 
+  incidentId,
   initialData, 
   onSubmit, 
   onCancel, 
@@ -82,7 +83,7 @@ export function ShelterAssessmentForm({
   const [gpsCoordinates, setGpsCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [mediaFiles, setMediaFiles] = useState<string[]>((initialData as any)?.mediaAttachments || [])
   const [selectedEntity, setSelectedEntity] = useState<string>(entityId)
-  const [selectedIncident, setSelectedIncident] = useState<string>('')
+  const [selectedIncident, setSelectedIncident] = useState<string>(incidentId || '')
   const [selectedEntityData, setSelectedEntityData] = useState<any>(null)
 
   // Extract shelter data from initialData

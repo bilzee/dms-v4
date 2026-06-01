@@ -13,8 +13,8 @@ export const GET = withAuth(async (request: NextRequest, context: any) => {
     const query = NotificationQuerySchema.parse(queryParams);
 
     const [notifications, unreadCount, totalCount] = await Promise.all([
-      notificationService.listNotifications(user.userId, query),
-      notificationService.getUnreadCount(user.userId),
+      notificationService.listNotifications(user.id, query),
+      notificationService.getUnreadCount(user.id),
       Promise.resolve(0),
     ]);
 

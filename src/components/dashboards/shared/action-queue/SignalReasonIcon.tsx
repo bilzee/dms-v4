@@ -41,6 +41,9 @@ const REASON_ICON_MAP: Record<SignalReason, React.ComponentType<{ className?: st
   'plan-needs-commitment': DollarSign,
   'partially-fulfilled': Package,
   'commitment-awaiting-plan': Timer,
+  'assessment-awaiting-verification': ShieldCheck,
+  'delivery-awaiting-verification': Truck,
+  'verification-overdue': AlertCircle,
 };
 
 const COORDINATOR_LABELS: Record<CoordinatorReason, string> = {
@@ -102,6 +105,9 @@ export const REASON_LABELS: Record<SignalReason, string> & Record<string, string
   'plan-needs-commitment': 'Plan needs commitment',
   'partially-fulfilled': 'Partially fulfilled',
   'commitment-awaiting-plan': 'Commitment awaiting plan',
+  'assessment-awaiting-verification': 'Assessment to verify',
+  'delivery-awaiting-verification': 'Delivery to verify',
+  'verification-overdue': 'Verification overdue',
   'verify-assessment': 'Assessment to verify',
   'verify-response': 'Response plan to verify',
   'verify-delivery': 'Delivery to verify',

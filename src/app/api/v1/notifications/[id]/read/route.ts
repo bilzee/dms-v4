@@ -12,7 +12,7 @@ export const PATCH = withAuth(async (request: NextRequest, context: any, { param
     const { user } = context;
     const { id } = await params;
 
-    const success = await notificationService.markNotificationRead(id, user.userId);
+    const success = await notificationService.markNotificationRead(id, user.id);
 
     if (!success) {
       return NextResponse.json(
