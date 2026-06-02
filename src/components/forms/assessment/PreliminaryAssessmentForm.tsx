@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormCard } from '@/components/shared/FormCard'
-import { FormProgress } from '@/components/shared/FormProgress'
 import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Textarea } from '@/components/ui/textarea'
@@ -249,11 +248,6 @@ export function PreliminaryAssessmentForm({
       )}
 
       <form onSubmit={handleSubmit(handleFormSubmit)}>
-        <FormProgress
-          control={control}
-          fields={['reportingAgent', 'reportingLGA', 'reportingWard']}
-          className="mb-2"
-        />
         <FormCard
           title="Preliminary Assessment"
           description="Initial assessment of disaster impact and affected areas"

@@ -16,7 +16,6 @@ import { MediaField } from '@/components/shared/MediaField'
 import { EntitySelector } from '@/components/shared/EntitySelector'
 import { IncidentSelector } from '@/components/shared/IncidentSelector'
 import { PopulationAssessmentFormProps, PopulationAssessment } from '@/types/rapid-assessment'
-import { FormProgress } from '@/components/shared/FormProgress'
 import { cn } from '@/lib/utils'
 import { getCurrentUserName, getAssessmentLocationData } from '@/utils/assessment-utils'
 import { Users, Baby, User, UserPlus, AlertTriangle, Heart } from '@/lib/icons'
@@ -303,12 +302,6 @@ export function PopulationAssessmentForm({
           </CardDescription>
         </CardHeader>
       </Card>
-
-      <FormProgress
-        control={form.control}
-        fields={['totalHouseholds', 'totalPopulation']}
-        className="mb-2"
-      />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>

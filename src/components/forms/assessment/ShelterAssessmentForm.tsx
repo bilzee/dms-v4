@@ -290,7 +290,7 @@ export function ShelterAssessmentForm({
           </Card>
 
           {/* Shelter Availability */}
-          <Card>
+          <Card className="bg-sky-50/50 dark:bg-sky-950/20">
             <CardHeader>
               <CardTitle>Shelter Availability & Safety</CardTitle>
               <CardDescription>
@@ -303,7 +303,7 @@ export function ShelterAssessmentForm({
                   control={form.control}
                   name="areSheltersSufficient"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -328,7 +328,7 @@ export function ShelterAssessmentForm({
                   control={form.control}
                   name="hasSafeStructures"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -353,7 +353,7 @@ export function ShelterAssessmentForm({
                   control={form.control}
                   name="provideWeatherProtection"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -379,7 +379,7 @@ export function ShelterAssessmentForm({
                   control={form.control}
                   name="areOvercrowded"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                       <FormControl>
                         <Checkbox
                           checked={field.value}

@@ -238,7 +238,7 @@ export function SecurityAssessmentForm({
           </Card>
 
           {/* Violence & Safety Assessment */}
-          <Card>
+          <Card className="bg-sky-50/50 dark:bg-sky-950/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-red-500" />
@@ -253,7 +253,7 @@ export function SecurityAssessmentForm({
                 control={form.control}
                 name="isSafeFromViolence"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 border-red-200">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 border-red-200 bg-background">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
@@ -278,7 +278,7 @@ export function SecurityAssessmentForm({
                 control={form.control}
                 name="gbvCasesReported"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 border-red-200">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 border-red-200 bg-background">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
@@ -302,7 +302,7 @@ export function SecurityAssessmentForm({
           </Card>
 
           {/* Security & Protection Services */}
-          <Card>
+          <Card className="bg-sky-50/50 dark:bg-sky-950/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
@@ -317,7 +317,7 @@ export function SecurityAssessmentForm({
                 control={form.control}
                 name="hasSecurityPresence"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
@@ -342,7 +342,7 @@ export function SecurityAssessmentForm({
                 control={form.control}
                 name="hasProtectionReportingMechanism"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
@@ -367,7 +367,7 @@ export function SecurityAssessmentForm({
           </Card>
 
           {/* Vulnerable Groups Protection */}
-          <Card>
+          <Card className="bg-sky-50/50 dark:bg-sky-950/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
@@ -382,7 +382,7 @@ export function SecurityAssessmentForm({
                 control={form.control}
                 name="vulnerableGroupsHaveAccess"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
@@ -406,7 +406,7 @@ export function SecurityAssessmentForm({
           </Card>
 
           {/* Environmental Safety */}
-          <Card>
+          <Card className="bg-sky-50/50 dark:bg-sky-950/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Lightbulb className="h-5 w-5" />
@@ -421,7 +421,7 @@ export function SecurityAssessmentForm({
                 control={form.control}
                 name="hasLighting"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                     <FormControl>
                       <Checkbox
                         checked={field.value}

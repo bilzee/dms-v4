@@ -296,7 +296,7 @@ export function FoodAssessmentForm({
           </Card>
 
           {/* Food Availability Indicators */}
-          <Card>
+          <Card className="bg-sky-50/50 dark:bg-sky-950/20">
             <CardHeader>
               <CardTitle>Food Availability & Access</CardTitle>
               <CardDescription>
@@ -309,7 +309,7 @@ export function FoodAssessmentForm({
                   control={form.control}
                   name="isFoodSufficient"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -334,7 +334,7 @@ export function FoodAssessmentForm({
                   control={form.control}
                   name="hasRegularMealAccess"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -359,7 +359,7 @@ export function FoodAssessmentForm({
                   control={form.control}
                   name="hasInfantNutrition"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -421,15 +421,15 @@ export function FoodAssessmentForm({
             </CardContent>
           </Card>
 
-          {/* Risk Assessment */}
+          {/* Food Supply Details */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-red-600">
-                <AlertTriangle className="h-5 w-5" />
-                Risk Assessment
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Food Supply Details
               </CardTitle>
               <CardDescription>
-                Food security risks and supply duration assessment
+                Estimate food supply duration and additional requirements
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -526,24 +526,52 @@ export function FoodAssessmentForm({
                 />
               </div>
 
-              {hasInteracted && foodDaysRemaining > 0 && foodDaysRemaining < 7 && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
-                  <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                  <div>
-                    <p className="text-sm font-medium">Critical Food Shortage</p>
-                    <p className="text-xs text-muted-foreground">Only {foodDaysRemaining} days of food available. Immediate food assistance required.</p>
+              {/* Risk Assessment */}
+              {hasInteracted && (hasFoodGaps || urgentNeed) && (
+                <>
+                  <div className="flex items-center gap-2 pt-2">
+                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                    <h4 className="text-sm font-semibold text-red-600">Risk Assessment</h4>
                   </div>
-                </div>
-              )}
-
-              {hasInteracted && foodDaysRemaining >= 7 && foodDaysRemaining < 30 && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
-                  <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
-                  <div>
-                    <p className="text-sm font-medium">Limited Food Supply</p>
-                    <p className="text-xs text-muted-foreground">{foodDaysRemaining} days of food available. Food assistance planning recommended.</p>
+                  <div className="space-y-2">
+                    {gaps.map(gap => (
+                      <div key={gap.key} className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
+                        <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                        <div>
+                          <p className="text-sm font-medium">{gap.label} Gap</p>
+                          <p className="text-xs text-muted-foreground">No adequate {gap.label.toLowerCase()} identified in this assessment.</p>
+                        </div>
+                      </div>
+                    ))}
+                    {foodDaysRemaining > 0 && foodDaysRemaining < 7 && (
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
+                        <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                        <div>
+                          <p className="text-sm font-medium">Critical Food Shortage</p>
+                          <p className="text-xs text-muted-foreground">Only {foodDaysRemaining} days of food available. Immediate food assistance required.</p>
+                        </div>
+                      </div>
+                    )}
+                    {foodDaysRemaining >= 7 && foodDaysRemaining < 30 && (
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
+                        <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                        <div>
+                          <p className="text-sm font-medium">Limited Food Supply</p>
+                          <p className="text-xs text-muted-foreground">{foodDaysRemaining} days of food available. Food assistance planning recommended.</p>
+                        </div>
+                      </div>
+                    )}
+                    {additionalFoodRequiredPersons > 0 && (
+                      <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
+                        <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                        <div>
+                          <p className="text-sm font-medium">Urgent Food Need</p>
+                          <p className="text-xs text-muted-foreground">{additionalFoodRequiredPersons} additional persons require immediate food assistance.</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                </>
               )}
             </CardContent>
           </Card>

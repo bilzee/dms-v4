@@ -22,7 +22,6 @@ import { HealthAssessmentFormProps, HealthAssessment } from '@/types/rapid-asses
 import { getCurrentUserName, getAssessmentLocationData } from '@/utils/assessment-utils'
 import { cn } from '@/lib/utils'
 import { Hospital, Activity, Pill, Baby, AlertTriangle } from '@/lib/icons'
-import { FormProgress } from '@/components/shared/FormProgress'
 
 const HealthAssessmentSchema = z.object({
   hasFunctionalClinic: z.boolean(),
@@ -272,12 +271,6 @@ export function HealthAssessmentForm({
         )}
       </Card>
 
-      <FormProgress
-        control={form.control}
-        fields={['healthFacilityType']}
-        className="mb-2"
-      />
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           {/* Incident Selection */}
@@ -316,22 +309,21 @@ export function HealthAssessmentForm({
             </CardContent>
           </Card>
 
-          {/* Healthcare Facilities Assessment */}
-          <Card>
+          {/* Gap Assessment — Healthcare Facilities */}
+          <Card className="bg-sky-50/50 dark:bg-sky-950/20">
             <CardHeader>
               <CardTitle>Healthcare Facilities</CardTitle>
               <CardDescription>
                 Evaluate the availability and functionality of healthcare facilities
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Boolean Indicators */}
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="hasFunctionalClinic"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -357,7 +349,7 @@ export function HealthAssessmentForm({
                   control={form.control}
                   name="hasEmergencyServices"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -379,8 +371,18 @@ export function HealthAssessmentForm({
                   )}
                 />
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Quantitative Data */}
+          {/* Context — Healthcare Facility Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Facility Details</CardTitle>
+              <CardDescription>
+                Provide details about healthcare facilities in the area
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -465,8 +467,8 @@ export function HealthAssessmentForm({
             </CardContent>
           </Card>
 
-          {/* Services and Supplies */}
-          <Card>
+          {/* Gap Assessment — Services and Supplies */}
+          <Card className="bg-sky-50/50 dark:bg-sky-950/20">
             <CardHeader>
               <CardTitle>Services and Supplies</CardTitle>
               <CardDescription>
@@ -479,7 +481,7 @@ export function HealthAssessmentForm({
                   control={form.control}
                   name="hasTrainedStaff"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -505,7 +507,7 @@ export function HealthAssessmentForm({
                   control={form.control}
                   name="hasMedicineSupply"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -531,7 +533,7 @@ export function HealthAssessmentForm({
                   control={form.control}
                   name="hasMedicalSupplies"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -557,7 +559,7 @@ export function HealthAssessmentForm({
                   control={form.control}
                   name="hasMaternalChildServices"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
                       <FormControl>
                         <Checkbox
                           checked={field.value}

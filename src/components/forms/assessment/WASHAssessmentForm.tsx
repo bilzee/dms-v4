@@ -20,7 +20,7 @@ import { IncidentSelector } from '@/components/shared/IncidentSelector'
 import { WASHAssessmentFormProps, WASHAssessment } from '@/types/rapid-assessment'
 import { getCurrentUserName, getAssessmentLocationData } from '@/utils/assessment-utils'
 import { cn } from '@/lib/utils'
-import { Droplets, AlertTriangle, Toilet, Waves } from '@/lib/icons'
+import { Droplets, AlertTriangle, Toilet } from '@/lib/icons'
 
 const WASHAssessmentSchema = z.object({
   waterSource: z.array(z.string()).default([]),
@@ -314,7 +314,161 @@ export function WASHAssessmentForm({
             </CardContent>
           </Card>
 
-          {/* Water Sources */}
+          {/* Water Access and Availability — GAP card */}
+          <Card className="bg-sky-50/50 dark:bg-sky-950/20">
+            <CardHeader>
+              <CardTitle>Water Access and Availability</CardTitle>
+              <CardDescription>
+                Evaluate water access and sufficiency
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="isWaterSufficient"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
+                          disabled={disabled}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="flex items-center gap-2">
+                          Water Sufficient
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
+                        </FormLabel>
+                        <FormDescription>
+                          Water quantity is sufficient for basic needs
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="hasCleanWaterAccess"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
+                          disabled={disabled}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="flex items-center gap-2">
+                          Clean Water Access
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
+                        </FormLabel>
+                        <FormDescription>
+                          Population has access to safe drinking water
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Sanitation Assessment — GAP card */}
+          <Card className="bg-sky-50/50 dark:bg-sky-950/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Toilet className="h-5 w-5" />
+                Sanitation Assessment
+              </CardTitle>
+              <CardDescription>
+                Assess sanitation and hygiene gaps
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="areLatrinesSufficient"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
+                          disabled={disabled}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="flex items-center gap-2">
+                          Latrines Sufficient
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
+                        </FormLabel>
+                        <FormDescription>
+                          Number of latrines is sufficient for population
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="hasHandwashingFacilities"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-background">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
+                          disabled={disabled}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="flex items-center gap-2">
+                          Handwashing Facilities Available
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
+                        </FormLabel>
+                        <FormDescription>
+                          Handwashing facilities with soap/water are available
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="hasOpenDefecationConcerns"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 border-red-200 bg-background">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
+                          disabled={disabled}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="flex items-center gap-2 text-red-600">
+                          Open Defecation Concerns
+                          {field.value && (!hasInteracted ? null : <StatusBadge domain="assessment" status="PUBLIC_HEALTH_RISK" label="Public Health Risk" />)}
+                        </FormLabel>
+                        <FormDescription>
+                          Open defecation practices observed (disease transmission risk)
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+            </CardContent>
+          </Card>
+
+          {/* Water Sources — context card */}
           <Card>
             <CardHeader>
               <CardTitle>Water Sources</CardTitle>
@@ -352,201 +506,44 @@ export function WASHAssessmentForm({
             </CardContent>
           </Card>
 
-          {/* Water Access */}
+          {/* Sanitation Facilities — context card */}
           <Card>
             <CardHeader>
-              <CardTitle>Water Access and Availability</CardTitle>
+              <CardTitle>Sanitation Facilities</CardTitle>
               <CardDescription>
-                Evaluate water access and sufficiency
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="isWaterSufficient"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
-                          disabled={disabled}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel className="flex items-center gap-2">
-                          Water Sufficient
-                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
-                        </FormLabel>
-                        <FormDescription>
-                          Water quantity is sufficient for basic needs
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="hasCleanWaterAccess"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
-                          disabled={disabled}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel className="flex items-center gap-2">
-                          Clean Water Access
-                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
-                        </FormLabel>
-                        <FormDescription>
-                          Population has access to safe drinking water
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Sanitation Facilities */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Toilet className="h-5 w-5" />
-                Sanitation Facilities
-              </CardTitle>
-              <CardDescription>
-                Assess toilet and sanitation facilities
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="functionalLatrinesAvailable"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        Functional Latrines
-                        <Badge variant="outline">{latrineCoverage}% coverage</Badge>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                          disabled={disabled}
-                        />
-                      </FormControl>
-                      {estimatedPopulation === 0 ? (
-                        <p className="text-xs text-muted-foreground">
-                          Latrine coverage requires population data. Complete a Population Assessment first.
-                        </p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">
-                          Estimated latrine coverage: {latrineCoverage}% (population: {estimatedPopulation.toLocaleString()})
-                        </p>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="areLatrinesSufficient"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
-                          disabled={disabled}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel className="flex items-center gap-2">
-                          Latrines Sufficient
-                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
-                        </FormLabel>
-                        <FormDescription>
-                          Number of latrines is sufficient for population
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="hasOpenDefecationConcerns"
-                render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 border-red-200">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
-                          disabled={disabled}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel className="flex items-center gap-2 text-red-600">
-                          Open Defecation Concerns
-                          {field.value && (!hasInteracted ? null : <StatusBadge domain="assessment" status="PUBLIC_HEALTH_RISK" label="Public Health Risk" />)}
-                        </FormLabel>
-                        <FormDescription>
-                          Open defecation practices observed (disease transmission risk)
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-            </CardContent>
-          </Card>
-
-          {/* Hygiene Facilities */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Waves className="h-5 w-5" />
-                Hygiene Practices
-              </CardTitle>
-              <CardDescription>
-                Assess handwashing and hygiene facilities
+                Record functional latrine infrastructure
               </CardDescription>
             </CardHeader>
             <CardContent>
               <FormField
                 control={form.control}
-                name="hasHandwashingFacilities"
+                name="functionalLatrinesAvailable"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      Functional Latrines
+                      <Badge variant="outline">{latrineCoverage}% coverage</Badge>
+                    </FormLabel>
                     <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                         disabled={disabled}
                       />
                     </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="flex items-center gap-2">
-                        Handwashing Facilities Available
-                        {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
-                      </FormLabel>
-                      <FormDescription>
-                        Handwashing facilities with soap/water are available
-                      </FormDescription>
-                    </div>
+                    {estimatedPopulation === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        Latrine coverage requires population data. Complete a Population Assessment first.
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Estimated latrine coverage: {latrineCoverage}% (population: {estimatedPopulation.toLocaleString()})
+                      </p>
+                    )}
+                    <FormMessage />
                   </FormItem>
                 )}
               />
