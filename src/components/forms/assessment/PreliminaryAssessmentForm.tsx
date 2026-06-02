@@ -35,7 +35,9 @@ const MapLocationSelector = dynamic(
 
 import { LocationSelector } from '@/components/shared/LocationSelector'
 import { MultipleEntitySelector } from '@/components/shared/MultipleEntitySelector'
+import { MediaField } from '@/components/shared/MediaField'
 import { usePreliminaryAssessment } from '@/hooks/usePreliminaryAssessment'
+import { useActiveIncidents, Incident } from '@/hooks/useIncidents'
 import { useAuth } from '@/hooks/useAuth'
 import { PreliminaryAssessmentSchema } from '@/lib/validation/preliminary-assessment'
 import { PreliminaryAssessmentData } from '@/types/preliminary-assessment'
@@ -75,8 +77,8 @@ export function PreliminaryAssessmentForm({
   } = usePreliminaryAssessment()
 
   const [selectedIncidentId, setSelectedIncidentId] = useState<string>('')
-  const [availableIncidents, setAvailableIncidents] = useState<any[]>([])
-  const [mediaFiles, setMediaFiles] = useState<File[]>([])
+  const { data: availableIncidents = [] } = useActiveIncidents()
+  const [mediaFiles, setMediaFiles] = useState<string[]>((initialData as any)?.mediaAttachments || [])
   const [feedbackMessage, setFeedbackMessage] = useState<{type: 'success' | 'error', message: string} | null>(null)
   const [showMapSelector, setShowMapSelector] = useState(false)
 
@@ -132,14 +134,6 @@ export function PreliminaryAssessmentForm({
     }
   }, [selectedDraftId, drafts, currentDraft, setValue, initialData])
 
-  // Load available incidents
-  useEffect(() => {
-    // In a real app, this would fetch from API
-    setAvailableIncidents([
-      { id: '1', type: 'Flood', location: 'Maiduguri', description: 'River overflow in Maiduguri' },
-      { id: '2', type: 'Fire', location: 'Jere', description: 'Bush fire in Jere LGA' }
-    ])
-  }, [])
 
   // Show feedback and auto-hide
   useEffect(() => {
@@ -194,17 +188,6 @@ export function PreliminaryAssessmentForm({
     setFeedbackMessage({ type: 'success', message: 'Draft saved successfully!' })
   }
 
-  const handleMediaUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || [])
-    const validFiles = files.filter(file => 
-      file.type.startsWith('image/') || file.type.startsWith('video/') || file.type.startsWith('audio/')
-    )
-    setMediaFiles(prev => [...prev, ...validFiles])
-  }
-
-  const removeMediaFile = (index: number) => {
-    setMediaFiles(prev => prev.filter((_, i) => i !== index))
-  }
 
   const handleFormSubmit = async (data: FormData) => {
     try {
@@ -603,11 +586,13 @@ export function PreliminaryAssessmentForm({
                   <SelectValue placeholder="Select an existing incident..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableIncidents.map((incident) => (
+                  {availableIncidents.map((incident: Incident) => (
                     <SelectItem key={incident.id} value={incident.id}>
                       <div className="flex flex-col">
-                        <span className="font-medium">{incident.type} - {incident.location}</span>
-                        <span className="text-sm text-muted-foreground">{incident.description}</span>
+                        <span className="font-medium">{incident.type}{incident.location ? ` - ${incident.location}` : ''}</span>
+                        {incident.description && (
+                          <span className="text-sm text-muted-foreground">{incident.description}</span>
+                        )}
                       </div>
                     </SelectItem>
                   ))}
@@ -617,7 +602,6 @@ export function PreliminaryAssessmentForm({
           </CardContent>
         </Card>
 
-        {/* Media Attachments */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -625,53 +609,16 @@ export function PreliminaryAssessmentForm({
               Media Attachments
             </CardTitle>
             <CardDescription>
-              Attach photos, videos, or audio recordings related to the assessment
+              Attach photos related to the assessment
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="mediaUpload">Upload Media Files</Label>
-              <Input
-                id="mediaUpload"
-                type="file"
-                multiple
-                accept="image/*,video/*,audio/*"
-                onChange={handleMediaUpload}
-                disabled={disabled}
-                className="cursor-pointer"
-              />
-              <p className="text-sm text-muted-foreground">
-                Supported formats: Images (JPG, PNG), Videos (MP4, MOV), Audio (MP3, WAV)
-              </p>
-            </div>
-            
-            {mediaFiles.length > 0 && (
-              <div className="space-y-2">
-                <Label>Selected Files ({mediaFiles.length})</Label>
-                <div className="space-y-2">
-                  {mediaFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded">
-                      <div className="flex items-center gap-2">
-                        <Paperclip className="h-4 w-4" />
-                        <span className="text-sm">{file.name}</span>
-                        <Badge variant="secondary" className="text-xs">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
-                        </Badge>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeMediaFile(index)}
-                        disabled={disabled}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          <CardContent>
+            <MediaField
+              onPhotosChange={setMediaFiles}
+              initialPhotos={mediaFiles}
+              maxPhotos={5}
+              maxFileSize={10}
+            />
           </CardContent>
         </Card>
 
@@ -684,7 +631,7 @@ export function PreliminaryAssessmentForm({
           loading={isLoading}
           disabled={disabled || isLoading}
           align="between"
-          variant="default"
+          variant="bordered"
         >
           <Button
             type="button"

@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState, useEffect, useCallback } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FormCard } from '@/components/shared/FormCard'
 import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -85,6 +84,7 @@ export function FoodAssessmentForm({
   const [selectedEntity, setSelectedEntity] = useState<string>(entityId)
   const [selectedIncident, setSelectedIncident] = useState<string>(incidentId || '')
   const [selectedEntityData, setSelectedEntityData] = useState<any>(null)
+  const [hasInteracted, setHasInteracted] = useState(false)
 
   // Extract food data from initialData
   const foodData = (initialData as any)?.foodAssessment || (initialData as any);
@@ -105,8 +105,6 @@ export function FoodAssessmentForm({
 
   // Track when initialData changes and update form
   useEffect(() => {
-    console.log('FoodAssessmentForm - initialData changed:', initialData);
-    
     if (foodData) {
       const newValues = {
         isFoodSufficient: foodData?.isFoodSufficient || false,
@@ -119,12 +117,15 @@ export function FoodAssessmentForm({
         additionalFoodDetails: foodData?.additionalFoodDetails || ''
       };
       
-      console.log('FoodAssessmentForm - updating form with values:', newValues);
       form.reset(newValues);
     }
   }, [initialData, foodData]);
 
   // Handle incident and entity changes
+  const markInteracted = useCallback(() => {
+    if (!hasInteracted) setHasInteracted(true)
+  }, [hasInteracted])
+
   const handleIncidentChange = (incidentId: string) => {
     setSelectedIncident(incidentId);
     if (selectedEntity && onIncidentEntityChange) {
@@ -153,7 +154,11 @@ export function FoodAssessmentForm({
     }
   })
 
-  const watchedValues = form.watch()
+  const [isFoodSufficient, hasRegularMealAccess, hasInfantNutrition, availableFoodDurationDays, additionalFoodRequiredPersons] = useWatch({
+    control: form.control,
+    name: ['isFoodSufficient', 'hasRegularMealAccess', 'hasInfantNutrition', 'availableFoodDurationDays', 'additionalFoodRequiredPersons'] as const
+  })
+  const watchedValues = { isFoodSufficient, hasRegularMealAccess, hasInfantNutrition, availableFoodDurationDays, additionalFoodRequiredPersons } as any
 
   // Calculate food security status
   const gapFields = [
@@ -214,14 +219,14 @@ export function FoodAssessmentForm({
   }
 
   return (
-    <FormCard className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Utensils className="h-5 w-5" />
             Food Security Assessment
-            {gapCount > 0 && (
+            {hasInteracted && gapCount > 0 && (
               <Badge variant="destructive">
                 {gapCount} Gap{gapCount > 1 ? 's' : ''}
               </Badge>
@@ -236,7 +241,7 @@ export function FoodAssessmentForm({
             Assess food availability, access, and nutrition security in the affected area
           </CardDescription>
         </CardHeader>
-        {gapCount > 0 && (
+        {hasInteracted && gapCount > 0 && (
           <CardContent>
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
@@ -307,14 +312,14 @@ export function FoodAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Food Sufficient
-                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                         </FormLabel>
                         <FormDescription>
                           Food supplies are sufficient to meet the population&apos;s needs
@@ -332,14 +337,14 @@ export function FoodAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Regular Meal Access
-                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                         </FormLabel>
                         <FormDescription>
                           Population has regular access to meals (at least 2 per day)
@@ -357,14 +362,14 @@ export function FoodAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Infant Nutrition Available
-                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                         </FormLabel>
                         <FormDescription>
                           Adequate nutrition available for infants and young children
@@ -386,7 +391,7 @@ export function FoodAssessmentForm({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+              <fieldset className="grid grid-cols-1 md:grid-cols-1 gap-4"><legend className="sr-only">Food Sources</legend>
                 {foodSourceOptions.map((source) => (
                   <FormField
                     key={source.id}
@@ -411,7 +416,7 @@ export function FoodAssessmentForm({
                     )}
                   />
                 ))}
-              </div>
+              </fieldset>
             </CardContent>
           </Card>
 
@@ -520,25 +525,24 @@ export function FoodAssessmentForm({
                 />
               </div>
 
-              {/* Food Security Alert */}
-              {foodDaysRemaining > 0 && foodDaysRemaining < 7 && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>Critical Food Shortage:</strong> Only {foodDaysRemaining} days of food available. 
-                    Immediate food assistance required.
-                  </AlertDescription>
-                </Alert>
+              {hasInteracted && foodDaysRemaining > 0 && foodDaysRemaining < 7 && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
+                  <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <div>
+                    <p className="text-sm font-medium">Critical Food Shortage</p>
+                    <p className="text-xs text-muted-foreground">Only {foodDaysRemaining} days of food available. Immediate food assistance required.</p>
+                  </div>
+                </div>
               )}
 
-              {foodDaysRemaining >= 7 && foodDaysRemaining < 30 && (
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    <strong>Limited Food Supply:</strong> {foodDaysRemaining} days of food available. 
-                    Food assistance planning recommended.
-                  </AlertDescription>
-                </Alert>
+              {hasInteracted && foodDaysRemaining >= 7 && foodDaysRemaining < 30 && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
+                  <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <div>
+                    <p className="text-sm font-medium">Limited Food Supply</p>
+                    <p className="text-xs text-muted-foreground">{foodDaysRemaining} days of food available. Food assistance planning recommended.</p>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -613,6 +617,6 @@ export function FoodAssessmentForm({
           />
         </form>
       </Form>
-    </FormCard>
+    </div>
   )
 }

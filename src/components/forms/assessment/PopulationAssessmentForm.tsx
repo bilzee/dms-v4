@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState, useEffect, useCallback } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FormCard } from '@/components/shared/FormCard'
 import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -127,10 +126,6 @@ export function PopulationAssessmentForm({
   // Extract population data from initialData
   const populationData = (initialData as any)?.populationAssessment || (initialData as any);
   
-  // Debug logging
-  console.log('PopulationAssessmentForm - initialData:', initialData);
-  console.log('PopulationAssessmentForm - populationData:', populationData);
-
   const form = useForm<FormData>({
     resolver: zodResolver(PopulationAssessmentSchema),
     defaultValues: {
@@ -152,8 +147,6 @@ export function PopulationAssessmentForm({
 
   // Track when initialData changes and update form
   useEffect(() => {
-    console.log('PopulationAssessmentForm - initialData changed:', initialData);
-    
     if (populationData) {
       const newValues = {
         totalHouseholds: populationData?.totalHouseholds || 0,
@@ -171,7 +164,6 @@ export function PopulationAssessmentForm({
         additionalPopulationDetails: populationData?.additionalPopulationDetails || ''
       };
       
-      console.log('PopulationAssessmentForm - updating form with values:', newValues);
       form.reset(newValues);
     }
   }, [initialData, populationData]);
@@ -191,7 +183,11 @@ export function PopulationAssessmentForm({
     }
   };
 
-  const watchedValues = form.watch()
+  const [totalHouseholds, totalPopulation, populationMale, populationFemale, populationUnder5, pregnantWomen, lactatingMothers, personWithDisability, elderlyPersons, separatedChildren, numberLivesLost, numberInjured] = useWatch({
+    control: form.control,
+    name: ['totalHouseholds', 'totalPopulation', 'populationMale', 'populationFemale', 'populationUnder5', 'pregnantWomen', 'lactatingMothers', 'personWithDisability', 'elderlyPersons', 'separatedChildren', 'numberLivesLost', 'numberInjured'] as const
+  })
+  const watchedValues = { totalHouseholds, totalPopulation, populationMale, populationFemale, populationUnder5, pregnantWomen, lactatingMothers, personWithDisability, elderlyPersons, separatedChildren, numberLivesLost, numberInjured } as any
 
   // Calculate population statistics
   const calculatePercentage = (value: number, total: number) => {
@@ -292,7 +288,7 @@ export function PopulationAssessmentForm({
   }
 
   return (
-    <FormCard className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <Card>
         <CardHeader>
@@ -838,6 +834,6 @@ export function PopulationAssessmentForm({
           />
         </form>
       </Form>
-    </FormCard>
+    </div>
   )
 }

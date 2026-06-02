@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FormCard } from '@/components/shared/FormCard'
 import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -91,6 +90,7 @@ export function WASHAssessmentForm({
   const [selectedEntity, setSelectedEntity] = useState<string>(entityId)
   const [selectedIncident, setSelectedIncident] = useState<string>(incidentId || '')
   const [selectedEntityData, setSelectedEntityData] = useState<any>(null)
+  const [hasInteracted, setHasInteracted] = useState(false)
 
   // Extract WASH data from initialData
   const washData = (initialData as any)?.washAssessment || (initialData as any);
@@ -111,8 +111,6 @@ export function WASHAssessmentForm({
 
   // Track when initialData changes and update form
   useEffect(() => {
-    console.log('WASHAssessmentForm - initialData changed:', initialData);
-    
     if (washData) {
       const newValues = {
         waterSource: parseWaterSource(washData?.waterSource),
@@ -125,7 +123,6 @@ export function WASHAssessmentForm({
         additionalWashDetails: washData?.additionalWashDetails || ''
       };
       
-      console.log('WASHAssessmentForm - updating form with values:', newValues);
       form.reset(newValues);
     }
   }, [initialData, washData]);
@@ -159,7 +156,11 @@ export function WASHAssessmentForm({
     }
   })
 
-  const watchedValues = form.watch()
+  const [isWaterSufficient, hasCleanWaterAccess, functionalLatrinesAvailable, areLatrinesSufficient, hasHandwashingFacilities, hasOpenDefecationConcerns] = useWatch({
+    control: form.control,
+    name: ['isWaterSufficient', 'hasCleanWaterAccess', 'functionalLatrinesAvailable', 'areLatrinesSufficient', 'hasHandwashingFacilities', 'hasOpenDefecationConcerns'] as const
+  })
+  const watchedValues = { isWaterSufficient, hasCleanWaterAccess, functionalLatrinesAvailable, areLatrinesSufficient, hasHandwashingFacilities, hasOpenDefecationConcerns } as any
 
   // Calculate WASH gaps and needs
   const gapFields = [
@@ -179,11 +180,23 @@ export function WASHAssessmentForm({
   const hasWashGaps = gapCount > 0
   const hasDefecationIssues = watchedValues.hasOpenDefecationConcerns
 
-  // Calculate latrine coverage (assuming 50 people per latrine as SPHERE standard)
-  const estimatedPopulation = 1000 // This should come from entity data
-  const latrineCoverage = watchedValues.functionalLatrinesAvailable > 0 
+  const estimatedPopulation = useMemo(() => {
+    if ((initialData as any)?.populationData?.totalPopulation) {
+      return (initialData as any).populationData.totalPopulation
+    }
+    if ((initialData as any)?.latestPopulationAssessment?.data?.totalPopulation) {
+      return (initialData as any).latestPopulationAssessment.data.totalPopulation
+    }
+    return 0
+  }, [initialData])
+
+  const latrineCoverage = watchedValues.functionalLatrinesAvailable > 0 && estimatedPopulation > 0
     ? Math.round((watchedValues.functionalLatrinesAvailable * 50) / estimatedPopulation * 100)
     : 0
+
+  const markInteracted = useCallback(() => {
+    if (!hasInteracted) setHasInteracted(true)
+  }, [hasInteracted])
 
   const handleSubmit = async (data: FormData) => {
     if (!selectedEntity) {
@@ -224,14 +237,14 @@ export function WASHAssessmentForm({
   }
 
   return (
-    <FormCard className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Droplets className="h-5 w-5" />
             WASH Assessment
-            {gapCount > 0 && (
+            {hasInteracted && gapCount > 0 && (
               <Badge variant="destructive">
                 {gapCount} Gap{gapCount > 1 ? 's' : ''}
               </Badge>
@@ -246,7 +259,7 @@ export function WASHAssessmentForm({
             Assess water, sanitation, and hygiene (WASH) facilities and practices
           </CardDescription>
         </CardHeader>
-        {gapCount > 0 && (
+        {hasInteracted && gapCount > 0 && (
           <CardContent>
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
@@ -309,7 +322,7 @@ export function WASHAssessmentForm({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-4"><legend className="sr-only">Water Sources</legend>
                 {waterSourceOptions.map((source) => (
                   <FormField
                     key={source.id}
@@ -334,7 +347,7 @@ export function WASHAssessmentForm({
                     )}
                   />
                 ))}
-              </div>
+              </fieldset>
             </CardContent>
           </Card>
 
@@ -356,14 +369,14 @@ export function WASHAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Water Sufficient
-                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                         </FormLabel>
                         <FormDescription>
                           Water quantity is sufficient for basic needs
@@ -381,14 +394,14 @@ export function WASHAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Clean Water Access
-                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                         </FormLabel>
                         <FormDescription>
                           Population has access to safe drinking water
@@ -433,9 +446,15 @@ export function WASHAssessmentForm({
                           disabled={disabled}
                         />
                       </FormControl>
-                      <FormDescription>
-                        Number of functional latrines available
-                      </FormDescription>
+                      {estimatedPopulation === 0 ? (
+                        <p className="text-xs text-muted-foreground">
+                          Latrine coverage requires population data. Complete a Population Assessment first.
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          Estimated latrine coverage: {latrineCoverage}% (population: {estimatedPopulation.toLocaleString()})
+                        </p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -449,14 +468,14 @@ export function WASHAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Latrines Sufficient
-                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                         </FormLabel>
                         <FormDescription>
                           Number of latrines is sufficient for population
@@ -475,14 +494,14 @@ export function WASHAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2 text-red-600">
                           Open Defecation Concerns
-                          {field.value && <StatusBadge domain="assessment" status="PUBLIC_HEALTH_RISK" label="Public Health Risk" />}
+                          {field.value && (!hasInteracted ? null : <StatusBadge domain="assessment" status="PUBLIC_HEALTH_RISK" label="Public Health Risk" />)}
                         </FormLabel>
                         <FormDescription>
                           Open defecation practices observed (disease transmission risk)
@@ -514,14 +533,14 @@ export function WASHAssessmentForm({
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                         disabled={disabled}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel className="flex items-center gap-2">
                         Handwashing Facilities Available
-                        <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                        {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                       </FormLabel>
                       <FormDescription>
                         Handwashing facilities with soap/water are available
@@ -534,7 +553,7 @@ export function WASHAssessmentForm({
           </Card>
 
           {/* Risk Assessment */}
-          {(hasWashGaps || hasDefecationIssues) && (
+          {hasInteracted && (hasWashGaps || hasDefecationIssues) && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-red-600">
@@ -545,39 +564,43 @@ export function WASHAssessmentForm({
               <CardContent>
                 <div className="space-y-4">
                   {waterGaps && (
-                    <Alert variant="destructive">
-                      <Droplets className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>Water Security Risk:</strong> Insufficient or unsafe water access increases risk of waterborne diseases
-                      </AlertDescription>
-                    </Alert>
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
+                      <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                      <div>
+                        <p className="text-sm font-medium">Water Security Gap</p>
+                        <p className="text-xs text-muted-foreground">Insufficient or unsafe water access increases risk of waterborne diseases</p>
+                      </div>
+                    </div>
                   )}
                   
                   {sanitationGaps && (
-                    <Alert variant="destructive">
-                      <Toilet className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>Sanitation Risk:</strong> Inadequate toilet facilities increases disease transmission risk
-                      </AlertDescription>
-                    </Alert>
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
+                      <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                      <div>
+                        <p className="text-sm font-medium">Sanitation Gap</p>
+                        <p className="text-xs text-muted-foreground">Inadequate toilet facilities increases disease transmission risk</p>
+                      </div>
+                    </div>
                   )}
                   
                   {hygieneGaps && (
-                    <Alert variant="destructive">
-                      <Waves className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>Hygiene Risk:</strong> Lack of handwashing facilities increases infection risk
-                      </AlertDescription>
-                    </Alert>
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
+                      <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                      <div>
+                        <p className="text-sm font-medium">Hygiene Gap</p>
+                        <p className="text-xs text-muted-foreground">Lack of handwashing facilities increases infection risk</p>
+                      </div>
+                    </div>
                   )}
                   
                   {hasDefecationIssues && (
-                    <Alert className="border-red-200 bg-red-50">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-red-800">
-                        <strong>High Public Health Risk:</strong> Open defecation practices create significant disease transmission risk. Immediate intervention required.
-                      </AlertDescription>
-                    </Alert>
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
+                      <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                      <div>
+                        <p className="text-sm font-medium text-red-600">High Public Health Risk</p>
+                        <p className="text-xs text-muted-foreground">Open defecation practices create significant disease transmission risk. Immediate intervention required.</p>
+                      </div>
+                    </div>
                   )}
                 </div>
               </CardContent>
@@ -654,6 +677,6 @@ export function WASHAssessmentForm({
           />
         </form>
       </Form>
-    </FormCard>
+    </div>
   )
 }

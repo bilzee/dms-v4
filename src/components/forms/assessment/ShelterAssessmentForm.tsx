@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState, useEffect, useCallback } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FormCard } from '@/components/shared/FormCard'
 import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
@@ -85,6 +84,7 @@ export function ShelterAssessmentForm({
   const [selectedEntity, setSelectedEntity] = useState<string>(entityId)
   const [selectedIncident, setSelectedIncident] = useState<string>(incidentId || '')
   const [selectedEntityData, setSelectedEntityData] = useState<any>(null)
+  const [hasInteracted, setHasInteracted] = useState(false)
 
   // Extract shelter data from initialData
   const shelterData = (initialData as any)?.shelterAssessment || (initialData as any);
@@ -105,8 +105,6 @@ export function ShelterAssessmentForm({
 
   // Track when initialData changes and update form
   useEffect(() => {
-    console.log('ShelterAssessmentForm - initialData changed:', initialData);
-    
     if (shelterData) {
       const newValues = {
         areSheltersSufficient: shelterData?.areSheltersSufficient || false,
@@ -119,7 +117,6 @@ export function ShelterAssessmentForm({
         additionalShelterDetails: shelterData?.additionalShelterDetails || ''
       };
       
-      console.log('ShelterAssessmentForm - updating form with values:', newValues);
       form.reset(newValues);
     }
   }, [initialData, shelterData]);
@@ -139,6 +136,10 @@ export function ShelterAssessmentForm({
     }
   };
 
+  const markInteracted = useCallback(() => {
+    if (!hasInteracted) setHasInteracted(true)
+  }, [hasInteracted])
+
   const form = useForm<FormData>({
     resolver: zodResolver(ShelterAssessmentSchema),
     defaultValues: {
@@ -153,7 +154,11 @@ export function ShelterAssessmentForm({
     }
   })
 
-  const watchedValues = form.watch()
+  const [areSheltersSufficient, hasSafeStructures, provideWeatherProtection, areOvercrowded, numberSheltersRequired] = useWatch({
+    control: form.control,
+    name: ['areSheltersSufficient', 'hasSafeStructures', 'provideWeatherProtection', 'areOvercrowded', 'numberSheltersRequired'] as const
+  })
+  const watchedValues = { areSheltersSufficient, hasSafeStructures, provideWeatherProtection, areOvercrowded, numberSheltersRequired } as any
 
   // Calculate shelter gaps and risks
   const gapFields = [
@@ -209,14 +214,14 @@ export function ShelterAssessmentForm({
   }
 
   return (
-    <FormCard className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Home className="h-5 w-5" />
             Shelter Assessment
-            {gapCount > 0 && (
+            {hasInteracted && gapCount > 0 && (
               <Badge variant="destructive">
                 {gapCount} Gap{gapCount > 1 ? 's' : ''}
               </Badge>
@@ -231,7 +236,7 @@ export function ShelterAssessmentForm({
             Assess shelter conditions, capacity, and protection from elements
           </CardDescription>
         </CardHeader>
-        {gapCount > 0 && (
+        {hasInteracted && gapCount > 0 && (
           <CardContent>
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
@@ -301,14 +306,14 @@ export function ShelterAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Shelters Sufficient
-                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                         </FormLabel>
                         <FormDescription>
                           Available shelters are sufficient for the affected population
@@ -326,14 +331,14 @@ export function ShelterAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Safe Structures
-                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                         </FormLabel>
                         <FormDescription>
                           Existing shelters are structurally safe and secure
@@ -351,7 +356,7 @@ export function ShelterAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                         />
                       </FormControl>
@@ -359,7 +364,7 @@ export function ShelterAssessmentForm({
                         <FormLabel className="flex items-center gap-2">
                           <Cloud className="h-4 w-4" />
                           Weather Protection
-                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                         </FormLabel>
                         <FormDescription>
                           Shelters provide adequate protection from weather elements
@@ -377,7 +382,7 @@ export function ShelterAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                         />
                       </FormControl>
@@ -385,7 +390,7 @@ export function ShelterAssessmentForm({
                         <FormLabel className="flex items-center gap-2">
                           <Users className="h-4 w-4" />
                           Overcrowding Issues
-                          {field.value && <StatusBadge domain="assessment" status="PUBLIC_HEALTH_RISK" label="Health Risk" />}
+                          {!hasInteracted ? null : field.value && <StatusBadge domain="assessment" status="PUBLIC_HEALTH_RISK" label="Health Risk" />}
                         </FormLabel>
                         <FormDescription>
                           Shelters are overcrowded beyond safe capacity
@@ -407,7 +412,7 @@ export function ShelterAssessmentForm({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-4"><legend className="sr-only">Current Shelter Types</legend>
                 {shelterTypeOptions.map((type) => (
                   <FormField
                     key={type.id}
@@ -433,7 +438,7 @@ export function ShelterAssessmentForm({
                     )}
                   />
                 ))}
-              </div>
+              </fieldset>
             </CardContent>
           </Card>
 
@@ -446,7 +451,7 @@ export function ShelterAssessmentForm({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-4"><legend className="sr-only">Required Shelter Types</legend>
                 {shelterTypeOptions.map((type) => (
                   <FormField
                     key={type.id}
@@ -472,7 +477,7 @@ export function ShelterAssessmentForm({
                     )}
                   />
                 ))}
-              </div>
+              </fieldset>
 
               <FormField
                 control={form.control}
@@ -509,7 +514,7 @@ export function ShelterAssessmentForm({
           </Card>
 
           {/* Risk Assessment */}
-          {hasShelterRisks && (
+          {hasInteracted && hasShelterRisks && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-red-600">
@@ -520,30 +525,33 @@ export function ShelterAssessmentForm({
               <CardContent>
                 <div className="space-y-4">
                   {shelterGaps && (
-                    <Alert variant="destructive">
-                      <Home className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>Inadequate Shelter:</strong> Insufficient, unsafe, or exposed shelters increase health and safety risks
-                      </AlertDescription>
-                    </Alert>
+                    <div key="shelter-gaps" className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
+                      <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                      <div>
+                        <p className="text-sm font-medium">Inadequate Shelter Gap</p>
+                        <p className="text-xs text-muted-foreground">Insufficient, unsafe, or exposed shelters increase health and safety risks</p>
+                      </div>
+                    </div>
                   )}
                   
                   {overcrowdingRisk && (
-                    <Alert variant="destructive">
-                      <Users className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>Overcrowding Risk:</strong> Overcrowded conditions increase disease transmission and safety risks
-                      </AlertDescription>
-                    </Alert>
+                    <div key="overcrowding" className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
+                      <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                      <div>
+                        <p className="text-sm font-medium">Overcrowding Risk Gap</p>
+                        <p className="text-xs text-muted-foreground">Overcrowded conditions increase disease transmission and safety risks</p>
+                      </div>
+                    </div>
                   )}
 
                   {urgentShelterNeed && (
-                    <Alert className="border-red-200 bg-red-50">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-red-800">
-                        <strong>Urgent Shelter Need:</strong> {watchedValues.numberSheltersRequired} additional shelters required. Immediate intervention needed.
-                      </AlertDescription>
-                    </Alert>
+                    <div key="urgent-need" className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
+                      <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                      <div>
+                        <p className="text-sm font-medium">Urgent Shelter Need Gap</p>
+                        <p className="text-xs text-muted-foreground">{watchedValues.numberSheltersRequired} additional shelters required. Immediate intervention needed.</p>
+                      </div>
+                    </div>
                   )}
                 </div>
               </CardContent>
@@ -620,6 +628,6 @@ export function ShelterAssessmentForm({
           />
         </form>
       </Form>
-    </FormCard>
+    </div>
   )
 }

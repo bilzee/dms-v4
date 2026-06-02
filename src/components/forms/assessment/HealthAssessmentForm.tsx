@@ -1,16 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState, useEffect, useCallback } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FormCard } from '@/components/shared/FormCard'
 import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -104,18 +104,11 @@ export function HealthAssessmentForm({
   const [selectedEntity, setSelectedEntity] = useState<string>(entityId)
   const [selectedIncident, setSelectedIncident] = useState<string>(incidentId || (initialData as any)?.rapidAssessment?.incidentId || '')
   const [selectedEntityData, setSelectedEntityData] = useState<any>(null)
+  const [hasInteracted, setHasInteracted] = useState(false)
 
-  // Extract health data from initialData
   const healthData = (initialData as any)?.healthAssessment || (initialData as any);
-  
-  // Debug logging
-  console.log('HealthAssessmentForm - initialData:', initialData);
-  console.log('HealthAssessmentForm - healthData:', healthData);
-  
-  // Track when initialData changes and update form
+
   useEffect(() => {
-    console.log('HealthAssessmentForm - initialData changed:', initialData);
-    
     if (healthData) {
       const newValues = {
         hasFunctionalClinic: healthData?.hasFunctionalClinic || false,
@@ -130,8 +123,7 @@ export function HealthAssessmentForm({
         commonHealthIssues: parseHealthIssues(healthData?.commonHealthIssues),
         additionalHealthDetails: healthData?.additionalHealthDetails || ''
       };
-      
-      console.log('HealthAssessmentForm - updating form with values:', newValues);
+
       form.reset(newValues);
     }
   }, [initialData, healthData]);
@@ -182,7 +174,10 @@ export function HealthAssessmentForm({
     }
   };
 
-  const watchedValues = form.watch()
+  const watchedBooleans = useWatch({ control: form.control, name: ['hasFunctionalClinic', 'hasEmergencyServices', 'hasTrainedStaff', 'hasMedicineSupply', 'hasMedicalSupplies', 'hasMaternalChildServices'] })
+  const watchedValues = Object.fromEntries(
+    ['hasFunctionalClinic', 'hasEmergencyServices', 'hasTrainedStaff', 'hasMedicineSupply', 'hasMedicalSupplies', 'hasMaternalChildServices'].map((name, i) => [name, watchedBooleans[i]])
+  ) as any
 
   // Calculate gap analysis
   const gapFields = [
@@ -232,6 +227,10 @@ export function HealthAssessmentForm({
     await onSubmit(assessmentData)
   }
 
+  const markInteracted = useCallback(() => {
+    if (!hasInteracted) setHasInteracted(true)
+  }, [hasInteracted])
+
   const handleHealthIssueChange = (issueId: string, checked: boolean) => {
     const currentIssues = form.getValues('commonHealthIssues')
     if (checked) {
@@ -242,14 +241,14 @@ export function HealthAssessmentForm({
   }
 
   return (
-    <FormCard className="max-w-4xl mx-auto" data-testid="health-assessment-form">
+    <div className="max-w-4xl mx-auto space-y-6" data-testid="health-assessment-form">
       {/* Gap Analysis Summary */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Hospital className="h-5 w-5" />
             Health Assessment
-            {gapCount > 0 && (
+            {hasInteracted && gapCount > 0 && (
               <Badge variant="destructive">
                 {gapCount} Gap{gapCount > 1 ? 's' : ''}
               </Badge>
@@ -259,7 +258,7 @@ export function HealthAssessmentForm({
             Assess healthcare facilities, services, and common health issues in the affected area
           </CardDescription>
         </CardHeader>
-        {gapCount > 0 && (
+        {hasInteracted && gapCount > 0 && (
           <CardContent>
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
@@ -328,7 +327,7 @@ export function HealthAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                           data-testid="has-functional-clinic"
                         />
@@ -336,7 +335,7 @@ export function HealthAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Functional Clinic
-                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                         </FormLabel>
                         <FormDescription>
                           At least one functional healthcare facility exists
@@ -354,7 +353,7 @@ export function HealthAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                           data-testid="has-emergency-services"
                         />
@@ -362,7 +361,7 @@ export function HealthAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Emergency Services
-                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                         </FormLabel>
                         <FormDescription>
                           Emergency medical services are available
@@ -432,19 +431,22 @@ export function HealthAssessmentForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Primary Facility Type</FormLabel>
-                    <FormControl>
-                      <select
-                        {...field}
+                    <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
                         disabled={disabled}
-                        data-testid="health-facility-type"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <option value="">Select facility type</option>
-                        {facilityTypes.map(type => (
-                          <option key={type} value={type}>{type}</option>
-                        ))}
-                      </select>
-                    </FormControl>
+                        <FormControl>
+                          <SelectTrigger data-testid="health-facility-type">
+                            <SelectValue placeholder="Select facility type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {facilityTypes.map(type => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     <FormDescription>
                       Main type of healthcare facility available
                     </FormDescription>
@@ -473,7 +475,7 @@ export function HealthAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                           data-testid="has-trained-staff"
                         />
@@ -481,7 +483,7 @@ export function HealthAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Trained Staff
-                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                         </FormLabel>
                         <FormDescription>
                           Sufficient trained medical staff available
@@ -499,7 +501,7 @@ export function HealthAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                           data-testid="has-medicine-supply"
                         />
@@ -507,7 +509,7 @@ export function HealthAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Medicine Supply
-                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                         </FormLabel>
                         <FormDescription>
                           Essential medicines are available
@@ -525,7 +527,7 @@ export function HealthAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                           data-testid="has-medical-supplies"
                         />
@@ -533,7 +535,7 @@ export function HealthAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Medical Supplies
-                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                         </FormLabel>
                         <FormDescription>
                           Medical equipment and supplies available
@@ -551,7 +553,7 @@ export function HealthAssessmentForm({
                       <FormControl>
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                           disabled={disabled}
                           data-testid="has-maternal-child-services"
                         />
@@ -559,7 +561,7 @@ export function HealthAssessmentForm({
                       <div className="space-y-1 leading-none">
                         <FormLabel className="flex items-center gap-2">
                           Maternal & Child Services
-                          <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                          {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                         </FormLabel>
                         <FormDescription>
                           Maternal and child health services available
@@ -581,7 +583,8 @@ export function HealthAssessmentForm({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <fieldset className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" aria-required="true">
+                <legend className="sr-only">Common Health Issues</legend>
                 {healthIssueOptions.map((issue) => {
                   const Icon = issue.icon
                   const isSelected = form.watch('commonHealthIssues').includes(issue.id)
@@ -615,12 +618,11 @@ export function HealthAssessmentForm({
                     />
                   )
                 })}
-              </div>
+              </fieldset>
             </CardContent>
           </Card>
 
-          {/* Risk Assessment */}
-          {gapCount > 0 && (
+          {hasInteracted && gapCount > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-red-600">
@@ -631,12 +633,13 @@ export function HealthAssessmentForm({
               <CardContent>
                 <div className="space-y-4">
                   {gaps.map((gap) => (
-                    <Alert key={gap.key} variant="destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>{gap.label} Gap:</strong> {gap.label} services are not available or insufficient
-                      </AlertDescription>
-                    </Alert>
+                    <div key={gap.key} className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
+                      <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                      <div>
+                        <p className="text-sm font-medium">{gap.label} Gap</p>
+                        <p className="text-xs text-muted-foreground">{gap.label} services are not available or insufficient</p>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </CardContent>
@@ -719,6 +722,6 @@ export function HealthAssessmentForm({
           />
         </form>
       </Form>
-    </FormCard>
+    </div>
   )
 }

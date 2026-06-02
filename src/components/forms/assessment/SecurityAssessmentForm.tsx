@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState, useEffect, useCallback } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FormCard } from '@/components/shared/FormCard'
 import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Textarea } from '@/components/ui/textarea'
@@ -48,13 +47,10 @@ export function SecurityAssessmentForm({
   const [selectedEntity, setSelectedEntity] = useState<string>(entityId)
   const [selectedIncident, setSelectedIncident] = useState<string>(incidentId || '')
   const [selectedEntityData, setSelectedEntityData] = useState<any>(null)
+  const [hasInteracted, setHasInteracted] = useState(false)
 
   // Extract security data from initialData
   const securityData = (initialData as any)?.securityAssessment || (initialData as any);
-  
-  // Debug logging
-  console.log('SecurityAssessmentForm - initialData:', initialData);
-  console.log('SecurityAssessmentForm - securityData:', securityData);
 
   const form = useForm<FormData>({
     resolver: zodResolver(SecurityAssessmentSchema),
@@ -71,8 +67,6 @@ export function SecurityAssessmentForm({
 
   // Track when initialData changes and update form
   useEffect(() => {
-    console.log('SecurityAssessmentForm - initialData changed:', initialData);
-    
     if (securityData) {
       const newValues = {
         isSafeFromViolence: securityData?.isSafeFromViolence || false,
@@ -83,8 +77,6 @@ export function SecurityAssessmentForm({
         hasLighting: securityData?.hasLighting || false,
         additionalSecurityDetails: securityData?.additionalSecurityDetails || ''
       };
-      
-      console.log('SecurityAssessmentForm - updating form with values:', newValues);
       form.reset(newValues);
     }
   }, [initialData, securityData]);
@@ -104,7 +96,15 @@ export function SecurityAssessmentForm({
     }
   };
 
-  const watchedValues = form.watch()
+  const markInteracted = useCallback(() => {
+    if (!hasInteracted) setHasInteracted(true)
+  }, [hasInteracted])
+
+  const [isSafeFromViolence, gbvCasesReported, hasSecurityPresence, hasProtectionReportingMechanism, vulnerableGroupsHaveAccess, hasLighting] = useWatch({
+    control: form.control,
+    name: ['isSafeFromViolence', 'gbvCasesReported', 'hasSecurityPresence', 'hasProtectionReportingMechanism', 'vulnerableGroupsHaveAccess', 'hasLighting'] as const
+  })
+  const watchedValues = { isSafeFromViolence, gbvCasesReported, hasSecurityPresence, hasProtectionReportingMechanism, vulnerableGroupsHaveAccess, hasLighting } as any
 
   // Calculate security risks
   const violenceRisk = !watchedValues.isSafeFromViolence
@@ -152,7 +152,7 @@ export function SecurityAssessmentForm({
   }
 
   return (
-    <FormCard className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <Card>
         <CardHeader>
@@ -164,7 +164,7 @@ export function SecurityAssessmentForm({
                 {criticalRisks} Critical Risk{criticalRisks > 1 ? 's' : ''}
               </Badge>
             )}
-            {gapCount > 0 && (
+            {hasInteracted && gapCount > 0 && (
               <Badge variant="destructive">
                 {gapCount} Gap{gapCount > 1 ? 's' : ''}
               </Badge>
@@ -184,7 +184,7 @@ export function SecurityAssessmentForm({
             </Alert>
           </CardContent>
         )}
-        {gapCount > 0 && (
+        {hasInteracted && gapCount > 0 && (
           <CardContent>
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
@@ -256,7 +256,7 @@ export function SecurityAssessmentForm({
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                         disabled={disabled}
                       />
                     </FormControl>
@@ -281,7 +281,7 @@ export function SecurityAssessmentForm({
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                         disabled={disabled}
                       />
                     </FormControl>
@@ -320,14 +320,14 @@ export function SecurityAssessmentForm({
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                         disabled={disabled}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel className="flex items-center gap-2">
                         Security Presence
-                        <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                        {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                       </FormLabel>
                       <FormDescription>
                         Security personnel or forces are present in the area
@@ -345,7 +345,7 @@ export function SecurityAssessmentForm({
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                         disabled={disabled}
                       />
                     </FormControl>
@@ -353,7 +353,7 @@ export function SecurityAssessmentForm({
                       <FormLabel className="flex items-center gap-2">
                         <Phone className="h-4 w-4" />
                         Protection Reporting Mechanism
-                        <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                        {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                       </FormLabel>
                       <FormDescription>
                         Mechanisms exist for reporting protection concerns
@@ -385,14 +385,14 @@ export function SecurityAssessmentForm({
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                         disabled={disabled}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel className="flex items-center gap-2">
                         Vulnerable Groups Have Access
-                        <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />
+                        {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                       </FormLabel>
                       <FormDescription>
                         Vulnerable groups have access to protection services
@@ -424,7 +424,7 @@ export function SecurityAssessmentForm({
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={field.onChange}
+                        onCheckedChange={(checked) => { markInteracted(); field.onChange(checked) }}
                         disabled={disabled}
                       />
                     </FormControl>
@@ -444,7 +444,7 @@ export function SecurityAssessmentForm({
           </Card>
 
           {/* Risk Assessment */}
-          {hasSecurityRisks && (
+          {hasInteracted && hasSecurityRisks && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-red-600">
@@ -462,7 +462,7 @@ export function SecurityAssessmentForm({
                       </AlertDescription>
                     </Alert>
                   )}
-                  
+
                   {gbvRisk && (
                     <Alert className="border-red-200 bg-red-50">
                       <AlertTriangle className="h-4 w-4 text-red-600" />
@@ -471,14 +471,15 @@ export function SecurityAssessmentForm({
                       </AlertDescription>
                     </Alert>
                   )}
-                  
+
                   {gaps.map((gap) => (
-                    <Alert key={gap.key} variant="destructive">
-                      <Shield className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>{gap.label} Gap:</strong> {gap.label} is not available or insufficient, increasing security risks
-                      </AlertDescription>
-                    </Alert>
+                    <div key={gap.key} className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
+                      <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                      <div>
+                        <p className="text-sm font-medium">{gap.label} Gap</p>
+                        <p className="text-xs text-muted-foreground">{gap.label} is not available or insufficient</p>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </CardContent>
@@ -555,6 +556,6 @@ export function SecurityAssessmentForm({
           />
         </form>
       </Form>
-    </FormCard>
+    </div>
   )
 }

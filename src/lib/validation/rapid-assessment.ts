@@ -60,7 +60,13 @@ export const FoodAssessmentSchema = z.object({
   additionalFoodRequiredPersons: z.number().int().min(0),
   additionalFoodRequiredHouseholds: z.number().int().min(0),
   additionalFoodDetails: z.any().optional()
-})
+}).refine(
+  (data) => !(data.isFoodSufficient && data.additionalFoodRequiredPersons > 0),
+  { message: 'Food marked sufficient but additional persons required', path: ['additionalFoodRequiredPersons'] }
+).refine(
+  (data) => !(data.isFoodSufficient && data.availableFoodDurationDays < 7),
+  { message: 'Food marked sufficient but duration is less than 7 days', path: ['availableFoodDurationDays'] }
+)
 
 // WASH Assessment Schema
 export const WASHAssessmentSchema = z.object({
@@ -72,7 +78,10 @@ export const WASHAssessmentSchema = z.object({
   hasHandwashingFacilities: z.boolean(),
   hasOpenDefecationConcerns: z.boolean(),
   additionalWashDetails: z.any().optional()
-})
+}).refine(
+  (data) => !(data.areLatrinesSufficient && data.functionalLatrinesAvailable === 0),
+  { message: 'Latrines marked sufficient but none are functional', path: ['functionalLatrinesAvailable'] }
+)
 
 // Shelter Assessment Schema
 export const ShelterAssessmentSchema = z.object({
@@ -84,7 +93,10 @@ export const ShelterAssessmentSchema = z.object({
   areOvercrowded: z.boolean(),
   provideWeatherProtection: z.boolean(),
   additionalShelterDetails: z.any().optional()
-})
+}).refine(
+  (data) => !(data.areSheltersSufficient && data.numberSheltersRequired > 0),
+  { message: 'Shelters marked sufficient but additional shelters required', path: ['numberSheltersRequired'] }
+)
 
 // Security Assessment Schema
 export const SecurityAssessmentSchema = z.object({
@@ -143,9 +155,9 @@ export const UpdateRapidAssessmentSchema = BaseRapidAssessmentSchema.partial().e
   type: z.enum(['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION']).optional(),
   healthData: HealthAssessmentSchema.partial().optional(),
   populationData: PopulationAssessmentSchema.partial().optional(),
-  foodData: FoodAssessmentSchema.partial().optional(),
-  washData: WASHAssessmentSchema.partial().optional(),
-  shelterData: ShelterAssessmentSchema.partial().optional(),
+  foodData: (FoodAssessmentSchema as any).innerType().partial().optional(),
+  washData: (WASHAssessmentSchema as any).innerType().partial().optional(),
+  shelterData: (ShelterAssessmentSchema as any).innerType().partial().optional(),
   securityData: SecurityAssessmentSchema.partial().optional()
 })
 
