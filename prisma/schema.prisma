@@ -192,7 +192,7 @@ model Incident {
   name                   String
   type                   String
   subType                String?
-  severity               Priority                @default(MEDIUM)
+  severity               Priority                @default(UNCLASSIFIED)
   status                 IncidentStatus          @default(ACTIVE)
   description            String
   location               String
@@ -675,6 +675,7 @@ enum Priority {
   HIGH
   MEDIUM
   LOW
+  UNCLASSIFIED
 }
 
 enum VerificationStatus {

@@ -180,8 +180,9 @@ class GapFieldSeverityService {
    */
   private compareSeverities(severity1: Priority, severity2: Priority): number {
     const severityOrder = {
+      [Priority.UNCLASSIFIED]: 0,
       [Priority.LOW]: 1,
-      [Priority.MEDIUM]: 2, 
+      [Priority.MEDIUM]: 2,
       [Priority.HIGH]: 3,
       [Priority.CRITICAL]: 4
     }

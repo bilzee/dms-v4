@@ -3,7 +3,6 @@ export interface IncidentData {
   id?: string
   type: string
   subType?: string
-  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
   status: 'ACTIVE' | 'CONTAINED' | 'RESOLVED'
   description: string
   location: string
@@ -79,7 +78,6 @@ export interface UpdateIncidentData {
   type?: string
   subType?: string
   status?: 'ACTIVE' | 'CONTAINED' | 'RESOLVED'
-  severity?: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
   description?: string
   location?: string
   coordinates?: { lat: number; lng: number }

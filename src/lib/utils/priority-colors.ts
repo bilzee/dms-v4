@@ -3,6 +3,7 @@ export const priorityColors = {
   high: 'bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20',
   medium: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20',
   low: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20',
+  unclassified: 'bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20',
 } as const;
 
 export const priorityDotColors = {
@@ -10,6 +11,7 @@ export const priorityDotColors = {
   high: 'bg-orange-500',
   medium: 'bg-yellow-500',
   low: 'bg-green-500',
+  unclassified: 'bg-gray-400',
 } as const;
 
 export const trendColors = {
@@ -30,6 +32,7 @@ export const verificationPriorityBadgeColors = {
   HIGH: 'bg-orange-100 text-orange-800 border-orange-300',
   MEDIUM: 'bg-yellow-100 text-yellow-800 border-yellow-300',
   LOW: 'bg-green-100 text-green-800 border-green-300',
+  UNCLASSIFIED: 'bg-gray-100 text-gray-600 border-gray-300',
 } as const;
 
 export const verificationPrioritySolidColors = {
@@ -37,6 +40,7 @@ export const verificationPrioritySolidColors = {
   HIGH: 'bg-orange-500 text-white',
   MEDIUM: 'bg-yellow-500 text-white',
   LOW: 'bg-green-500 text-white',
+  UNCLASSIFIED: 'bg-gray-400 text-white',
 } as const;
 
 export const verificationStatusBadgeColors: Record<string, string> = {

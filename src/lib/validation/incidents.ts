@@ -3,7 +3,6 @@ import { z } from 'zod'
 export const IncidentSchema = z.object({
   type: z.string().min(1, 'Incident type is required'),
   subType: z.string().optional(),
-  severity: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).default('MEDIUM'),
   status: z.enum(['ACTIVE', 'CONTAINED', 'RESOLVED']).default('ACTIVE'),
   description: z.string().min(1, 'Description is required'),
   location: z.string().min(1, 'Location is required'),
@@ -20,7 +19,6 @@ export const CreateIncidentSchema = z.object({
 
 export const UpdateIncidentSchema = z.object({
   status: z.enum(['ACTIVE', 'CONTAINED', 'RESOLVED']).optional(),
-  severity: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional(),
   description: z.string().min(1, 'Description is required').optional(),
   location: z.string().min(1, 'Location is required').optional(),
   coordinates: z.object({

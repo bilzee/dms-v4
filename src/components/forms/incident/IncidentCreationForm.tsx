@@ -22,7 +22,6 @@ import { useIncident } from '@/hooks/useIncident'
 import { IncidentSchema } from '@/lib/validation/incidents'
 import { IncidentData } from '@/types/incidents'
 import { AlertTriangle, MapPin, Loader2 } from '@/lib/icons'
-import { getBadgeClasses } from '@/components/shared/StatusBadge'
 import { apiGet, extractArray } from '@/lib/api'
 import { z } from 'zod'
 
@@ -38,13 +37,6 @@ interface IncidentCreationFormProps {
   autoSave?: boolean
   gpsEnabled?: boolean
 }
-
-const severityOptions = [
-  { value: 'LOW', label: 'Low' },
-  { value: 'MEDIUM', label: 'Medium' },
-  { value: 'HIGH', label: 'High' },
-  { value: 'CRITICAL', label: 'Critical' }
-]
 
 const statusOptions = [
   { value: 'ACTIVE', label: 'Active' },
@@ -93,7 +85,6 @@ export function IncidentCreationForm({
     defaultValues: {
       type: initialData?.type || '',
       subType: initialData?.subType || '',
-      severity: initialData?.severity || 'MEDIUM',
       status: initialData?.status || 'ACTIVE',
       description: initialData?.description || '',
       location: initialData?.location || '',
@@ -101,7 +92,6 @@ export function IncidentCreationForm({
     }
   })
 
-  const selectedSeverity = watch('severity')
   const watchedValues = watch()
 
   // Auto-save functionality
@@ -326,35 +316,13 @@ export function IncidentCreationForm({
             </div>
           </div>
 
-          {/* Severity and Status */}
+          {/* Status */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="severity">
-                Severity <span className="text-red-500">*</span>
-              </Label>
-              <Select 
-                onValueChange={(value) => setValue('severity', value as any)} 
-                defaultValue="MEDIUM"
-                disabled={disabled}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {severityOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      <div className="flex items-center gap-2">
-                        <div className={`px-2 py-1 rounded text-xs ${getBadgeClasses('severity', option.value)}`}>
-                          {option.label}
-                        </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.severity && (
-                <p className="text-sm text-red-600">{errors.severity.message}</p>
-              )}
+              <div className="flex items-center gap-2 p-3 rounded-md border bg-muted/50 text-sm text-muted-foreground">
+                <AlertTriangle className="h-4 w-4" />
+                <span>Severity is determined automatically from assessments</span>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -474,17 +442,6 @@ export function IncidentCreationForm({
               <p className="text-sm text-red-600">{errors.description.message}</p>
             )}
           </div>
-
-          {/* Severity Warning */}
-          {selectedSeverity === 'CRITICAL' && (
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Critical Incident:</strong> This incident will be flagged for immediate attention 
-                and will trigger emergency response protocols.
-              </AlertDescription>
-            </Alert>
-          )}
 
           {/* Action Buttons */}
           <FormActionBar

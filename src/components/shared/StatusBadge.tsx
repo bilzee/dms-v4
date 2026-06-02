@@ -14,10 +14,12 @@ const severityBadgeColors: Record<string, string> = {
   HIGH: 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800',
   MEDIUM: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800',
   LOW: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800',
+  UNCLASSIFIED: 'bg-gray-100 text-gray-600 border-gray-300 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-700',
   critical: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800',
   high: 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800',
   medium: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800',
   low: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800',
+  unclassified: 'bg-gray-100 text-gray-600 border-gray-300 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-700',
 }
 
 const incidentBadgeColors: Record<string, string> = {
@@ -105,10 +107,12 @@ const dotColorMap: Record<Domain, Record<string, string>> = {
     HIGH: 'bg-orange-500',
     MEDIUM: 'bg-yellow-500',
     LOW: 'bg-green-500',
+    UNCLASSIFIED: 'bg-gray-400',
     critical: 'bg-red-500',
     high: 'bg-orange-500',
     medium: 'bg-yellow-500',
     low: 'bg-green-500',
+    unclassified: 'bg-gray-400',
   },
   verification: {
     DRAFT: 'bg-muted-foreground',

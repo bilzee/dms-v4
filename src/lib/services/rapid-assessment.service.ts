@@ -258,6 +258,14 @@ export class RapidAssessmentService {
     // Automatically trigger gap analysis calculation after successful creation
     await this.triggerGapAnalysis(result.rapidAssessment.id)
 
+    // Recalculate incident severity bottom-up
+    if (input.incidentId) {
+      try {
+        const { incidentSeverityService } = await import('@/lib/services/incident-severity.service');
+        await incidentSeverityService.recalculateIncidentSeverity(input.incidentId)
+      } catch {}
+    }
+
     try {
       const { ActionSignalService } = await import('@/lib/services/action-signal.service');
       await ActionSignalService.evaluateAndGenerate({
@@ -493,6 +501,14 @@ export class RapidAssessmentService {
       }
     })
 
+    // Recalculate incident severity bottom-up
+    if (updatedAssessment.incidentId) {
+      try {
+        const { incidentSeverityService } = await import('@/lib/services/incident-severity.service');
+        await incidentSeverityService.recalculateIncidentSeverity(updatedAssessment.incidentId)
+      } catch {}
+    }
+
     return updatedAssessment as unknown as RapidAssessmentWithData
   }
 
@@ -500,7 +516,7 @@ export class RapidAssessmentService {
     // Check if assessment exists and user has permission
     const existingAssessment = await prisma.rapidAssessment.findUnique({
       where: { id },
-      select: { assessorId: true }
+      select: { assessorId: true, incidentId: true }
     })
 
     if (!existingAssessment) {
@@ -511,10 +527,20 @@ export class RapidAssessmentService {
       throw new Error('Not authorized to delete this assessment')
     }
 
+    const incidentId = existingAssessment.incidentId
+
     // Delete assessment (cascade will handle type-specific assessment)
     await prisma.rapidAssessment.delete({
       where: { id }
     })
+
+    // Recalculate incident severity bottom-up
+    if (incidentId) {
+      try {
+        const { incidentSeverityService } = await import('@/lib/services/incident-severity.service');
+        await incidentSeverityService.recalculateIncidentSeverity(incidentId)
+      } catch {}
+    }
   }
 
   static async submit(id: string, submittedBy: string): Promise<RapidAssessmentWithData> {
@@ -629,6 +655,14 @@ export class RapidAssessmentService {
             gapAnalysis: gapAnalysisData.gapAnalysis as unknown as Prisma.InputJsonObject
           }
         })
+      }
+
+      // Recalculate incident severity after gap analysis updates priority
+      if (assessment.incidentId) {
+        try {
+          const { incidentSeverityService } = await import('@/lib/services/incident-severity.service');
+          await incidentSeverityService.recalculateIncidentSeverity(assessment.incidentId)
+        } catch {}
       }
 
       console.log(`Gap analysis calculated for assessment ${assessmentId} (${assessment.rapidAssessmentType})`)

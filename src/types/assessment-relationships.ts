@@ -15,12 +15,7 @@ export interface EntityIncidentRelationship {
   entity: Entity;
   incident: Incident;
   assessments: RapidAssessment[];
-  priorityDistribution: {
-    CRITICAL: number;
-    HIGH: number;
-    MEDIUM: number;
-    LOW: number;
-  };
+  priorityDistribution: Record<Priority, number>;
   latestAssessment: RapidAssessment;
   totalAssessments: number;
   firstAssessmentDate: Date;
@@ -32,12 +27,7 @@ export interface EntityWithRelationships extends Entity {
   incidents?: Incident[];              // Computed: Related incidents via assessments
   assessmentCount?: number;            // Computed: Total assessments
   incidentCount?: number;              // Computed: Unique incidents
-  priorityDistribution?: {             // Computed: Assessment priority breakdown
-    CRITICAL: number;
-    HIGH: number;
-    MEDIUM: number;
-    LOW: number;
-  };
+  priorityDistribution?: Record<Priority, number>;
 }
 
 // Enhanced Incident with computed relationship data
@@ -45,12 +35,7 @@ export interface IncidentWithRelationships extends Incident {
   entities?: Entity[];                 // Computed: Related entities via assessments
   assessmentCount?: number;            // Computed: Total assessments
   entityCount?: number;                // Computed: Unique entities
-  priorityDistribution?: {             // Computed: Assessment priority breakdown
-    CRITICAL: number;
-    HIGH: number;
-    MEDIUM: number;
-    LOW: number;
-  };
+  priorityDistribution?: Record<Priority, number>;
 }
 
 // Timeline item for assessment history visualization
@@ -78,12 +63,7 @@ export interface RelationshipStatistics {
   totalEntities: number;
   totalIncidents: number;
   totalAssessments: number;
-  priorityDistribution: {
-    CRITICAL: number;
-    HIGH: number;
-    MEDIUM: number;
-    LOW: number;
-  };
+  priorityDistribution: Record<Priority, number>;
   assessmentTypeDistribution: {
     HEALTH: number;
     WASH: number;

@@ -47,6 +47,7 @@ export const SEVERITY_COLOR_MAP = {
   high: 'orange',
   medium: 'yellow',
   low: 'green',
+  unclassified: 'gray',
   info: 'blue',
   success: 'emerald',
   warning: 'amber',

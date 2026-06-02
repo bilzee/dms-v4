@@ -64,6 +64,7 @@ export async function getIncidentEntities(
           HIGH: 0,
           MEDIUM: 0,
           LOW: 0,
+          UNCLASSIFIED: 0,
         },
       });
     }
@@ -122,6 +123,7 @@ export async function getEntityIncidents(
           HIGH: 0,
           MEDIUM: 0,
           LOW: 0,
+          UNCLASSIFIED: 0,
         },
       });
     }
@@ -181,6 +183,7 @@ export async function getEntityIncidentRelationships(
           HIGH: 0,
           MEDIUM: 0,
           LOW: 0,
+          UNCLASSIFIED: 0,
         },
         latestAssessment: assessment,
         totalAssessments: 0,
@@ -299,6 +302,7 @@ export async function calculateRelationshipStatistics(
     HIGH: 0,
     MEDIUM: 0,
     LOW: 0,
+    UNCLASSIFIED: 0,
   };
 
   const assessmentTypeDistribution: RelationshipStatistics['assessmentTypeDistribution'] = {
@@ -358,7 +362,8 @@ export async function getIncidentAssessmentSummary(incidentId: string) {
     HIGH: 0,
     MEDIUM: 0,
     LOW: 0,
-  };
+    UNCLASSIFIED: 0,
+  } as Record<Priority, number>;
 
   for (const assessment of assessments) {
     entityMap.set(assessment.entityId, assessment.entity);

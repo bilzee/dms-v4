@@ -106,12 +106,13 @@ export default function EntityIncidentMapPage() {
   };
 
   // Priority styling and colors
-  const PRIORITY_COLORS = {
+  const PRIORITY_COLORS: Record<string, string> = {
     CRITICAL: '#dc2626',
     HIGH: '#ea580c', 
     MEDIUM: '#ca8a04',
     LOW: '#16a34a',
-  } as const;
+    UNCLASSIFIED: '#9ca3af',
+  };
 
   if (incidentsLoading) {
     return (

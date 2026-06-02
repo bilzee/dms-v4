@@ -46,7 +46,6 @@ export class PreliminaryAssessmentService {
           name: incidentData.description,
           type: incidentData.type,
           subType: incidentData.subType,
-          severity: incidentData.severity,
           description: incidentData.description,
           location: incidentData.location,
           coordinates: {
@@ -78,6 +77,14 @@ export class PreliminaryAssessmentService {
         }
       }
     })
+
+    const incidentId = assessment.incidentId || incident?.id
+    if (incidentId) {
+      try {
+        const { incidentSeverityService } = await import('@/lib/services/incident-severity.service');
+        await incidentSeverityService.recalculateIncidentSeverity(incidentId)
+      } catch {}
+    }
 
     return assessment as unknown as PreliminaryAssessment & { incident?: Incident }
   }
@@ -245,13 +252,32 @@ export class PreliminaryAssessmentService {
       }
     })
 
-    return assessment as unknown as PreliminaryAssessment & { incident?: Incident }
+    const result = assessment as unknown as PreliminaryAssessment & { incident?: Incident }
+
+    if (result.incidentId) {
+      try {
+        const { incidentSeverityService } = await import('@/lib/services/incident-severity.service');
+        await incidentSeverityService.recalculateIncidentSeverity(result.incidentId)
+      } catch {}
+    }
+
+    return result
   }
 
   static async delete(id: string): Promise<void> {
+    const assessment = await prisma.preliminaryAssessment.findUnique({
+      where: { id },
+      select: { incidentId: true }
+    })
     await prisma.preliminaryAssessment.delete({
       where: { id }
     })
+    if (assessment?.incidentId) {
+      try {
+        const { incidentSeverityService } = await import('@/lib/services/incident-severity.service');
+        await incidentSeverityService.recalculateIncidentSeverity(assessment.incidentId)
+      } catch {}
+    }
   }
 
   static async linkToIncident(assessmentId: string, incidentId: string): Promise<PreliminaryAssessment> {
