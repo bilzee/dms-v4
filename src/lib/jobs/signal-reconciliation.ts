@@ -76,8 +76,10 @@ export class SignalReconciliationJob {
         return this.checkPlanNeedsCommitment(signal);
       case 'partially-fulfilled':
         return this.checkPartiallyFulfilled(signal);
-      case 'commitment-awaiting-plan':
-        return this.checkCommitmentAwaitingPlan(signal);
+      case 'entity-needs-assessor':
+      case 'entity-needs-responder':
+      case 'entity-needs-donor':
+        return false;
       default:
         return false;
     }
@@ -195,15 +197,4 @@ export class SignalReconciliationJob {
     return commitment.status === 'COMPLETE';
   }
 
-  private static async checkCommitmentAwaitingPlan(signal: any): Promise<boolean> {
-    const context = signal.context as any;
-    if (!context?.commitmentId) return false;
-
-    const commitment = await prisma.donorCommitment.findUnique({
-      where: { id: context.commitmentId },
-      select: { planCommitments: { select: { planId: true } } },
-    });
-    if (!commitment) return true;
-    return commitment.planCommitments.length > 0;
-  }
 }

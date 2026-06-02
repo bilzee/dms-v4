@@ -9,10 +9,12 @@ export type SignalReason =
   | 'assessment-needs-response'
   | 'plan-needs-commitment'
   | 'partially-fulfilled'
-  | 'commitment-awaiting-plan'
   | 'assessment-awaiting-verification'
   | 'delivery-awaiting-verification'
-  | 'verification-overdue';
+  | 'verification-overdue'
+  | 'entity-needs-assessor'
+  | 'entity-needs-responder'
+  | 'entity-needs-donor';
 
 export type SignalPriority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -114,6 +116,7 @@ export interface SignalTriggerPayload {
   responseType?: string;
   responsePriority?: string;
   commitmentId?: string;
+  commitmentPriority?: string;
   donorId?: string;
 }
 
@@ -124,14 +127,16 @@ export const SIGNAL_REASON_ROLES: Record<SignalReason, SignalTargetRole[]> = {
   'awaiting-plan': ['RESPONDER', 'COORDINATOR'],
   'awaiting-plan-for-commitment': ['RESPONDER', 'COORDINATOR'],
   'awaiting-delivery': ['RESPONDER', 'COORDINATOR'],
-  'partially-covered': ['RESPONDER', 'COORDINATOR'],
+  'partially-covered': ['DONOR', 'COORDINATOR'],
   'assessment-needs-response': ['DONOR', 'COORDINATOR'],
   'plan-needs-commitment': ['DONOR', 'COORDINATOR'],
-  'partially-fulfilled': ['DONOR', 'COORDINATOR'],
-  'commitment-awaiting-plan': ['DONOR', 'COORDINATOR'],
+  'partially-fulfilled': ['DONOR', 'RESPONDER', 'COORDINATOR'],
   'assessment-awaiting-verification': ['COORDINATOR'],
   'delivery-awaiting-verification': ['COORDINATOR'],
   'verification-overdue': ['COORDINATOR'],
+  'entity-needs-assessor': ['COORDINATOR'],
+  'entity-needs-responder': ['COORDINATOR'],
+  'entity-needs-donor': ['COORDINATOR'],
 };
 
 export const NOTIFICATION_TEMPLATES: Record<SignalReason, { title: string; body: string }> = {
@@ -175,9 +180,17 @@ export const NOTIFICATION_TEMPLATES: Record<SignalReason, { title: string; body:
     title: 'Commitment partially fulfilled',
     body: '{entityName} — your commitment is partially delivered.',
   },
-  'commitment-awaiting-plan': {
-    title: 'Your commitment awaits action',
-    body: '{entityName} — your commitment is awaiting a responder\'s plan.',
+  'entity-needs-assessor': {
+    title: 'Entity needs assessor',
+    body: '{entityName} — no assessor has been assigned.',
+  },
+  'entity-needs-responder': {
+    title: 'Entity needs responder',
+    body: '{entityName} — no responder has been assigned.',
+  },
+  'entity-needs-donor': {
+    title: 'Entity needs donor',
+    body: '{entityName} — no donor has been assigned.',
   },
   'assessment-awaiting-verification': {
     title: 'Assessment awaiting review',

@@ -21,6 +21,7 @@ export default function AuthLayout({
   useSignalSSE({
     enabled: isAuthenticated,
     onSignalCreated: (event) => {
+      if (event.type !== 'SIGNAL_CREATED') return;
       const data = event.data as Record<string, string>;
       if (data?.entityName && data?.signalReason) {
         const title = data.signalReason.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());

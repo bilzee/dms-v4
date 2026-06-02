@@ -29,7 +29,8 @@ import {
   Trophy,
   MapPin,
   LogOut,
-  Menu
+  Menu,
+  Bell
 } from '@/lib/icons';
 
 interface NavItem {
@@ -426,6 +427,12 @@ const getNavigationItems = (role: string | null): NavItem[] => {
             href: '/system/health', 
             icon: Monitor,
             description: 'System monitoring and health status' 
+          },
+          {
+            name: 'Notification Settings',
+            href: '/admin/settings/notifications',
+            icon: Bell,
+            description: 'Configure push and in-app notification channels and priorities'
           }
         ]
       }

@@ -12,14 +12,13 @@ import {
   AlertCircle,
   DollarSign,
   Package,
-  Timer,
 } from '@/lib/icons';
 import type { SignalReason, SignalPriority } from '@/types/action-signal';
 import { cn } from '@/lib/utils';
 
 import { ShieldCheck, UserPlus } from '@/lib/icons';
 
-type CoordinatorReason = 'verify-assessment' | 'verify-response' | 'verify-delivery' | 'need-assessor' | 'need-responder';
+type CoordinatorReason = 'verify-assessment' | 'verify-response' | 'verify-delivery' | 'need-assessor' | 'need-responder' | 'entity-needs-assessor' | 'entity-needs-responder' | 'entity-needs-donor';
 
 const COORDINATOR_ICON_MAP: Record<CoordinatorReason, React.ComponentType<{ className?: string }>> = {
   'verify-assessment': ShieldCheck,
@@ -27,6 +26,9 @@ const COORDINATOR_ICON_MAP: Record<CoordinatorReason, React.ComponentType<{ clas
   'verify-delivery': Truck,
   'need-assessor': UserPlus,
   'need-responder': UserPlus,
+  'entity-needs-assessor': UserPlus,
+  'entity-needs-responder': UserPlus,
+  'entity-needs-donor': UserPlus,
 };
 
 const REASON_ICON_MAP: Record<SignalReason, React.ComponentType<{ className?: string }>> = {
@@ -40,10 +42,12 @@ const REASON_ICON_MAP: Record<SignalReason, React.ComponentType<{ className?: st
   'assessment-needs-response': AlertCircle,
   'plan-needs-commitment': DollarSign,
   'partially-fulfilled': Package,
-  'commitment-awaiting-plan': Timer,
   'assessment-awaiting-verification': ShieldCheck,
   'delivery-awaiting-verification': Truck,
   'verification-overdue': AlertCircle,
+  'entity-needs-assessor': UserPlus,
+  'entity-needs-responder': UserPlus,
+  'entity-needs-donor': UserPlus,
 };
 
 const COORDINATOR_LABELS: Record<CoordinatorReason, string> = {
@@ -52,6 +56,9 @@ const COORDINATOR_LABELS: Record<CoordinatorReason, string> = {
   'verify-delivery': 'Delivery to verify',
   'need-assessor': 'Needs assessor assigned',
   'need-responder': 'Needs responder assigned',
+  'entity-needs-assessor': 'Needs assessor assigned',
+  'entity-needs-responder': 'Needs responder assigned',
+  'entity-needs-donor': 'Needs donor assigned',
 };
 
 export function getCoordinatorReasonIcon(reason: string) {
@@ -104,10 +111,12 @@ export const REASON_LABELS: Record<SignalReason, string> & Record<string, string
   'assessment-needs-response': 'Assessment needs response',
   'plan-needs-commitment': 'Plan needs commitment',
   'partially-fulfilled': 'Partially fulfilled',
-  'commitment-awaiting-plan': 'Commitment awaiting plan',
   'assessment-awaiting-verification': 'Assessment to verify',
   'delivery-awaiting-verification': 'Delivery to verify',
   'verification-overdue': 'Verification overdue',
+  'entity-needs-assessor': 'Needs assessor assigned',
+  'entity-needs-responder': 'Needs responder assigned',
+  'entity-needs-donor': 'Needs donor assigned',
   'verify-assessment': 'Assessment to verify',
   'verify-response': 'Response plan to verify',
   'verify-delivery': 'Delivery to verify',

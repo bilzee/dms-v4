@@ -33,18 +33,21 @@ const ACTION_LABELS: Record<string, Record<string, string>> = {
     'awaiting-plan': 'Create Plan',
     'awaiting-plan-for-commitment': 'Create Plan',
     'awaiting-delivery': 'Confirm Delivery',
-    'partially-covered': 'View Plan',
+    'partially-fulfilled': 'View Commitment',
   },
   DONOR: {
     'assessment-needs-response': 'View',
     'plan-needs-commitment': 'Make Commitment',
     'partially-fulfilled': 'View Commitment',
-    'commitment-awaiting-plan': 'View Details',
+    'partially-covered': 'View Plan',
   },
   COORDINATOR: {
     'assessment-awaiting-verification': 'Review Assessment',
     'delivery-awaiting-verification': 'Review Delivery',
     'verification-overdue': 'Review Now',
+    'entity-needs-assessor': 'Assign Assessor',
+    'entity-needs-responder': 'Assign Responder',
+    'entity-needs-donor': 'Assign Donor',
   },
 };
 
