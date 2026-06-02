@@ -6,11 +6,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormActionBar } from '@/components/shared/FormActionBar'
+import { StickyFormHeader } from '@/components/shared/StickyFormHeader'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { GPSCapture } from '@/components/shared/GPSCapture'
 import { MediaField } from '@/components/shared/MediaField'
@@ -151,32 +150,14 @@ export function SecurityAssessmentForm({
   return (
     <div className="max-w-4xl mx-auto space-y-6" data-testid="security-assessment-form">
       {/* Header */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Security & Protection Assessment
-            {hasInteracted && gapCount > 0 && (
-              <Badge variant="destructive">
-                {gapCount} Gap{gapCount > 1 ? 's' : ''}
-              </Badge>
-            )}
-          </CardTitle>
-          <CardDescription>
-            Assess safety, security conditions, and protection mechanisms for vulnerable populations
-          </CardDescription>
-        </CardHeader>
-        {hasInteracted && gapCount > 0 && (
-          <CardContent>
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Gaps Identified:</strong> {gaps.map(g => g.label).join(', ')}
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        )}
-      </Card>
+      <StickyFormHeader
+        icon={<Shield className="h-5 w-5" />}
+        title="Security & Protection Assessment"
+        description="Assess safety, security conditions, and protection mechanisms for vulnerable populations"
+        gapCount={gapCount}
+        gapLabels={gaps.map(g => g.label)}
+        hasInteracted={hasInteracted}
+      />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>

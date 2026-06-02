@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormActionBar } from '@/components/shared/FormActionBar'
+import { StickyFormHeader } from '@/components/shared/StickyFormHeader'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -291,17 +292,14 @@ export function PopulationAssessmentForm({
   return (
     <div className="max-w-4xl mx-auto space-y-6" data-testid="population-assessment-form">
       {/* Header */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Population Assessment
-          </CardTitle>
-          <CardDescription>
-            Document demographic information and vulnerable populations in the affected area
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <StickyFormHeader
+        icon={<Users className="h-5 w-5" />}
+        title="Population Assessment"
+        description="Document demographic information and vulnerable populations in the affected area"
+        gapCount={0}
+        gapLabels={[]}
+        hasInteracted={false}
+      />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>

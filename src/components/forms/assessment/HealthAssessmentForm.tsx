@@ -6,14 +6,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormActionBar } from '@/components/shared/FormActionBar'
+import { TagPillSelect } from '@/components/shared/TagPillSelect'
+import { StickyFormHeader } from '@/components/shared/StickyFormHeader'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/shared/StatusBadge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { GPSCapture } from '@/components/shared/GPSCapture'
 import { MediaField } from '@/components/shared/MediaField'
 import { EntitySelector } from '@/components/shared/EntitySelector'
@@ -232,44 +232,17 @@ export function HealthAssessmentForm({
     if (!hasInteracted) setHasInteracted(true)
   }, [hasInteracted])
 
-  const handleHealthIssueChange = (issueId: string, checked: boolean) => {
-    const currentIssues = form.getValues('commonHealthIssues')
-    if (checked) {
-      form.setValue('commonHealthIssues', [...currentIssues, issueId])
-    } else {
-      form.setValue('commonHealthIssues', currentIssues.filter(id => id !== issueId))
-    }
-  }
-
   return (
     <div className="max-w-4xl mx-auto space-y-6" data-testid="health-assessment-form">
       {/* Gap Analysis Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Hospital className="h-5 w-5" />
-            Health Assessment
-            {hasInteracted && gapCount > 0 && (
-              <Badge variant="destructive">
-                {gapCount} Gap{gapCount > 1 ? 's' : ''}
-              </Badge>
-            )}
-          </CardTitle>
-          <CardDescription>
-            Assess healthcare facilities, services, and common health issues in the affected area
-          </CardDescription>
-        </CardHeader>
-        {hasInteracted && gapCount > 0 && (
-          <CardContent>
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription data-testid="gap-summary">
-                <strong>Gaps Identified:</strong> {gaps.map(g => g.label).join(', ')}
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        )}
-      </Card>
+      <StickyFormHeader
+        icon={<Hospital className="h-5 w-5" />}
+        title="Health Assessment"
+        description="Assess healthcare facilities, services, and common health issues in the affected area"
+        gapCount={gapCount}
+        gapLabels={gaps.map(g => g.label)}
+        hasInteracted={hasInteracted}
+      />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
@@ -593,42 +566,12 @@ export function HealthAssessmentForm({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <fieldset className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" aria-required="true">
-                <legend className="sr-only">Common Health Issues</legend>
-                {healthIssueOptions.map((issue) => {
-                  const Icon = issue.icon
-                  const isSelected = form.watch('commonHealthIssues').includes(issue.id)
-                  
-                  return (
-                    <FormField
-                      key={issue.id}
-                      control={form.control}
-                      name="commonHealthIssues"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                          <FormControl>
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={(checked) => handleHealthIssueChange(issue.id, checked as boolean)}
-                              disabled={disabled}
-                              data-testid={`health-issue-${issue.id.toLowerCase()}`}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none flex-1">
-                            <FormLabel className="flex items-center gap-2">
-                              <Icon className="h-4 w-4" />
-                              {issue.label}
-                            </FormLabel>
-                            <FormDescription className="text-xs">
-                              {issue.description}
-                            </FormDescription>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  )
-                })}
-              </fieldset>
+              <TagPillSelect
+                options={healthIssueOptions.map(issue => ({ id: issue.id, label: issue.label, description: issue.description }))}
+                selected={form.watch('commonHealthIssues')}
+                onChange={(selected) => form.setValue('commonHealthIssues', selected)}
+                disabled={disabled}
+              />
             </CardContent>
           </Card>
 

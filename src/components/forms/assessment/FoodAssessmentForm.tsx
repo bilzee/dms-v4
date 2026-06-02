@@ -6,11 +6,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormActionBar } from '@/components/shared/FormActionBar'
+import { TagPillSelect } from '@/components/shared/TagPillSelect'
+import { StickyFormHeader } from '@/components/shared/StickyFormHeader'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { GPSCapture } from '@/components/shared/GPSCapture'
@@ -210,49 +211,19 @@ export function FoodAssessmentForm({
     await onSubmit(assessmentData)
   }
 
-  const handleFoodSourceChange = (sourceId: string, checked: boolean) => {
-    const currentSources = form.getValues('foodSource')
-    if (checked) {
-      form.setValue('foodSource', [...currentSources, sourceId])
-    } else {
-      form.setValue('foodSource', currentSources.filter(id => id !== sourceId))
-    }
-  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6" data-testid="food-assessment-form">
       {/* Header */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Utensils className="h-5 w-5" />
-            Food Security Assessment
-            {hasInteracted && gapCount > 0 && (
-              <Badge variant="destructive">
-                {gapCount} Gap{gapCount > 1 ? 's' : ''}
-              </Badge>
-            )}
-            {urgentNeed && (
-              <Badge variant="destructive">
-                Urgent Need
-              </Badge>
-            )}
-          </CardTitle>
-          <CardDescription>
-            Assess food availability, access, and nutrition security in the affected area
-          </CardDescription>
-        </CardHeader>
-        {hasInteracted && gapCount > 0 && (
-          <CardContent>
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Gaps Identified:</strong> {gaps.map(g => g.label).join(', ')}
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        )}
-      </Card>
+      <StickyFormHeader
+        icon={<Utensils className="h-5 w-5" />}
+        title="Food Security Assessment"
+        description="Assess food availability, access, and nutrition security in the affected area"
+        gapCount={gapCount}
+        gapLabels={gaps.map(g => g.label)}
+        hasInteracted={hasInteracted}
+        extraBadges={urgentNeed ? <Badge variant="destructive">Urgent Need</Badge> : undefined}
+      />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
@@ -392,32 +363,12 @@ export function FoodAssessmentForm({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <fieldset className="grid grid-cols-1 md:grid-cols-1 gap-4"><legend className="sr-only">Food Sources</legend>
-                {foodSourceOptions.map((source) => (
-                  <FormField
-                    key={source.id}
-                    control={form.control}
-                    name="foodSource"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value.includes(source.id)}
-                            onCheckedChange={(checked) => handleFoodSourceChange(source.id, checked as boolean)}
-                            disabled={disabled}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none flex-1">
-                          <FormLabel>{source.label}</FormLabel>
-                          <FormDescription className="text-xs">
-                            {source.description}
-                          </FormDescription>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                ))}
-              </fieldset>
+              <TagPillSelect
+                options={foodSourceOptions.map(s => ({ id: s.id, label: s.label, description: s.description }))}
+                selected={form.watch('foodSource')}
+                onChange={(selected) => form.setValue('foodSource', selected)}
+                disabled={disabled}
+              />
             </CardContent>
           </Card>
 
