@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormActionBar } from '@/components/shared/FormActionBar'
-import { FormProgress } from '@/components/shared/FormProgress'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -254,12 +253,6 @@ export function FoodAssessmentForm({
           </CardContent>
         )}
       </Card>
-
-      <FormProgress
-        control={form.control}
-        requiredFields={['isFoodSufficient', 'hasRegularMealAccess', 'hasInfantNutrition', 'availableFoodDurationDays', 'additionalFoodRequiredPersons', 'additionalFoodRequiredHouseholds']}
-        className="mb-2"
-      />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>

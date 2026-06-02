@@ -251,7 +251,7 @@ export function PreliminaryAssessmentForm({
       <form onSubmit={handleSubmit(handleFormSubmit)}>
         <FormProgress
           control={control}
-          requiredFields={['reportingDate', 'reportingAgent', 'reportingLatitude', 'reportingLongitude', 'reportingLGA', 'reportingWard']}
+          fields={['reportingAgent', 'reportingLGA', 'reportingWard']}
           className="mb-2"
         />
         <FormCard

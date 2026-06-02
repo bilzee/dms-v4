@@ -274,7 +274,7 @@ export function HealthAssessmentForm({
 
       <FormProgress
         control={form.control}
-        requiredFields={['hasFunctionalClinic', 'hasEmergencyServices', 'healthFacilityType', 'hasTrainedStaff', 'hasMedicineSupply', 'hasMedicalSupplies', 'hasMaternalChildServices']}
+        fields={['healthFacilityType']}
         className="mb-2"
       />
 

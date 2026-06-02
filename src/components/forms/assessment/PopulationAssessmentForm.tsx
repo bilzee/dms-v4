@@ -306,7 +306,7 @@ export function PopulationAssessmentForm({
 
       <FormProgress
         control={form.control}
-        requiredFields={['totalHouseholds', 'totalPopulation', 'populationMale', 'populationFemale', 'populationUnder5', 'pregnantWomen', 'lactatingMothers', 'personWithDisability', 'elderlyPersons', 'separatedChildren']}
+        fields={['totalHouseholds', 'totalPopulation']}
         className="mb-2"
       />
 

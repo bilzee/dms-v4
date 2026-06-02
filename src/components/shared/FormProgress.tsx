@@ -5,29 +5,28 @@ import { ProgressBar } from '@/components/shared/ProgressBar'
 
 interface FormProgressProps {
   control: any
-  requiredFields: string[]
+  fields: string[]
   label?: string
   className?: string
 }
 
 export function FormProgress({
   control,
-  requiredFields,
+  fields,
   label = 'Form Completion',
   className,
 }: FormProgressProps) {
-  const values = useWatch({ control, name: requiredFields })
+  const values = useWatch({ control, name: fields })
 
   const filledCount = values.reduce((count: number, value: any) => {
     if (value === undefined || value === null || value === '') return count
     if (typeof value === 'number' && value === 0) return count
     if (Array.isArray(value) && value.length === 0) return count
-    if (typeof value === 'boolean') return count + 1
     return count + 1
   }, 0)
 
-  const percentage = requiredFields.length > 0
-    ? Math.round((filledCount / requiredFields.length) * 100)
+  const percentage = fields.length > 0
+    ? Math.round((filledCount / fields.length) * 100)
     : 0
 
   const variant = percentage >= 100 ? 'success' : percentage >= 50 ? 'default' : 'warning'

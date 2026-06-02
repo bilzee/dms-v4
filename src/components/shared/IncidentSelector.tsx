@@ -19,16 +19,6 @@ interface IncidentSelectorProps {
   className?: string
 }
 
-const incidentTypeIcons = {
-  FLOOD: '🌊',
-  DROUGHT: '🌵',
-  EARTHQUAKE: '🌍',
-  FIRE: '🔥',
-  CONFLICT: '⚔️',
-  DISEASE_OUTBREAK: '🦠',
-  OTHER: '⚠️'
-}
-
 export function IncidentSelector({
   value,
   onValueChange,
@@ -54,6 +44,20 @@ export function IncidentSelector({
     )
   }
 
+  const getSelectedLabel = () => {
+    if (!value || !incidents) return null
+    const incident = incidents.find(i => i.id === value)
+    if (!incident) return null
+    return (
+      <span className="flex items-center gap-2">
+        <span className="font-medium">{incident.type}</span>
+        <span className="text-muted-foreground">—</span>
+        <span>{incident.location}</span>
+        <StatusBadge status={incident.severity} domain="severity" size="sm" />
+      </span>
+    )
+  }
+
   return (
     <FormItem className={className}>
       <FormLabel>{label} {required && <span className="text-red-500">*</span>}</FormLabel>
@@ -67,34 +71,23 @@ export function IncidentSelector({
             "w-full",
             !value && "text-muted-foreground"
           )}>
-            <SelectValue placeholder={isLoading ? "Loading incidents..." : placeholder} />
+            {value && incidents?.length ? getSelectedLabel() : (
+              <SelectValue placeholder={isLoading ? "Loading incidents..." : placeholder} />
+            )}
           </SelectTrigger>
         </FormControl>
         <SelectContent>
           {incidents?.map((incident) => (
             <SelectItem key={incident.id} value={incident.id}>
-              <div className="flex items-center gap-3 py-1">
-                <span className="text-lg">
-                  {incidentTypeIcons[incident.type as keyof typeof incidentTypeIcons] || incidentTypeIcons.OTHER}
-                </span>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{incident.type}</span>
-                    <StatusBadge 
-                      status={incident.severity} 
-                      domain="severity" 
-                      size="sm" 
-                    />
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {incident.location}
-                  </div>
-                  {incident.description && (
-                    <div className="text-xs text-muted-foreground max-w-md truncate">
-                      {incident.description}
-                    </div>
-                  )}
-                </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium">{incident.type}</span>
+                <span className="text-muted-foreground">—</span>
+                <span className="text-muted-foreground">{incident.location}</span>
+                <StatusBadge 
+                  status={incident.severity} 
+                  domain="severity" 
+                  size="sm" 
+                />
               </div>
             </SelectItem>
           ))}
