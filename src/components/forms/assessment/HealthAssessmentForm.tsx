@@ -98,14 +98,16 @@ export function HealthAssessmentForm({
   isSubmitting = false,
   disabled = false,
   onIncidentEntityChange,
-  lockIncidentEntity = false
+  lockIncidentEntity = false,
+  isReassessment = false,
+  previousAssessmentDate
 }: HealthAssessmentFormProps) {
   const [gpsCoordinates, setGpsCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [mediaFiles, setMediaFiles] = useState<string[]>((initialData as any)?.mediaAttachments || [])
   const [selectedEntity, setSelectedEntity] = useState<string>(entityId)
   const [selectedIncident, setSelectedIncident] = useState<string>(incidentId || (initialData as any)?.rapidAssessment?.incidentId || '')
   const [selectedEntityData, setSelectedEntityData] = useState<any>(null)
-  const [hasInteracted, setHasInteracted] = useState(false)
+  const [hasInteracted, setHasInteracted] = useState(isReassessment)
 
   const healthData = (initialData as any)?.healthAssessment || (initialData as any);
 
@@ -242,6 +244,8 @@ export function HealthAssessmentForm({
         gapCount={gapCount}
         gapLabels={gaps.map(g => g.label)}
         hasInteracted={hasInteracted}
+        isReassessment={isReassessment}
+        previousAssessmentDate={previousAssessmentDate}
       />
 
       <Form {...form}>

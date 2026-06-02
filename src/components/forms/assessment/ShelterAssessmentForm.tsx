@@ -79,14 +79,16 @@ export function ShelterAssessmentForm({
   isSubmitting = false,
   disabled = false,
   onIncidentEntityChange,
-  lockIncidentEntity = false
+  lockIncidentEntity = false,
+  isReassessment = false,
+  previousAssessmentDate
 }: ShelterAssessmentFormProps) {
   const [gpsCoordinates, setGpsCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [mediaFiles, setMediaFiles] = useState<string[]>((initialData as any)?.mediaAttachments || [])
   const [selectedEntity, setSelectedEntity] = useState<string>(entityId)
   const [selectedIncident, setSelectedIncident] = useState<string>(incidentId || '')
   const [selectedEntityData, setSelectedEntityData] = useState<any>(null)
-  const [hasInteracted, setHasInteracted] = useState(false)
+  const [hasInteracted, setHasInteracted] = useState(isReassessment)
 
   // Extract shelter data from initialData
   const shelterData = (initialData as any)?.shelterAssessment || (initialData as any);
@@ -211,6 +213,8 @@ export function ShelterAssessmentForm({
         gapLabels={gaps.map(g => g.label)}
         hasInteracted={hasInteracted}
         extraBadges={urgentShelterNeed ? <Badge variant="destructive">Urgent Need ({watchedValues.numberSheltersRequired})</Badge> : undefined}
+        isReassessment={isReassessment}
+        previousAssessmentDate={previousAssessmentDate}
       />
 
       <Form {...form}>

@@ -85,14 +85,16 @@ export function WASHAssessmentForm({
   isSubmitting = false,
   disabled = false,
   onIncidentEntityChange,
-  lockIncidentEntity = false
+  lockIncidentEntity = false,
+  isReassessment = false,
+  previousAssessmentDate
 }: WASHAssessmentFormProps) {
   const [gpsCoordinates, setGpsCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [mediaFiles, setMediaFiles] = useState<string[]>((initialData as any)?.mediaAttachments || [])
   const [selectedEntity, setSelectedEntity] = useState<string>(entityId)
   const [selectedIncident, setSelectedIncident] = useState<string>(incidentId || '')
   const [selectedEntityData, setSelectedEntityData] = useState<any>(null)
-  const [hasInteracted, setHasInteracted] = useState(false)
+  const [hasInteracted, setHasInteracted] = useState(isReassessment)
 
   // Extract WASH data from initialData
   const washData = (initialData as any)?.washAssessment || (initialData as any);
@@ -241,6 +243,8 @@ export function WASHAssessmentForm({
         gapLabels={gaps.map(g => g.label)}
         hasInteracted={hasInteracted}
         extraBadges={hasDefecationIssues ? <Badge variant="destructive">Public Health Risk</Badge> : undefined}
+        isReassessment={isReassessment}
+        previousAssessmentDate={previousAssessmentDate}
       />
 
       <Form {...form}>

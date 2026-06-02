@@ -117,7 +117,9 @@ export function PopulationAssessmentForm({
   isSubmitting = false,
   disabled = false,
   onIncidentEntityChange,
-  lockIncidentEntity = false
+  lockIncidentEntity = false,
+  isReassessment = false,
+  previousAssessmentDate
 }: PopulationAssessmentFormProps) {
   const [gpsCoordinates, setGpsCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [mediaFiles, setMediaFiles] = useState<string[]>((initialData as any)?.mediaAttachments || [])
@@ -299,6 +301,8 @@ export function PopulationAssessmentForm({
         gapCount={0}
         gapLabels={[]}
         hasInteracted={false}
+        isReassessment={isReassessment}
+        previousAssessmentDate={previousAssessmentDate}
       />
 
       <Form {...form}>

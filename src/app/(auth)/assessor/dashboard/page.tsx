@@ -55,7 +55,10 @@ export default function AssessorDashboard() {
   }, [token])
 
   const handleSignalAction = (signal: ActionSignalItem) => {
-    router.push(`/assessor/rapid-assessments/new?entityId=${signal.entityId}&type=${signal.type}&incidentId=${signal.incidentId || ''}`)
+    const params = new URLSearchParams({ entityId: signal.entityId, type: signal.type })
+    if (signal.incidentId) params.set('incidentId', signal.incidentId)
+    if (signal.signalReason) params.set('signalReason', signal.signalReason)
+    router.push(`/assessor/rapid-assessments/new?${params.toString()}`)
   }
 
   const handleNewAssessment = () => {

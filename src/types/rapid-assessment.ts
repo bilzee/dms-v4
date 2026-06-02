@@ -153,6 +153,8 @@ export interface BaseAssessmentFormProps {
   disabled?: boolean
   lockIncidentEntity?: boolean
   onIncidentEntityChange?: (incidentId: string, entityId: string) => void
+  isReassessment?: boolean
+  previousAssessmentDate?: string
 }
 
 export interface HealthAssessmentFormProps extends BaseAssessmentFormProps {

@@ -76,6 +76,7 @@ function NewAssessmentContent() {
   const [latestAssessmentData, setLatestAssessmentData] = useState<any>(null)
   const prefillEntityId = searchParams.get('entityId') || ''
   const prefillIncidentId = searchParams.get('incidentId') || ''
+  const signalReason = searchParams.get('signalReason') || ''
 
   useEffect(() => {
     const typeParam = searchParams.get('type')
@@ -189,6 +190,11 @@ function NewAssessmentContent() {
       }
     }
 
+    const isReassessment = signalReason === 'reassessment-needed' || !!latestAssessmentData
+    const previousAssessmentDate = latestAssessmentData?.rapidAssessmentDate
+      ? new Date(latestAssessmentData.rapidAssessmentDate).toLocaleDateString()
+      : undefined
+
     const commonProps = {
       entityId: prefillEntityId,
       incidentId: prefillIncidentId,
@@ -200,7 +206,9 @@ function NewAssessmentContent() {
         if (selectedType && incidentId && entityId) {
           fetchLatestAssessment(incidentId, entityId, selectedType);
         }
-      }
+      },
+      isReassessment,
+      previousAssessmentDate,
     }
 
     switch (selectedType) {

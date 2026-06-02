@@ -40,14 +40,16 @@ export function SecurityAssessmentForm({
   isSubmitting = false,
   disabled = false,
   onIncidentEntityChange,
-  lockIncidentEntity = false
+  lockIncidentEntity = false,
+  isReassessment = false,
+  previousAssessmentDate
 }: SecurityAssessmentFormProps) {
   const [gpsCoordinates, setGpsCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [mediaFiles, setMediaFiles] = useState<string[]>((initialData as any)?.mediaAttachments || [])
   const [selectedEntity, setSelectedEntity] = useState<string>(entityId)
   const [selectedIncident, setSelectedIncident] = useState<string>(incidentId || '')
   const [selectedEntityData, setSelectedEntityData] = useState<any>(null)
-  const [hasInteracted, setHasInteracted] = useState(false)
+  const [hasInteracted, setHasInteracted] = useState(isReassessment)
 
   // Extract security data from initialData
   const securityData = (initialData as any)?.securityAssessment || (initialData as any);
@@ -157,6 +159,8 @@ export function SecurityAssessmentForm({
         gapCount={gapCount}
         gapLabels={gaps.map(g => g.label)}
         hasInteracted={hasInteracted}
+        isReassessment={isReassessment}
+        previousAssessmentDate={previousAssessmentDate}
       />
 
       <Form {...form}>
