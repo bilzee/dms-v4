@@ -107,27 +107,23 @@ export function SecurityAssessmentForm({
   })
   const watchedValues = { isSafeFromViolence, gbvCasesReported, hasSecurityPresence, hasProtectionReportingMechanism, vulnerableGroupsHaveAccess, hasLighting } as any
 
-  // Calculate security risks
-  const violenceRisk = !watchedValues.isSafeFromViolence
-  const gbvRisk = watchedValues.gbvCasesReported
-  const securityGap = !watchedValues.hasSecurityPresence
-  const protectionGap = !watchedValues.hasProtectionReportingMechanism
-  const vulnerableGroupRisk = !watchedValues.vulnerableGroupsHaveAccess
-  const lightingRisk = !watchedValues.hasLighting
-  
   // Gap fields for consistency with other assessment forms
   const gapFields = [
+    { key: 'isSafeFromViolence', label: 'Safe from Violence' },
+    { key: 'gbvCasesReported', label: 'GBV Cases Reported', inverted: true },
     { key: 'hasSecurityPresence', label: 'Security Presence' },
     { key: 'hasProtectionReportingMechanism', label: 'Protection Reporting Mechanism' },
     { key: 'vulnerableGroupsHaveAccess', label: 'Vulnerable Group Access' },
     { key: 'hasLighting', label: 'Lighting' }
   ]
 
-  const gaps = gapFields.filter(field => !watchedValues[field.key as keyof FormData])
+  const gaps = gapFields.filter(field => {
+    const val = watchedValues[field.key as keyof FormData]
+    return field.inverted ? val : !val
+  })
   const gapCount = gaps.length
   
-  const criticalRisks = [violenceRisk, gbvRisk].filter(Boolean).length
-  const hasSecurityRisks = criticalRisks > 0 || gapCount > 0
+  const hasSecurityRisks = gapCount > 0
 
   const handleSubmit = async (data: FormData) => {
     if (!selectedEntity) {
@@ -160,11 +156,6 @@ export function SecurityAssessmentForm({
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
             Security & Protection Assessment
-            {criticalRisks > 0 && (
-              <Badge variant="destructive">
-                {criticalRisks} Critical Risk{criticalRisks > 1 ? 's' : ''}
-              </Badge>
-            )}
             {hasInteracted && gapCount > 0 && (
               <Badge variant="destructive">
                 {gapCount} Gap{gapCount > 1 ? 's' : ''}
@@ -175,16 +166,6 @@ export function SecurityAssessmentForm({
             Assess safety, security conditions, and protection mechanisms for vulnerable populations
           </CardDescription>
         </CardHeader>
-        {criticalRisks > 0 && (
-          <CardContent>
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Critical Protection Risks Identified:</strong> Immediate intervention required to ensure population safety
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        )}
         {hasInteracted && gapCount > 0 && (
           <CardContent>
             <Alert variant="destructive">
@@ -262,9 +243,9 @@ export function SecurityAssessmentForm({
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel className="flex items-center gap-2 text-red-600">
+                      <FormLabel className="flex items-center gap-2">
                         Safe from Violence
-                        {!field.value && <Badge variant="destructive">Critical Risk</Badge>}
+                        {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                       </FormLabel>
                       <FormDescription>
                         Population is safe from violence and armed conflict
@@ -287,9 +268,9 @@ export function SecurityAssessmentForm({
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel className="flex items-center gap-2 text-red-600">
+                      <FormLabel className="flex items-center gap-2">
                         GBV Cases Reported
-                        {field.value && <Badge variant="destructive">High Risk</Badge>}
+                        {!hasInteracted ? null : <StatusBadge domain="assessment" status={!field.value ? "NO_GAP" : "GAP"} label={!field.value ? "No Gap" : "Gap"} />}
                       </FormLabel>
                       <FormDescription>
                         Cases of gender-based violence have been reported
@@ -432,7 +413,7 @@ export function SecurityAssessmentForm({
                     <div className="space-y-1 leading-none">
                       <FormLabel className="flex items-center gap-2">
                         Adequate Lighting
-                        {!field.value && <Badge variant="destructive">Safety Risk</Badge>}
+                        {!hasInteracted ? null : <StatusBadge domain="assessment" status={field.value ? "NO_GAP" : "GAP"} label={field.value ? "No Gap" : "Gap"} />}
                       </FormLabel>
                       <FormDescription>
                         Sufficient lighting available for safety and security
@@ -455,24 +436,6 @@ export function SecurityAssessmentForm({
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {violenceRisk && (
-                    <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>Violence Risk:</strong> Population exposed to violence and conflict. Immediate protection measures required.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {gbvRisk && (
-                    <Alert className="border-red-200 bg-red-50">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                      <AlertDescription className="text-red-800">
-                        <strong>GBV Risk:</strong> Gender-based violence reported. Specialized protection services urgently needed.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
                   {gaps.map((gap) => (
                     <div key={gap.key} className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border" role="status">
                       <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
