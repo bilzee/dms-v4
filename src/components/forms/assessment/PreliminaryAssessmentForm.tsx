@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormCard } from '@/components/shared/FormCard'
+import { FormProgress } from '@/components/shared/FormProgress'
 import { FormActionBar } from '@/components/shared/FormActionBar'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Textarea } from '@/components/ui/textarea'
@@ -88,6 +89,7 @@ export function PreliminaryAssessmentForm({
     watch,
     setValue,
     reset,
+    control,
     formState: { errors, isDirty }
   } = useForm<FormData>({
     resolver: zodResolver(PreliminaryAssessmentSchema),
@@ -229,7 +231,7 @@ export function PreliminaryAssessmentForm({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="preliminary-assessment-form">
       {feedbackMessage && (
         <Alert variant={feedbackMessage.type === 'success' ? 'default' : 'destructive'}>
           <CheckCircle2 className="h-4 w-4" />
@@ -247,6 +249,11 @@ export function PreliminaryAssessmentForm({
       )}
 
       <form onSubmit={handleSubmit(handleFormSubmit)}>
+        <FormProgress
+          control={control}
+          requiredFields={['reportingDate', 'reportingAgent', 'reportingLatitude', 'reportingLongitude', 'reportingLGA', 'reportingWard']}
+          className="mb-2"
+        />
         <FormCard
           title="Preliminary Assessment"
           description="Initial assessment of disaster impact and affected areas"
@@ -632,6 +639,7 @@ export function PreliminaryAssessmentForm({
           disabled={disabled || isLoading}
           align="between"
           variant="bordered"
+          data-testid="preliminary-submit"
         >
           <Button
             type="button"

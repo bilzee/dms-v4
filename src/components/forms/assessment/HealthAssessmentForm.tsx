@@ -22,6 +22,7 @@ import { HealthAssessmentFormProps, HealthAssessment } from '@/types/rapid-asses
 import { getCurrentUserName, getAssessmentLocationData } from '@/utils/assessment-utils'
 import { cn } from '@/lib/utils'
 import { Hospital, Activity, Pill, Baby, AlertTriangle } from '@/lib/icons'
+import { FormProgress } from '@/components/shared/FormProgress'
 
 const HealthAssessmentSchema = z.object({
   hasFunctionalClinic: z.boolean(),
@@ -97,7 +98,8 @@ export function HealthAssessmentForm({
   onCancel, 
   isSubmitting = false,
   disabled = false,
-  onIncidentEntityChange
+  onIncidentEntityChange,
+  lockIncidentEntity = false
 }: HealthAssessmentFormProps) {
   const [gpsCoordinates, setGpsCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [mediaFiles, setMediaFiles] = useState<string[]>((initialData as any)?.mediaAttachments || [])
@@ -270,6 +272,12 @@ export function HealthAssessmentForm({
         )}
       </Card>
 
+      <FormProgress
+        control={form.control}
+        requiredFields={['hasFunctionalClinic', 'hasEmergencyServices', 'healthFacilityType', 'hasTrainedStaff', 'hasMedicineSupply', 'hasMedicalSupplies', 'hasMaternalChildServices']}
+        className="mb-2"
+      />
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           {/* Incident Selection */}
@@ -284,7 +292,7 @@ export function HealthAssessmentForm({
               <IncidentSelector
                 value={selectedIncident}
                 onValueChange={handleIncidentChange}
-                disabled={disabled}
+                disabled={disabled || (lockIncidentEntity && !!selectedIncident)}
                 required
               />
             </CardContent>
@@ -302,7 +310,7 @@ export function HealthAssessmentForm({
               <EntitySelector
                 value={selectedEntity}
                 onValueChange={handleEntityChange}
-                disabled={disabled}
+                disabled={disabled || (lockIncidentEntity && !!selectedEntity)}
                 data-testid="entity-select"
               />
             </CardContent>
@@ -719,6 +727,7 @@ export function HealthAssessmentForm({
             loading={isSubmitting}
             disabled={isSubmitting || disabled || !selectedEntity}
             variant="bordered"
+            data-testid="health-submit"
           />
         </form>
       </Form>

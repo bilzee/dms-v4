@@ -16,6 +16,7 @@ import { MediaField } from '@/components/shared/MediaField'
 import { EntitySelector } from '@/components/shared/EntitySelector'
 import { IncidentSelector } from '@/components/shared/IncidentSelector'
 import { PopulationAssessmentFormProps, PopulationAssessment } from '@/types/rapid-assessment'
+import { FormProgress } from '@/components/shared/FormProgress'
 import { cn } from '@/lib/utils'
 import { getCurrentUserName, getAssessmentLocationData } from '@/utils/assessment-utils'
 import { Users, Baby, User, UserPlus, AlertTriangle, Heart } from '@/lib/icons'
@@ -115,7 +116,8 @@ export function PopulationAssessmentForm({
   onCancel, 
   isSubmitting = false,
   disabled = false,
-  onIncidentEntityChange
+  onIncidentEntityChange,
+  lockIncidentEntity = false
 }: PopulationAssessmentFormProps) {
   const [gpsCoordinates, setGpsCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [mediaFiles, setMediaFiles] = useState<string[]>((initialData as any)?.mediaAttachments || [])
@@ -288,7 +290,7 @@ export function PopulationAssessmentForm({
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6" data-testid="population-assessment-form">
       {/* Header */}
       <Card>
         <CardHeader>
@@ -301,6 +303,12 @@ export function PopulationAssessmentForm({
           </CardDescription>
         </CardHeader>
       </Card>
+
+      <FormProgress
+        control={form.control}
+        requiredFields={['totalHouseholds', 'totalPopulation', 'populationMale', 'populationFemale', 'populationUnder5', 'pregnantWomen', 'lactatingMothers', 'personWithDisability', 'elderlyPersons', 'separatedChildren']}
+        className="mb-2"
+      />
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
@@ -316,7 +324,7 @@ export function PopulationAssessmentForm({
               <IncidentSelector
                 value={selectedIncident}
                 onValueChange={handleIncidentChange}
-                disabled={disabled}
+                disabled={disabled || (lockIncidentEntity && !!selectedIncident)}
                 required
               />
             </CardContent>
@@ -337,7 +345,7 @@ export function PopulationAssessmentForm({
                   handleEntityChange(value)
                   setSelectedEntityData(null)
                 }}
-                disabled={disabled}
+                disabled={disabled || (lockIncidentEntity && !!selectedEntity)}
               />
             </CardContent>
           </Card>
@@ -819,6 +827,7 @@ export function PopulationAssessmentForm({
           </Card>
 
           <FormActionBar
+            data-testid="population-submit"
             onCancel={onCancel}
             submitLabel="Submit Population Assessment"
             loading={isSubmitting}

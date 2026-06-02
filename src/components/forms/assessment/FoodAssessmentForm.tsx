@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormActionBar } from '@/components/shared/FormActionBar'
+import { FormProgress } from '@/components/shared/FormProgress'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -77,7 +78,8 @@ export function FoodAssessmentForm({
   onCancel, 
   isSubmitting = false,
   disabled = false,
-  onIncidentEntityChange
+  onIncidentEntityChange,
+  lockIncidentEntity = false
 }: FoodAssessmentFormProps) {
   const [gpsCoordinates, setGpsCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [mediaFiles, setMediaFiles] = useState<string[]>((initialData as any)?.mediaAttachments || [])
@@ -219,7 +221,7 @@ export function FoodAssessmentForm({
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6" data-testid="food-assessment-form">
       {/* Header */}
       <Card>
         <CardHeader>
@@ -253,6 +255,12 @@ export function FoodAssessmentForm({
         )}
       </Card>
 
+      <FormProgress
+        control={form.control}
+        requiredFields={['isFoodSufficient', 'hasRegularMealAccess', 'hasInfantNutrition', 'availableFoodDurationDays', 'additionalFoodRequiredPersons', 'additionalFoodRequiredHouseholds']}
+        className="mb-2"
+      />
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           {/* Incident Selection */}
@@ -267,7 +275,7 @@ export function FoodAssessmentForm({
               <IncidentSelector
                 value={selectedIncident}
                 onValueChange={handleIncidentChange}
-                disabled={disabled}
+                disabled={disabled || (lockIncidentEntity && !!selectedIncident)}
                 required
               />
             </CardContent>
@@ -289,7 +297,7 @@ export function FoodAssessmentForm({
                   // Reset entity data when selection changes
                   setSelectedEntityData(null)
                 }}
-                disabled={disabled}
+                disabled={disabled || (lockIncidentEntity && !!selectedEntity)}
               />
             </CardContent>
           </Card>
@@ -614,6 +622,7 @@ export function FoodAssessmentForm({
             loading={isSubmitting}
             disabled={isSubmitting || disabled || !selectedEntity}
             variant="bordered"
+            data-testid="food-submit"
           />
         </form>
       </Form>

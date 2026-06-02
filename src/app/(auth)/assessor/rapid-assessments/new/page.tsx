@@ -195,6 +195,7 @@ function NewAssessmentContent() {
       initialData: latestAssessmentData,
       onSubmit: handleAssessmentSubmit,
       onCancel: handleGoBack,
+      lockIncidentEntity: !!(prefillEntityId && prefillIncidentId),
       onIncidentEntityChange: (incidentId: string, entityId: string) => {
         if (selectedType && incidentId && entityId) {
           fetchLatestAssessment(incidentId, entityId, selectedType);

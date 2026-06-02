@@ -151,6 +151,7 @@ export interface BaseAssessmentFormProps {
   onCancel: () => void
   isSubmitting?: boolean
   disabled?: boolean
+  lockIncidentEntity?: boolean
   onIncidentEntityChange?: (incidentId: string, entityId: string) => void
 }
 

@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormActionBar } from '@/components/shared/FormActionBar'
+import { FormProgress } from '@/components/shared/FormProgress'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -77,7 +78,8 @@ export function ShelterAssessmentForm({
   onCancel, 
   isSubmitting = false,
   disabled = false,
-  onIncidentEntityChange
+  onIncidentEntityChange,
+  lockIncidentEntity = false
 }: ShelterAssessmentFormProps) {
   const [gpsCoordinates, setGpsCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [mediaFiles, setMediaFiles] = useState<string[]>((initialData as any)?.mediaAttachments || [])
@@ -214,7 +216,7 @@ export function ShelterAssessmentForm({
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6" data-testid="shelter-assessment-form">
       {/* Header */}
       <Card>
         <CardHeader>
@@ -248,6 +250,12 @@ export function ShelterAssessmentForm({
         )}
       </Card>
 
+      <FormProgress
+        control={form.control}
+        requiredFields={['areSheltersSufficient', 'hasSafeStructures', 'provideWeatherProtection', 'areOvercrowded']}
+        className="mb-2"
+      />
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           {/* Incident Selection */}
@@ -262,7 +270,7 @@ export function ShelterAssessmentForm({
               <IncidentSelector
                 value={selectedIncident}
                 onValueChange={handleIncidentChange}
-                disabled={disabled}
+                disabled={disabled || (lockIncidentEntity && !!selectedIncident)}
                 required
               />
             </CardContent>
@@ -283,7 +291,7 @@ export function ShelterAssessmentForm({
                   handleEntityChange(value)
                   setSelectedEntityData(null)
                 }}
-                disabled={disabled}
+                disabled={disabled || (lockIncidentEntity && !!selectedEntity)}
               />
             </CardContent>
           </Card>
@@ -625,6 +633,7 @@ export function ShelterAssessmentForm({
             loading={isSubmitting}
             disabled={isSubmitting || disabled || !selectedEntity}
             variant="bordered"
+            data-testid="shelter-submit"
           />
         </form>
       </Form>

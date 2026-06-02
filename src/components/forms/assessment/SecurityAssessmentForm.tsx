@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormActionBar } from '@/components/shared/FormActionBar'
+import { FormProgress } from '@/components/shared/FormProgress'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -40,7 +41,8 @@ export function SecurityAssessmentForm({
   onCancel, 
   isSubmitting = false,
   disabled = false,
-  onIncidentEntityChange
+  onIncidentEntityChange,
+  lockIncidentEntity = false
 }: SecurityAssessmentFormProps) {
   const [gpsCoordinates, setGpsCoordinates] = useState<{ lat: number; lng: number } | null>(null)
   const [mediaFiles, setMediaFiles] = useState<string[]>((initialData as any)?.mediaAttachments || [])
@@ -152,7 +154,7 @@ export function SecurityAssessmentForm({
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6" data-testid="security-assessment-form">
       {/* Header */}
       <Card>
         <CardHeader>
@@ -196,6 +198,12 @@ export function SecurityAssessmentForm({
         )}
       </Card>
 
+      <FormProgress
+        control={form.control}
+        requiredFields={['isSafeFromViolence', 'gbvCasesReported', 'hasSecurityPresence', 'hasProtectionReportingMechanism', 'vulnerableGroupsHaveAccess', 'hasLighting']}
+        className="mb-2"
+      />
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           {/* Incident Selection */}
@@ -210,7 +218,7 @@ export function SecurityAssessmentForm({
               <IncidentSelector
                 value={selectedIncident}
                 onValueChange={handleIncidentChange}
-                disabled={disabled}
+                disabled={disabled || (lockIncidentEntity && !!selectedIncident)}
                 required
               />
             </CardContent>
@@ -231,7 +239,7 @@ export function SecurityAssessmentForm({
                   handleEntityChange(value)
                   setSelectedEntityData(null)
                 }}
-                disabled={disabled}
+                disabled={disabled || (lockIncidentEntity && !!selectedEntity)}
               />
             </CardContent>
           </Card>
@@ -553,6 +561,7 @@ export function SecurityAssessmentForm({
             loading={isSubmitting}
             disabled={isSubmitting || disabled || !selectedEntity}
             variant="bordered"
+            data-testid="security-submit"
           />
         </form>
       </Form>
