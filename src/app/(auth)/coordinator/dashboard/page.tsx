@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, CheckCircle, Clock, RefreshCw, FileText } from '@/lib/icons';
 import { useEffect, useMemo, useState } from 'react';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
-import { ActionQueue } from '@/components/dashboards/shared/action-queue'
+import { ActionQueue, SignalDetailPanel } from '@/components/dashboards/shared/action-queue'
 import { deriveMapPropsFromSignals } from '@/components/dashboards/shared/action-queue/map-utils'
 import { useActionSignals } from '@/hooks/useActionSignals'
 import type { ActionSignalItem } from '@/types/action-signal'
@@ -26,6 +26,7 @@ export default function CoordinatorDashboard() {
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   const [selectedSignal, setSelectedSignal] = useState<ActionSignalItem | null>(null)
+  const [viewSignal, setViewSignal] = useState<ActionSignalItem | null>(null)
   const { data: signalsData, refetch: refetchSignals } = useActionSignals({ unresolvedOnly: true, limit: 100, activeRole: 'COORDINATOR', enabled: !!token })
   const coordinatorSignals: ActionSignalItem[] = signalsData?.signals ?? []
   const mapProps = useMemo(() => deriveMapPropsFromSignals(coordinatorSignals), [coordinatorSignals])
@@ -127,6 +128,7 @@ export default function CoordinatorDashboard() {
               role="COORDINATOR"
               onItemSelect={setSelectedSignal}
               onItemAction={handleSignalAction}
+              onItemView={setViewSignal}
               selectedSignalId={selectedSignal?.id}
             />
           </div>
@@ -143,6 +145,7 @@ export default function CoordinatorDashboard() {
           </div>
         </div>
 
+        <SignalDetailPanel signal={viewSignal} onClose={() => setViewSignal(null)} />
       </div>
     </RoleBasedRoute>
   );

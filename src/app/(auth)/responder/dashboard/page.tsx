@@ -22,7 +22,7 @@ import { RoleBasedRoute } from '@/components/shared/RoleBasedRoute'
 import { useAuth } from '@/hooks/useAuth'
 import { ResponsePlanningForm } from '@/components/forms/response'
 import { ResponsePlanningDashboard } from '@/components/response/ResponsePlanningDashboard'
-import { ActionQueue } from '@/components/dashboards/shared/action-queue'
+import { ActionQueue, SignalDetailPanel } from '@/components/dashboards/shared/action-queue'
 import { deriveMapPropsFromSignals } from '@/components/dashboards/shared/action-queue/map-utils'
 import { StatCard } from '@/components/shared/StatCard'
 
@@ -44,6 +44,7 @@ function ResponderDashboardContent() {
   const [editingResponse, setEditingResponse] = useState<string | null>(null)
   const [isClient, setIsClient] = useState(false)
   const [selectedSignal, setSelectedSignal] = useState<ActionSignalItem | null>(null)
+  const [viewSignal, setViewSignal] = useState<ActionSignalItem | null>(null)
   const { data: signalsData } = useActionSignals({ unresolvedOnly: true, limit: 100, activeRole: 'RESPONDER' })
   const mapProps = useMemo(() => deriveMapPropsFromSignals(signalsData?.signals ?? []), [signalsData?.signals])
 
@@ -278,6 +279,7 @@ function ResponderDashboardContent() {
                   role="RESPONDER"
                   onItemSelect={setSelectedSignal}
                   onItemAction={handleSignalAction}
+                  onItemView={setViewSignal}
                   selectedSignalId={selectedSignal?.id}
                 />
               </div>
@@ -293,6 +295,8 @@ function ResponderDashboardContent() {
                 />
               </div>
             </div>
+
+            <SignalDetailPanel signal={viewSignal} onClose={() => setViewSignal(null)} />
           </div>
         )
       }}

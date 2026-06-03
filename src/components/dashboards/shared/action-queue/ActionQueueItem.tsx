@@ -11,7 +11,6 @@ import type { ActionSignalItem, SignalPriority } from '@/types/action-signal';
 
 const ACTION_LABELS: Record<string, Record<string, string>> = {
   ASSESSOR: {
-    'unassessed': 'Start Assessment',
     'reassessment-needed': 'Reassess',
     'overdue': 'Start Assessment',
   },
@@ -22,30 +21,23 @@ const ACTION_LABELS: Record<string, Record<string, string>> = {
     'partially-fulfilled': 'View Commitment',
   },
   DONOR: {
+    'assessment-needs-response': 'Make Commitment',
     'plan-needs-commitment': 'Make Commitment',
     'partially-fulfilled': 'View Commitment',
     'partially-covered': 'View Plan',
-    'unassessed': 'View',
-    'reassessment-needed': 'View',
-    'overdue': 'View',
-    'awaiting-plan': 'View',
-    'awaiting-delivery': 'View',
   },
   COORDINATOR: {
-    'unassessed': 'Assign Assessor',
     'awaiting-plan': 'Assign Responder',
     'awaiting-delivery': 'Review',
     'overdue': 'Review',
     'assessment-awaiting-verification': 'Review Assessment',
     'delivery-awaiting-verification': 'Review Delivery',
     'verification-overdue': 'Review Now',
-    'entity-needs-assessor': 'Assign Assessor',
     'entity-needs-responder': 'Assign Responder',
     'entity-needs-donor': 'Assign Donor',
     'verify-assessment': 'Verify',
     'verify-response': 'Verify',
     'verify-delivery': 'Verify',
-    'need-assessor': 'Assign',
     'need-responder': 'Assign',
   },
 };

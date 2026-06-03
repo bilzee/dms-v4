@@ -3,7 +3,6 @@ import { z } from 'zod';
 export const SignalQuerySchema = z.object({
   priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional(),
   signalReason: z.enum([
-    'unassessed',
     'reassessment-needed',
     'overdue',
     'awaiting-plan',

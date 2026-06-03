@@ -99,6 +99,7 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
         responseId: id,
         responseType: response.type,
         responsePriority: response.priority,
+        deliveryStatus: response.deliveryStatus,
       });
     } catch (e) {
       console.error('[ResponseVerify] signal hook error:', e);

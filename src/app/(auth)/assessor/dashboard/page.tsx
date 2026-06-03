@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useAuth } from '@/hooks/useAuth'
 import { apiGet, extractArray } from '@/lib/api'
-import { ActionQueue } from '@/components/dashboards/shared/action-queue'
+import { ActionQueue, SignalDetailPanel } from '@/components/dashboards/shared/action-queue'
 import { deriveMapPropsFromSignals } from '@/components/dashboards/shared/action-queue/map-utils'
 
 const ActionQueueMapPanel = dynamic(
@@ -33,6 +33,7 @@ export default function AssessorDashboard() {
   const [selectedType, setSelectedType] = useState<string>('')
   const [assessments, setAssessments] = useState<any[]>([])
   const [selectedSignal, setSelectedSignal] = useState<ActionSignalItem | null>(null)
+  const [viewSignal, setViewSignal] = useState<ActionSignalItem | null>(null)
   const router = useRouter()
   const { token } = useAuth()
   const { data: signalsData } = useActionSignals({ unresolvedOnly: true, limit: 100, activeRole: 'ASSESSOR' })
@@ -138,6 +139,7 @@ export default function AssessorDashboard() {
               role="ASSESSOR"
               onItemSelect={setSelectedSignal}
               onItemAction={handleSignalAction}
+              onItemView={setViewSignal}
               selectedSignalId={selectedSignal?.id}
             />
           </div>
@@ -153,6 +155,8 @@ export default function AssessorDashboard() {
             />
           </div>
         </div>
+
+        <SignalDetailPanel signal={viewSignal} onClose={() => setViewSignal(null)} />
       </div>
     </RoleBasedRoute>
   )

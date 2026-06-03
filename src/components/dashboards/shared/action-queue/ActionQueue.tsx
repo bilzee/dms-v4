@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Eye } from '@/lib/icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useActionSignals } from '@/hooks/useActionSignals';
@@ -17,6 +18,7 @@ interface ActionQueueProps {
   sortBy?: SortOption;
   onItemSelect?: (signal: ActionSignalItem) => void;
   onItemAction?: (signal: ActionSignalItem) => void;
+  onItemView?: (signal: ActionSignalItem) => void;
   selectedSignalId?: string | null;
   className?: string;
 }
@@ -25,7 +27,6 @@ const PRIORITY_ORDER: Record<string, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2
 
 const ACTION_LABELS: Record<string, Record<string, string>> = {
   ASSESSOR: {
-    'unassessed': 'Start Assessment',
     'reassessment-needed': 'Reassess',
     'overdue': 'Start Assessment',
   },
@@ -45,7 +46,6 @@ const ACTION_LABELS: Record<string, Record<string, string>> = {
     'assessment-awaiting-verification': 'Review Assessment',
     'delivery-awaiting-verification': 'Review Delivery',
     'verification-overdue': 'Review Now',
-    'entity-needs-assessor': 'Assign Assessor',
     'entity-needs-responder': 'Assign Responder',
     'entity-needs-donor': 'Assign Donor',
   },
@@ -56,6 +56,7 @@ export function ActionQueue({
   sortBy: initialSortBy = 'priority',
   onItemSelect,
   onItemAction,
+  onItemView,
   selectedSignalId,
   className,
 }: ActionQueueProps) {
@@ -216,8 +217,20 @@ export function ActionQueue({
                 )}
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <SignalPriorityBadge priority={signal.priority as SignalPriority} />
+
+                {onItemView && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="hidden lg:inline-flex text-xs h-7 px-2"
+                    onClick={(e) => { e.stopPropagation(); onItemView(signal); }}
+                  >
+                    <Eye className="h-3 w-3 mr-1" />
+                    View
+                  </Button>
+                )}
 
                 {onItemAction && (
                   <Button

@@ -2,7 +2,6 @@
 
 import React from 'react';
 import {
-  ClipboardList,
   RefreshCw,
   Clock,
   FileText,
@@ -18,21 +17,18 @@ import { cn } from '@/lib/utils';
 
 import { ShieldCheck, UserPlus } from '@/lib/icons';
 
-type CoordinatorReason = 'verify-assessment' | 'verify-response' | 'verify-delivery' | 'need-assessor' | 'need-responder' | 'entity-needs-assessor' | 'entity-needs-responder' | 'entity-needs-donor';
+type CoordinatorReason = 'verify-assessment' | 'verify-response' | 'verify-delivery' | 'need-responder' | 'entity-needs-responder' | 'entity-needs-donor';
 
 const COORDINATOR_ICON_MAP: Record<CoordinatorReason, React.ComponentType<{ className?: string }>> = {
   'verify-assessment': ShieldCheck,
   'verify-response': ShieldCheck,
   'verify-delivery': Truck,
-  'need-assessor': UserPlus,
   'need-responder': UserPlus,
-  'entity-needs-assessor': UserPlus,
   'entity-needs-responder': UserPlus,
   'entity-needs-donor': UserPlus,
 };
 
 const REASON_ICON_MAP: Record<SignalReason, React.ComponentType<{ className?: string }>> = {
-  'unassessed': ClipboardList,
   'reassessment-needed': RefreshCw,
   'overdue': Clock,
   'awaiting-plan': FileText,
@@ -45,7 +41,6 @@ const REASON_ICON_MAP: Record<SignalReason, React.ComponentType<{ className?: st
   'assessment-awaiting-verification': ShieldCheck,
   'delivery-awaiting-verification': Truck,
   'verification-overdue': AlertCircle,
-  'entity-needs-assessor': UserPlus,
   'entity-needs-responder': UserPlus,
   'entity-needs-donor': UserPlus,
 };
@@ -54,9 +49,7 @@ const COORDINATOR_LABELS: Record<CoordinatorReason, string> = {
   'verify-assessment': 'Assessment to verify',
   'verify-response': 'Response plan to verify',
   'verify-delivery': 'Delivery to verify',
-  'need-assessor': 'Needs assessor assigned',
   'need-responder': 'Needs responder assigned',
-  'entity-needs-assessor': 'Needs assessor assigned',
   'entity-needs-responder': 'Needs responder assigned',
   'entity-needs-donor': 'Needs donor assigned',
 };
@@ -101,7 +94,6 @@ export function SignalReasonIcon({ reason, priority, size = 22, className }: Sig
 }
 
 export const REASON_LABELS: Record<SignalReason, string> & Record<string, string> = {
-  'unassessed': 'Assessment needed',
   'reassessment-needed': 'Reassessment needed',
   'overdue': 'Overdue',
   'awaiting-plan': 'Awaiting plan',
@@ -114,12 +106,10 @@ export const REASON_LABELS: Record<SignalReason, string> & Record<string, string
   'assessment-awaiting-verification': 'Assessment to verify',
   'delivery-awaiting-verification': 'Delivery to verify',
   'verification-overdue': 'Verification overdue',
-  'entity-needs-assessor': 'Needs assessor assigned',
   'entity-needs-responder': 'Needs responder assigned',
   'entity-needs-donor': 'Needs donor assigned',
   'verify-assessment': 'Assessment to verify',
   'verify-response': 'Response plan to verify',
   'verify-delivery': 'Delivery to verify',
-  'need-assessor': 'Needs assessor assigned',
   'need-responder': 'Needs responder assigned',
 };

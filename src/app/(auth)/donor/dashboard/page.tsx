@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { ArrowLeft, User } from '@/lib/icons'
-import { ActionQueue } from '@/components/dashboards/shared/action-queue'
+import { ActionQueue, SignalDetailPanel } from '@/components/dashboards/shared/action-queue'
 import { deriveMapPropsFromSignals } from '@/components/dashboards/shared/action-queue/map-utils'
 
 const ActionQueueMapPanel = dynamic(
@@ -30,6 +30,7 @@ export default function DonorDashboardPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [selectedSignal, setSelectedSignal] = useState<ActionSignalItem | null>(null)
+  const [viewSignal, setViewSignal] = useState<ActionSignalItem | null>(null)
   const { data: signalsData } = useActionSignals({ unresolvedOnly: true, limit: 100, activeRole: 'DONOR' })
   const mapProps = useMemo(() => deriveMapPropsFromSignals(signalsData?.signals ?? []), [signalsData?.signals])
 
@@ -163,6 +164,7 @@ export default function DonorDashboardPage() {
               role="DONOR"
               onItemSelect={setSelectedSignal}
               onItemAction={handleSignalAction}
+              onItemView={setViewSignal}
               selectedSignalId={selectedSignal?.id}
             />
           </div>
@@ -178,6 +180,8 @@ export default function DonorDashboardPage() {
             />
           </div>
         </div>
+
+        <SignalDetailPanel signal={viewSignal} onClose={() => setViewSignal(null)} />
       </div>
     </RoleBasedRoute>
   )

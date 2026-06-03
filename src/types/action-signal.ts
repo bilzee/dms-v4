@@ -1,5 +1,4 @@
 export type SignalReason =
-  | 'unassessed'
   | 'reassessment-needed'
   | 'overdue'
   | 'awaiting-plan'
@@ -12,7 +11,6 @@ export type SignalReason =
   | 'assessment-awaiting-verification'
   | 'delivery-awaiting-verification'
   | 'verification-overdue'
-  | 'entity-needs-assessor'
   | 'entity-needs-responder'
   | 'entity-needs-donor';
 
@@ -118,10 +116,10 @@ export interface SignalTriggerPayload {
   commitmentId?: string;
   commitmentPriority?: string;
   donorId?: string;
+  deliveryStatus?: string;
 }
 
 export const SIGNAL_REASON_ROLES: Record<SignalReason, SignalTargetRole[]> = {
-  'unassessed': ['ASSESSOR', 'COORDINATOR'],
   'reassessment-needed': ['ASSESSOR', 'COORDINATOR'],
   'overdue': ['ASSESSOR', 'COORDINATOR'],
   'awaiting-plan': ['RESPONDER', 'COORDINATOR'],
@@ -134,16 +132,11 @@ export const SIGNAL_REASON_ROLES: Record<SignalReason, SignalTargetRole[]> = {
   'assessment-awaiting-verification': ['COORDINATOR'],
   'delivery-awaiting-verification': ['COORDINATOR'],
   'verification-overdue': ['COORDINATOR'],
-  'entity-needs-assessor': ['COORDINATOR'],
   'entity-needs-responder': ['COORDINATOR'],
   'entity-needs-donor': ['COORDINATOR'],
 };
 
 export const NOTIFICATION_TEMPLATES: Record<SignalReason, { title: string; body: string }> = {
-  'unassessed': {
-    title: 'Assessment needed',
-    body: '{entityName} — {assessmentType} assessment has not been conducted.',
-  },
   'reassessment-needed': {
     title: 'Reassessment needed',
     body: '{entityName} — situation changed after verified {responseType} response.',
@@ -179,10 +172,6 @@ export const NOTIFICATION_TEMPLATES: Record<SignalReason, { title: string; body:
   'partially-fulfilled': {
     title: 'Commitment partially fulfilled',
     body: '{entityName} — your commitment is partially delivered.',
-  },
-  'entity-needs-assessor': {
-    title: 'Entity needs assessor',
-    body: '{entityName} — no assessor has been assigned.',
   },
   'entity-needs-responder': {
     title: 'Entity needs responder',

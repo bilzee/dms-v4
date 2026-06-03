@@ -88,8 +88,6 @@ export class ActionSignalService {
     });
     if (!entity) return;
 
-    const verifiedStatuses = ['SUBMITTED', 'VERIFIED', 'AUTO_VERIFIED'];
-
     if (payload.trigger === 'assessment-verified' || payload.trigger === 'assessment-created' || payload.trigger === 'assessment-submitted') {
       const assessors = assignments.filter(a => a.role === 'ASSESSOR');
       for (const assessor of assessors) {
@@ -98,7 +96,7 @@ export class ActionSignalService {
           payload.entityId,
           payload.incidentId,
           payload.assessmentType || '',
-          ['unassessed', 'overdue'],
+          ['overdue'],
           tx
         );
       }
@@ -149,42 +147,6 @@ export class ActionSignalService {
       }
     }
 
-    const assessmentType = payload.assessmentType;
-    if (assessmentType) {
-      const allTypes = ['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION'] as AssessmentType[];
-      const otherTypes = allTypes.filter(t => t !== assessmentType);
-      const assessors = assignments.filter(a => a.role === 'ASSESSOR');
-
-      for (const type of otherTypes) {
-        const hasAssessment = await tx.rapidAssessment.findFirst({
-          where: {
-            entityId: payload.entityId,
-            incidentId: payload.incidentId,
-            rapidAssessmentType: type,
-            verificationStatus: { in: verifiedStatuses as any[] },
-          },
-        });
-        if (!hasAssessment) {
-          for (const assessor of assessors) {
-            await this.upsertSignal(
-              {
-                userId: assessor.userId,
-                entityId: payload.entityId,
-                incidentId: payload.incidentId,
-                type,
-                signalReason: 'unassessed',
-                priority: 'CRITICAL',
-                context: {
-                  entityName: entity.name,
-                  assessmentType: type,
-                },
-              },
-              tx
-            );
-          }
-        }
-      }
-    }
   }
 
   private static async handleResponseTrigger(
@@ -315,8 +277,12 @@ export class ActionSignalService {
       if (payload.trigger === 'response-verified' && payload.responseType && payload.responseId) {
         const verifiedResponse = await tx.rapidResponse.findUnique({
           where: { id: payload.responseId },
-          select: { updatedAt: true, verificationStatus: true },
+          select: { updatedAt: true, verificationStatus: true, deliveryStatus: true },
         });
+
+        if (verifiedResponse?.deliveryStatus !== 'DELIVERED') {
+          return;
+        }
 
         const verifiedAt = verifiedResponse?.updatedAt || new Date();
 
@@ -782,6 +748,12 @@ export class ActionSignalService {
       }
     }
 
+    const activeIncidents = await prisma.incident.findMany({
+      where: { status: 'ACTIVE' },
+      select: { id: true, name: true },
+    });
+    const activeIncidentIds = new Set(activeIncidents.map(i => i.id));
+
     const entities = await prisma.entity.findMany({
       where: { isActive: true },
       include: {
@@ -805,44 +777,54 @@ export class ActionSignalService {
         }
       }
 
-      const missingRoles: Array<{ reason: SignalReason; role: string }> = [];
-      if (!assignedRoles.has('ASSESSOR')) missingRoles.push({ reason: 'entity-needs-assessor', role: 'ASSESSOR' });
-      if (!assignedRoles.has('RESPONDER')) missingRoles.push({ reason: 'entity-needs-responder', role: 'RESPONDER' });
-      if (!assignedRoles.has('DONOR')) missingRoles.push({ reason: 'entity-needs-donor', role: 'DONOR' });
-
-      for (const { reason } of missingRoles) {
-        for (const coordinator of coordinators) {
-          await this.upsertSignal({
-            userId: coordinator.id,
+      for (const incident of activeIncidents) {
+        const hasAssessment = await prisma.rapidAssessment.findFirst({
+          where: {
             entityId: entity.id,
-            incidentId: null,
-            type: 'ASSIGNMENT',
-            signalReason: reason,
-            priority: 'HIGH',
-            context: {
-              entityName: entity.name,
-            },
-          }, prisma);
+            incidentId: incident.id,
+            verificationStatus: { in: ['SUBMITTED', 'VERIFIED', 'AUTO_VERIFIED'] },
+          },
+        });
+        if (!hasAssessment) continue;
+
+        const missingRoles: Array<{ reason: SignalReason; role: string }> = [];
+        if (!assignedRoles.has('RESPONDER')) missingRoles.push({ reason: 'entity-needs-responder', role: 'RESPONDER' });
+        if (!assignedRoles.has('DONOR')) missingRoles.push({ reason: 'entity-needs-donor', role: 'DONOR' });
+
+        for (const { reason } of missingRoles) {
+          for (const coordinator of coordinators) {
+            await this.upsertSignal({
+              userId: coordinator.id,
+              entityId: entity.id,
+              incidentId: incident.id,
+              type: 'ASSIGNMENT',
+              signalReason: reason,
+              priority: 'HIGH',
+              context: {
+                entityName: entity.name,
+              },
+            }, prisma);
+          }
         }
       }
     }
 
     const coordinatorIds = coordinators.map(c => c.id);
-    const knownReasons: SignalReason[] = ['assessment-awaiting-verification', 'delivery-awaiting-verification', 'verification-overdue', 'entity-needs-assessor', 'entity-needs-responder', 'entity-needs-donor'];
+    const knownReasons: SignalReason[] = ['assessment-awaiting-verification', 'delivery-awaiting-verification', 'verification-overdue', 'entity-needs-responder', 'entity-needs-donor'];
     const activeCoordinatorSignals = await prisma.actionSignal.findMany({
       where: {
         userId: { in: coordinatorIds },
         signalReason: { in: knownReasons },
         resolvedAt: null,
       },
-      select: { id: true, signalReason: true, type: true, context: true, entityId: true },
+      select: { id: true, signalReason: true, type: true, context: true, entityId: true, incidentId: true },
     });
 
     const submittedAssessmentIds = new Set(submittedAssessments.map(a => a.id));
     const submittedResponseIds = new Set(submittedResponses.map(r => r.id));
 
-    const entityNeedsReasons: Set<string> = new Set(['entity-needs-assessor', 'entity-needs-responder', 'entity-needs-donor']);
-    const entitiesMissingRoles: Map<string, Set<string>> = new Map();
+    const entityNeedsReasons: Set<string> = new Set(['entity-needs-responder', 'entity-needs-donor']);
+    const entitiesMissingRolesByIncident: Map<string, Map<string, Set<string>>> = new Map();
     for (const entity of entities) {
       const assignedRoles = new Set<string>();
       for (const assignment of entity.assignments) {
@@ -850,16 +832,30 @@ export class ActionSignalService {
           assignedRoles.add(userRole.role.name);
         }
       }
-      const missing = new Set<string>();
-      if (!assignedRoles.has('ASSESSOR')) missing.add('entity-needs-assessor');
-      if (!assignedRoles.has('RESPONDER')) missing.add('entity-needs-responder');
-      if (!assignedRoles.has('DONOR')) missing.add('entity-needs-donor');
-      if (missing.size > 0) entitiesMissingRoles.set(entity.id, missing);
+      for (const incident of activeIncidents) {
+        const hasAssessment = await prisma.rapidAssessment.findFirst({
+          where: {
+            entityId: entity.id,
+            incidentId: incident.id,
+            verificationStatus: { in: ['SUBMITTED', 'VERIFIED', 'AUTO_VERIFIED'] },
+          },
+        });
+        if (!hasAssessment) continue;
+        const missing = new Set<string>();
+        if (!assignedRoles.has('RESPONDER')) missing.add('entity-needs-responder');
+        if (!assignedRoles.has('DONOR')) missing.add('entity-needs-donor');
+        if (missing.size > 0) {
+          const key = `${entity.id}:${incident.id}`;
+          entitiesMissingRolesByIncident.set(key, new Map([['missing', missing]]));
+        }
+      }
     }
 
     for (const signal of activeCoordinatorSignals) {
       if (entityNeedsReasons.has(signal.signalReason)) {
-        const stillMissing = entitiesMissingRoles.get(signal.entityId);
+        const key = `${signal.entityId}:${signal.incidentId}`;
+        const entry = signal.incidentId ? entitiesMissingRolesByIncident.get(key) : undefined;
+        const stillMissing = entry?.get('missing');
         if (!stillMissing || !stillMissing.has(signal.signalReason)) {
           await prisma.actionSignal.update({
             where: { id: signal.id },
@@ -919,7 +915,6 @@ export class ActionSignalService {
       'assessment-awaiting-verification',
       'delivery-awaiting-verification',
       'verification-overdue',
-      'entity-needs-assessor',
       'entity-needs-responder',
       'entity-needs-donor',
     ];
@@ -930,10 +925,15 @@ export class ActionSignalService {
           .filter(([, reasonRoles]) => reasonRoles.includes(activeRole as SignalTargetRole))
           .map(([reason]) => reason as SignalReason);
 
+    const activeIncidentIds = (await prisma.incident.findMany({
+      where: { status: 'ACTIVE' },
+      select: { id: true },
+    })).map(i => i.id);
+
     const where: Prisma.ActionSignalWhereInput = {
       resolvedAt: query.unresolvedOnly ? null : undefined,
       ...entityFilter,
-      incidentId: query.incidentId || undefined,
+      incidentId: query.incidentId || { in: activeIncidentIds.length > 0 ? activeIncidentIds : ['__none__'] },
       priority: query.priority || undefined,
       signalReason: query.signalReason || (allowedReasons ? { in: allowedReasons } : undefined),
       type: query.type || undefined,
@@ -1318,7 +1318,7 @@ export class ActionSignalService {
       });
       if (!assessment) return;
 
-      const reasons: SignalReason[] = ['awaiting-plan', 'assessment-needs-response', 'unassessed', 'reassessment-needed'];
+      const reasons: SignalReason[] = ['awaiting-plan', 'assessment-needs-response', 'reassessment-needed'];
       await prisma.actionSignal.updateMany({
         where: {
           entityId: assessment.entityId,

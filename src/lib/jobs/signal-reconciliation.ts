@@ -40,6 +40,47 @@ export class SignalReconciliationJob {
           errors.push(`Signal ${signal.id}: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
       }
+
+      const decommissionResult = await prisma.actionSignal.updateMany({
+        where: {
+          signalReason: { in: ['unassessed', 'entity-needs-assessor'] },
+          resolvedAt: null,
+        },
+        data: { resolvedAt: new Date() },
+      });
+      resolved += decommissionResult.count;
+
+      const orphanedResult = await prisma.actionSignal.updateMany({
+        where: {
+          incidentId: null,
+          resolvedAt: null,
+        },
+        data: { resolvedAt: new Date() },
+      });
+      resolved += orphanedResult.count;
+
+      const inactiveIncidentSignals = await prisma.actionSignal.findMany({
+        where: { resolvedAt: null, incidentId: { not: null } },
+        select: { id: true, incidentId: true },
+      });
+      if (inactiveIncidentSignals.length > 0) {
+        const activeIncidentIds = new Set(
+          (await prisma.incident.findMany({
+            where: { status: 'ACTIVE' },
+            select: { id: true },
+          })).map(i => i.id)
+        );
+        const staleIds = inactiveIncidentSignals
+          .filter(s => s.incidentId && !activeIncidentIds.has(s.incidentId))
+          .map(s => s.id);
+        if (staleIds.length > 0) {
+          const staleResult = await prisma.actionSignal.updateMany({
+            where: { id: { in: staleIds } },
+            data: { resolvedAt: new Date() },
+          });
+          resolved += staleResult.count;
+        }
+      }
     } catch (err) {
       errors.push(`Fatal: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
@@ -56,8 +97,6 @@ export class SignalReconciliationJob {
     const reason = signal.signalReason as SignalReason;
 
     switch (reason) {
-      case 'unassessed':
-        return this.checkUnassessed(signal);
       case 'reassessment-needed':
         return this.checkReassessmentNeeded(signal);
       case 'overdue':
@@ -76,25 +115,12 @@ export class SignalReconciliationJob {
         return this.checkPlanNeedsCommitment(signal);
       case 'partially-fulfilled':
         return this.checkPartiallyFulfilled(signal);
-      case 'entity-needs-assessor':
       case 'entity-needs-responder':
       case 'entity-needs-donor':
         return false;
       default:
         return false;
     }
-  }
-
-  private static async checkUnassessed(signal: any): Promise<boolean> {
-    const hasAssessment = await prisma.rapidAssessment.findFirst({
-      where: {
-        entityId: signal.entityId,
-        incidentId: signal.incidentId,
-        rapidAssessmentType: signal.type as any,
-        verificationStatus: { in: ['SUBMITTED', 'VERIFIED', 'AUTO_VERIFIED'] },
-      },
-    });
-    return !!hasAssessment;
   }
 
   private static async checkReassessmentNeeded(signal: any): Promise<boolean> {
