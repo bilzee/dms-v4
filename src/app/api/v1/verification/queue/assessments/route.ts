@@ -101,6 +101,13 @@ export const GET = withAuth(async (request, context) => {
             name: true,
             email: true
           }
+        },
+        incident: {
+          select: {
+            id: true,
+            name: true,
+            type: true
+          }
         }
       },
       orderBy: orderBy,

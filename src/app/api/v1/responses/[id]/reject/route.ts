@@ -11,9 +11,9 @@ const RejectResponseSchema = z.object({
   notes: z.string().optional(),
 });
 
-export const POST = withAuth(async (request: NextRequest, context, { params }) => {
+export const POST = withAuth(async (request: NextRequest, context: any) => {
   try {
-    const { roles } = context;
+    const { user, roles } = context;
     
     // Check coordinator permissions
     if (!roles.includes('COORDINATOR')) {
@@ -23,12 +23,13 @@ export const POST = withAuth(async (request: NextRequest, context, { params }) =
       );
     }
 
-    const { id } = params;
+    const url = new URL(request.url);
+    const pathname = url.pathname;
+    const id = pathname.split('/').slice(-2, -1)[0];
     const body = await request.json();
     const validatedData = RejectResponseSchema.parse(body);
     
-    // Get user ID from auth context (you may need to adjust this based on your auth setup)
-    const userId = (request as any).user?.id || 'system';
+    const userId = user.id;
 
     // Find the response
     const response = await prisma.rapidResponse.findUnique({

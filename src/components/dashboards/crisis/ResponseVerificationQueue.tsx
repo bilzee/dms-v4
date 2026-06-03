@@ -46,13 +46,15 @@ interface ResponseVerificationQueueProps {
   onResponseSelect?: (response: ResponseVerificationQueueItem) => void;
   selectedResponseId?: string;
   filters?: any;
+  onActionComplete?: () => void;
 }
 
 export function ResponseVerificationQueue({
   className,
   onResponseSelect,
   selectedResponseId,
-  filters: parentFilters
+  filters: parentFilters,
+  onActionComplete
 }: ResponseVerificationQueueProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -89,6 +91,7 @@ export function ResponseVerificationQueue({
         responseId,
         data: { notes }
       });
+      onActionComplete?.();
     } catch (error) {
       console.error('Failed to verify response:', error);
     }
@@ -104,10 +107,10 @@ export function ResponseVerificationQueue({
         }
       });
 
-      // Reset reject form
       setRejectingResponse(null);
       setRejectReason('');
       setRejectNotes('');
+      onActionComplete?.();
     } catch (error) {
       console.error('Failed to reject response:', error);
     }
@@ -337,10 +340,76 @@ export function ResponseVerificationQueue({
                 {response.description}
               </p>
             )}
+          </div>
+        )}
+        renderExpanded={(response: ResponseVerificationQueueItem) => (
+          <div className="space-y-4 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-medium text-foreground mb-2">Entity Details</h4>
+                <div className="space-y-1 text-muted-foreground">
+                  <div>Type: {response.entity.type}</div>
+                  <div>ID: {response.entity.id}</div>
+                  <div>Auto-Approve: {response.entity.autoApproveEnabled ? 'Enabled' : 'Disabled'}</div>
+                </div>
+              </div>
 
-            {/* Inline Verify/Reject buttons for SUBMITTED responses */}
+              <div>
+                <h4 className="font-medium text-foreground mb-2">Responder Details</h4>
+                <div className="space-y-1 text-muted-foreground">
+                  <div>Email: {response.responder.email}</div>
+                  <div>ID: {response.responder.id}</div>
+                </div>
+              </div>
+
+              {response.planCommitments?.[0]?.commitment?.donor && (
+                <div className="md:col-span-2">
+                  <h4 className="font-medium text-foreground mb-2">Donor Information</h4>
+                  <div className="space-y-1 text-sm text-muted-foreground">
+                    <div>Name: {response.planCommitments[0].commitment.donor.name}</div>
+                    <div>Email: {response.planCommitments[0].commitment.donor.contactEmail}</div>
+                    {response.planCommitments[0].commitment && (
+                      <div>
+                        Commitment: {response.planCommitments[0].commitment.id.slice(-6)}
+                        {response.planCommitments[0].commitment.notes && ` - ${response.planCommitments[0].commitment.notes}`}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="md:col-span-2">
+                <h4 className="font-medium text-foreground mb-2">Timeline</h4>
+                <div className="space-y-1 text-sm text-muted-foreground">
+                  <div>Created: {new Date(response.createdAt).toLocaleString()}</div>
+                  <div>Last Updated: {new Date(response.updatedAt).toLocaleString()}</div>
+                  {response.verifiedAt && (
+                    <div>Verified: {new Date(response.verifiedAt).toLocaleString()}</div>
+                  )}
+                </div>
+              </div>
+
+              {response.resources && (
+                <div className="md:col-span-2">
+                  <h4 className="font-medium text-foreground mb-2">Resources</h4>
+                  <div className="space-y-1">
+                    {typeof response.resources === 'string' ? (
+                      <p className="text-sm bg-muted p-2 rounded">{response.resources}</p>
+                    ) : typeof response.resources === 'object' ? (
+                      Object.entries(response.resources as Record<string, unknown>).map(([key, value]) => (
+                        <div key={key} className="bg-muted p-2 rounded text-sm flex items-center justify-between">
+                          <span className="capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                          <span className="font-medium">{String(value)}</span>
+                        </div>
+                      ))
+                    ) : null}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {response.verificationStatus === 'SUBMITTED' && (
-              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+              <div className="flex items-center gap-2 pt-3 border-t border-border">
                 <Button
                   size="sm"
                   onClick={(e) => {
@@ -356,7 +425,7 @@ export function ResponseVerificationQueue({
                   ) : (
                     <CheckCircle className="h-3 w-3 mr-1" />
                   )}
-                  Verify
+                  Verify Response
                 </Button>
 
                 <Button
@@ -374,69 +443,8 @@ export function ResponseVerificationQueue({
                   ) : (
                     <XCircle className="h-3 w-3 mr-1" />
                   )}
-                  Reject
+                  Reject Response
                 </Button>
-              </div>
-            )}
-          </div>
-        )}
-        renderExpanded={(response: ResponseVerificationQueueItem) => (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <h4 className="font-medium text-foreground mb-2">Entity Details</h4>
-              <div className="space-y-1 text-muted-foreground">
-                <div>Type: {response.entity.type}</div>
-                <div>ID: {response.entity.id}</div>
-                <div>Auto-Approve: {response.entity.autoApproveEnabled ? 'Enabled' : 'Disabled'}</div>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-medium text-foreground mb-2">Responder Details</h4>
-              <div className="space-y-1 text-muted-foreground">
-                <div>Email: {response.responder.email}</div>
-                <div>ID: {response.responder.id}</div>
-              </div>
-            </div>
-
-            {/* Donor information if available */}
-            {response.planCommitments?.[0]?.commitment?.donor && (
-              <div className="md:col-span-2">
-                <h4 className="font-medium text-foreground mb-2">Donor Information</h4>
-                <div className="space-y-1 text-sm text-muted-foreground">
-                  <div>Name: {response.planCommitments[0].commitment.donor.name}</div>
-                  <div>Email: {response.planCommitments[0].commitment.donor.contactEmail}</div>
-                  {response.planCommitments[0].commitment && (
-                    <div>
-                      Commitment: {response.planCommitments[0].commitment.id.slice(-6)}
-                      {response.planCommitments[0].commitment.notes && ` - ${response.planCommitments[0].commitment.notes}`}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Timeline */}
-            <div className="md:col-span-2">
-              <h4 className="font-medium text-foreground mb-2">Timeline</h4>
-              <div className="space-y-1 text-sm text-muted-foreground">
-                <div>Created: {new Date(response.createdAt).toLocaleString()}</div>
-                <div>Last Updated: {new Date(response.updatedAt).toLocaleString()}</div>
-                {response.verifiedAt && (
-                  <div>Verified: {new Date(response.verifiedAt).toLocaleString()}</div>
-                )}
-              </div>
-            </div>
-
-            {/* Resources information */}
-            {response.resources && (
-              <div className="md:col-span-2">
-                <h4 className="font-medium text-foreground mb-2">Resources</h4>
-                <div className="text-sm text-muted-foreground">
-                  <pre className="whitespace-pre-wrap text-xs bg-muted p-2 rounded">
-                    {JSON.stringify(response.resources, null, 2)}
-                  </pre>
-                </div>
               </div>
             )}
           </div>

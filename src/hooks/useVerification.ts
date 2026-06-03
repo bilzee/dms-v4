@@ -52,8 +52,8 @@ export function useVerificationActions() {
       return result;
     },
     onSuccess: (data) => {
-      // Invalidate and refetch verification queue
       queryClient.invalidateQueries({ queryKey: ['verification-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['verification-metrics'] });
       
       toast.success('Assessment verified successfully', {
         description: `Assessment for ${data.data.entity?.name} has been approved.`
@@ -75,8 +75,8 @@ export function useVerificationActions() {
       return result;
     },
     onSuccess: (data) => {
-      // Invalidate and refetch verification queue
       queryClient.invalidateQueries({ queryKey: ['verification-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['verification-metrics'] });
       
       toast.success('Assessment rejected', {
         description: `Assessment for ${data.data.entity?.name} has been rejected.`
@@ -147,6 +147,7 @@ export function useBulkVerificationActions() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['verification-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['verification-metrics'] });
       
       toast.success(`Successfully verified ${data.length} assessments`, {
         description: 'All selected assessments have been approved.'

@@ -34,6 +34,15 @@ export interface VerificationQueueItem {
   verificationStatus: VerificationStatus;
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   location?: string;
+  coordinates?: any;
+  gapAnalysis?: any;
+  mediaAttachments?: any;
+  assessorName?: string;
+  versionNumber?: number;
+  isOfflineCreated?: boolean;
+  incidentId?: string;
+  rejectionReason?: string;
+  rejectionFeedback?: string;
   responseDate?: Date;
   entity: {
     id: string;
@@ -46,6 +55,11 @@ export interface VerificationQueueItem {
     id: string;
     name: string;
     email: string;
+  };
+  incident?: {
+    id: string;
+    name: string;
+    type: string;
   };
   responder?: {
     id: string;

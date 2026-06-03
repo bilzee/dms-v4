@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { apiGet, apiPost } from '@/lib/api';
 import { getAuthToken } from '@/lib/auth/token-utils';
 import type { 
@@ -57,9 +58,18 @@ export function useVerifyResponse() {
       }
       return result.data;
     },
-    onSuccess: () => {
-      // Invalidate and refetch verification queue
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['response-verification-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['verification-metrics'] });
+      
+      toast.success('Response verified successfully', {
+        description: `Response for ${data?.entity?.name || 'entity'} has been approved.`
+      });
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to verify response', {
+        description: error.message
+      });
     },
   });
 }
@@ -75,9 +85,18 @@ export function useRejectResponse() {
       }
       return result.data;
     },
-    onSuccess: () => {
-      // Invalidate and refetch verification queue
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['response-verification-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['verification-metrics'] });
+      
+      toast.success('Response rejected', {
+        description: `Response for ${data?.entity?.name || 'entity'} has been rejected.`
+      });
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to reject response', {
+        description: error.message
+      });
     },
   });
 }

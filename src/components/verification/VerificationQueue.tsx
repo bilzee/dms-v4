@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { verificationPriorityBadgeColors } from '@/lib/utils/priority-colors';
 import { useVerificationQueue, useVerificationFilters } from '@/hooks/useVerification';
+import { VerificationActions } from './VerificationActions';
 import { StatusIndicator } from './StatusIndicator';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,12 +35,14 @@ interface VerificationQueueProps {
   className?: string;
   onAssessmentSelect?: (assessment: VerificationQueueItem) => void;
   selectedAssessmentId?: string;
+  onActionComplete?: () => void;
 }
 
 export function VerificationQueue({ 
   className, 
   onAssessmentSelect,
-  selectedAssessmentId 
+  selectedAssessmentId,
+  onActionComplete
 }: VerificationQueueProps) {
   const { filters, updateFilter } = useVerificationFilters();
   const [searchTerm, setSearchTerm] = useState('');
@@ -212,33 +215,51 @@ export function VerificationQueue({
               <span>{new Date(assessment.rapidAssessmentDate).toLocaleDateString()}</span>
             </div>
           </div>
+
+          {assessment.incident?.name && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+              <AlertTriangle className="h-3 w-3" />
+              <span>Incident: {assessment.incident.name}</span>
+            </div>
+          )}
         </div>
       )}
       renderExpanded={(assessment: VerificationQueueItem) => (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Entity Details</h4>
-            <div className="space-y-1 text-gray-600">
-              <div>Type: {assessment.entity.type}</div>
-              <div>ID: {assessment.entity.id}</div>
+        <div className="space-y-4 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-medium text-gray-900 mb-2">Entity Details</h4>
+              <div className="space-y-1 text-gray-600">
+                <div>Type: {assessment.entity.type}</div>
+                <div>Location: {assessment.entity.location || 'Not specified'}</div>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-medium text-gray-900 mb-2">Assessor Details</h4>
+              <div className="space-y-1 text-gray-600">
+                <div>Name: {assessment.assessor.name}</div>
+                <div>Email: {assessment.assessor.email}</div>
+              </div>
+            </div>
+            
+            <div className="md:col-span-2">
+              <h4 className="font-medium text-gray-900 mb-2">Timeline</h4>
+              <div className="space-y-1 text-sm text-gray-600">
+                <div>Assessment Date: {new Date(assessment.rapidAssessmentDate).toLocaleString()}</div>
+                <div>Submitted: {new Date(assessment.createdAt).toLocaleString()}</div>
+                <div>Last Updated: {new Date(assessment.updatedAt).toLocaleString()}</div>
+              </div>
             </div>
           </div>
-          
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Assessor Details</h4>
-            <div className="space-y-1 text-gray-600">
-              <div>Email: {assessment.assessor.email}</div>
-              <div>ID: {assessment.assessor.id}</div>
-            </div>
-          </div>
-          
-          <div className="md:col-span-2">
-            <h4 className="font-medium text-gray-900 mb-2">Timeline</h4>
-            <div className="space-y-1 text-sm text-gray-600">
-              <div>Created: {new Date(assessment.createdAt).toLocaleString()}</div>
-              <div>Last Updated: {new Date(assessment.updatedAt).toLocaleString()}</div>
-            </div>
-          </div>
+
+          {assessment.verificationStatus === 'SUBMITTED' && (
+            <VerificationActions
+              assessment={assessment}
+              inline={false}
+              onActionComplete={onActionComplete}
+            />
+          )}
         </div>
       )}
       pagination={
