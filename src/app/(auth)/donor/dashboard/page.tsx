@@ -109,8 +109,8 @@ export default function DonorDashboardPage() {
 
   return (
     <RoleBasedRoute requiredRole="DONOR">
-      <div className="py-6">
-        <div className="mb-6">
+      <div className="space-y-6">
+        <div>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Donor Dashboard</h1>

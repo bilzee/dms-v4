@@ -10,6 +10,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useMapConfig } from '@/hooks/useMapConfig';
 import { MapContainer, TileLayer, CircleMarker, LayerGroup } from 'react-leaflet';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -88,8 +89,9 @@ export function AssessmentRelationshipMap({
     start: null,
     end: null,
   });
-  const [zoomLevel, setZoomLevel] = useState(10);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([11.8311, 13.1511]); // Maiduguri center
+  const { center: configCenter, zoom: configZoom } = useMapConfig();
+  const [zoomLevel, setZoomLevel] = useState(configZoom);
+  const [mapCenter, setMapCenter] = useState<[number, number]>(configCenter);
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
   const [hoveredEntityId, setHoveredEntityId] = useState<string | null>(null);
   const [isMaximized, setIsMaximized] = useState(false);

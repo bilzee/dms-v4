@@ -22,6 +22,7 @@ import { EntityCluster } from './components/EntityMarker';
 import { DonorOverlayControl } from './components/DonorOverlayControl';
 import type { DonorOverlayControlProps } from './components/DonorOverlayControl';
 import { useDashboardLayoutStore } from '@/stores/dashboardLayout.store';
+import { useMapConfig } from '@/hooks/useMapConfig';
 import { useTouchGestures } from '@/hooks/useTouchGestures';
 
 // Since this is a client component, we can import directly
@@ -234,6 +235,7 @@ function InteractiveMapCore({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [map, setMap] = useState<LeafletMap | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
+  const { center: configCenter } = useMapConfig();
   
   // Dashboard store integration
   const {
@@ -354,7 +356,7 @@ function InteractiveMapCore({
         )}
       >
         <MapContainer
-            center={[9.0820, 8.6753]} // Default to Nigeria
+            center={configCenter}
             zoom={initialZoom}
             className="w-full h-full"
             ref={(mapInstance) => {

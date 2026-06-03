@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { Button } from '@/components/ui/button';
 import { MapPin, Crosshair, Maximize2 } from '@/lib/icons';
+import { useMapConfig } from '@/hooks/useMapConfig';
 
 // Fix Leaflet default markers for SSR
 import L from 'leaflet';
@@ -50,8 +51,10 @@ function LocationMarker({ position, onLocationSelect, onPositionChange }: Locati
   );
 }
 
-export function LocationSelector({ onLocationSelect, initialCoordinates = { latitude: 11.8311, longitude: 13.1511 } }: LocationSelectorProps) {
-  const [position, setPosition] = useState<[number, number]>([initialCoordinates.latitude, initialCoordinates.longitude]);
+export function LocationSelector({ onLocationSelect, initialCoordinates }: LocationSelectorProps) {
+  const { center: configCenter } = useMapConfig();
+  const coords = initialCoordinates ?? { latitude: configCenter[0], longitude: configCenter[1] };
+  const [position, setPosition] = useState<[number, number]>([coords.latitude, coords.longitude]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const mapRef = useRef<L.Map>(null);
 

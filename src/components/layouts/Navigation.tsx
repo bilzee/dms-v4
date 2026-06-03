@@ -433,6 +433,12 @@ const getNavigationItems = (role: string | null): NavItem[] => {
             href: '/admin/settings/notifications',
             icon: Bell,
             description: 'Configure push and in-app notification channels and priorities'
+          },
+          {
+            name: 'Map Settings',
+            href: '/admin/settings/map',
+            icon: MapPin,
+            description: 'Configure default map center and zoom level'
           }
         ]
       }

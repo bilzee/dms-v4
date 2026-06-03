@@ -12,6 +12,7 @@ import {
 } from 'react-leaflet';
 import { useQuery } from '@tanstack/react-query';
 import { apiGet } from '@/lib/api';
+import { useMapConfig } from '@/hooks/useMapConfig';
 import { Badge } from '@/components/ui/badge';
 import '@/components/dashboards/situation/map-styles.css';
 
@@ -141,6 +142,8 @@ export function ActionQueueMapPanel({
   selectedEntityId,
   onEntitySelect,
 }: ActionQueueMapPanelProps) {
+  const { center: configCenter, zoom: configZoom } = useMapConfig();
+
   const { data: entitiesData } = useQuery({
     queryKey: ['map-entities'],
     queryFn: async () => {
@@ -183,8 +186,8 @@ export function ActionQueueMapPanel({
   return (
     <div className="h-full w-full">
       <MapContainer
-        center={[9.082, 8.6753]}
-        zoom={6}
+        center={configCenter}
+        zoom={configZoom}
         className="h-full w-full rounded-lg"
         zoomControl={false}
         attributionControl={false}

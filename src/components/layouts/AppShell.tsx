@@ -144,7 +144,7 @@ export const AppShell = ({
 
         {/* Main content */}
         <main id="main-content" className={cn(
-          isDashboard ? 'py-0' : 'py-6'
+          isFullscreen ? 'py-0' : 'py-6'
         )}>
           {/* Breadcrumbs - shown on all pages except dashboard root */}
           {!isDashboard && showBreadcrumbs && (
@@ -156,9 +156,7 @@ export const AppShell = ({
           <div className={cn(
             isFullscreen
               ? 'w-full h-full'
-              : isDashboard
-                ? 'px-4 sm:px-6 w-full'
-                : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'
+              : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'
           )}>
             {children}
           </div>
