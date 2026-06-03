@@ -7,6 +7,11 @@ import {
   validateNotificationConfig,
   getDefaultNotificationConfig,
 } from '@/lib/services/notification-config.service';
+import {
+  getActionSignalConfig,
+  saveActionSignalConfig,
+  getDefaultActionSignalConfig,
+} from '@/lib/services/action-signal-config.service';
 
 export const GET = withAuth(async (request: NextRequest, context) => {
   const { roles } = context;
@@ -15,8 +20,11 @@ export const GET = withAuth(async (request: NextRequest, context) => {
   }
 
   try {
-    const config = await getNotificationConfig();
-    return successResponse(config);
+    const [config, actionSignalConfig] = await Promise.all([
+      getNotificationConfig(),
+      getActionSignalConfig(),
+    ]);
+    return successResponse({ notification: config, actionSignals: actionSignalConfig });
   } catch (error) {
     return handleApiError(error);
   }
@@ -30,14 +38,24 @@ export const PUT = withAuth(async (request: NextRequest, context) => {
 
   try {
     const body = await request.json();
-    const errors = validateNotificationConfig(body);
-    if (errors.length > 0) {
-      return errorResponse(errors.join('; '), 400);
+
+    if (body.notification) {
+      const errors = validateNotificationConfig(body.notification);
+      if (errors.length > 0) {
+        return errorResponse(errors.join('; '), 400);
+      }
+      await saveNotificationConfig(body.notification, userId);
     }
 
-    await saveNotificationConfig(body, userId);
-    const updated = await getNotificationConfig();
-    return successResponse(updated);
+    if (body.actionSignals) {
+      await saveActionSignalConfig(body.actionSignals, userId);
+    }
+
+    const [config, actionSignalConfig] = await Promise.all([
+      getNotificationConfig(),
+      getActionSignalConfig(),
+    ]);
+    return successResponse({ notification: config, actionSignals: actionSignalConfig });
   } catch (error) {
     return handleApiError(error);
   }
@@ -50,9 +68,15 @@ export const DELETE = withAuth(async (request: NextRequest, context) => {
   }
 
   try {
-    const defaults = getDefaultNotificationConfig();
-    await saveNotificationConfig(defaults, userId);
-    return successResponse(defaults);
+    const [notifDefaults, asDefaults] = await Promise.all([
+      getDefaultNotificationConfig(),
+      getDefaultActionSignalConfig(),
+    ]);
+    await Promise.all([
+      saveNotificationConfig(notifDefaults, userId),
+      saveActionSignalConfig(asDefaults, userId),
+    ]);
+    return successResponse({ notification: notifDefaults, actionSignals: asDefaults });
   } catch (error) {
     return handleApiError(error);
   }

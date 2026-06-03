@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { apiGet, apiPut, apiDelete } from '@/lib/api';
 import { toast } from 'sonner';
 import {
@@ -27,9 +28,14 @@ import {
   Info,
   Shield,
   Zap,
+  Activity,
+  ChevronDown,
+  Users,
 } from '@/lib/icons';
 import { useRouter } from 'next/navigation';
 import type { SignalPriority } from '@/lib/services/notification-config.service';
+import type { SignalReason, SignalTargetRole } from '@/types/action-signal';
+import { SIGNAL_REASON_ROLES, NOTIFICATION_TEMPLATES } from '@/types/action-signal';
 
 interface NotificationConfig {
   pushEnabled: boolean;
@@ -44,7 +50,10 @@ interface NotificationConfig {
   quietHoursEnd: string;
 }
 
-const DEFAULT_CONFIG: NotificationConfig = {
+type RoleSignalConfig = Record<SignalReason, boolean>;
+type ActionSignalConfig = Record<SignalTargetRole, RoleSignalConfig>;
+
+const DEFAULT_NOTIFICATION_CONFIG: NotificationConfig = {
   pushEnabled: true,
   inAppEnabled: true,
   pushPriorities: ['CRITICAL', 'HIGH'],
@@ -63,6 +72,48 @@ const ALL_PRIORITIES: { value: SignalPriority; label: string; color: string }[] 
   { value: 'MEDIUM', label: 'Medium', color: 'bg-yellow-500 text-black' },
   { value: 'LOW', label: 'Low', color: 'bg-blue-500 text-white' },
 ];
+
+function buildDefaultSignalConfig(): ActionSignalConfig {
+  const roles: SignalTargetRole[] = ['ASSESSOR', 'RESPONDER', 'DONOR', 'COORDINATOR'];
+  const config: Partial<ActionSignalConfig> = {};
+  for (const role of roles) {
+    const reasons = Object.entries(SIGNAL_REASON_ROLES)
+      .filter(([, r]) => r.includes(role))
+      .map(([reason]) => reason as SignalReason);
+    const roleConfig: Partial<RoleSignalConfig> = {};
+    for (const reason of reasons) {
+      roleConfig[reason] = true;
+    }
+    config[role] = roleConfig as RoleSignalConfig;
+  }
+  return config as ActionSignalConfig;
+}
+
+const DEFAULT_ACTION_SIGNAL_CONFIG = buildDefaultSignalConfig();
+
+const ROLE_META: Record<SignalTargetRole, { label: string; color: string; icon: string }> = {
+  ASSESSOR: { label: 'Assessor', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400', icon: '📋' },
+  RESPONDER: { label: 'Responder', color: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400', icon: '🚑' },
+  DONOR: { label: 'Donor', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400', icon: '💰' },
+  COORDINATOR: { label: 'Coordinator', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400', icon: '🎯' },
+};
+
+const SIGNAL_REASON_LABELS: Record<SignalReason, string> = {
+  'reassessment-needed': 'Reassessment Needed',
+  'overdue': 'Population Assessment Overdue',
+  'awaiting-plan': 'Response Plan Needed',
+  'awaiting-plan-for-commitment': 'Commitment Needs Plan',
+  'awaiting-delivery': 'Delivery Confirmation Needed',
+  'partially-covered': 'Plan Partially Covered',
+  'assessment-needs-response': 'Assessment Needs Resources',
+  'plan-needs-commitment': 'Plan Needs Commitment',
+  'partially-fulfilled': 'Commitment Partially Fulfilled',
+  'assessment-awaiting-verification': 'Assessment Awaiting Review',
+  'delivery-awaiting-verification': 'Delivery Awaiting Review',
+  'verification-overdue': 'Verification Overdue',
+  'entity-needs-responder': 'Entity Needs Responder',
+  'entity-needs-donor': 'Entity Needs Donor',
+};
 
 function PrioritySelector({
   selected,
@@ -108,22 +159,48 @@ function PrioritySelector({
 
 export default function NotificationConfigPage() {
   const router = useRouter();
-  const [config, setConfig] = useState<NotificationConfig>({ ...DEFAULT_CONFIG, pushPriorities: [...DEFAULT_CONFIG.pushPriorities], inAppPriorities: [...DEFAULT_CONFIG.inAppPriorities] });
-  const [originalConfig, setOriginalConfig] = useState<NotificationConfig>({ ...DEFAULT_CONFIG, pushPriorities: [...DEFAULT_CONFIG.pushPriorities], inAppPriorities: [...DEFAULT_CONFIG.inAppPriorities] });
+  const [notifConfig, setNotifConfig] = useState<NotificationConfig>({
+    ...DEFAULT_NOTIFICATION_CONFIG,
+    pushPriorities: [...DEFAULT_NOTIFICATION_CONFIG.pushPriorities],
+    inAppPriorities: [...DEFAULT_NOTIFICATION_CONFIG.inAppPriorities],
+  });
+  const [originalNotifConfig, setOriginalNotifConfig] = useState<NotificationConfig>({ ...notifConfig });
+
+  const [signalConfig, setSignalConfig] = useState<ActionSignalConfig>(
+    JSON.parse(JSON.stringify(DEFAULT_ACTION_SIGNAL_CONFIG))
+  );
+  const [originalSignalConfig, setOriginalSignalConfig] = useState<ActionSignalConfig>(
+    JSON.parse(JSON.stringify(DEFAULT_ACTION_SIGNAL_CONFIG))
+  );
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expandedRoles, setExpandedRoles] = useState<Set<string>>(new Set(['ASSESSOR']));
 
   const fetchConfig = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await apiGet<NotificationConfig>('/api/v1/notification-config');
+      const result = await apiGet<any>('/api/v1/notification-config');
       if (!result.success) throw new Error((result as any).error || 'Failed to load');
-      const data = (result as any).data as NotificationConfig;
-      const withArrays = { ...data, pushPriorities: [...(data.pushPriorities || DEFAULT_CONFIG.pushPriorities)], inAppPriorities: [...(data.inAppPriorities || DEFAULT_CONFIG.inAppPriorities)] };
-      setConfig(withArrays);
-      setOriginalConfig(withArrays);
+      const data = (result as any).data;
+
+      if (data.notification) {
+        const n = data.notification;
+        const withArrays = {
+          ...n,
+          pushPriorities: [...(n.pushPriorities || DEFAULT_NOTIFICATION_CONFIG.pushPriorities)],
+          inAppPriorities: [...(n.inAppPriorities || DEFAULT_NOTIFICATION_CONFIG.inAppPriorities)],
+        };
+        setNotifConfig(withArrays);
+        setOriginalNotifConfig(withArrays);
+      }
+
+      if (data.actionSignals) {
+        setSignalConfig(data.actionSignals);
+        setOriginalSignalConfig(JSON.parse(JSON.stringify(data.actionSignals)));
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -133,24 +210,70 @@ export default function NotificationConfigPage() {
 
   useMemo(() => { fetchConfig(); }, [fetchConfig]);
 
-  const hasChanges = useMemo(() => {
-    return JSON.stringify(config) !== JSON.stringify(originalConfig);
-  }, [config, originalConfig]);
+  const hasNotifChanges = useMemo(() => {
+    return JSON.stringify(notifConfig) !== JSON.stringify(originalNotifConfig);
+  }, [notifConfig, originalNotifConfig]);
 
-  const updateConfig = <K extends keyof NotificationConfig>(key: K, value: NotificationConfig[K]) => {
-    setConfig(prev => ({ ...prev, [key]: value }));
+  const hasSignalChanges = useMemo(() => {
+    return JSON.stringify(signalConfig) !== JSON.stringify(originalSignalConfig);
+  }, [signalConfig, originalSignalConfig]);
+
+  const hasChanges = hasNotifChanges || hasSignalChanges;
+
+  const updateNotifConfig = <K extends keyof NotificationConfig>(key: K, value: NotificationConfig[K]) => {
+    setNotifConfig(prev => ({ ...prev, [key]: value }));
+  };
+
+  const toggleSignal = (role: SignalTargetRole, reason: SignalReason) => {
+    setSignalConfig(prev => ({
+      ...prev,
+      [role]: {
+        ...prev[role],
+        [reason]: !prev[role]?.[reason],
+      },
+    }));
+  };
+
+  const toggleAllForRole = (role: SignalTargetRole, enabled: boolean) => {
+    setSignalConfig(prev => {
+      const roleReasons = Object.entries(SIGNAL_REASON_ROLES)
+        .filter(([, r]) => r.includes(role))
+        .map(([reason]) => reason as SignalReason);
+      const updated = { ...prev[role] };
+      for (const reason of roleReasons) {
+        updated[reason] = enabled;
+      }
+      return { ...prev, [role]: updated };
+    });
   };
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const result = await apiPut('/api/v1/notification-config', config);
+      const payload: any = {};
+      if (hasNotifChanges) payload.notification = notifConfig;
+      if (hasSignalChanges) payload.actionSignals = signalConfig;
+
+      const result = await apiPut('/api/v1/notification-config', payload);
       if (!result.success) throw new Error((result as any).error || 'Failed to save');
-      const updated = (result as any).data as NotificationConfig;
-      const withArrays = { ...updated, pushPriorities: [...(updated.pushPriorities || [])], inAppPriorities: [...(updated.inAppPriorities || [])] };
-      setConfig(withArrays);
-      setOriginalConfig(withArrays);
-      toast.success('Notification settings saved successfully');
+      const data = (result as any).data;
+
+      if (data.notification) {
+        const n = data.notification;
+        const withArrays = {
+          ...n,
+          pushPriorities: [...(n.pushPriorities || [])],
+          inAppPriorities: [...(n.inAppPriorities || [])],
+        };
+        setNotifConfig(withArrays);
+        setOriginalNotifConfig(withArrays);
+      }
+      if (data.actionSignals) {
+        setSignalConfig(data.actionSignals);
+        setOriginalSignalConfig(JSON.parse(JSON.stringify(data.actionSignals)));
+      }
+
+      toast.success('Settings saved successfully');
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -163,11 +286,24 @@ export default function NotificationConfigPage() {
     try {
       const result = await apiDelete('/api/v1/notification-config');
       if (!result.success) throw new Error((result as any).error || 'Failed to reset');
-      const defaults = (result as any).data as NotificationConfig;
-      const withArrays = { ...defaults, pushPriorities: [...(defaults.pushPriorities || [])], inAppPriorities: [...(defaults.inAppPriorities || [])] };
-      setConfig(withArrays);
-      setOriginalConfig(withArrays);
-      toast.success('Notification settings reset to defaults');
+      const data = (result as any).data;
+
+      if (data.notification) {
+        const n = data.notification;
+        const withArrays = {
+          ...n,
+          pushPriorities: [...(n.pushPriorities || [])],
+          inAppPriorities: [...(n.inAppPriorities || [])],
+        };
+        setNotifConfig(withArrays);
+        setOriginalNotifConfig(withArrays);
+      }
+      if (data.actionSignals) {
+        setSignalConfig(data.actionSignals);
+        setOriginalSignalConfig(JSON.parse(JSON.stringify(data.actionSignals)));
+      }
+
+      toast.success('Settings reset to defaults');
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -176,8 +312,22 @@ export default function NotificationConfigPage() {
   };
 
   const handleDiscard = () => {
-    setConfig({ ...originalConfig, pushPriorities: [...originalConfig.pushPriorities], inAppPriorities: [...originalConfig.inAppPriorities] });
+    setNotifConfig({
+      ...originalNotifConfig,
+      pushPriorities: [...originalNotifConfig.pushPriorities],
+      inAppPriorities: [...originalNotifConfig.inAppPriorities],
+    });
+    setSignalConfig(JSON.parse(JSON.stringify(originalSignalConfig)));
     toast.info('Changes discarded');
+  };
+
+  const toggleRoleExpanded = (role: string) => {
+    setExpandedRoles(prev => {
+      const next = new Set(prev);
+      if (next.has(role)) next.delete(role);
+      else next.add(role);
+      return next;
+    });
   };
 
   if (isLoading) {
@@ -209,7 +359,7 @@ export default function NotificationConfigPage() {
                 <h1 className="text-2xl font-bold text-foreground">Notification Settings</h1>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Configure how and when notifications are delivered across the system
+                Configure notifications, channels, and action signal visibility
               </p>
             </div>
           </div>
@@ -253,8 +403,8 @@ export default function NotificationConfigPage() {
             <div className="flex gap-3">
               <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
               <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                <p className="font-medium">How notification settings work</p>
-                <p>These settings control the system-wide notification behavior. Push notifications appear as desktop/mobile alerts. In-app notifications appear as toast popups and in the notification bell. Changes apply to all users.</p>
+                <p className="font-medium">How these settings work</p>
+                <p>Channels and Priority Rules control notification delivery. Timing controls expiration and quiet hours. Action Signals let you enable or disable individual action queue items per dashboard role.</p>
               </div>
             </div>
           </CardContent>
@@ -274,6 +424,10 @@ export default function NotificationConfigPage() {
               <Clock className="h-4 w-4 mr-1.5" />
               Timing
             </TabsTrigger>
+            <TabsTrigger value="action-signals">
+              <Activity className="h-4 w-4 mr-1.5" />
+              Action Signals
+            </TabsTrigger>
           </TabsList>
 
           {/* Channels Tab */}
@@ -292,12 +446,12 @@ export default function NotificationConfigPage() {
                     </div>
                   </div>
                   <Switch
-                    checked={config.pushEnabled}
-                    onCheckedChange={(v) => updateConfig('pushEnabled', v)}
+                    checked={notifConfig.pushEnabled}
+                    onCheckedChange={(v) => updateNotifConfig('pushEnabled', v)}
                   />
                 </div>
               </CardHeader>
-              {config.pushEnabled && (
+              {notifConfig.pushEnabled && (
                 <CardContent className="pt-0 space-y-4">
                   <Separator />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -310,8 +464,8 @@ export default function NotificationConfigPage() {
                         type="number"
                         min={0}
                         max={1440}
-                        value={config.pushCooldownMinutes}
-                        onChange={(e) => updateConfig('pushCooldownMinutes', Math.max(0, parseInt(e.target.value) || 0))}
+                        value={notifConfig.pushCooldownMinutes}
+                        onChange={(e) => updateNotifConfig('pushCooldownMinutes', Math.max(0, parseInt(e.target.value) || 0))}
                       />
                       <p className="text-xs text-muted-foreground">
                         Minimum time between push notifications for the same user. Set to 0 for no cooldown.
@@ -342,12 +496,12 @@ export default function NotificationConfigPage() {
                     </div>
                   </div>
                   <Switch
-                    checked={config.inAppEnabled}
-                    onCheckedChange={(v) => updateConfig('inAppEnabled', v)}
+                    checked={notifConfig.inAppEnabled}
+                    onCheckedChange={(v) => updateNotifConfig('inAppEnabled', v)}
                   />
                 </div>
               </CardHeader>
-              {config.inAppEnabled && (
+              {notifConfig.inAppEnabled && (
                 <CardContent className="pt-0 space-y-4">
                   <Separator />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -360,8 +514,8 @@ export default function NotificationConfigPage() {
                         type="number"
                         min={0}
                         max={1440}
-                        value={config.inAppCooldownMinutes}
-                        onChange={(e) => updateConfig('inAppCooldownMinutes', Math.max(0, parseInt(e.target.value) || 0))}
+                        value={notifConfig.inAppCooldownMinutes}
+                        onChange={(e) => updateNotifConfig('inAppCooldownMinutes', Math.max(0, parseInt(e.target.value) || 0))}
                       />
                       <p className="text-xs text-muted-foreground">
                         Minimum time between in-app toast notifications. Set to 0 for no cooldown.
@@ -399,15 +553,15 @@ export default function NotificationConfigPage() {
                       Push notification priorities
                     </Label>
                     <Badge variant="outline" className="text-xs">
-                      {config.pushPriorities.length} of 4
+                      {notifConfig.pushPriorities.length} of 4
                     </Badge>
                   </div>
                   <PrioritySelector
-                    selected={config.pushPriorities}
-                    onChange={(v) => updateConfig('pushPriorities', v)}
-                    disabled={!config.pushEnabled}
+                    selected={notifConfig.pushPriorities}
+                    onChange={(v) => updateNotifConfig('pushPriorities', v)}
+                    disabled={!notifConfig.pushEnabled}
                   />
-                  {!config.pushEnabled && (
+                  {!notifConfig.pushEnabled && (
                     <p className="text-xs text-muted-foreground italic">Enable push notifications first to configure priorities</p>
                   )}
                 </div>
@@ -421,15 +575,15 @@ export default function NotificationConfigPage() {
                       In-app notification priorities
                     </Label>
                     <Badge variant="outline" className="text-xs">
-                      {config.inAppPriorities.length} of 4
+                      {notifConfig.inAppPriorities.length} of 4
                     </Badge>
                   </div>
                   <PrioritySelector
-                    selected={config.inAppPriorities}
-                    onChange={(v) => updateConfig('inAppPriorities', v)}
-                    disabled={!config.inAppEnabled}
+                    selected={notifConfig.inAppPriorities}
+                    onChange={(v) => updateNotifConfig('inAppPriorities', v)}
+                    disabled={!notifConfig.inAppEnabled}
                   />
-                  {!config.inAppEnabled && (
+                  {!notifConfig.inAppEnabled && (
                     <p className="text-xs text-muted-foreground italic">Enable in-app notifications first to configure priorities</p>
                   )}
                 </div>
@@ -444,8 +598,8 @@ export default function NotificationConfigPage() {
                       <Smartphone className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
                       <div>
                         <span className="font-medium">Push:</span>{' '}
-                        {config.pushEnabled
-                          ? config.pushPriorities.map(p => ALL_PRIORITIES.find(ap => ap.value === p)?.label).join(', ') || 'None'
+                        {notifConfig.pushEnabled
+                          ? notifConfig.pushPriorities.map(p => ALL_PRIORITIES.find(ap => ap.value === p)?.label).join(', ') || 'None'
                           : 'Disabled'}
                       </div>
                     </div>
@@ -453,8 +607,8 @@ export default function NotificationConfigPage() {
                       <Monitor className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
                       <div>
                         <span className="font-medium">In-App:</span>{' '}
-                        {config.inAppEnabled
-                          ? config.inAppPriorities.map(p => ALL_PRIORITIES.find(ap => ap.value === p)?.label).join(', ') || 'None'
+                        {notifConfig.inAppEnabled
+                          ? notifConfig.inAppPriorities.map(p => ALL_PRIORITIES.find(ap => ap.value === p)?.label).join(', ') || 'None'
                           : 'Disabled'}
                       </div>
                     </div>
@@ -487,12 +641,12 @@ export default function NotificationConfigPage() {
                       type="number"
                       min={1}
                       max={168}
-                      value={config.notificationTTLHours}
-                      onChange={(e) => updateConfig('notificationTTLHours', Math.max(1, parseInt(e.target.value) || 24))}
+                      value={notifConfig.notificationTTLHours}
+                      onChange={(e) => updateNotifConfig('notificationTTLHours', Math.max(1, parseInt(e.target.value) || 24))}
                       className="w-32"
                     />
                     <span className="text-sm text-muted-foreground">
-                      {config.notificationTTLHours}h ({config.notificationTTLHours >= 24 ? `${Math.floor(config.notificationTTLHours / 24)}d ${config.notificationTTLHours % 24}h` : `${config.notificationTTLHours} hours`})
+                      {notifConfig.notificationTTLHours}h ({notifConfig.notificationTTLHours >= 24 ? `${Math.floor(notifConfig.notificationTTLHours / 24)}d ${notifConfig.notificationTTLHours % 24}h` : `${notifConfig.notificationTTLHours} hours`})
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -515,12 +669,12 @@ export default function NotificationConfigPage() {
                     </CardDescription>
                   </div>
                   <Switch
-                    checked={config.quietHoursEnabled}
-                    onCheckedChange={(v) => updateConfig('quietHoursEnabled', v)}
+                    checked={notifConfig.quietHoursEnabled}
+                    onCheckedChange={(v) => updateNotifConfig('quietHoursEnabled', v)}
                   />
                 </div>
               </CardHeader>
-              {config.quietHoursEnabled && (
+              {notifConfig.quietHoursEnabled && (
                 <CardContent className="pt-0 space-y-4">
                   <Separator />
                   <div className="grid grid-cols-2 gap-4">
@@ -529,8 +683,8 @@ export default function NotificationConfigPage() {
                       <Input
                         id="quietStart"
                         type="time"
-                        value={config.quietHoursStart}
-                        onChange={(e) => updateConfig('quietHoursStart', e.target.value)}
+                        value={notifConfig.quietHoursStart}
+                        onChange={(e) => updateNotifConfig('quietHoursStart', e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
@@ -538,8 +692,8 @@ export default function NotificationConfigPage() {
                       <Input
                         id="quietEnd"
                         type="time"
-                        value={config.quietHoursEnd}
-                        onChange={(e) => updateConfig('quietHoursEnd', e.target.value)}
+                        value={notifConfig.quietHoursEnd}
+                        onChange={(e) => updateNotifConfig('quietHoursEnd', e.target.value)}
                       />
                     </div>
                   </div>
@@ -548,6 +702,134 @@ export default function NotificationConfigPage() {
                   </p>
                 </CardContent>
               )}
+            </Card>
+          </TabsContent>
+
+          {/* Action Signals Tab */}
+          <TabsContent value="action-signals" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-primary" />
+                  Action Signal Visibility
+                </CardTitle>
+                <CardDescription>
+                  Enable or disable individual action signals for each dashboard role. Disabled signals will not appear on the corresponding Action Queue.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 mb-4">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    Changes take effect immediately for new signals. Existing signals in the queue are not retroactively removed.
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {(['ASSESSOR', 'RESPONDER', 'DONOR', 'COORDINATOR'] as SignalTargetRole[]).map(role => {
+                    const meta = ROLE_META[role];
+                    const roleReasons = Object.entries(SIGNAL_REASON_ROLES)
+                      .filter(([, r]) => r.includes(role))
+                      .map(([reason]) => reason as SignalReason);
+                    const roleConfig = signalConfig[role] || {};
+                    const enabledCount = roleReasons.filter(r => roleConfig[r] !== false).length;
+                    const allEnabled = enabledCount === roleReasons.length;
+                    const allDisabled = enabledCount === 0;
+                    const isExpanded = expandedRoles.has(role);
+
+                    return (
+                      <Collapsible
+                        key={role}
+                        open={isExpanded}
+                        onOpenChange={() => toggleRoleExpanded(role)}
+                      >
+                        <Card className="border-l-4 border-l-primary/30">
+                          <CollapsibleTrigger asChild>
+                            <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors py-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className={`p-2 rounded-lg ${meta.color}`}>
+                                    <Users className="h-4 w-4" />
+                                  </div>
+                                  <div>
+                                    <CardTitle className="text-sm">{meta.label} Dashboard</CardTitle>
+                                    <p className="text-xs text-muted-foreground">
+                                      {enabledCount} of {roleReasons.length} signals enabled
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <Badge variant={allEnabled ? 'default' : allDisabled ? 'destructive' : 'secondary'} className="text-xs">
+                                    {allEnabled ? 'All On' : allDisabled ? 'All Off' : `${enabledCount}/${roleReasons.length}`}
+                                  </Badge>
+                                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                </div>
+                              </div>
+                            </CardHeader>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <CardContent className="pt-0 pb-4">
+                              <Separator className="mb-4" />
+                              <div className="flex items-center justify-between mb-3">
+                                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Toggle All</span>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 text-xs"
+                                    onClick={() => toggleAllForRole(role, true)}
+                                  >
+                                    Enable All
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 text-xs"
+                                    onClick={() => toggleAllForRole(role, false)}
+                                  >
+                                    Disable All
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                {roleReasons.map(reason => {
+                                  const enabled = roleConfig[reason] !== false;
+                                  const template = NOTIFICATION_TEMPLATES[reason];
+                                  return (
+                                    <div
+                                      key={reason}
+                                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                                        enabled ? 'bg-background border-border' : 'bg-muted/30 border-transparent'
+                                      }`}
+                                    >
+                                      <div className="flex-1 min-w-0 mr-4">
+                                        <div className="flex items-center gap-2">
+                                          <span className={`text-sm font-medium ${!enabled ? 'text-muted-foreground' : ''}`}>
+                                            {SIGNAL_REASON_LABELS[reason]}
+                                          </span>
+                                        </div>
+                                        {template && (
+                                          <p className={`text-xs mt-0.5 truncate ${!enabled ? 'text-muted-foreground/60' : 'text-muted-foreground'}`}>
+                                            {template.title}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <Switch
+                                        checked={enabled}
+                                        onCheckedChange={() => toggleSignal(role, reason)}
+                                      />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </CardContent>
+                          </CollapsibleContent>
+                        </Card>
+                      </Collapsible>
+                    );
+                  })}
+                </div>
+              </CardContent>
             </Card>
           </TabsContent>
         </Tabs>

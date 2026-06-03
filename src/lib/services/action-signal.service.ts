@@ -919,11 +919,20 @@ export class ActionSignalService {
       'entity-needs-donor',
     ];
 
-    const allowedReasons = activeRole === 'COORDINATOR' || activeRole === 'ADMIN'
+    let allowedReasons = activeRole === 'COORDINATOR' || activeRole === 'ADMIN'
       ? coordinatorReasons
       : Object.entries(SIGNAL_REASON_ROLES)
           .filter(([, reasonRoles]) => reasonRoles.includes(activeRole as SignalTargetRole))
           .map(([reason]) => reason as SignalReason);
+
+    const { isSignalEnabled } = await import('./action-signal-config.service');
+    const roleKey = activeRole === 'ADMIN' ? 'COORDINATOR' : activeRole;
+    const enabledReasons: SignalReason[] = [];
+    for (const reason of allowedReasons) {
+      const enabled = await isSignalEnabled(roleKey, reason);
+      if (enabled) enabledReasons.push(reason);
+    }
+    allowedReasons = enabledReasons;
 
     const activeIncidentIds = (await prisma.incident.findMany({
       where: { status: 'ACTIVE' },
@@ -1060,6 +1069,18 @@ export class ActionSignalService {
     },
     tx: PrismaTransaction | typeof prisma
   ): Promise<void> {
+    const { isSignalEnabled } = await import('./action-signal-config.service');
+    const user = await tx.user.findUnique({
+      where: { id: data.userId },
+      include: { roles: { include: { role: { select: { name: true } } } } },
+    });
+    const userRoles = user?.roles.map(ur => ur.role.name) || [];
+    const primaryRole = userRoles.find(r => ['ASSESSOR', 'RESPONDER', 'DONOR', 'COORDINATOR'].includes(r));
+    if (primaryRole) {
+      const enabled = await isSignalEnabled(primaryRole, data.signalReason);
+      if (!enabled) return;
+    }
+
     const existing = await tx.actionSignal.findFirst({
       where: {
         userId: data.userId,
