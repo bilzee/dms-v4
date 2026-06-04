@@ -22,6 +22,7 @@ import {
   Bell,
   Smartphone,
   Monitor,
+  Mail,
   Clock,
   Moon,
   AlertTriangle,
@@ -48,6 +49,10 @@ interface NotificationConfig {
   quietHoursEnabled: boolean;
   quietHoursStart: string;
   quietHoursEnd: string;
+  emailEnabled: boolean;
+  emailPriorities: SignalPriority[];
+  emailDigestEnabled: boolean;
+  emailDigestTime: string;
 }
 
 type RoleSignalConfig = Record<SignalReason, boolean>;
@@ -64,6 +69,10 @@ const DEFAULT_NOTIFICATION_CONFIG: NotificationConfig = {
   quietHoursEnabled: false,
   quietHoursStart: '22:00',
   quietHoursEnd: '07:00',
+  emailEnabled: false,
+  emailPriorities: ['CRITICAL', 'HIGH'],
+  emailDigestEnabled: false,
+  emailDigestTime: '08:00',
 };
 
 const ALL_PRIORITIES: { value: SignalPriority; label: string; color: string }[] = [
@@ -163,6 +172,7 @@ export default function NotificationConfigPage() {
     ...DEFAULT_NOTIFICATION_CONFIG,
     pushPriorities: [...DEFAULT_NOTIFICATION_CONFIG.pushPriorities],
     inAppPriorities: [...DEFAULT_NOTIFICATION_CONFIG.inAppPriorities],
+    emailPriorities: [...DEFAULT_NOTIFICATION_CONFIG.emailPriorities],
   });
   const [originalNotifConfig, setOriginalNotifConfig] = useState<NotificationConfig>({ ...notifConfig });
 
@@ -192,6 +202,10 @@ export default function NotificationConfigPage() {
           ...n,
           pushPriorities: [...(n.pushPriorities || DEFAULT_NOTIFICATION_CONFIG.pushPriorities)],
           inAppPriorities: [...(n.inAppPriorities || DEFAULT_NOTIFICATION_CONFIG.inAppPriorities)],
+          emailPriorities: [...(n.emailPriorities || DEFAULT_NOTIFICATION_CONFIG.emailPriorities)],
+          emailEnabled: n.emailEnabled ?? false,
+          emailDigestEnabled: n.emailDigestEnabled ?? false,
+          emailDigestTime: n.emailDigestTime || '08:00',
         };
         setNotifConfig(withArrays);
         setOriginalNotifConfig(withArrays);
@@ -264,6 +278,10 @@ export default function NotificationConfigPage() {
           ...n,
           pushPriorities: [...(n.pushPriorities || [])],
           inAppPriorities: [...(n.inAppPriorities || [])],
+          emailPriorities: [...(n.emailPriorities || DEFAULT_NOTIFICATION_CONFIG.emailPriorities)],
+          emailEnabled: n.emailEnabled ?? false,
+          emailDigestEnabled: n.emailDigestEnabled ?? false,
+          emailDigestTime: n.emailDigestTime || '08:00',
         };
         setNotifConfig(withArrays);
         setOriginalNotifConfig(withArrays);
@@ -294,6 +312,10 @@ export default function NotificationConfigPage() {
           ...n,
           pushPriorities: [...(n.pushPriorities || [])],
           inAppPriorities: [...(n.inAppPriorities || [])],
+          emailPriorities: [...(n.emailPriorities || DEFAULT_NOTIFICATION_CONFIG.emailPriorities)],
+          emailEnabled: n.emailEnabled ?? false,
+          emailDigestEnabled: n.emailDigestEnabled ?? false,
+          emailDigestTime: n.emailDigestTime || '08:00',
         };
         setNotifConfig(withArrays);
         setOriginalNotifConfig(withArrays);
@@ -316,6 +338,7 @@ export default function NotificationConfigPage() {
       ...originalNotifConfig,
       pushPriorities: [...originalNotifConfig.pushPriorities],
       inAppPriorities: [...originalNotifConfig.inAppPriorities],
+      emailPriorities: [...originalNotifConfig.emailPriorities],
     });
     setSignalConfig(JSON.parse(JSON.stringify(originalSignalConfig)));
     toast.info('Changes discarded');
@@ -531,6 +554,81 @@ export default function NotificationConfigPage() {
                 </CardContent>
               )}
             </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                      <Mail className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">Email Notifications</CardTitle>
+                      <CardDescription>Send email alerts for action signals via Resend or SendGrid</CardDescription>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={notifConfig.emailEnabled}
+                    onCheckedChange={(v) => updateNotifConfig('emailEnabled', v)}
+                  />
+                </div>
+              </CardHeader>
+              {notifConfig.emailEnabled && (
+                <CardContent className="pt-0 space-y-4">
+                  <Separator />
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-purple-500" />
+                        Email priority levels
+                      </Label>
+                      <Badge variant="outline" className="text-xs">
+                        {notifConfig.emailPriorities.length} of 4
+                      </Badge>
+                    </div>
+                    <PrioritySelector
+                      selected={notifConfig.emailPriorities}
+                      onChange={(v) => updateNotifConfig('emailPriorities', v)}
+                      disabled={!notifConfig.emailEnabled}
+                    />
+                  </div>
+                  <Separator />
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-sm font-medium">Daily Digest</Label>
+                        <p className="text-xs text-muted-foreground">Batch non-critical signals into a single daily email</p>
+                      </div>
+                      <Switch
+                        checked={notifConfig.emailDigestEnabled}
+                        onCheckedChange={(v) => updateNotifConfig('emailDigestEnabled', v)}
+                      />
+                    </div>
+                    {notifConfig.emailDigestEnabled && (
+                      <div className="space-y-2">
+                        <Label htmlFor="digestTime" className="text-sm font-medium">Digest delivery time</Label>
+                        <Input
+                          id="digestTime"
+                          type="time"
+                          value={notifConfig.emailDigestTime}
+                          onChange={(e) => updateNotifConfig('emailDigestTime', e.target.value)}
+                          className="w-32"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Non-CRITICAL signals will be batched and sent once daily. CRITICAL signals always send immediately.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      Requires EMAIL_ENABLED=true and a configured email provider (Resend or SendGrid).
+                    </span>
+                  </div>
+                </CardContent>
+              )}
+            </Card>
           </TabsContent>
 
           {/* Priority Rules Tab */}
@@ -590,10 +688,31 @@ export default function NotificationConfigPage() {
 
                 <Separator />
 
-                {/* Current routing preview */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-purple-500" />
+                      Email notification priorities
+                    </Label>
+                    <Badge variant="outline" className="text-xs">
+                      {notifConfig.emailPriorities.length} of 4
+                    </Badge>
+                  </div>
+                  <PrioritySelector
+                    selected={notifConfig.emailPriorities}
+                    onChange={(v) => updateNotifConfig('emailPriorities', v)}
+                    disabled={!notifConfig.emailEnabled}
+                  />
+                  {!notifConfig.emailEnabled && (
+                    <p className="text-xs text-muted-foreground italic">Enable email notifications first to configure priorities</p>
+                  )}
+                </div>
+
+                <Separator />
+
                 <div className="p-4 rounded-lg border bg-muted/30">
                   <h4 className="text-sm font-medium mb-3">Current routing summary</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                     <div className="flex items-start gap-2">
                       <Smartphone className="h-4 w-4 text-orange-500 shrink-0 mt-0.5" />
                       <div>
@@ -609,6 +728,15 @@ export default function NotificationConfigPage() {
                         <span className="font-medium">In-App:</span>{' '}
                         {notifConfig.inAppEnabled
                           ? notifConfig.inAppPriorities.map(p => ALL_PRIORITIES.find(ap => ap.value === p)?.label).join(', ') || 'None'
+                          : 'Disabled'}
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Mail className="h-4 w-4 text-purple-500 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-medium">Email:</span>{' '}
+                        {notifConfig.emailEnabled
+                          ? notifConfig.emailPriorities.map(p => ALL_PRIORITIES.find(ap => ap.value === p)?.label).join(', ') || 'None'
                           : 'Disabled'}
                       </div>
                     </div>

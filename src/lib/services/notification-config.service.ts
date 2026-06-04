@@ -13,6 +13,10 @@ export interface NotificationConfig {
   quietHoursEnabled: boolean;
   quietHoursStart: string;
   quietHoursEnd: string;
+  emailEnabled: boolean;
+  emailPriorities: SignalPriority[];
+  emailDigestEnabled: boolean;
+  emailDigestTime: string;
 }
 
 const DEFAULT_CONFIG: NotificationConfig = {
@@ -26,6 +30,10 @@ const DEFAULT_CONFIG: NotificationConfig = {
   quietHoursEnabled: false,
   quietHoursStart: '22:00',
   quietHoursEnd: '07:00',
+  emailEnabled: false,
+  emailPriorities: ['CRITICAL', 'HIGH'],
+  emailDigestEnabled: false,
+  emailDigestTime: '08:00',
 };
 
 const ALL_PRIORITIES: SignalPriority[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
@@ -36,12 +44,22 @@ let cachedConfig: NotificationConfig | null = null;
 let cacheExpiry = 0;
 
 export function getDefaultNotificationConfig(): NotificationConfig {
-  return { ...DEFAULT_CONFIG, pushPriorities: [...DEFAULT_CONFIG.pushPriorities], inAppPriorities: [...DEFAULT_CONFIG.inAppPriorities] };
+  return {
+    ...DEFAULT_CONFIG,
+    pushPriorities: [...DEFAULT_CONFIG.pushPriorities],
+    inAppPriorities: [...DEFAULT_CONFIG.inAppPriorities],
+    emailPriorities: [...DEFAULT_CONFIG.emailPriorities],
+  };
 }
 
 export async function getNotificationConfig(): Promise<NotificationConfig> {
   if (cachedConfig && Date.now() < cacheExpiry) {
-    return { ...cachedConfig, pushPriorities: [...cachedConfig.pushPriorities], inAppPriorities: [...cachedConfig.inAppPriorities] };
+    return {
+      ...cachedConfig,
+      pushPriorities: [...cachedConfig.pushPriorities],
+      inAppPriorities: [...cachedConfig.inAppPriorities],
+      emailPriorities: [...cachedConfig.emailPriorities],
+    };
   }
 
   const rows = await prisma.systemSetting.findMany({
@@ -61,12 +79,21 @@ export async function getNotificationConfig(): Promise<NotificationConfig> {
     quietHoursEnabled: map.get('quietHoursEnabled') ?? DEFAULT_CONFIG.quietHoursEnabled,
     quietHoursStart: parseTimeStr(map.get('quietHoursStart'), DEFAULT_CONFIG.quietHoursStart),
     quietHoursEnd: parseTimeStr(map.get('quietHoursEnd'), DEFAULT_CONFIG.quietHoursEnd),
+    emailEnabled: map.get('emailEnabled') ?? DEFAULT_CONFIG.emailEnabled,
+    emailPriorities: parsePriorities(map.get('emailPriorities'), DEFAULT_CONFIG.emailPriorities),
+    emailDigestEnabled: map.get('emailDigestEnabled') ?? DEFAULT_CONFIG.emailDigestEnabled,
+    emailDigestTime: parseTimeStr(map.get('emailDigestTime'), DEFAULT_CONFIG.emailDigestTime),
   };
 
   cachedConfig = config;
   cacheExpiry = Date.now() + CACHE_TTL_MS;
 
-  return { ...config, pushPriorities: [...config.pushPriorities], inAppPriorities: [...config.inAppPriorities] };
+  return {
+    ...config,
+    pushPriorities: [...config.pushPriorities],
+    inAppPriorities: [...config.inAppPriorities],
+    emailPriorities: [...config.emailPriorities],
+  };
 }
 
 export function invalidateNotificationConfigCache(): void {
@@ -91,6 +118,12 @@ export function validateNotificationConfig(config: NotificationConfig): string[]
   }
   if (!Array.isArray(config.inAppPriorities) || config.inAppPriorities.some(p => !ALL_PRIORITIES.includes(p))) {
     errors.push('Invalid in-app priority selection');
+  }
+  if (!Array.isArray(config.emailPriorities) || config.emailPriorities.some(p => !ALL_PRIORITIES.includes(p))) {
+    errors.push('Invalid email priority selection');
+  }
+  if (config.emailDigestEnabled) {
+    if (!/^\d{2}:\d{2}$/.test(config.emailDigestTime)) errors.push('Digest time must be HH:MM format');
   }
   const timeRegex = /^\d{2}:\d{2}$/;
   if (config.quietHoursEnabled) {
@@ -121,6 +154,10 @@ export async function saveNotificationConfig(
     ['quietHoursEnabled', config.quietHoursEnabled],
     ['quietHoursStart', config.quietHoursStart],
     ['quietHoursEnd', config.quietHoursEnd],
+    ['emailEnabled', config.emailEnabled],
+    ['emailPriorities', config.emailPriorities],
+    ['emailDigestEnabled', config.emailDigestEnabled],
+    ['emailDigestTime', config.emailDigestTime],
   ];
 
   for (const [key, value] of entries) {
@@ -140,6 +177,10 @@ export function shouldSendPush(priority: string, config: NotificationConfig): bo
 
 export function shouldSendInApp(priority: string, config: NotificationConfig): boolean {
   return config.inAppEnabled && (config.inAppPriorities as string[]).includes(priority);
+}
+
+export function shouldSendEmail(priority: string, config: NotificationConfig): boolean {
+  return config.emailEnabled && (config.emailPriorities as string[]).includes(priority);
 }
 
 function parsePriorities(raw: unknown, defaults: SignalPriority[]): SignalPriority[] {

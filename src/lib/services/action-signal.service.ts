@@ -1137,7 +1137,7 @@ export class ActionSignalService {
       incidentId: data.incidentId,
     });
 
-    const { getNotificationConfig, shouldSendPush, shouldSendInApp } = await import('./notification-config.service');
+    const { getNotificationConfig, shouldSendPush, shouldSendInApp, shouldSendEmail } = await import('./notification-config.service');
     const notifConfig = await getNotificationConfig();
 
     if (shouldSendInApp(data.priority, notifConfig)) {
@@ -1146,6 +1146,10 @@ export class ActionSignalService {
 
     if (shouldSendPush(data.priority, notifConfig)) {
       this.sendPushNotification(data.userId, data.signalReason, data.context).catch(() => {});
+    }
+
+    if (shouldSendEmail(data.priority, notifConfig)) {
+      this.sendEmailNotification(data.userId, data.signalReason, data.context, notifConfig, data.priority).catch(() => {});
     }
   }
 
@@ -1170,6 +1174,63 @@ export class ActionSignalService {
         title: template.title,
         body,
         data: { signalReason: reason, entityId: context.entityName },
+      });
+    } catch {}
+  }
+
+  private static async sendEmailNotification(
+    userId: string,
+    reason: SignalReason,
+    context: SignalContext,
+    config: import('./notification-config.service').NotificationConfig,
+    priority: SignalPriority
+  ): Promise<void> {
+    try {
+      const userOverride = await prisma.systemSetting.findUnique({
+        where: { section_key: { section: 'notification-user', key: `${userId}:emailEnabled` } },
+      });
+      if (userOverride && userOverride.value === false) return;
+
+      if (config.emailDigestEnabled && priority !== 'CRITICAL') return;
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, name: true },
+      });
+      if (!user?.email) return;
+
+      const template = NOTIFICATION_TEMPLATES[reason];
+      if (!template) return;
+
+      const body = template.body
+        .replace('{entityName}', context.entityName || '')
+        .replace('{assessmentType}', context.assessmentType || '')
+        .replace('{responseType}', context.responseType || '')
+        .replace('{donorName}', context.donorName || '')
+        .replace('{coveragePercent}', String(context.coveragePercent || 0));
+
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const { generateUnsubscribeToken } = await import('@/lib/email/unsubscribe-token');
+      const unsubscribeToken = generateUnsubscribeToken(userId);
+      const unsubscribeUrl = `${baseUrl}/api/v1/notifications/unsubscribe?userId=${userId}&token=${unsubscribeToken}`;
+
+      const { renderSignalEmail } = await import('@/lib/email/templates/signal-notification');
+      const { html, text } = renderSignalEmail({
+        title: template.title,
+        body,
+        entityName: context.entityName || '',
+        priority,
+        signalReason: reason,
+        dashboardUrl: `${baseUrl}/dashboard`,
+        unsubscribeUrl,
+      });
+
+      const { emailService } = await import('@/lib/email/email.service');
+      await emailService.send({
+        to: user.email,
+        subject: `[DRMS] ${template.title}`,
+        html,
+        text,
       });
     } catch {}
   }

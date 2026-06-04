@@ -111,6 +111,12 @@ const getNavigationItems = (role: string | null): NavItem[] => {
         description: 'Comprehensive situation monitoring'
       },
       {
+        name: 'Signal Analytics',
+        href: '/coordinator/analytics',
+        icon: BarChart3,
+        description: 'Historical signal analytics and operational metrics'
+      },
+      {
         name: 'Operations Management',
         href: '#coordinator-operations',
         icon: Users,
