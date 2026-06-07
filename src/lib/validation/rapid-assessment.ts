@@ -151,13 +151,46 @@ export const CreateRapidAssessmentSchema = z.discriminatedUnion('type', [
 ])
 
 // Update Schemas (partial updates allowed)
+const PartialFoodAssessmentSchema = z.object({
+  isFoodSufficient: z.boolean().optional(),
+  hasRegularMealAccess: z.boolean().optional(),
+  hasInfantNutrition: z.boolean().optional(),
+  foodSource: z.array(z.string()).optional(),
+  availableFoodDurationDays: z.number().int().min(0).optional(),
+  additionalFoodRequiredPersons: z.number().int().min(0).optional(),
+  additionalFoodRequiredHouseholds: z.number().int().min(0).optional(),
+  additionalFoodDetails: z.any().optional()
+})
+
+const PartialWASHAssessmentSchema = z.object({
+  waterSource: z.array(z.string()).optional(),
+  isWaterSufficient: z.boolean().optional(),
+  hasCleanWaterAccess: z.boolean().optional(),
+  functionalLatrinesAvailable: z.number().int().min(0).optional(),
+  areLatrinesSufficient: z.boolean().optional(),
+  hasHandwashingFacilities: z.boolean().optional(),
+  hasOpenDefecationConcerns: z.boolean().optional(),
+  additionalWashDetails: z.any().optional()
+})
+
+const PartialShelterAssessmentSchema = z.object({
+  areSheltersSufficient: z.boolean().optional(),
+  hasSafeStructures: z.boolean().optional(),
+  shelterTypes: z.array(z.string()).optional(),
+  requiredShelterType: z.array(z.string()).optional(),
+  numberSheltersRequired: z.number().int().min(0).optional(),
+  areOvercrowded: z.boolean().optional(),
+  provideWeatherProtection: z.boolean().optional(),
+  additionalShelterDetails: z.any().optional()
+})
+
 export const UpdateRapidAssessmentSchema = BaseRapidAssessmentSchema.partial().extend({
   type: z.enum(['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION']).optional(),
   healthData: HealthAssessmentSchema.partial().optional(),
   populationData: PopulationAssessmentSchema.partial().optional(),
-  foodData: (FoodAssessmentSchema as any).innerType().partial().optional(),
-  washData: (WASHAssessmentSchema as any).innerType().partial().optional(),
-  shelterData: (ShelterAssessmentSchema as any).innerType().partial().optional(),
+  foodData: PartialFoodAssessmentSchema.optional(),
+  washData: PartialWASHAssessmentSchema.optional(),
+  shelterData: PartialShelterAssessmentSchema.optional(),
   securityData: SecurityAssessmentSchema.partial().optional()
 })
 

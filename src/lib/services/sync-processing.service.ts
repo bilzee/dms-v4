@@ -72,7 +72,7 @@ export class SyncProcessingService {
       const assessment = await prisma.rapidAssessment.create({
         data: {
           id: change.offlineId || change.entityUuid,
-          rapidAssessmentType: (data.type as string) || 'HEALTH',
+          rapidAssessmentType: (data.type as any) || 'HEALTH',
           rapidAssessmentDate: data.rapidAssessmentDate ? new Date(data.rapidAssessmentDate as string) : new Date(),
           assessorId: userId,
           assessorName: (data.assessorName as string) || 'Unknown',
@@ -298,7 +298,7 @@ export class SyncProcessingService {
             where: { id: change.entityUuid },
             data: {
               name: (data.name as string) || existing.name,
-              type: (data.type as string) || existing.type
+              type: (data.type as any) || existing.type
             }
           })
         }
@@ -324,12 +324,9 @@ export class SyncProcessingService {
         data: {
           id: change.entityUuid,
           name: (data.name as string) || 'Synced Entity',
-          type: (data.type as string) || 'COMMUNITY',
-          ward: (data.ward as string) || 'Unknown',
-          lga: (data.lga as string) || 'Unknown',
-          state: (data.state as string) || 'Unknown',
-          latitude: (data.latitude as number) || 0,
-          longitude: (data.longitude as number) || 0
+          type: (data.type as any) || 'COMMUNITY',
+          location: (data.location as string) || null,
+          coordinates: data.coordinates as any || null,
         }
       })
 

@@ -9,7 +9,19 @@ const withPWA = require('next-pwa')({
   register: currentConfig.serviceWorker.register,
   skipWaiting: currentConfig.serviceWorker.skipWaiting,
   scope: currentConfig.serviceWorker.scope,
+  buildExcludes: [/app-build-manifest/],
   runtimeCaching: [
+    {
+      urlPattern: /\/_next\/static\/.*/,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'static-assets',
+        expiration: {
+          maxEntries: 300,
+          maxAgeSeconds: cacheConfig.assetCacheTime,
+        },
+      },
+    },
     {
       urlPattern: /^https?.*\/api\/.*$/,
       handler: 'NetworkFirst',
@@ -29,7 +41,7 @@ const withPWA = require('next-pwa')({
         cacheName: 'entities-cache',
         expiration: {
           maxEntries: 500,
-          maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days (entities don't change often)
+          maxAgeSeconds: 7 * 24 * 60 * 60,
         },
       },
     },
@@ -41,6 +53,18 @@ const withPWA = require('next-pwa')({
         expiration: {
           maxEntries: 200,
           maxAgeSeconds: cacheConfig.assetCacheTime,
+        },
+      },
+    },
+    {
+      urlPattern: ({ request }) => request.mode === 'navigate',
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'pages-cache',
+        networkTimeoutSeconds: 3,
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 24 * 60 * 60,
         },
       },
     },

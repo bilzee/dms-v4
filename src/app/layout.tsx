@@ -6,6 +6,7 @@ import { BackgroundSyncProvider } from '@/providers/BackgroundSyncProvider';
 import { AuthInitializer } from '@/components/providers/AuthInitializer';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { Toaster } from 'sonner';
+import { ServiceWorkerRegistration } from '@/components/providers/ServiceWorkerRegistration';
 
 export const metadata: Metadata = {
   title: 'Disaster Response Management System (DRMS)',
@@ -36,6 +37,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body className="bg-background min-h-screen transition-colors duration-300">
+        <ServiceWorkerRegistration />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:z-[9999] focus:p-4 focus:bg-primary focus:text-primary-foreground"
