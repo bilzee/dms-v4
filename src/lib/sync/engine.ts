@@ -249,7 +249,7 @@ export class SyncEngine {
         throw new Error(apiResult.error || 'Sync API error')
       }
 
-      const syncResults: SyncResult[] = extractArray<SyncResult>(apiResult.data)
+      const syncResults: SyncResult[] = apiResult.data?.results || extractArray<SyncResult>(apiResult.data)
 
       // Process results and update queue
       for (let i = 0; i < syncResults.length; i++) {
@@ -387,17 +387,19 @@ export class SyncEngine {
   }
 
   private async updateEntitySyncStatus(
-    queueItem: SyncQueueItem, 
+    queueItem: SyncQueueItem & { decryptedData?: any }, 
     serverId: string, 
     status: 'synced' | 'failed'
   ): Promise<void> {
     try {
       switch (queueItem.type) {
-        case 'assessment':
-          await offlineDB.updateAssessment(queueItem.entityUuid, { 
+        case 'assessment': {
+          const assessmentUuid = queueItem.decryptedData?.id || queueItem.entityUuid;
+          await offlineDB.updateAssessment(assessmentUuid, { 
             syncStatus: status 
           });
           break;
+        }
           
         case 'response':
           await offlineDB.responses

@@ -105,7 +105,9 @@ export function useActionSignals(options: UseActionSignalsOptions = {}) {
 
         const userId = getCachedUserId();
         if (userId && data?.signals) {
-          offlineDB.cacheSignals(data.signals, userId).catch(() => {});
+          offlineDB.cacheSignals(data.signals, userId).catch(err => {
+            console.warn('Failed to cache signals to IndexedDB:', err);
+          });
         }
 
         return data;

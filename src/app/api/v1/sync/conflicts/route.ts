@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
-import { conflictResolver } from '@/lib/sync/conflict';
+import { prisma } from '@/lib/db/client';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
-import { successResponse, errorResponse, handleApiError, paginatedResponse } from '@/lib/api/response';
+import { errorResponse, handleApiError, paginatedResponse } from '@/lib/api/response';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,51 +14,41 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
-    const entityType = searchParams.get('entityType') as 'assessment' | 'response' | 'entity' | null;
-    const resolved = searchParams.get('resolved');
+    const entityType = searchParams.get('entityType');
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
 
-    let conflicts = await conflictResolver.getConflictHistory();
-
+    const where: any = {};
     if (entityType) {
-      conflicts = conflicts.filter(conflict => conflict.entityType === entityType);
+      where.entityType = entityType;
     }
-    if (resolved !== null) {
-      const isResolved = resolved === 'true';
-      conflicts = conflicts.filter(conflict => conflict.isResolved === isResolved);
-    }
-    if (dateFrom) {
-      const fromDate = new Date(dateFrom);
-      conflicts = conflicts.filter(conflict => new Date(conflict.createdAt) >= fromDate);
-    }
-    if (dateTo) {
-      const toDate = new Date(dateTo);
-      conflicts = conflicts.filter(conflict => new Date(conflict.createdAt) <= toDate);
+    if (dateFrom || dateTo) {
+      where.conflictDate = {};
+      if (dateFrom) where.conflictDate.gte = new Date(dateFrom);
+      if (dateTo) where.conflictDate.lte = new Date(dateTo);
     }
 
-    const total = conflicts.length;
+    const total = await prisma.syncConflict.count({ where });
     const offset = (page - 1) * limit;
-    const paginatedConflicts = conflicts.slice(offset, offset + limit);
 
-    const transformedConflicts = paginatedConflicts.map(conflict => ({
-      id: conflict.conflictId,
+    const conflicts = await prisma.syncConflict.findMany({
+      where,
+      orderBy: { conflictDate: 'desc' },
+      skip: offset,
+      take: limit
+    });
+
+    const transformedConflicts = conflicts.map(conflict => ({
+      id: conflict.id,
       entityType: conflict.entityType,
-      entityId: conflict.entityUuid,
-      conflictDate: conflict.createdAt,
-      resolutionMethod: conflict.resolutionStrategy.toUpperCase(),
-      winningVersion: conflict.isResolved ? conflict.resolvedData : conflict.serverData,
-      losingVersion: conflict.isResolved
-        ? (conflict.resolutionStrategy === 'last_write_wins'
-          ? (conflict.resolvedData === conflict.serverData ? conflict.localData : conflict.serverData)
-          : null)
-        : conflict.localData,
+      entityId: conflict.entityId,
+      conflictDate: conflict.conflictDate,
+      resolutionMethod: conflict.resolutionMethod,
+      winningVersion: conflict.winningVersion,
+      losingVersion: conflict.losingVersion,
       resolvedAt: conflict.resolvedAt,
-      isResolved: conflict.isResolved,
-      resolvedBy: conflict.resolvedBy,
-      localVersion: conflict.localVersion,
-      serverVersion: conflict.serverVersion,
-      metadata: conflict.metadata
+      coordinatorNotified: conflict.coordinatorNotified,
+      responseId: conflict.responseId
     }));
 
     return paginatedResponse(transformedConflicts, page, limit, total);

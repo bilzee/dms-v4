@@ -333,7 +333,8 @@ export class OfflineBootstrapService {
         const result = await apiGet('/api/v1/assessments/verified?limit=500')
 
         if (result.success) {
-          const assessments = result.data as any[]
+          const raw = result.data as any
+          const assessments = Array.isArray(raw) ? raw : raw?.data || raw?.assessments || []
 
           // Store verified assessments for response planning
           localStorage.setItem('drms_offline_verified_assessments', JSON.stringify({
@@ -372,6 +373,9 @@ export class OfflineBootstrapService {
         unresolvedOnly: 'true',
         limit: '500',
       });
+      if (userRole) {
+        params.append('activeRole', userRole);
+      }
 
       const result = await apiGet(`/api/v1/action-signals?${params}`);
       if (result.success) {

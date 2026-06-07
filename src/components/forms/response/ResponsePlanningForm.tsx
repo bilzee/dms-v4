@@ -43,6 +43,22 @@ import { useAuth } from '@/hooks/useAuth'
 import { apiGet, extractArray } from '@/lib/api'
 import { getDotColor } from '@/components/shared/StatusBadge'
 
+function getOfflineAssessments(entityId?: string): any[] {
+  try {
+    const cached = localStorage.getItem('drms_offline_verified_assessments')
+    if (!cached) return []
+    const { data } = JSON.parse(cached)
+    if (!Array.isArray(data)) return []
+    if (entityId) {
+      const byId = data.filter((a: any) => a.entity?.id === entityId || a.entityId === entityId)
+      if (byId.length > 0) return byId
+    }
+    return data
+  } catch {
+    return []
+  }
+}
+
 const ResponseItemSchema = z.object({
   name: z.string().min(1, 'Item name is required'),
   unit: z.string().min(1, 'Unit is required'),
@@ -150,9 +166,21 @@ export function ResponsePlanningForm({
     queryKey: ['assessments', 'verified', selectedEntityId],
     queryFn: async () => {
       if (!selectedEntityId || !token) return []
-      const result = await apiGet(`/api/v1/assessments/verified?entityId=${selectedEntityId}`)
-      if (!result.success) throw new Error('Failed to fetch verified assessments')
-      return extractArray(result.data as any)
+      try {
+        const result = await apiGet(`/api/v1/assessments/verified?entityId=${selectedEntityId}`)
+        if (result.success) {
+          const onlineData = extractArray(result.data as any)
+          try {
+            const cached = localStorage.getItem('drms_offline_verified_assessments')
+            const existing = cached ? JSON.parse(cached) : { data: [], timestamp: new Date().toISOString() }
+            const filtered = (existing.data || []).filter((a: any) => a.entity?.id !== selectedEntityId && a.entityId !== selectedEntityId)
+            filtered.push(...onlineData)
+            localStorage.setItem('drms_offline_verified_assessments', JSON.stringify({ data: filtered, timestamp: new Date().toISOString() }))
+          } catch {}
+          return onlineData
+        }
+      } catch {}
+      return getOfflineAssessments(selectedEntityId)
     },
     enabled: !!selectedEntityId && !!token
   })
@@ -213,6 +241,7 @@ export function ResponsePlanningForm({
 
   // Create planned response mutation
   const createMutation = useMutation({
+    networkMode: 'always',
     mutationFn: async (data: CreatePlannedResponseInput) => {
       if (!user) throw new Error('User not authenticated')
       
@@ -266,6 +295,7 @@ export function ResponsePlanningForm({
 
   // Create delivered response mutation
   const createDeliveredMutation = useMutation({
+    networkMode: 'always',
     mutationFn: async (data: CreateDeliveredResponseInput) => {
       if (!user) throw new Error('User not authenticated')
       
@@ -295,6 +325,7 @@ export function ResponsePlanningForm({
 
   // Update planned response mutation
   const updateMutation = useMutation({
+    networkMode: 'always',
     mutationFn: async ({ id, data }: { id: string, data: Partial<CreatePlannedResponseInput> }) => {
       if (!user) throw new Error('User not authenticated')
       

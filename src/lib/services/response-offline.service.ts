@@ -1,6 +1,7 @@
 import { CreatePlannedResponseInput, UpdatePlannedResponseInput } from '@/lib/validation/response'
 import { ResponseService } from './response-client.service'
 import { offlineDB } from '@/lib/db/offline'
+import { syncEngine } from '@/lib/sync/engine'
 
 export class ResponseOfflineService {
   private static readonly BASE_URL = '/api/v1/responses'
@@ -48,17 +49,17 @@ export class ResponseOfflineService {
       
       await offlineDB.addResponse(offlineResponse)
       
-      // Add to sync queue
-      await offlineDB.addToSyncQueue({
-        uuid: crypto.randomUUID(),
-        type: 'response',
-        action: 'create',
-        entityUuid: data.entityId,
-        data: offlineResponse.data,
-        priority: 5,
-        attempts: 0,
-        timestamp: new Date()
-      })
+      try {
+        await syncEngine.addToQueue(
+          'response',
+          'create',
+          data.entityId,
+          offlineResponse.data,
+          5
+        )
+      } catch (queueError) {
+        console.error('Failed to add to sync queue:', queueError)
+      }
       
       return offlineResponse.data
     }
@@ -95,21 +96,20 @@ export class ResponseOfflineService {
       
       await offlineDB.updateResponse(id, offlineUpdate)
       
-      // Get the existing response to extract the entityId
-      const existingResponse = await offlineDB.getResponse(id)
-      const entityId = (data as any).entityId || (existingResponse?.data as any)?.entityId
-      
-      // Add to sync queue
-      await offlineDB.addToSyncQueue({
-        uuid: crypto.randomUUID(),
-        type: 'response',
-        action: 'update',
-        entityUuid: entityId || id, // Fallback to id if entityId not found
-        data: offlineUpdate.data,
-        priority: 5,
-        attempts: 0,
-        timestamp: new Date()
-      })
+      try {
+        const existingResponse = await offlineDB.getResponse(id)
+        const entityId = (data as any).entityId || (existingResponse?.data as any)?.entityId
+        
+        await syncEngine.addToQueue(
+          'response',
+          'update',
+          entityId || id,
+          offlineUpdate.data,
+          5
+        )
+      } catch (queueError) {
+        console.error('Failed to add to sync queue:', queueError)
+      }
       
       return offlineUpdate.data
     }

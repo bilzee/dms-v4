@@ -58,6 +58,20 @@ export function AssessmentSelector({
   const [isCheckingConflicts, setIsCheckingConflicts] = useState(false)
   const { token } = useAuth()
 
+  const getOfflineAssessments = (entityId: string): any[] => {
+    try {
+      const cached = localStorage.getItem('drms_offline_verified_assessments')
+      if (!cached) return []
+      const { data } = JSON.parse(cached)
+      if (!Array.isArray(data)) return []
+      const byId = data.filter((a: any) => a.entity?.id === entityId || a.entityId === entityId)
+      if (byId.length > 0) return byId
+      return data
+    } catch {
+      return []
+    }
+  }
+
   // Get verified assessments for the entity
   const { data: assessments = [], isLoading, error } = useQuery({
     queryKey: ['assessments', 'verified', entityId, 'response-planning'],
@@ -66,35 +80,24 @@ export function AssessmentSelector({
         return []
       }
       
-      const result = await apiGet(`/api/v1/assessments/verified?entityId=${entityId}`)
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch verified assessments')
-      }
-      const assessments = extractArray(result.data as any)
-      
-      // Check each assessment for existing responses
-      const assessmentsWithConflicts = await Promise.all(
-        assessments.map(async (assessment: any) => {
+      try {
+        const result = await apiGet(`/api/v1/assessments/verified?entityId=${entityId}`)
+        if (result.success) {
+          const onlineData = extractArray(result.data as any)
           try {
-            // We need a user ID to check for existing responses
-            // For now, just assume no existing responses
-            // TODO: Properly check for existing responses when user is available
-            const existingResponses = { total: 0 }
-            
-            return {
-              ...assessment,
-              hasExistingResponse: existingResponses?.total > 0
-            }
-          } catch {
-            return {
-              ...assessment,
-              hasExistingResponse: false
-            }
-          }
-        })
-      )
-      
-      return assessmentsWithConflicts
+            const cached = localStorage.getItem('drms_offline_verified_assessments')
+            const existing = cached ? JSON.parse(cached) : { data: [], timestamp: new Date().toISOString() }
+            const filtered = (existing.data || []).filter((a: any) => a.entity?.id !== entityId && a.entityId !== entityId)
+            filtered.push(...onlineData)
+            localStorage.setItem('drms_offline_verified_assessments', JSON.stringify({ data: filtered, timestamp: new Date().toISOString() }))
+          } catch {}
+          return onlineData.map((a: any) => ({ ...a, hasExistingResponse: false }))
+        }
+      } catch {}
+
+      const offlineData = getOfflineAssessments(entityId)
+      if (offlineData.length > 0) return offlineData.map((a: any) => ({ ...a, hasExistingResponse: false }))
+      throw new Error('Failed to fetch verified assessments')
     },
     enabled: !!entityId && !disabled && !!token
   })

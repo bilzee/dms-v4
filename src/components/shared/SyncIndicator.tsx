@@ -53,18 +53,24 @@ export const SyncIndicator = () => {
       return `${pendingOperations} pending`;
     }
 
+    if (!isOnline) {
+      return 'Offline';
+    }
+
     return 'Synced';
   };
 
   const getSyncColor = () => {
     if (isSyncing) return 'text-blue-600 dark:text-blue-400';
     if (pendingOperations > 0) return isOnline ? 'text-orange-600 dark:text-orange-400' : 'text-muted-foreground';
+    if (!isOnline) return 'text-muted-foreground';
     return 'text-green-600 dark:text-green-400';
   };
 
   const getBgColor = () => {
     if (isSyncing) return 'bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800';
     if (pendingOperations > 0) return isOnline ? 'bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800' : 'bg-muted border-border';
+    if (!isOnline) return 'bg-muted border-border';
     return 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800';
   };
 

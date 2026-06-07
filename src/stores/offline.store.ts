@@ -7,6 +7,7 @@ export interface SyncQueueItem {
   type: 'assessment' | 'response' | 'entity';
   action: 'create' | 'update' | 'delete';
   entityUuid: string;
+  data?: any;
   priority: number;
   attempts: number;
   lastAttempt?: Date;
@@ -92,10 +93,9 @@ export const useOfflineStore = create<OfflineState>()(
         };
         
         try {
-          // Add to IndexedDB
           await offlineDB.addToSyncQueue({
             ...newItem,
-            data: {} // This will be populated by the specific operation
+            data: (item as any).data || {}
           });
           
           // Update state

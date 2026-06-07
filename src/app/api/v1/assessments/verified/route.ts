@@ -5,7 +5,8 @@ import { handleApiError } from '@/lib/api/response'
 
 // Validation schema for query parameters
 const VerifiedAssessmentsQuerySchema = z.object({
-  entityId: z.string().min(1, 'Entity ID is required'),
+  entityId: z.string().min(1, 'Entity ID is required').optional(),
+  limit: z.coerce.number().int().min(1).max(1000).optional(),
 })
 
 export const GET = withAuth(async (request, context) => {
@@ -28,7 +29,7 @@ export const GET = withAuth(async (request, context) => {
     const { entityAssignmentService } = await import('@/lib/services/entity-assignment.service')
     
     // Get verified assessments for the entity
-    const assessments = await entityAssignmentService.getVerifiedAssessments(query.entityId)
+    const assessments = await entityAssignmentService.getVerifiedAssessments(query.entityId, query.limit)
     
     return NextResponse.json({
       success: true,

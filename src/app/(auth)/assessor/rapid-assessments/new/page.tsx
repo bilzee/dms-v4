@@ -10,7 +10,8 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft, AlertTriangle, CheckCircle, Hospital, Users, Utensils, Droplets, Home, Shield } from '@/lib/icons'
 import { useAuth } from '@/hooks/useAuth'
-import { apiGet, apiPost } from '@/lib/api'
+import { apiGet } from '@/lib/api'
+import { assessmentOfflineService } from '@/lib/services/assessment-offline.service'
 
 // Import assessment forms
 import { 
@@ -174,16 +175,9 @@ function NewAssessmentContent() {
             break;
         }
         
-        // Submit to API
-        const result = await apiPost('/api/v1/rapid-assessments', assessmentData);
-        
-        if (result.success) {
-          console.log('Assessment submitted successfully:', result.data);
-          handleAssessmentComplete();
-        } else {
-          console.error('API Error:', result.error);
-          throw new Error(result.error || 'Failed to submit assessment');
-        }
+        const result = await assessmentOfflineService.createAssessment(assessmentData, user?.id || 'unknown');
+        console.log('Assessment submitted successfully:', result);
+        handleAssessmentComplete();
       } catch (error) {
         console.error('Error submitting assessment:', error);
         throw error;

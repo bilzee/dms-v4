@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
 import { entityAssignmentService } from '@/lib/services/entity-assignment.service';
+import { SyncProcessingService } from '@/lib/services/sync-processing.service';
 import { successResponse, errorResponse, handleApiError } from '@/lib/api/response';
 
 const SyncChangeSchema = z.object({
@@ -10,7 +11,7 @@ const SyncChangeSchema = z.object({
   data: z.record(z.unknown()),
   offlineId: z.string().optional(),
   versionNumber: z.number().int().positive(),
-  entityUuid: z.string().uuid()
+  entityUuid: z.string().min(1)
 });
 
 const BatchSyncRequestSchema = z.object({
@@ -47,14 +48,21 @@ export const POST = withAuth(async (
       );
     }
 
-    return errorResponse(
-      'Batch sync processing is not yet implemented',
-      501,
-      {
-        hint: 'This endpoint requires a SyncService with Prisma transaction support. See architecture docs for sync engine design.',
-        receivedChanges: changes.length
+    const results = await SyncProcessingService.processBatch(changes, context.userId);
+
+    const successful = results.filter(r => r.status === 'success');
+    const conflicts = results.filter(r => r.status === 'conflict');
+    const failed = results.filter(r => r.status === 'failed');
+
+    return successResponse({
+      results,
+      summary: {
+        totalProcessed: results.length,
+        successful: successful.length,
+        conflicts: conflicts.length,
+        failed: failed.length
       }
-    );
+    }, results.every(r => r.status === 'failed') ? 207 : 200);
 
   } catch (error) {
     return handleApiError(error);

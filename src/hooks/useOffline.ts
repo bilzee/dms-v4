@@ -101,60 +101,11 @@ export const useOffline = () => {
     }
   }, [addToSyncQueue]);
 
-  // Sync data with server
+  // Sync is now handled by SyncEngine (src/lib/sync/engine.ts)
+  // This stub is disabled to prevent silent data loss
   const syncData = useCallback(async () => {
-    if (!isOnline || isSyncing) return;
-
-    try {
-      startSync();
-      const queue = await offlineDB.getSyncQueue();
-      
-      if (queue.length === 0) {
-        stopSync();
-        return;
-      }
-
-      let completed = 0;
-      const total = queue.length;
-
-      for (const item of queue) {
-        try {
-          // TODO: Replace with actual API call to /api/v1/sync/batch when SyncService is implemented
-          // Currently removes items from queue without server sync
-          // See architecture docs for sync engine design
-          
-          // Remove from queue on success
-          await removeFromSyncQueue(item.uuid);
-          
-          // Update sync status in local database
-          switch (item.type) {
-            case 'assessment':
-              await offlineDB.updateAssessment(item.entityUuid, { syncStatus: 'synced' });
-              break;
-            case 'response':
-              // Similar update for responses
-              break;
-            case 'entity':
-              // Similar update for entities
-              break;
-          }
-          
-          completed++;
-          setSyncProgress((completed / total) * 100);
-          
-        } catch (error) {
-          console.error(`Failed to sync ${item.type}:`, error);
-          // Update retry info for failed items
-          // In production, implement exponential backoff
-        }
-      }
-
-      stopSync();
-    } catch (error) {
-      console.error('Sync failed:', error);
-      stopSync();
-    }
-  }, [isOnline, isSyncing, startSync, stopSync, setSyncProgress, removeFromSyncQueue]);
+    console.warn('useOffline.syncData() is deprecated. SyncEngine handles sync automatically.');
+  }, []);
 
   // Get offline assessment by UUID
   const getOfflineAssessment = useCallback(async (uuid: string) => {
@@ -211,12 +162,8 @@ export const useOffline = () => {
     }
   }, [clearOfflineData]);
 
-  // Auto-sync effect when connection comes back
-  useEffect(() => {
-    if (isOnline && !isSyncing && pendingOperations > 0) {
-      syncData();
-    }
-  }, [isOnline, isSyncing, pendingOperations, syncData]);
+  // Auto-sync is now handled by SyncEngine (src/lib/sync/engine.ts)
+  // SyncEngine.listenConnectivityChange() triggers sync on reconnection
 
   return {
     // State

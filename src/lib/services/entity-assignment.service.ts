@@ -436,15 +436,18 @@ export class EntityAssignmentServiceImpl implements EntityAssignmentService {
    * Get verified assessments for an entity
    * Returns assessments that can be used for response planning
    */
-  async getVerifiedAssessments(entityId: string): Promise<any[]> {
+  async getVerifiedAssessments(entityId?: string, limit?: number): Promise<any[]> {
     try {
-      const assessments = await prisma.rapidAssessment.findMany({
-        where: {
-          entityId: entityId,
+      const where: any = {
           verificationStatus: {
             in: ['VERIFIED', 'AUTO_VERIFIED']
           }
-        },
+        };
+      if (entityId) {
+        where.entityId = entityId;
+      }
+      const assessments = await prisma.rapidAssessment.findMany({
+        where,
         select: {
           id: true,
           rapidAssessmentType: true,
@@ -470,7 +473,8 @@ export class EntityAssignmentServiceImpl implements EntityAssignmentService {
         orderBy: [
           { verificationStatus: 'desc' },
           { rapidAssessmentDate: 'desc' }
-        ]
+        ],
+        ...(limit ? { take: limit } : {})
       });
 
       return assessments;
