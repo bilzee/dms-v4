@@ -8,17 +8,35 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { Toaster } from 'sonner';
 import { ServiceWorkerRegistration } from '@/components/providers/ServiceWorkerRegistration';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
+import { BrandedFooter } from '@/components/shared/BrandedFooter';
+import { prisma } from '@/lib/db/client';
 
-export const metadata: Metadata = {
-  title: 'Disaster Response Management System (DRMS)',
-  description: 'Comprehensive disaster response management and humanitarian assessment PWA',
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'DRMS',
-  },
-};
+const DEFAULT_APP_NAME = 'DRMS';
+
+export async function generateMetadata(): Promise<Metadata> {
+  let appName = DEFAULT_APP_NAME;
+  let appDescription = 'Comprehensive disaster response management and humanitarian assessment PWA';
+
+  try {
+    const settings = await prisma.systemSetting.findMany({
+      where: { section: 'branding' },
+    });
+    const brandingMap = new Map(settings.map(s => [s.key, s.value as string]));
+    appName = brandingMap.get('appName') || DEFAULT_APP_NAME;
+    appDescription = brandingMap.get('appDescription') || appDescription;
+  } catch {}
+
+  return {
+    title: `${appName} — Disaster Response Management System`,
+    description: appDescription,
+    manifest: '/api/v1/manifest',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: appName,
+    },
+  };
+}
 
 export const viewport = {
   width: 'device-width',
@@ -61,19 +79,11 @@ export default function RootLayout({
                 <div className="min-h-screen flex flex-col">
                   <Header />
 
-                  {/* Main content */}
                   <main className="flex-1">
                     {children}
                   </main>
 
-              {/* Footer */}
-              <footer className="bg-card border-t border-border">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                  <p className="text-center text-sm text-muted-foreground">
-                    Disaster Management System - Borno State, Nigeria
-                  </p>
-                </div>
-                </footer>
+              <BrandedFooter />
               </div>
               <Toaster richColors position="top-right" closeButton duration={4000} />
               </AuthInitializer>

@@ -6,6 +6,7 @@ export const STORAGE_PATHS = {
   backups: 'backups',
   exports: 'exports',
   temp: 'temp',
+  branding: 'branding',
 } as const
 
 export type StorageCategory = (typeof STORAGE_PATHS)[keyof typeof STORAGE_PATHS]

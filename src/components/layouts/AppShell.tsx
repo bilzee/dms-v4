@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useBranding } from '@/hooks/useBranding';
 import { Header } from '@/components/shared/Header';
 import { Navigation } from '@/components/layouts/Navigation';
 import { SyncIndicator } from '@/components/shared/SyncIndicator';
@@ -28,6 +29,7 @@ export const AppShell = ({
   showBreadcrumbs = true 
 }: AppShellProps) => {
   const { isAuthenticated } = useAuth();
+  const { appName, headerIconUrl } = useBranding();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -99,8 +101,12 @@ export const AppShell = ({
           {/* Role information */}
           <div className="flex h-16 items-center px-4 border-b">
             <Link href="/dashboard" className="flex items-center gap-2">
-              <Shield className="h-6 w-6 text-primary" />
-              <span className="font-semibold text-foreground">DMS Borno</span>
+              {headerIconUrl ? (
+                <img src={headerIconUrl} alt="" className="h-6 w-6 object-contain" />
+              ) : (
+                <Shield className="h-6 w-6 text-primary" />
+              )}
+              <span className="font-semibold text-foreground">{appName}</span>
             </Link>
           </div>
           

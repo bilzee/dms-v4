@@ -31,6 +31,12 @@ const SETTINGS_DEFAULTS: Record<string, Record<string, any>> = {
     backupFrequency: 'daily',
     retentionPeriod: 30,
     backupLocation: 'cloud'
+  },
+  branding: {
+    appName: 'DRMS',
+    appDescription: 'Comprehensive disaster response management and humanitarian assessment PWA',
+    headerIconUrl: '',
+    pwaIconUrl: ''
   }
 }
 

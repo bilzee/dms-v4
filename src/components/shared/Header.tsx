@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useBranding } from '@/hooks/useBranding';
 import { RoleSwitcher } from '@/components/layouts/RoleSwitcher';
 import { SyncIndicator } from './SyncIndicator';
 import { OfflineIndicator } from './OfflineIndicator';
@@ -26,6 +27,7 @@ interface HeaderProps {
 
 export const Header = ({ fullWidth = false }: HeaderProps) => {
   const { isAuthenticated, user, logout } = useAuth();
+  const { appName, headerIconUrl } = useBranding();
   const [logoutOpen, setLogoutOpen] = useState(false);
 
   const handleLogoutConfirm = async () => {
@@ -38,8 +40,11 @@ export const Header = ({ fullWidth = false }: HeaderProps) => {
       <div className={fullWidth ? "px-4 sm:px-6 lg:px-8" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"}>
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <Link href="/dashboard" className="text-xl font-semibold text-foreground hover:text-primary transition-colors">
-              DMS Borno
+            <Link href="/dashboard" className="text-xl font-semibold text-foreground hover:text-primary transition-colors flex items-center gap-2">
+              {headerIconUrl && (
+                <img src={headerIconUrl} alt="" className="h-8 w-8 object-contain" />
+              )}
+              {appName}
             </Link>
           </div>
           <div className="flex items-center gap-4">
