@@ -7,6 +7,7 @@ import { AuthInitializer } from '@/components/providers/AuthInitializer';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { Toaster } from 'sonner';
 import { ServiceWorkerRegistration } from '@/components/providers/ServiceWorkerRegistration';
+import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 
 export const metadata: Metadata = {
   title: 'Disaster Response Management System (DRMS)',
@@ -35,9 +36,13 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/icons/icon-192x192.png" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className="bg-background min-h-screen transition-colors duration-300">
         <ServiceWorkerRegistration />
+        <InstallPrompt />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:z-[9999] focus:p-4 focus:bg-primary focus:text-primary-foreground"
