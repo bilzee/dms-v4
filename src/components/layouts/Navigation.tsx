@@ -28,6 +28,7 @@ import {
   Award,
   Trophy,
   MapPin,
+  Image,
   LogOut,
   Menu,
   Bell
@@ -42,35 +43,29 @@ interface NavItem {
   children?: NavItem[];
 }
 
-const getNavigationItems = (role: string | null): NavItem[] => {
-  const baseItems: NavItem[] = [
-    {
-      name: 'Home',
-      href: '/dashboard',
-      icon: LayoutDashboard,
-      description: 'Overview and statistics'
-    },
-    {
-      name: 'Profile',
-      href: '/profile',
-      icon: User,
-      description: 'Your user profile and settings'
-    },
-    {
-      name: 'Help & Support',
-      href: '/help',
-      icon: Settings,
-      description: 'Get help and support'
-    },
-    {
-      name: 'Logout',
-      href: '#logout',
-      icon: LogOut,
-      description: 'Sign out of your account'
-    }
-  ];
+const utilityItems: NavItem[] = [
+  {
+    name: 'Profile',
+    href: '/profile',
+    icon: User,
+    description: 'Your user profile and settings'
+  },
+  {
+    name: 'Help & Support',
+    href: '/help',
+    icon: Settings,
+    description: 'Get help and support'
+  },
+  {
+    name: 'Logout',
+    href: '#logout',
+    icon: LogOut,
+    description: 'Sign out of your account'
+  }
+];
 
-  const roleItems: Record<string, NavItem[]> = {
+const getNavigationItems = (role: string | null): { roleItems: NavItem[]; utilityItems: NavItem[] } => {
+  const roleSpecificItems: Record<string, NavItem[]> = {
     ASSESSOR: [
       {
         name: 'Dashboard',
@@ -445,14 +440,20 @@ const getNavigationItems = (role: string | null): NavItem[] => {
             href: '/admin/settings/map',
             icon: MapPin,
             description: 'Configure default map center and zoom level'
+          },
+          {
+            name: 'Brand Settings',
+            href: '/admin/settings/branding',
+            icon: Image,
+            description: 'Customize app name, logo, and PWA icon'
           }
         ]
       }
     ]
   };
 
-  const roleSpecificItems = roleItems[role as keyof typeof roleItems] || [];
-  return [...baseItems, ...roleSpecificItems];
+  const items = roleSpecificItems[role as keyof typeof roleSpecificItems] || [];
+  return { roleItems: items, utilityItems };
 };
 
 export const Navigation = () => {
@@ -462,7 +463,7 @@ export const Navigation = () => {
   const { canAccessPath } = useRoleNavigation();
   
   // Memoize navigationItems to prevent infinite re-renders
-  const navigationItems = useMemo(() => getNavigationItems(currentRole), [currentRole]);
+  const { roleItems, utilityItems: footerItems } = useMemo(() => getNavigationItems(currentRole), [currentRole]);
   
   // Get all parent items (items with children) for default expansion
   const getParentItems = (items: NavItem[]): string[] => {
@@ -476,7 +477,7 @@ export const Navigation = () => {
   };
   
   // Memoize parent items calculation
-  const parentItems = useMemo(() => getParentItems(navigationItems), [navigationItems]);
+  const parentItems = useMemo(() => getParentItems(roleItems), [roleItems]);
   
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set(parentItems));
 
@@ -514,7 +515,7 @@ export const Navigation = () => {
 
   const isAccessible = (href: string) => {
     if (href.startsWith('#')) return true;
-    if (href === '/dashboard' || href === '/profile' || href === '/help') return true;
+    if (href === '/profile' || href === '/help') return true;
     return canAccessPath(href);
   };
 
@@ -649,7 +650,13 @@ export const Navigation = () => {
         </div>
       )}
       
-      {navigationItems.map((item) => (
+      {roleItems.map((item) => (
+        <NavItemComponent key={item.href} item={item} />
+      ))}
+      
+      <div className="my-3 border-t border-border" />
+      
+      {footerItems.map((item) => (
         <NavItemComponent key={item.href} item={item} />
       ))}
     </nav>
