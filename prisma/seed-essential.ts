@@ -195,7 +195,7 @@ async function main() {
   // ========================================
   console.log('Creating report templates...');
 
-  const reportTemplates: { id: string; name: string; description: string; type: ReportType; layout: unknown }[] = [
+  const reportTemplates = [
     {
       id: 'rapid-assessment-template',
       name: 'Rapid Needs Assessment',
