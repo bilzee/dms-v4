@@ -24,9 +24,8 @@ export interface UserWithRoles extends User {
 
 const _resolveJwtSecret = (): string => {
   if (process.env.JWT_SECRET) return process.env.JWT_SECRET
-  if (process.env.NODE_ENV === 'development') {
-    console.warn('[AUTH] WARNING: JWT_SECRET not set. Using ephemeral dev secret. Set JWT_SECRET for production!')
-    return 'dev-only-ephemeral-secret'
+  if (process.env.NODE_ENV === 'development' || process.env.NEXT_BUILD === 'true') {
+    return 'build-time-placeholder-secret'
   }
   throw new Error('FATAL: JWT_SECRET environment variable is required in production')
 }
