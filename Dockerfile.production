@@ -51,9 +51,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-RUN corepack enable pnpm
-RUN pnpm add -D prisma
-RUN npx prisma generate
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.pnpm/prisma@*/node_modules/prisma ./node_modules/prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.pnpm/@prisma+client*/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.pnpm/@prisma+client*/node_modules/@prisma ./node_modules/@prisma
+RUN ln -s /app/node_modules/prisma/build/index.js /usr/local/bin/prisma 2>/dev/null || true
 
 RUN chown -R nextjs:nodejs /app/public
 
