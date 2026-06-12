@@ -1,4 +1,4 @@
-import { PrismaClient, Priority, AssessmentType, RoleName } from '@prisma/client';
+import { PrismaClient, Priority, AssessmentType, RoleName, ReportType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -195,12 +195,12 @@ async function main() {
   // ========================================
   console.log('Creating report templates...');
 
-  const reportTemplates = [
+  const reportTemplates: { id: string; name: string; description: string; type: ReportType; layout: unknown }[] = [
     {
       id: 'rapid-assessment-template',
       name: 'Rapid Needs Assessment',
       description: 'Quick initial assessment for disaster response planning',
-      type: 'CUSTOM',
+      type: 'CUSTOM' as ReportType,
       layout: {
         sections: [
           { id: 'basic-info', title: 'Basic Information', fields: [
@@ -224,7 +224,7 @@ async function main() {
       id: 'daily-sitrep-template',
       name: 'Daily Situation Report',
       description: 'Daily summary of disaster response activities and situation',
-      type: 'CUSTOM',
+      type: 'CUSTOM' as ReportType,
       layout: {
         sections: [
           { id: 'situation-update', title: 'Situation Update', fields: [
@@ -244,7 +244,7 @@ async function main() {
       id: 'assessment-summary-template',
       name: 'Assessment Summary Report',
       description: 'Comprehensive summary of all assessment findings across sectors',
-      type: 'ASSESSMENT',
+      type: 'ASSESSMENT' as ReportType,
       layout: {
         sections: [
           { id: 'overview', title: 'Assessment Overview', fields: [
@@ -268,7 +268,7 @@ async function main() {
       id: 'response-impact-template',
       name: 'Response Impact Report',
       description: 'Analysis of response plan effectiveness and delivery outcomes',
-      type: 'RESPONSE',
+      type: 'RESPONSE' as ReportType,
       layout: {
         sections: [
           { id: 'response-overview', title: 'Response Overview', fields: [
@@ -292,7 +292,7 @@ async function main() {
       id: 'entity-status-template',
       name: 'Entity Status Dashboard Report',
       description: 'Current status overview of all monitored entities and facilities',
-      type: 'ENTITY',
+      type: 'ENTITY' as ReportType,
       layout: {
         sections: [
           { id: 'entity-overview', title: 'Entity Overview', fields: [
@@ -312,7 +312,7 @@ async function main() {
       id: 'donor-performance-template',
       name: 'Donor Performance Report',
       description: 'Tracking donor commitments, deliveries, and fulfillment rates',
-      type: 'DONOR',
+      type: 'DONOR' as ReportType,
       layout: {
         sections: [
           { id: 'commitment-overview', title: 'Commitment Overview', fields: [
