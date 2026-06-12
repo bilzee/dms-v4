@@ -41,7 +41,7 @@ next-env.d.ts
 /public/fallback-*.js
 
 # Prisma
-/prisma/migrations/
+# prisma/migrations/ needed for production Docker builds
 
 # Logs
 npm-debug.log*
@@ -69,10 +69,8 @@ lerna-debug.log*
 ehthumbs.db
 Thumbs.db
 
-# Package managers
-pnpm-lock.yaml
+# Package managers (lockfiles ARE committed for reproducible builds)
 yarn.lock
-package-lock.json
 
 # Temporary folders
 tmp/
@@ -162,7 +160,7 @@ docs/consulting
 /snapshot-health-assessment.json
 /snapshot-login.json
 /start-debug.sh
-/start-with-migrations.sh
+# start-with-migrations.sh is needed for Docker production builds
 /step2-failed.png
 /STORY-5.1-TESTING-GUIDE.md
 /temp-analytics-snapshot.json
