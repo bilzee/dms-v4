@@ -2,6 +2,7 @@
   "name": "disaster-response-management-system",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.15.4",
   "scripts": {
     "dev": "next dev",
     "dev:pwa": "PWA_TESTING=true next dev",
