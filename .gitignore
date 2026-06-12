@@ -144,8 +144,8 @@ docs/consulting
 /migrations.sql
 /OFFLINE_IMPLEMENTATION_STATUS.md
 /production-readiness-report.json
-/production-security.config.js
-/pwa.config.js
+# production-security.config.js is needed for Docker builds
+# pwa.config.js is needed for Docker builds
 /registration-page-debug.png
 /schema-before-story3.1.prisma
 /scriptsvalidate-pre-story.sh
