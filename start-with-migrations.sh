@@ -12,7 +12,7 @@ echo ""
 echo "=== Checking Prisma Client ==="
 if [ ! -d "node_modules/.prisma" ]; then
     echo "⚠️  Prisma client not found, generating..."
-    if node ./node_modules/prisma/build/index.js generate; then
+    if node ./node_modules/.bin/prisma generate; then
         echo "✅ Prisma client generated successfully"
     else
         echo "❌ Prisma client generation failed - this may cause issues"
@@ -30,11 +30,11 @@ if [ -d "prisma/migrations" ] && [ -n "$(ls -A prisma/migrations 2>/dev/null)" ]
     # Run database migrations
     echo ""
     echo "=== Running Database Migrations ==="
-    if node ./node_modules/prisma/build/index.js migrate deploy; then
+    if node ./node_modules/.bin/prisma migrate deploy; then
         echo "✅ Migrations completed successfully"
     else
         echo "⚠️  Migrations failed - falling back to db push"
-        if node ./node_modules/prisma/build/index.js db push --accept-data-loss; then
+        if node ./node_modules/.bin/prisma db push --accept-data-loss; then
             echo "✅ Schema pushed successfully via fallback"
         else
             echo "❌ Schema push also failed - database tables may not exist"
@@ -44,7 +44,7 @@ else
     echo "⚠️  No migration files found - using db push instead"
     echo ""
     echo "=== Pushing Schema to Database ==="
-    if node ./node_modules/prisma/build/index.js db push --accept-data-loss; then
+    if node ./node_modules/.bin/prisma db push --accept-data-loss; then
         echo "✅ Schema pushed successfully"
     else
         echo "❌ Schema push failed - database tables may not exist"
