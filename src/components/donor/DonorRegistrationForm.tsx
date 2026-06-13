@@ -103,16 +103,21 @@ export function DonorRegistrationForm({ onSuccess, onCancel }: DonorRegistration
       // Clear any previous errors
       setErrorMessage(null)
       
-      // Store auth token
-      setAuthToken(data.data.token)
-      localStorage.setItem('user_data', JSON.stringify(data.data.user))
-      
-      toast.success('Registration successful! Welcome to the platform.')
+      // Only store auth token for self-registration (not admin-initiated)
+      const existingToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+      if (!existingToken) {
+        setAuthToken(data.data.token)
+        localStorage.setItem('user_data', JSON.stringify(data.data.user))
+      }
       
       if (onSuccess) {
+        toast.success('Donor organization registered successfully!')
         onSuccess(data.data)
       } else {
+        toast.success('Registration successful! Welcome to the platform.')
         // Show success message and redirect to donor dashboard
+        setAuthToken(data.data.token)
+        localStorage.setItem('user_data', JSON.stringify(data.data.user))
         setTimeout(() => {
           router.push('/donor/dashboard')
         }, 2000)
