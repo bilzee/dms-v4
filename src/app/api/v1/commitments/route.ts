@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db/client';
 import { withAuth } from '@/lib/auth/middleware';
 import { CommitmentQuerySchema } from '@/lib/validation/commitment';
 import { EntityAssignmentServiceImpl } from '@/lib/services/entity-assignment.service';
-import { handleApiError } from '@/lib/api/response'
+import { successResponse, createdResponse, errorResponse, handleApiError } from '@/lib/api/response'
 
 export const GET = withAuth(async (request: NextRequest, context) => {
   const { user, roles } = context;
@@ -158,6 +158,70 @@ export const GET = withAuth(async (request: NextRequest, context) => {
       );
     }
 
+    return handleApiError(error);
+  }
+});
+
+export const POST = withAuth(async (request: NextRequest, context) => {
+  const { user, roles } = context;
+
+  if (!roles || roles.length === 0) {
+    return errorResponse('Authentication required.', 401);
+  }
+
+  const hasPermission = roles.includes('DONOR') || roles.includes('COORDINATOR') || roles.includes('ADMIN');
+  if (!hasPermission) {
+    return errorResponse('Insufficient permissions. Donor, Coordinator, or Admin role required.', 403);
+  }
+
+  try {
+    const body = await request.json();
+    const { donorId, entityId, incidentId, type, items, notes, totalValueEstimated } = body;
+
+    if (!donorId || !entityId || !incidentId) {
+      return errorResponse('Donor ID, Entity ID, and Incident ID are required.', 400);
+    }
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return errorResponse('At least one commitment item is required.', 400);
+    }
+
+    const [donor, entity, incident] = await Promise.all([
+      prisma.donor.findUnique({ where: { id: donorId } }),
+      prisma.entity.findUnique({ where: { id: entityId } }),
+      prisma.incident.findUnique({ where: { id: incidentId } }),
+    ]);
+
+    if (!donor) return errorResponse('Donor not found.', 404);
+    if (!entity) return errorResponse('Entity not found.', 404);
+    if (!incident) return errorResponse('Incident not found.', 404);
+
+    const totalCommittedQuantity = items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0);
+    const calculatedValue = totalValueEstimated || items.reduce((sum: number, item: any) => sum + (Number(item.estimatedValue) || 0), 0);
+
+    const commitment = await prisma.donorCommitment.create({
+      data: {
+        donorId,
+        entityId,
+        incidentId,
+        type: type || 'LOGISTICS',
+        status: 'PLANNED',
+        items: items,
+        totalCommittedQuantity,
+        deliveredQuantity: 0,
+        verifiedDeliveredQuantity: 0,
+        notes: notes || null,
+        totalValueEstimated: calculatedValue,
+      },
+      include: {
+        donor: { select: { id: true, name: true, type: true, organization: true } },
+        entity: { select: { id: true, name: true, type: true, location: true } },
+        incident: { select: { id: true, type: true, subType: true, severity: true, status: true } },
+      },
+    });
+
+    return createdResponse(commitment);
+  } catch (error) {
     return handleApiError(error);
   }
 });
