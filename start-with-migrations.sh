@@ -10,51 +10,25 @@ echo "Database: ${DATABASE_URL:+configured}"
 # Check if Prisma client exists, generate if needed
 echo ""
 echo "=== Checking Prisma Client ==="
-if [ ! -d "node_modules/.prisma" ]; then
+if [ ! -d "node_modules/.pnpm/@prisma+client" ]; then
     echo "⚠️  Prisma client not found, generating..."
-    if node ./node_modules/.bin/prisma generate; then
-        echo "✅ Prisma client generated successfully"
-    else
-        echo "❌ Prisma client generation failed - this may cause issues"
-    fi
+    npx prisma generate || echo "❌ Prisma client generation failed"
 else
     echo "✅ Prisma client found"
 fi
 
-# Check if migrations exist
+# Run database migrations
 echo ""
-echo "=== Checking for Migrations ==="
-if [ -d "prisma/migrations" ] && [ -n "$(ls -A prisma/migrations 2>/dev/null)" ]; then
-    echo "✅ Migration files found"
-    
-    # Run database migrations
-    echo ""
-    echo "=== Running Database Migrations ==="
-    if node ./node_modules/.bin/prisma migrate deploy; then
-        echo "✅ Migrations completed successfully"
-    else
-        echo "⚠️  Migrations failed - falling back to db push"
-        if node ./node_modules/.bin/prisma db push --accept-data-loss; then
-            echo "✅ Schema pushed successfully via fallback"
-        else
-            echo "❌ Schema push also failed - database tables may not exist"
-        fi
-    fi
+echo "=== Running Database Migrations ==="
+npx prisma migrate deploy
+if [ $? -eq 0 ]; then
+    echo "✅ Migrations completed successfully"
 else
-    echo "⚠️  No migration files found - using db push instead"
-    echo ""
-    echo "=== Pushing Schema to Database ==="
-    if node ./node_modules/.bin/prisma db push --accept-data-loss; then
-        echo "✅ Schema pushed successfully"
-    else
-        echo "❌ Schema push failed - database tables may not exist"
-    fi
+    echo "⚠️  Migrations failed - falling back to db push"
+    npx prisma db push --accept-data-loss || echo "❌ Schema push also failed"
 fi
 
 # Start the application
 echo ""
 echo "=== Starting Next.js Server ==="
-echo "Container will stay alive as long as server.js runs"
-
-# Use exec to replace shell with node process (proper signal handling)
 exec node server.js
