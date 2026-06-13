@@ -33,7 +33,12 @@ if [ -d "prisma/migrations" ] && [ -n "$(ls -A prisma/migrations 2>/dev/null)" ]
     if node ./node_modules/prisma/build/index.js migrate deploy; then
         echo "✅ Migrations completed successfully"
     else
-        echo "❌ Migrations failed - attempting to start anyway (tables might already exist)"
+        echo "⚠️  Migrations failed - falling back to db push"
+        if node ./node_modules/prisma/build/index.js db push --accept-data-loss; then
+            echo "✅ Schema pushed successfully via fallback"
+        else
+            echo "❌ Schema push also failed - database tables may not exist"
+        fi
     fi
 else
     echo "⚠️  No migration files found - using db push instead"
