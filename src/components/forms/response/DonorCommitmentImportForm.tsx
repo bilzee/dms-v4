@@ -183,7 +183,7 @@ export function DonorCommitmentImportForm({
     ],
     queryFn: async () => {
       const result = await apiGet(
-        `/api/v1/donors/commitments?entityId=${selectedEntityId}&incidentId=${selectedIncidentId}&status=PLANNED&limit=100`
+        `/api/v1/commitments?entityId=${selectedEntityId}&incidentId=${selectedIncidentId}&status=PLANNED&limit=100`
       )
       if (!result.success) return []
 
@@ -191,7 +191,7 @@ export function DonorCommitmentImportForm({
       if (allCommitments.length === 0) return []
 
       const planCommitmentsResult = await apiGet(
-        `/api/v1/donors/commitments?entityId=${selectedEntityId}&incidentId=${selectedIncidentId}&includeResponses=true&limit=100`
+        `/api/v1/commitments?entityId=${selectedEntityId}&incidentId=${selectedIncidentId}&includeResponses=true&limit=100`
       )
       if (!planCommitmentsResult.success) return allCommitments
 
