@@ -141,7 +141,7 @@ export function DonorCommitmentImportForm({
     enabled: !!user?.id,
   })
 
-  const entities = entitiesData?.data || []
+  const entities = extractArray(entitiesData)
 
   const { data: incidentsData, isLoading: incidentsLoading } = useQuery({
     queryKey: ['incidents', selectedEntityId],
