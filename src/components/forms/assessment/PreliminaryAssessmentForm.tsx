@@ -202,7 +202,7 @@ export function PreliminaryAssessmentForm({
       const submissionData = {
         ...data,
         reportingDate: new Date(data.reportingDate), // Convert string back to Date for backend
-        estimatedAgriculturalLandsAffected: data.estimatedAgriculturalLandsAffected ? String(data.estimatedAgriculturalLandsAffected) : undefined,
+        estimatedAgriculturalLandsAffected: data.estimatedAgriculturalLandsAffected || undefined,
         incidentId: selectedIncidentId || '',
         mediaFiles
       }
