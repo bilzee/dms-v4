@@ -482,13 +482,44 @@ export class RapidAssessmentService {
       throw new Error('Not authorized to update this assessment')
     }
 
-    const { type, ...baseData } = input
+    const { type, healthData, populationData, foodData, washData, shelterData, securityData, ...baseData } = input
+
+    const assessmentType = existingAssessment.rapidAssessmentType
+
+    const typeSpecificUpdate: Record<string, any> = {}
+    if (assessmentType === 'HEALTH' && healthData) {
+      typeSpecificUpdate.healthAssessment = { update: { ...healthData } }
+    } else if (assessmentType === 'POPULATION' && populationData) {
+      typeSpecificUpdate.populationAssessment = { update: { ...populationData } }
+    } else if (assessmentType === 'FOOD' && foodData) {
+      typeSpecificUpdate.foodAssessment = { update: { ...foodData } }
+    } else if (assessmentType === 'WASH' && washData) {
+      typeSpecificUpdate.washAssessment = { update: { ...washData } }
+    } else if (assessmentType === 'SHELTER' && shelterData) {
+      typeSpecificUpdate.shelterAssessment = { update: { ...shelterData } }
+    } else if (assessmentType === 'SECURITY' && securityData) {
+      typeSpecificUpdate.securityAssessment = { update: { ...securityData } }
+    }
+
+    const { verificationStatus, ...safeBaseData } = baseData as any
+    const statusUpdate: Record<string, any> = {}
+    if (verificationStatus !== undefined) {
+      statusUpdate.verificationStatus = verificationStatus
+      if (verificationStatus === 'SUBMITTED') {
+        statusUpdate.rejectionReason = null
+        statusUpdate.rejectionFeedback = null
+        statusUpdate.verifiedAt = null
+        statusUpdate.verifiedBy = null
+      }
+    }
 
     // Update base rapid assessment
     const updatedAssessment = await prisma.rapidAssessment.update({
       where: { id },
       data: {
-        ...baseData,
+        ...safeBaseData,
+        ...statusUpdate,
+        ...typeSpecificUpdate,
         updatedAt: new Date()
       },
       include: {
