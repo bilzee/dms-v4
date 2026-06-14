@@ -46,6 +46,11 @@ import { z } from 'zod'
 
 type FormData = z.infer<typeof PreliminaryAssessmentSchema>
 
+function formatDatetimeLocal(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
 interface PreliminaryAssessmentFormProps {
   onSubmit?: (data: PreliminaryAssessmentData) => Promise<void>
   onDraftSave?: (data: Partial<PreliminaryAssessmentData>) => void
@@ -94,8 +99,8 @@ export function PreliminaryAssessmentForm({
     resolver: zodResolver(PreliminaryAssessmentSchema),
     defaultValues: {
       reportingDate: initialData?.reportingDate 
-        ? new Date(initialData.reportingDate)
-        : new Date(), // Always set to today's date in correct format
+        ? formatDatetimeLocal(new Date(initialData.reportingDate))
+        : formatDatetimeLocal(new Date()),
       reportingLatitude: initialData?.reportingLatitude || 0,
       reportingLongitude: initialData?.reportingLongitude || 0,
       reportingLGA: initialData?.reportingLGA || '',

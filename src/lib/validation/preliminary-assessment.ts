@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const PreliminaryAssessmentSchema = z.object({
-  reportingDate: z.coerce.date(),
+  reportingDate: z.string().min(1, 'Reporting date is required'),
   reportingLatitude: z.number().min(-90).max(90),
   reportingLongitude: z.number().min(-180).max(180),
   reportingLGA: z.string().min(1, 'LGA is required'),

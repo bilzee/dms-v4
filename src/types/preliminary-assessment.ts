@@ -1,7 +1,7 @@
 import { PreliminaryAssessment, Incident } from '@prisma/client'
 
 export interface PreliminaryAssessmentData {
-  reportingDate: Date
+  reportingDate: Date | string
   reportingLatitude: number
   reportingLongitude: number
   reportingLGA: string

@@ -135,7 +135,7 @@ export const usePreliminaryAssessmentStore = create<PreliminaryAssessmentState>(
           // Create a mock assessment response for the UI
           const mockAssessment: PreliminaryAssessment & { incident?: Incident } = {
             id: assessmentUuid,
-            reportingDate: data.data.reportingDate,
+            reportingDate: new Date(data.data.reportingDate),
             reportingLatitude: data.data.reportingLatitude,
             reportingLongitude: data.data.reportingLongitude,
             reportingLGA: data.data.reportingLGA,
