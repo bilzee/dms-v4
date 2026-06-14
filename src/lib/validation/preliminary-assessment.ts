@@ -14,7 +14,7 @@ export const PreliminaryAssessmentSchema = z.object({
   schoolsAffected: z.string().optional(),
   numberMedicalFacilitiesAffected: z.number().int().min(0).default(0),
   medicalFacilitiesAffected: z.string().optional(),
-  estimatedAgriculturalLandsAffected: z.string().optional(),
+  estimatedAgriculturalLandsAffected: z.number().optional(),
   reportingAgent: z.string().min(1, 'Reporting agent is required'),
   additionalDetails: z.any().optional(),
   incidentId: z.string().nullable().optional(),

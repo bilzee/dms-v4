@@ -35,7 +35,7 @@ export class PreliminaryAssessmentService {
     createdBy: string
   ): Promise<PreliminaryAssessment & { incident?: Incident }> {
     const { data, createIncident, incidentData } = input
-    const { affectedEntityIds, ...assessmentData } = data
+    const { affectedEntityIds, estimatedAgriculturalLandsAffected, ...assessmentData } = data
 
     let incident: Incident | undefined
 
@@ -61,7 +61,8 @@ export class PreliminaryAssessmentService {
     const assessment = await prisma.preliminaryAssessment.create({
       data: {
         ...assessmentData,
-        incidentId: incident?.id || data.incidentId,
+        estimatedAgriculturalLandsAffected: estimatedAgriculturalLandsAffected != null ? String(estimatedAgriculturalLandsAffected) : null,
+        incidentId: incident?.id || data.incidentId || null,
         affectedEntities: affectedEntityIds && affectedEntityIds.length > 0 ? {
           create: affectedEntityIds.map((entityId: string) => ({
             entityId
@@ -219,7 +220,16 @@ export class PreliminaryAssessmentService {
     id: string,
     input: UpdatePreliminaryAssessmentInput
   ): Promise<PreliminaryAssessment & { incident?: Incident }> {
-    const { affectedEntityIds, ...updateData } = input.data
+    const { affectedEntityIds, estimatedAgriculturalLandsAffected, ...updateData } = input.data
+
+    if (estimatedAgriculturalLandsAffected !== undefined) {
+      (updateData as any).estimatedAgriculturalLandsAffected = estimatedAgriculturalLandsAffected != null ? String(estimatedAgriculturalLandsAffected) : null
+    }
+
+    // Remove incidentId from updateData if null (Prisma update doesn't accept null for relation)
+    if (updateData.incidentId === null) {
+      delete (updateData as any).incidentId
+    }
 
     // Handle entity relationships separately if provided
     if (affectedEntityIds !== undefined) {

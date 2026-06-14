@@ -12,7 +12,7 @@ export interface PreliminaryAssessmentData {
   numberHousesAffected: number
   schoolsAffected?: string
   medicalFacilitiesAffected?: string
-  estimatedAgriculturalLandsAffected?: string
+  estimatedAgriculturalLandsAffected?: number
   reportingAgent: string
   additionalDetails?: any
   incidentId?: string

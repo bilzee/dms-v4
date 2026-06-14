@@ -111,7 +111,7 @@ export function PreliminaryAssessmentForm({
       numberHousesAffected: initialData?.numberHousesAffected || 0,
       schoolsAffected: initialData?.schoolsAffected || '',
       medicalFacilitiesAffected: initialData?.medicalFacilitiesAffected || '',
-      estimatedAgriculturalLandsAffected: initialData?.estimatedAgriculturalLandsAffected || '',
+      estimatedAgriculturalLandsAffected: initialData?.estimatedAgriculturalLandsAffected || undefined,
       reportingAgent: (user as any)?.name || '', // Always set to current user
       additionalDetails: initialData?.additionalDetails || '',
       affectedEntityIds: initialData?.affectedEntityIds || []

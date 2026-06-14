@@ -148,7 +148,7 @@ export const usePreliminaryAssessmentStore = create<PreliminaryAssessmentState>(
             schoolsAffected: data.data.schoolsAffected || null,
             numberMedicalFacilitiesAffected: (data.data as any).numberMedicalFacilitiesAffected || 0,
             medicalFacilitiesAffected: data.data.medicalFacilitiesAffected || null,
-            estimatedAgriculturalLandsAffected: data.data.estimatedAgriculturalLandsAffected || null,
+            estimatedAgriculturalLandsAffected: data.data.estimatedAgriculturalLandsAffected != null ? String(data.data.estimatedAgriculturalLandsAffected) : null,
             reportingAgent: data.data.reportingAgent,
             additionalDetails: data.data.additionalDetails || null,
             incidentId: data.data.incidentId || null,
