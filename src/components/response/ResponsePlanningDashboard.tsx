@@ -16,6 +16,7 @@ import { Package, Edit, Plus, AlertTriangle, Clock, CheckCircle, Truck } from '@
 import { ResponseService } from '@/lib/services/response-client.service'
 import { useAuth } from '@/hooks/useAuth'
 import { type SeverityLevel } from '@/lib/utils/status-colors'
+import { verificationPriorityBadgeColors } from '@/lib/utils/priority-colors'
 import type { FilterConfig } from '@/components/shared/SearchToolbar'
 
 interface ResponsePlanningDashboardProps {
@@ -214,12 +215,8 @@ export function ResponsePlanningDashboard({
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge 
-                    variant={
-                      response.priority === 'CRITICAL' ? 'destructive' :
-                      response.priority === 'HIGH' ? 'default' :
-                      'secondary'
-                    }
-                    className="shrink-0"
+                    variant="outline"
+                    className={`shrink-0 border ${verificationPriorityBadgeColors[response.priority as keyof typeof verificationPriorityBadgeColors] || 'bg-gray-100 text-gray-800 border-gray-300'}`}
                   >
                     {response.priority}
                   </Badge>

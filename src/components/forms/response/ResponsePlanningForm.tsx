@@ -808,7 +808,7 @@ export function ResponsePlanningForm({
                                         type="number"
                                         placeholder="0"
                                         min="1"
-                                        {...field}
+                                        {...{ ...field, onChange: undefined }}
                                         onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
                                       />
                                     </FormControl>
@@ -1139,7 +1139,7 @@ export function ResponsePlanningForm({
                                     type="number" 
                                     placeholder="0" 
                                     min="1"
-                                    {...field}
+                                    {...{ ...field, onChange: undefined }}
                                     onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
                                   />
                                 </FormControl>
