@@ -112,37 +112,12 @@ function EditAssessmentContent() {
       setIsSubmitting(true)
       setError(null)
       
-      // Get the type-specific data
-      let typeSpecificData = {}
-      switch (assessment.rapidAssessmentType) {
-        case 'HEALTH':
-          typeSpecificData = { healthData: formData }
-          break
-        case 'POPULATION':
-          typeSpecificData = { populationData: formData }
-          break
-        case 'FOOD':
-          typeSpecificData = { foodData: formData }
-          break
-        case 'WASH':
-          typeSpecificData = { washData: formData }
-          break
-        case 'SHELTER':
-          typeSpecificData = { shelterData: formData }
-          break
-        case 'SECURITY':
-          typeSpecificData = { securityData: formData }
-          break
-      }
-
-      // Update the assessment
+      // The form's handleSubmit already returns the complete assessment object
+      // with type-specific data nested (e.g., { type, entityId, incidentId, foodData: {...} })
+      // So we just spread it directly and add verification status for resubmit
       const result = await apiPut(`/api/v1/rapid-assessments/${assessmentId}`, {
-        ...typeSpecificData,
-        verificationStatus: 'SUBMITTED',
-        rejectionReason: null,
-        verificationComment: null,
-        verifiedAt: null,
-        verifiedBy: null
+        ...formData,
+        verificationStatus: 'SUBMITTED'
       })
       
       if (result.success) {
