@@ -488,15 +488,36 @@ export class RapidAssessmentService {
 
     const typeSpecificUpdate: Record<string, any> = {}
     if (assessmentType === 'HEALTH' && healthData) {
-      typeSpecificUpdate.healthAssessment = { update: { ...healthData } }
+      typeSpecificUpdate.healthAssessment = {
+        update: {
+          ...healthData,
+          commonHealthIssues: JSON.stringify((healthData as any).commonHealthIssues || [])
+        }
+      }
     } else if (assessmentType === 'POPULATION' && populationData) {
       typeSpecificUpdate.populationAssessment = { update: { ...populationData } }
     } else if (assessmentType === 'FOOD' && foodData) {
-      typeSpecificUpdate.foodAssessment = { update: { ...foodData } }
+      typeSpecificUpdate.foodAssessment = {
+        update: {
+          ...foodData,
+          foodSource: JSON.stringify((foodData as any).foodSource || [])
+        }
+      }
     } else if (assessmentType === 'WASH' && washData) {
-      typeSpecificUpdate.washAssessment = { update: { ...washData } }
+      typeSpecificUpdate.washAssessment = {
+        update: {
+          ...washData,
+          waterSource: JSON.stringify((washData as any).waterSource || [])
+        }
+      }
     } else if (assessmentType === 'SHELTER' && shelterData) {
-      typeSpecificUpdate.shelterAssessment = { update: { ...shelterData } }
+      typeSpecificUpdate.shelterAssessment = {
+        update: {
+          ...shelterData,
+          shelterTypes: JSON.stringify((shelterData as any).shelterTypes || []),
+          requiredShelterType: JSON.stringify((shelterData as any).requiredShelterType || [])
+        }
+      }
     } else if (assessmentType === 'SECURITY' && securityData) {
       typeSpecificUpdate.securityAssessment = { update: { ...securityData } }
     }
