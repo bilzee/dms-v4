@@ -186,6 +186,7 @@ const PartialShelterAssessmentSchema = z.object({
 
 export const UpdateRapidAssessmentSchema = BaseRapidAssessmentSchema.partial().extend({
   type: z.enum(['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION']).optional(),
+  verificationStatus: z.enum(['DRAFT', 'SUBMITTED', 'VERIFIED', 'AUTO_VERIFIED', 'REJECTED']).optional(),
   healthData: HealthAssessmentSchema.partial().optional(),
   populationData: PopulationAssessmentSchema.partial().optional(),
   foodData: PartialFoodAssessmentSchema.optional(),
