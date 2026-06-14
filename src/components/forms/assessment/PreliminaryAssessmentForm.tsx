@@ -277,7 +277,7 @@ export function PreliminaryAssessmentForm({
                   id="reportingDate"
                   type="datetime-local"
                   {...register('reportingDate')}
-                  disabled={true} // Always disabled
+                  readOnly={true}
                   className="bg-muted text-foreground cursor-not-allowed"
                 />
                 <p className="text-xs text-muted-foreground">Automatically set to current date and time</p>
@@ -295,7 +295,7 @@ export function PreliminaryAssessmentForm({
                   <Input
                     id="reportingAgent"
                     {...register('reportingAgent')}
-                    disabled={true} // Always disabled
+                    readOnly={true}
                     className="bg-muted text-foreground cursor-not-allowed"
                     placeholder="Automatically set to current user"
                   />
