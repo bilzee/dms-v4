@@ -404,7 +404,6 @@ export function PreliminaryAssessmentForm({
                   type="number"
                   min="0"
                   {...register('numberLivesLost', { 
-                    valueAsNumber: true,
                     setValueAs: (value) => value === '' ? 0 : Number(value)
                   })}
                   disabled={disabled}
@@ -421,7 +420,6 @@ export function PreliminaryAssessmentForm({
                   type="number"
                   min="0"
                   {...register('numberInjured', { 
-                    valueAsNumber: true,
                     setValueAs: (value) => value === '' ? 0 : Number(value)
                   })}
                   disabled={disabled}
@@ -438,7 +436,6 @@ export function PreliminaryAssessmentForm({
                   type="number"
                   min="0"
                   {...register('numberDisplaced', { 
-                    valueAsNumber: true,
                     setValueAs: (value) => value === '' ? 0 : Number(value)
                   })}
                   disabled={disabled}
@@ -455,7 +452,6 @@ export function PreliminaryAssessmentForm({
                   type="number"
                   min="0"
                   {...register('numberHousesAffected', { 
-                    valueAsNumber: true,
                     setValueAs: (value) => value === '' ? 0 : Number(value)
                   })}
                   disabled={disabled}
@@ -487,7 +483,6 @@ export function PreliminaryAssessmentForm({
                   type="number"
                   min="0"
                   {...register('numberSchoolsAffected', { 
-                    valueAsNumber: true,
                     setValueAs: (value) => value === '' ? 0 : Number(value)
                   })}
                   disabled={disabled}
@@ -506,7 +501,6 @@ export function PreliminaryAssessmentForm({
                   type="number"
                   min="0"
                   {...register('numberMedicalFacilitiesAffected', { 
-                    valueAsNumber: true,
                     setValueAs: (value) => value === '' ? 0 : Number(value)
                   })}
                   disabled={disabled}
@@ -546,9 +540,8 @@ export function PreliminaryAssessmentForm({
                 type="number"
                 min="0"
                 step="0.1"
-                {...register('estimatedAgriculturalLandsAffected', { 
-                  valueAsNumber: true,
-                  setValueAs: (value) => value === '' ? 0 : Number(value)
+                {...register('estimatedAgriculturalLandsAffected', {
+                  setValueAs: (value) => value === '' ? undefined : Number(value)
                 })}
                 disabled={disabled}
                 placeholder="Enter hectares of affected agricultural land"
