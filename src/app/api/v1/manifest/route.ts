@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/client'
 
+export const dynamic = 'force-dynamic'
+
 const STATIC_MANIFEST = {
   name: 'Disaster Response Management System (DRMS)',
   short_name: 'DRMS',

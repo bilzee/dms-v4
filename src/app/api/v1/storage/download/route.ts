@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { storageService } from '@/lib/storage/storage.service'
 
+export const dynamic = 'force-dynamic'
+
 const CONTENT_TYPES: Record<string, string> = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',

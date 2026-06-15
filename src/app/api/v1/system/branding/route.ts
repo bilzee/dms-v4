@@ -2,6 +2,8 @@ import { successResponse, handleApiError } from '@/lib/api/response'
 import { prisma } from '@/lib/db/client'
 import { NextRequest } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 const BRANDING_DEFAULTS = {
   appName: 'DRMS',
   appDescription: 'Comprehensive disaster response management and humanitarian assessment PWA',
