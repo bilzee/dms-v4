@@ -17,6 +17,8 @@ export async function generateMetadata(): Promise<Metadata> {
   let appName = DEFAULT_APP_NAME;
   let appDescription = 'Comprehensive disaster response management and humanitarian assessment PWA';
 
+  let headerIconUrl = '';
+
   try {
     const settings = await prisma.systemSetting.findMany({
       where: { section: 'branding' },
@@ -24,12 +26,18 @@ export async function generateMetadata(): Promise<Metadata> {
     const brandingMap = new Map(settings.map(s => [s.key, s.value as string]));
     appName = brandingMap.get('appName') || DEFAULT_APP_NAME;
     appDescription = brandingMap.get('appDescription') || appDescription;
+    headerIconUrl = brandingMap.get('headerIconUrl') || '';
   } catch {}
+
+  const icons = headerIconUrl
+    ? { icon: headerIconUrl, apple: headerIconUrl }
+    : undefined;
 
   return {
     title: `${appName} — Disaster Response Management System`,
     description: appDescription,
     manifest: '/api/v1/manifest',
+    icons,
     appleWebApp: {
       capable: true,
       statusBarStyle: 'default',
@@ -52,10 +60,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/icons/icon-192x192.png" />
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-        <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
-        <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className="bg-background min-h-screen transition-colors duration-300">

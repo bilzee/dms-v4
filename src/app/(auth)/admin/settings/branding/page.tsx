@@ -405,7 +405,11 @@ export default function BrandingSettingsPage() {
                   <h4 className="text-sm font-medium mb-2">Browser Tab Preview</h4>
                   <div className="border rounded-lg overflow-hidden">
                     <div className="bg-muted/50 px-3 py-1.5 flex items-center gap-2 border-b">
-                      <div className="w-4 h-4 rounded-sm bg-primary/30" />
+                      {settings.headerIconUrl ? (
+                        <img src={settings.headerIconUrl} alt="" className="w-4 h-4 rounded-sm object-contain" />
+                      ) : (
+                        <div className="w-4 h-4 rounded-sm bg-primary/30" />
+                      )}
                       <span className="text-xs truncate">
                         {settings.appName || 'DRMS'} — Disaster Response Management System
                       </span>
