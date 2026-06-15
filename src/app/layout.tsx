@@ -13,6 +13,8 @@ import { prisma } from '@/lib/db/client';
 
 const DEFAULT_APP_NAME = 'DRMS';
 
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata(): Promise<Metadata> {
   let appName = DEFAULT_APP_NAME;
   let appDescription = 'Comprehensive disaster response management and humanitarian assessment PWA';
