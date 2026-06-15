@@ -560,30 +560,6 @@ export function DeliveryConfirmationForm({
                   </div>
                 )}
 
-                <FormField
-                  control={form.control}
-                  name="deliveredItems"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input
-                          type="hidden"
-                          {...field}
-                          value={JSON.stringify(field.value)}
-                          onChange={(e) => {
-                            try {
-                              const parsed = JSON.parse(e.target.value)
-                              field.onChange(parsed)
-                            } catch (error) {
-                              // Handle JSON parse error
-                            }
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
             </CardContent>
           </Card>

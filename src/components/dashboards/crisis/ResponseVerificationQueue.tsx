@@ -396,12 +396,32 @@ export function ResponseVerificationQueue({
                     {typeof response.resources === 'string' ? (
                       <p className="text-sm bg-muted p-2 rounded">{response.resources}</p>
                     ) : typeof response.resources === 'object' ? (
-                      Object.entries(response.resources as Record<string, unknown>).map(([key, value]) => (
-                        <div key={key} className="bg-muted p-2 rounded text-sm flex items-center justify-between">
-                          <span className="capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                          <span className="font-medium">{String(value)}</span>
-                        </div>
-                      ))
+                      (() => {
+                        const resources = response.resources as Record<string, unknown>;
+                        const entries = Object.entries(resources);
+                        return entries.map(([key, value]) => {
+                          if (value === null || value === undefined || value === '') return null;
+                          let displayValue: string;
+                          if (typeof value === 'object') {
+                            const obj = value as Record<string, unknown>;
+                            if (typeof obj.latitude === 'number' || typeof obj.latitude === 'string') {
+                              displayValue = `${obj.latitude}, ${obj.longitude}`;
+                            } else if (Array.isArray(value)) {
+                              displayValue = `${(value as unknown[]).length} item(s)`;
+                            } else {
+                              displayValue = JSON.stringify(value);
+                            }
+                          } else {
+                            displayValue = String(value);
+                          }
+                          return (
+                            <div key={key} className="bg-muted p-2 rounded text-sm flex items-center justify-between">
+                              <span className="capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                              <span className="font-medium">{displayValue}</span>
+                            </div>
+                          );
+                        });
+                      })()
                     ) : null}
                   </div>
                 </div>

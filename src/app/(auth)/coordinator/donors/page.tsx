@@ -33,7 +33,7 @@ interface Donor {
   updatedAt: string
   _count: {
     commitments: number
-    responses: number
+    responses?: number
   }
 }
 
@@ -179,7 +179,7 @@ export default function DonorManagementPage() {
         <StatCard label="Total Donors" value={donors.length} severity="info" icon={Building2} />
         <StatCard label="Active" value={donors.filter(d => d.isActive).length} severity="success" icon={ShieldCheck} />
         <StatCard label="Total Commitments" value={donors.reduce((sum, d) => sum + d._count.commitments, 0)} severity="info" icon={Users} />
-        <StatCard label="Total Responses" value={donors.reduce((sum, d) => sum + d._count.responses, 0)} severity="info" icon={CheckCircle} />
+        <StatCard label="Total Responses" value={donors.reduce((sum, d) => sum + (d._count.responses || 0), 0)} severity="info" icon={CheckCircle} />
       </StatCardGrid>
 
       <DataTable

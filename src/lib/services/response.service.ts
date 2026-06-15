@@ -633,11 +633,25 @@ export class ResponseService {
         }
       })
 
-      if (response.planCommitments.length > 0 && input.deliveredItems) {
+      if (input.deliveredItems) {
         const deliveredItems = input.deliveredItems as Array<{ name: string; quantity: number }>;
+
+        const commitmentIdsToUpdate = new Set<string>();
         for (const pc of response.planCommitments) {
+          commitmentIdsToUpdate.add(pc.commitmentId);
+        }
+
+        const sourceCommitments = await tx.donorCommitment.findMany({
+          where: { sourcePlanId: responseId },
+          select: { id: true },
+        });
+        for (const sc of sourceCommitments) {
+          commitmentIdsToUpdate.add(sc.id);
+        }
+
+        for (const commitmentId of commitmentIdsToUpdate) {
           const commitment = await tx.donorCommitment.findUnique({
-            where: { id: pc.commitmentId },
+            where: { id: commitmentId },
             select: { id: true, items: true, deliveredQuantity: true, totalCommittedQuantity: true, status: true },
           });
           if (!commitment?.items) continue;
@@ -658,7 +672,7 @@ export class ResponseService {
           else if (anyDelivered) newStatus = 'PARTIAL';
 
           await tx.donorCommitment.update({
-            where: { id: pc.commitmentId },
+            where: { id: commitmentId },
             data: {
               items: cItems,
               deliveredQuantity: newDeliveredQty,
