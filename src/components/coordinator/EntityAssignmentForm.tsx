@@ -273,7 +273,7 @@ export default function CoordinatorEntitiesPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Entity Assignment Management</h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground hidden sm:block">
           Assign users and donors to entities for coordinated disaster response
         </p>
       </div>

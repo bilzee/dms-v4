@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator'
 import { getAuthToken, createAuthenticatedFetch } from '@/lib/auth/token-utils'
 import { apiGet } from '@/lib/api'
 import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
 import {
   History,
@@ -262,7 +263,7 @@ export default function AuditLogDashboard({ initialFilters, className }: AuditLo
 
   return (
     <div className={`space-y-6 ${className || ''}`}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <StatCardGrid columns={4}>
         <StatCard
           label="Total Entries"
           value={summary.totalEntries.toLocaleString()}
@@ -287,13 +288,13 @@ export default function AuditLogDashboard({ initialFilters, className }: AuditLo
           severity="warning"
           icon={Clock}
         />
-      </div>
+      </StatCardGrid>
 
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <CardTitle className="text-lg font-semibold">Audit Log Entries</CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <div className="relative flex-1 sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -489,7 +490,7 @@ export default function AuditLogDashboard({ initialFilters, className }: AuditLo
           )}
 
           {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6 pt-4 border-t">
+            <div className="flex flex-wrap items-center justify-between gap-2 mt-6 pt-4 border-t">
               <p className="text-sm text-muted-foreground">
                 Showing {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total.toLocaleString()} entries
               </p>

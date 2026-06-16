@@ -72,21 +72,21 @@ export default function CoordinatorDashboard() {
   return (
     <RoleBasedRoute requiredRole="COORDINATOR">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Coordinator Dashboard</h1>
-            <div className="text-gray-600 mt-2">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-gray-900 sm:text-3xl">Coordinator Dashboard</h1>
+            <div className="text-gray-600 mt-2 hidden sm:block">
               Welcome back, {typeof user === 'object' && user ? user.name : 'User'}. Your current role is: <Badge variant="outline">{currentRole}</Badge>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Button
               variant="outline"
               size="sm"
               onClick={() => refetchSignals()}
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+              <RefreshCw className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Refresh</span>
             </Button>
           </div>
         </div>

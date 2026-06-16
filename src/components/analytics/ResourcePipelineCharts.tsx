@@ -123,11 +123,11 @@ function CommitmentPipelineChart({ data }: { data: ResourceData }) {
         </CardHeader>
         <CardContent>
           {data.byStatus.length === 0 ? (
-            <div className="flex items-center justify-center h-64 text-muted-foreground">
+            <div className="flex items-center justify-center h-48 sm:h-64 text-muted-foreground">
               No commitment data available.
             </div>
           ) : (
-            <div className="h-72">
+            <div className="h-56 sm:h-72">
               <Bar data={chartData} options={options} />
             </div>
           )}
@@ -186,7 +186,7 @@ function ResourceTypeBreakdown({ data }: { data: ResourceData }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-64">
+        <div className="h-48 sm:h-64">
           <Bar data={chartData} options={options} />
         </div>
       </CardContent>

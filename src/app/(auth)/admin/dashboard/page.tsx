@@ -210,22 +210,22 @@ function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Avatar className="h-12 w-12">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center space-x-4 min-w-0">
+          <Avatar className="h-12 w-12 flex-shrink-0">
             <AvatarImage src="" />
             <AvatarFallback className="text-lg">
               {user?.name?.charAt(0) || 'A'}
             </AvatarFallback>
           </Avatar>
-          <div>
-            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground">System Administration &mdash; {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold sm:text-2xl truncate">Admin Dashboard</h1>
+            <p className="text-muted-foreground hidden sm:block">System Administration &mdash; {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </div>
         </div>
-        <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
-          <RefreshCw className={cn('h-4 w-4 mr-2', refreshing && 'animate-spin')} />
-          Refresh
+        <Button variant="outline" className="flex-shrink-0" onClick={handleRefresh} disabled={refreshing}>
+          <RefreshCw className={cn('h-4 w-4 sm:mr-2', refreshing && 'animate-spin')} />
+          <span className="hidden sm:inline">Refresh</span>
         </Button>
       </div>
 

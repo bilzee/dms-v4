@@ -1,0 +1,4 @@
+uid=56_0 RootWebArea "Disaster Response Management System (DRMS)" url="http://localhost:3001/assessor/rapid-assessments/new?type=HEALTH"
+  uid=56_1 link "Skip to main content" url="http://localhost:3001/assessor/rapid-assessments/new?type=HEALTH#main-content"
+    uid=56_2 StaticText "Skip to main content"
+  uid=56_3 StaticText "Initializing..."

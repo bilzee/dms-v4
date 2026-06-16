@@ -54,7 +54,7 @@ export function StickyFormHeader({
       <div ref={sentinelRef} className="h-0" />
       <div
         className={cn(
-          isStuck && 'sticky top-0 z-30'
+          isStuck && 'sticky top-[104px] md:top-0 z-30'
         )}
       >
         {showBanner && (
@@ -100,7 +100,7 @@ export function StickyFormHeader({
                 {extraBadges}
               </CardTitle>
             </div>
-            {!isStuck && <CardDescription>{description}</CardDescription>}
+            {!isStuck && <CardDescription className="hidden sm:block">{description}</CardDescription>}
           </CardHeader>
           {!isStuck && hasInteracted && gapCount > 0 && gapLabels && gapLabels.length > 0 && (
             <CardContent>

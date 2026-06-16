@@ -96,7 +96,7 @@ export function PriorityDistributionChart({ data }: PriorityDistributionChartPro
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
+          <div className="flex items-center justify-center h-48 sm:h-64 text-muted-foreground">
             No priority data available.
           </div>
         </CardContent>

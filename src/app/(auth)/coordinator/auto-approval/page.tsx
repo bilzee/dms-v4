@@ -44,14 +44,14 @@ export default function AutoApprovalManagement() {
               </Link>
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Auto-Approval Management</h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-gray-600 mt-2 hidden sm:block">
               Configure automatic verification settings for rapid response coordination
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4 mr-2" />
-              Advanced Settings
+              <Settings className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Advanced Settings</span>
             </Button>
           </div>
         </div>

@@ -16,7 +16,7 @@ export default function DonorProfilePage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Donor Profile</h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-600 mt-2 hidden sm:block">
                 Manage your organization profile and settings
               </p>
             </div>

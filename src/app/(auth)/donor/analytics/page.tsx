@@ -111,18 +111,18 @@ export default function DonorAnalyticsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Donor Analytics Dashboard</h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2 hidden sm:block">
               Comprehensive analytics and insights across all assigned entities
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm">
-              <Filter className="h-4 w-4 mr-2" />
-              Filter
+              <Filter className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Filter</span>
             </Button>
             <Button variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+              <RefreshCw className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Refresh</span>
             </Button>
             <ExportButton dataType="commitments" size="sm" />
           </div>

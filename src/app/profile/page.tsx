@@ -67,7 +67,7 @@ export default function ProfilePage() {
     <div className="container mx-auto py-8 space-y-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">My Profile</h1>
-        <p className="text-gray-600">Manage your personal information and account settings</p>
+        <p className="text-gray-600 hidden sm:block">Manage your personal information and account settings</p>
       </div>
 
       <div className="max-w-2xl mx-auto">

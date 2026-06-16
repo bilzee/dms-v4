@@ -223,7 +223,7 @@ export function ShelterAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Incident Information</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Select the incident this assessment is related to
               </CardDescription>
             </CardHeader>
@@ -241,7 +241,7 @@ export function ShelterAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Assessment Location</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Select the entity being assessed
               </CardDescription>
             </CardHeader>
@@ -261,7 +261,7 @@ export function ShelterAssessmentForm({
           <Card className="bg-sky-50/50 dark:bg-sky-950/20">
             <CardHeader>
               <CardTitle>Shelter Availability & Safety</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Evaluate current shelter conditions and safety
               </CardDescription>
             </CardHeader>
@@ -376,7 +376,7 @@ export function ShelterAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Current Shelter Types</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Select the types of shelters currently available
               </CardDescription>
             </CardHeader>
@@ -394,7 +394,7 @@ export function ShelterAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Additional Shelter Requirements</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Select the types of shelters urgently needed
               </CardDescription>
             </CardHeader>
@@ -503,7 +503,7 @@ export function ShelterAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Photo Documentation</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Add photos of shelter conditions, facilities, and affected areas
               </CardDescription>
             </CardHeader>
@@ -521,7 +521,7 @@ export function ShelterAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Additional Details</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Any additional shelter-related information
               </CardDescription>
             </CardHeader>

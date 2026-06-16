@@ -149,7 +149,7 @@ export function CommitmentFromPlanForm({ donorId, responseId, onSuccess, onCance
         </Button>
         <div>
           <h1 className="text-2xl font-bold">Create Commitment from Plan</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground hidden sm:block">
             Commit resources for the unfulfilled items of this response plan
           </p>
         </div>

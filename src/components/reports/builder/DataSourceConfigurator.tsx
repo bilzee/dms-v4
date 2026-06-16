@@ -237,7 +237,7 @@ export function DataSourceConfigurator({
           {getDataSourceIcon()}
           <div>
             <h2 className="text-lg font-semibold">Data Source: {getDataSourceLabel()}</h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground hidden sm:block">
               Configure filters and aggregations for your report
             </p>
           </div>

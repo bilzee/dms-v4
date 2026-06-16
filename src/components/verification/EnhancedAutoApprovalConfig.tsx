@@ -411,7 +411,7 @@ export function EnhancedAutoApprovalConfig({
           {!compactMode && (
             <>
               <h2 className="text-2xl font-bold tracking-tight">Auto-Approval Configuration</h2>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground hidden sm:block">
                 Advanced management with filtering, validation, and conflict detection
               </p>
             </>
@@ -424,8 +424,8 @@ export function EnhancedAutoApprovalConfig({
             onClick={() => setShowFilterDialog(true)}
             size="sm"
           >
-            <Filter className="h-4 w-4 mr-2" />
-            Filters
+            <Filter className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Filters</span>
           </Button>
           
           <Button
@@ -434,8 +434,8 @@ export function EnhancedAutoApprovalConfig({
             disabled={isLoading}
             size="sm"
           >
-            <RefreshCw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
-            Refresh
+            <RefreshCw className={cn('h-4 w-4 sm:mr-2', isLoading && 'animate-spin')} />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>
@@ -514,7 +514,7 @@ export function EnhancedAutoApprovalConfig({
       {selectedEntities.size > 0 && (
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">
                   {selectedEntities.size} entities selected

@@ -35,7 +35,7 @@ export default function AdminDonorRegistrationPage() {
               </Link>
             </div>
             <h1 className="text-3xl font-bold tracking-tight">Register New Donor</h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground hidden sm:block">
               Create a new donor organization and associated user account
             </p>
           </div>

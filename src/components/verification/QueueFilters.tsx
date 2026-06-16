@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Calendar, Filter, X, Save, RotateCcw } from '@/lib/icons';
+import { Calendar, Filter, X, Save, RotateCcw, ChevronDown } from '@/lib/icons';
 import { VerificationFilters } from '@/stores/verification.store';
 import { cn } from '@/lib/utils';
 import { getDotColor } from '@/components/shared/StatusBadge';
@@ -166,16 +166,25 @@ export function QueueFilters({
     }
   };
 
+  const [mobileExpanded, setMobileExpanded] = useState(false);
+
   if (!visible) return null;
 
   return (
     <Card className="mb-6">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Queue Filters
-          </CardTitle>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <button
+            type="button"
+            className="flex items-center gap-2"
+            onClick={() => setMobileExpanded(v => !v)}
+          >
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Queue Filters
+            </CardTitle>
+            <ChevronDown className={cn("h-5 w-5 text-muted-foreground transition-transform md:hidden", !mobileExpanded && "-rotate-90")} />
+          </button>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={onClear}>
               <RotateCcw className="h-4 w-4 mr-1" />
@@ -188,7 +197,7 @@ export function QueueFilters({
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-6">
+      <CardContent className={cn('space-y-6', !mobileExpanded && 'hidden md:block')}>
         {/* Quick Presets */}
         <div>
           <Label className="text-sm font-medium">Quick Filters</Label>

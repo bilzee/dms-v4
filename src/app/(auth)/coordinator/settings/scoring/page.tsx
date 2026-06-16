@@ -209,21 +209,21 @@ export default function ScoringConfigPage() {
             <Trophy className="h-6 w-6 text-yellow-500" />
             <h1 className="text-2xl font-bold">Scoring Configuration</h1>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             Configure how donor ranking scores are calculated across the system
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleResetDefaults}>
-            <RotateCcw className="h-4 w-4 mr-1" />
-            Defaults
+            <RotateCcw className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Defaults</span>
           </Button>
           <Button variant="outline" size="sm" onClick={handleReset} disabled={!hasChanges}>
             Discard
           </Button>
           <Button size="sm" onClick={handleSave} disabled={!hasChanges || !weightsValid || isSaving}>
-            <Save className="h-4 w-4 mr-1" />
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            <Save className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">{isSaving ? 'Saving...' : 'Save Changes'}</span>
           </Button>
         </div>
       </div>

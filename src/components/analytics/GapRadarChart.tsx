@@ -83,7 +83,7 @@ export function GapRadarChart({ data }: { data: GapRadarData }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
+          <div className="flex items-center justify-center h-48 sm:h-64 text-muted-foreground">
             No gap data available. Top 5 entities shown when data exists.
           </div>
         </CardContent>
@@ -100,7 +100,7 @@ export function GapRadarChart({ data }: { data: GapRadarData }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-80">
+        <div className="h-64 sm:h-80">
           <Radar data={chartData} options={options} />
         </div>
         <p className="text-xs text-muted-foreground mt-2">

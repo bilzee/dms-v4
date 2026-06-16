@@ -186,7 +186,7 @@ export function DonorProfile({ donorId }: DonorProfileProps) {
           </Avatar>
           <div>
             <h2 className="text-2xl font-bold" data-testid="profile-name">{donor?.name}</h2>
-            <p className="text-gray-600" data-testid="profile-type">{donor?.type}</p>
+            <p className="text-gray-600 hidden sm:block" data-testid="profile-type">{donor?.type}</p>
           </div>
         </div>
         

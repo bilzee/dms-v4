@@ -126,7 +126,7 @@ function DeliveryConfirmationPageContent() {
           <Badge variant="outline">Responder</Badge>
         </div>
         
-        <p className="text-gray-600 mt-2">
+        <p className="text-gray-600 mt-2 hidden sm:block">
           Document the actual delivery of planned aid items with location verification and photos.
         </p>
       </div>

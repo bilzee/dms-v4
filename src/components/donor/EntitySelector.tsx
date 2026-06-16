@@ -138,7 +138,7 @@ export function EntitySelector({ onEntitySelect, showStats = true }: EntitySelec
               <div className="flex items-center justify-between" data-testid="entity-selector-header">
                 <div>
                   <h2 className="text-2xl font-bold" data-testid="entity-selector-title">Assigned Entities</h2>
-                  <p className="text-gray-600" data-testid="entity-selector-description">
+                  <p className="text-gray-600 hidden sm:block" data-testid="entity-selector-description">
                     Entities where you can provide support and make commitments
                   </p>
                 </div>
@@ -148,8 +148,8 @@ export function EntitySelector({ onEntitySelect, showStats = true }: EntitySelec
                   onClick={retry}
                   disabled={isLoading}
                 >
-                  <RefreshCw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
-                  Refresh
+                  <RefreshCw className={cn('h-4 w-4 sm:mr-2', isLoading && 'animate-spin')} />
+                  <span className="hidden sm:inline">Refresh</span>
                 </Button>
               </div>
 

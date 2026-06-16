@@ -266,7 +266,7 @@ export function DonorPerformanceDashboard({
           <Skeleton className="h-4 w-64" />
         </CardHeader>
         <CardContent className="space-y-4">
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-48 sm:h-64 w-full" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-20 w-full" />
@@ -308,7 +308,7 @@ export function DonorPerformanceDashboard({
           <h2 className="text-2xl font-bold text-foreground">
             {donorName || 'Performance Dashboard'}
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             Member since {performanceData?.donor?.memberSince ? new Date(performanceData.donor.memberSince).toLocaleDateString() : 'N/A'}
           </p>
         </div>
@@ -343,8 +343,8 @@ export function DonorPerformanceDashboard({
             onClick={() => refetch()}
             disabled={isFetching}
           >
-            <RefreshCw className={cn("w-4 h-4 mr-2", isFetching && "animate-spin")} />
-            Refresh
+            <RefreshCw className={cn("w-4 h-4 sm:mr-2", isFetching && "animate-spin")} />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>
@@ -447,7 +447,7 @@ export function DonorPerformanceDashboard({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-64 sm:h-80">
               {chartType === 'line' && <Line data={chartData} options={chartOptions} />}
               {chartType === 'bar' && <Bar data={chartData} options={barChartOptions} />}
               {chartType === 'radar' && <Radar data={chartData} options={radarChartOptions} />}

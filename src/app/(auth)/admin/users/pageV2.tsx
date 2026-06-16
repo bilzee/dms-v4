@@ -43,6 +43,7 @@ const userColumns: ColumnDef<User>[] = [
   {
     key: 'email',
     header: 'Email',
+    hideOnMobile: true,
     render: (user) => <span className="text-muted-foreground">{user.email}</span>,
   },
   {
@@ -78,6 +79,7 @@ const userColumns: ColumnDef<User>[] = [
   {
     key: 'createdAt',
     header: 'Joined',
+    hideOnMobile: true,
     render: (user) => new Date(user.createdAt).toLocaleDateString(),
   },
 ]

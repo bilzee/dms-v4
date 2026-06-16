@@ -179,7 +179,7 @@ export function TemplateSelector({
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h2 className="text-xl font-semibold">Select Report Template</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground hidden sm:block">
             Choose a template to start building your custom report
           </p>
         </div>

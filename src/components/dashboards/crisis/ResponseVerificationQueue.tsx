@@ -27,6 +27,8 @@ import {
   HeartHandshake,
   Package
 } from '@/lib/icons';
+import { StatCard } from '@/components/shared/StatCard';
+import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { DataCardList, type ExpandedCardProps } from '@/components/shared/DataCardList';
 import { type SeverityLevel } from '@/lib/utils/status-colors';
 import type { ResponseVerificationQueueItem } from '@/types/response-verification';
@@ -172,27 +174,16 @@ export function ResponseVerificationQueue({
       {/* Metrics summary - outside DataCardList as a sibling above */}
       {filteredResponses.length > 0 && (
         <div data-testid="response-metrics-summary">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div data-testid="total-pending-responses" className="text-center p-2 bg-yellow-50 rounded">
-              <div className="text-lg font-bold">{queueData?.statistics?.submitted || 0}</div>
-              <div className="text-sm text-muted-foreground">Pending</div>
-            </div>
-            <div data-testid="total-verified-responses" className="text-center p-2 bg-green-50 rounded">
-              <div className="text-lg font-bold">{queueData?.statistics?.verified || 0}</div>
-              <div className="text-sm text-muted-foreground">Verified</div>
-            </div>
-            <div data-testid="total-rejected-responses" className="text-center p-2 bg-red-50 rounded">
-              <div className="text-lg font-bold">{queueData?.statistics?.rejected || 0}</div>
-              <div className="text-sm text-muted-foreground">Rejected</div>
-            </div>
-            <div data-testid="verification-rate" className="text-center p-2 bg-blue-50 rounded">
-              <div className="text-lg font-bold">{queueData?.statistics?.total && queueData.statistics.total > 0 ? Math.round((queueData.statistics.verified / queueData.statistics.total) * 100) : 0}%</div>
-              <div className="text-sm text-muted-foreground">Rate</div>
-            </div>
-          </div>
-          <div data-testid="average-processing-time" className="text-center p-2 bg-muted rounded mb-4">
-            <div className="text-lg font-bold">{(queueData?.statistics as any)?.avgProcessingTime ? `${(queueData?.statistics as any)?.avgProcessingTime}h` : 'N/A'}</div>
-            <div className="text-sm text-muted-foreground">Avg Processing Time</div>
+          <StatCardGrid columns={4} className="mb-4">
+              <StatCard label="Pending" value={queueData?.statistics?.submitted || 0} severity="warning" variant="compact" icon={Clock} />
+              <StatCard label="Verified" value={queueData?.statistics?.verified || 0} severity="success" variant="compact" icon={CheckCircle} />
+              <StatCard label="Rejected" value={queueData?.statistics?.rejected || 0} severity="critical" variant="compact" icon={XCircle} />
+              <StatCard label="Rate" value={`${queueData?.statistics?.total && queueData.statistics.total > 0 ? Math.round((queueData.statistics.verified / queueData.statistics.total) * 100) : 0}%`} severity="info" variant="compact" />
+          </StatCardGrid>
+          <div data-testid="average-processing-time" className="mb-4">
+            <StatCardGrid columns={1}>
+              <StatCard label="Avg Processing Time" value={(queueData?.statistics as any)?.avgProcessingTime ? `${(queueData?.statistics as any)?.avgProcessingTime}h` : 'N/A'} severity="neutral" variant="compact" />
+            </StatCardGrid>
           </div>
           <div data-testid="response-breakdown-by-type" className="mb-4">
             <h4 className="font-medium mb-2">Breakdown by Type</h4>
@@ -429,7 +420,7 @@ export function ResponseVerificationQueue({
             </div>
 
             {response.verificationStatus === 'SUBMITTED' && (
-              <div className="flex items-center gap-2 pt-3 border-t border-border">
+              <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border">
                 <Button
                   size="sm"
                   onClick={(e) => {

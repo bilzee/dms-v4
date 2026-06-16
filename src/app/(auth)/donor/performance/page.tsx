@@ -109,7 +109,7 @@ export default function PerformancePage() {
                 <User className="w-8 h-8 text-blue-500" />
                 Performance Dashboard
               </h1>
-              <p className="text-muted-foreground mt-2">
+              <p className="text-muted-foreground mt-2 hidden sm:block">
                 Track your donation performance, achievements, and ranking over time.
               </p>
             </div>

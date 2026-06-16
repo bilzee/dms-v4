@@ -23,6 +23,7 @@ import {
   AlertTriangle
 } from '@/lib/icons'
 import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
 
 interface AssessmentViewerProps {
@@ -199,12 +200,12 @@ export function AssessmentViewer({ entityId }: AssessmentViewerProps) {
         </CardHeader>
         <CardContent>
           {/* Summary Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <StatCardGrid columns={4} className="mb-6">
             <StatCard label="Total Assessments" value={summary.totalAssessments} severity="info" variant="centered" />
             <StatCard label="Verified" value={summary.verifiedAssessments} severity="success" variant="centered" />
             <StatCard label="Categories" value={summary.categories.length} severity="info" variant="centered" />
             <StatCard label="Total Records" value={pagination.total} severity="neutral" variant="centered" />
-          </div>
+          </StatCardGrid>
 
           {/* Filters */}
           <div className="flex flex-col md:flex-row gap-4">

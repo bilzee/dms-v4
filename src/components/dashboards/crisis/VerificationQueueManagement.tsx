@@ -129,7 +129,7 @@ export function VerificationQueueManagement({ className }: VerificationQueueMana
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Verification Queue Management</h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             Review and verify assessments and delivery responses
           </p>
         </div>
@@ -143,9 +143,9 @@ export function VerificationQueueManagement({ className }: VerificationQueueMana
             onClick={handleRefreshAll}
             disabled={assessmentsLoading}
           >
-            <RefreshCw className={cn('h-4 w-4 mr-2',
+            <RefreshCw className={cn('h-4 w-4 sm:mr-2',
               assessmentsLoading && 'animate-spin')} />
-            Refresh
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>
@@ -208,7 +208,7 @@ export function VerificationQueueManagement({ className }: VerificationQueueMana
               className="flex items-center gap-2"
             >
               <Filter className="h-4 w-4" />
-              Filters
+              <span className="hidden sm:inline">Filters</span>
             </Button>
           </div>
         </div>

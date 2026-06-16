@@ -144,15 +144,14 @@ export const RoleSwitcher = ({ className }: RoleSwitcherProps) => {
           <Button
             variant="outline"
             size="sm"
-            className={`gap-2 ${className}`}
+            className={`gap-1 sm:gap-2 px-2 sm:px-3 ${className}`}
             disabled={isSwitching}
           >
-            <User className="h-4 w-4" />
-            <span className="hidden sm:inline">{currentRoleDisplay}</span>
-            <Badge className={currentRoleColor} variant="secondary">
+            <User className="h-4 w-4 flex-shrink-0" />
+            <Badge className={`${currentRoleColor} hidden sm:inline-flex`} variant="secondary">
               {currentRoleDisplay}
             </Badge>
-            <ArrowLeftRight className="h-4 w-4" />
+            <ArrowLeftRight className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
           </Button>
         </DropdownMenuTrigger>
         

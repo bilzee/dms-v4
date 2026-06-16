@@ -68,6 +68,7 @@ const donorColumns: ColumnDef<Donor>[] = [
   {
     key: 'contact',
     header: 'Contact',
+    hideOnMobile: true,
     render: (donor) => (
       <div className="space-y-1">
         {donor.contactEmail && (
@@ -107,6 +108,7 @@ const donorColumns: ColumnDef<Donor>[] = [
   {
     key: 'activity',
     header: 'Activity',
+    hideOnMobile: true,
     render: (donor) => (
       <div className="text-sm">
         <p>{donor._count.commitments} commitments</p>
@@ -178,7 +180,7 @@ export default function DonorManagementPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Donor Management</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             Manage donor organizations, view performance metrics, and monitor contributions
           </p>
         </div>
@@ -186,8 +188,8 @@ export default function DonorManagementPage() {
         <div className="flex items-center gap-3">
           <Link href="/admin/donors/register">
             <Button>
-              <Building2 className="h-4 w-4 mr-2" />
-              Register New Donor
+              <Building2 className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Register New Donor</span>
             </Button>
           </Link>
           <ExportButton dataType="entities" size="sm" />

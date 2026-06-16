@@ -148,8 +148,8 @@ export default function DonorDetailsPage() {
           <div className="flex items-center gap-3">
             <Link href={`/admin/donors/${donor.id}/edit`}>
               <Button>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Donor
+                <Edit className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Edit Donor</span>
               </Button>
             </Link>
           </div>

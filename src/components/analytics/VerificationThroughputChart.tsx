@@ -80,7 +80,7 @@ function TurnaroundTrendChart({ data }: TurnaroundTrendChartProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-72">
+        <div className="h-56 sm:h-72">
           <Line data={chartData} options={options} />
         </div>
         <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
@@ -144,7 +144,7 @@ function TurnaroundDistributionChart({ data }: { data: ThroughputData }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-72">
+        <div className="h-56 sm:h-72">
           <Bar data={chartData} options={options} />
         </div>
         <p className="text-xs text-muted-foreground mt-2">

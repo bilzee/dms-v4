@@ -94,7 +94,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-3xl font-bold">Home</h1>
-            <p className="text-gray-600">Welcome back, {user.name}</p>
+            <p className="text-gray-600 hidden sm:block">Welcome back, {user.name}</p>
           </div>
         </div>
         
@@ -104,14 +104,14 @@ export default function DashboardPage() {
             <>
               <Link href="/coordinator/situation-dashboard">
                 <Button size="sm" className="bg-primary hover:bg-primary/90">
-                  <Monitor className="h-4 w-4 mr-2" />
-                  Situation Dashboard
+                  <Monitor className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Situation Dashboard</span>
                 </Button>
               </Link>
               <Link href="/coordinator/incidents?action=create">
                 <Button size="sm" variant="outline">
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  New Incident
+                  <PlusCircle className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">New Incident</span>
                 </Button>
               </Link>
             </>
@@ -120,14 +120,14 @@ export default function DashboardPage() {
             <>
               <Link href="/assessor/preliminary-assessment">
                 <Button size="sm" className="bg-primary hover:bg-primary/90">
-                  <ClipboardList className="h-4 w-4 mr-2" />
-                  New Assessment
+                  <ClipboardList className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">New Assessment</span>
                 </Button>
               </Link>
               <Link href="/rapid-assessments">
                 <Button size="sm" variant="outline">
-                  <FileText className="h-4 w-4 mr-2" />
-                  View Assessments
+                  <FileText className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">View Assessments</span>
                 </Button>
               </Link>
             </>
@@ -136,14 +136,14 @@ export default function DashboardPage() {
             <>
               <Link href="/responder/planning/new">
                 <Button size="sm" className="bg-primary hover:bg-primary/90">
-                  <Package className="h-4 w-4 mr-2" />
-                  Plan Response
+                  <Package className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Plan Response</span>
                 </Button>
               </Link>
               <Link href="/responder/responses">
                 <Button size="sm" variant="outline">
-                  <Package className="h-4 w-4 mr-2" />
-                  Active Responses
+                  <Package className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Active Responses</span>
                 </Button>
               </Link>
             </>

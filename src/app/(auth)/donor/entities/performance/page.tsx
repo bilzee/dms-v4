@@ -283,7 +283,7 @@ export default function EntityPerformancePage() {
             </Button>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Entity Performance</h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-600 mt-2 hidden sm:block">
                 Track impact metrics and performance across all assigned entities
               </p>
             </div>
@@ -296,7 +296,7 @@ export default function EntityPerformancePage() {
               className="flex items-center gap-2"
             >
               <RefreshCw className="h-4 w-4" />
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
             </Button>
             <Button
               variant="outline"
@@ -304,7 +304,7 @@ export default function EntityPerformancePage() {
               className="flex items-center gap-2"
             >
               <Download className="h-4 w-4" />
-              Export
+              <span className="hidden sm:inline">Export</span>
             </Button>
           </div>
         </div>

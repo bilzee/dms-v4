@@ -16,7 +16,7 @@ export default function DonorEntitiesPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Assigned Entities</h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-600 mt-2 hidden sm:block">
                 View and manage entities assigned to your organization
               </p>
             </div>

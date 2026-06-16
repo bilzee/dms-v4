@@ -938,7 +938,7 @@ export function DonorCommitmentImportForm({
             </div>
           )}
 
-          <DialogFooter className="bg-muted dark:bg-gray-800 -mx-6 -mb-6 px-6 py-4 mt-6 flex justify-between">
+          <DialogFooter className="bg-muted dark:bg-gray-800 -mx-6 -mb-6 px-6 py-4 mt-6 flex flex-wrap justify-between gap-2">
             <Button
               onClick={handleConfirmImport}
               disabled={importMutation.isPending}

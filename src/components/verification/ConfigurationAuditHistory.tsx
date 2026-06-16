@@ -362,7 +362,7 @@ export function ConfigurationAuditHistory({
             <History className="h-6 w-6" />
             Configuration Audit History
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             {entityId ? 'Entity-specific configuration changes' : 'All configuration changes and audit trail'}
           </p>
         </div>
@@ -373,8 +373,8 @@ export function ConfigurationAuditHistory({
             onClick={() => setShowFilters(!showFilters)}
             size="sm"
           >
-            <Filter className="h-4 w-4 mr-2" />
-            Filters
+            <Filter className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Filters</span>
             {hasActiveFilters() && <Badge variant="destructive" className="ml-2">!</Badge>}
           </Button>
           
@@ -383,8 +383,8 @@ export function ConfigurationAuditHistory({
             onClick={() => setShowExportDialog(true)}
             size="sm"
           >
-            <Download className="h-4 w-4 mr-2" />
-            Export
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Export</span>
           </Button>
           
           <Button
@@ -393,8 +393,8 @@ export function ConfigurationAuditHistory({
             disabled={isLoading}
             size="sm"
           >
-            <RefreshCw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
-            Refresh
+            <RefreshCw className={cn('h-4 w-4 sm:mr-2', isLoading && 'animate-spin')} />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>

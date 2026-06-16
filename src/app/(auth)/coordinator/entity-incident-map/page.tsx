@@ -148,7 +148,7 @@ export default function EntityIncidentMapPage() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold">Entity-Incident Relationship Map</h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 hidden sm:block">
             Interactive visualization showing entity-incident relationships and assessment data
           </p>
         </div>
@@ -160,7 +160,7 @@ export default function EntityIncidentMapPage() {
       {/* Incident Selection and Filters */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Network className="h-5 w-5" />

@@ -155,7 +155,7 @@ export default function EditRejectedResponsePage() {
         
         <div>
           <h1 className="text-2xl font-bold">Edit Rejected Response</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             Update response details and resubmit as delivery for coordinator verification
           </p>
         </div>

@@ -147,7 +147,7 @@ export default function PreliminaryAssessmentDetailsPage() {
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold">Preliminary Assessment Details</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             Initial impact assessment for {assessment.reportingLGA}, {assessment.reportingWard}
           </p>
         </div>

@@ -25,6 +25,7 @@ import {
   Clock
 } from '@/lib/icons'
 import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton'
 
 import { EntityInsightsHeader } from '@/components/donor/EntityInsightsHeader'
@@ -162,7 +163,7 @@ export default function EntityInsightsPage() {
                 {demographics.name}
                 <Badge variant="outline">{demographics.type}</Badge>
               </h1>
-              <p className="text-gray-600 mt-1 flex items-center gap-2">
+              <p className="text-gray-600 mt-1 flex items-center gap-2 hidden sm:block">
                 <MapPin className="h-4 w-4" />
                 {demographics.location || 'Location not specified'}
                 {demographics.demographics?.lga && (
@@ -259,7 +260,7 @@ export default function EntityInsightsPage() {
               </Card>
 
               {/* Quick Stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <StatCardGrid columns={2}>
                 {demographics.demographics?.population ? (
                   <StatCard
                     label="Total Population"
@@ -305,7 +306,7 @@ export default function EntityInsightsPage() {
                     icon={Clock}
                   />
                 )}
-              </div>
+              </StatCardGrid>
             </div>
 
             {/* Critical Gaps Alert */}

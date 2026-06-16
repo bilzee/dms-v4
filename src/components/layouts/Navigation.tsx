@@ -465,26 +465,32 @@ export const Navigation = () => {
   // Memoize navigationItems to prevent infinite re-renders
   const { roleItems, utilityItems: footerItems } = useMemo(() => getNavigationItems(currentRole), [currentRole]);
   
-  // Get all parent items (items with children) for default expansion
-  const getParentItems = (items: NavItem[]): string[] => {
-    const parentHrefs: string[] = [];
+  // Determine which parent group contains the current path
+  const getActiveParentItems = (items: NavItem[], path: string): string[] => {
+    const activeHrefs: string[] = [];
     items.forEach(item => {
       if (item.children && item.children.length > 0) {
-        parentHrefs.push(item.href);
+        const childMatches = item.children.some(child => {
+          const childHref = child.href.split('?')[0];
+          return path === childHref || path.startsWith(childHref + '/');
+        });
+        const parentMatches = item.href !== '#' && (path === item.href || path.startsWith(item.href + '/'));
+        if (childMatches || parentMatches) {
+          activeHrefs.push(item.href);
+        }
       }
     });
-    return parentHrefs;
+    return activeHrefs;
   };
-  
-  // Memoize parent items calculation
-  const parentItems = useMemo(() => getParentItems(roleItems), [roleItems]);
-  
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set(parentItems));
 
-  // Ensure expanded items stay expanded when navigation changes
+  const activeParentItems = useMemo(() => getActiveParentItems(roleItems, pathname), [roleItems, pathname]);
+
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set(activeParentItems));
+
+  // Update expanded items when path changes — auto-expand active group, collapse others
   useEffect(() => {
-    setExpandedItems(new Set(parentItems));
-  }, [parentItems]);
+    setExpandedItems(new Set(activeParentItems));
+  }, [activeParentItems]);
 
   const toggleExpanded = (href: string) => {
     const newExpanded = new Set(expandedItems);

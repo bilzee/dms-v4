@@ -196,7 +196,7 @@ export default function MapSettingsPage() {
               <MapPin className="h-8 w-8 text-blue-600" />
               Map Configuration
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2 hidden sm:block">
               Configure the default map center and zoom level used across all maps in the system
             </p>
           </div>
@@ -207,12 +207,12 @@ export default function MapSettingsPage() {
               </Badge>
             )}
             <Button variant="outline" onClick={handleReset} disabled={saving}>
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Defaults
+              <RotateCcw className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Defaults</span>
             </Button>
             <Button onClick={handleSave} disabled={saving || !dirty}>
-              <Save className="h-4 w-4 mr-2" />
-              {saving ? 'Saving...' : 'Save'}
+              <Save className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">{saving ? 'Saving...' : 'Save'}</span>
             </Button>
           </div>
         </div>

@@ -87,7 +87,7 @@ export default function VerificationMetricsPage() {
             <BarChart3 className="h-8 w-8" />
             Verification Metrics
           </h1>
-          <p className="text-muted-foreground">Assessment verification performance and statistics</p>
+          <p className="text-muted-foreground hidden sm:block">Assessment verification performance and statistics</p>
         </div>
         <ExportButton dataType="assessments" size="sm" />
       </div>

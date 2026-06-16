@@ -156,7 +156,7 @@ export default function ReportBuilderPage() {
           <h1 className="text-2xl font-bold">
             {configId ? 'Edit Report Configuration' : 'Create Report Configuration'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 hidden sm:block">
             {configId ? 'Modify an existing report configuration' : 'Configure a new report'}
           </p>
         </div>

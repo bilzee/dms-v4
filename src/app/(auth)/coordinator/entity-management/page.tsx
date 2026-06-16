@@ -32,8 +32,10 @@ import {
   ArrowLeft,
   RefreshCw,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  ChevronDown
 } from '@/lib/icons';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 import { apiGet, apiPost, apiPut, apiDelete, extractArray } from '@/lib/api';
@@ -87,6 +89,7 @@ export default function EntityManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [activeFilter, setActiveFilter] = useState<string>('all');
+  const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingEntity, setEditingEntity] = useState<Entity | null>(null);
 
@@ -186,7 +189,7 @@ export default function EntityManagementPage() {
               </Badge>
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Entity Management</h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-gray-600 mt-2 hidden sm:block">
               Create and manage entities within the crisis management system
             </p>
           </div>
@@ -197,14 +200,14 @@ export default function EntityManagementPage() {
               onClick={() => refetch()}
               disabled={isLoading}
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
+              <RefreshCw className={`h-4 w-4 sm:mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
             </Button>
             <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
               <DialogTrigger asChild>
                 <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Entity
+                  <Plus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Create Entity</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl">
@@ -236,12 +239,19 @@ export default function EntityManagementPage() {
         {/* Filters */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Filter className="h-5 w-5" />
-              Filters
-            </CardTitle>
+            <button
+              type="button"
+              className="flex w-full items-center justify-between"
+              onClick={() => setFiltersExpanded(v => !v)}
+            >
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Filter className="h-5 w-5" />
+                Filters
+              </CardTitle>
+              <ChevronDown className={cn("h-5 w-5 text-muted-foreground transition-transform md:hidden", !filtersExpanded && "-rotate-90")} />
+            </button>
           </CardHeader>
-          <CardContent>
+          <CardContent className={cn(!filtersExpanded && 'hidden md:block')}>
             <div className="grid gap-4 md:grid-cols-4">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />

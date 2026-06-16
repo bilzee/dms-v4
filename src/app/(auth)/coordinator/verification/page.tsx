@@ -92,8 +92,8 @@ export default function VerificationPage() {
       <div className="mb-4">
         <Link href="/verification/metrics">
           <Button variant="outline" size="sm">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            View Verification Metrics
+            <BarChart3 className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">View Verification Metrics</span>
           </Button>
         </Link>
       </div>

@@ -177,7 +177,7 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
             <BarChart3 className="h-6 w-6" />
             Configuration Analytics & Reporting
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             Auto-approval effectiveness analysis and optimization insights
           </p>
         </div>
@@ -195,8 +195,8 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
           </Select>
           
           <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export Report
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Export Report</span>
           </Button>
           
           <Button
@@ -205,8 +205,8 @@ export function ConfigurationAnalytics({ className, timeRange: defaultTimeRange 
             disabled={isLoading}
             size="sm"
           >
-            <RefreshCw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
-            Refresh
+            <RefreshCw className={cn('h-4 w-4 sm:mr-2', isLoading && 'animate-spin')} />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>

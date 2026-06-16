@@ -42,7 +42,7 @@ function FormActionBar({
   return (
     <div
       className={cn(
-        'flex gap-3 pt-6',
+        'flex flex-wrap gap-3 pt-6',
         alignClasses[align],
         variant === 'bordered' && 'border-t',
         className

@@ -197,7 +197,7 @@ export function ResponsePlanningDashboard({
             <Badge variant="secondary">{filteredResponses.length}</Badge>
             <Button onClick={onCreateResponse} className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
-              Create New Plan
+              <span className="hidden sm:inline">Create New Plan</span>
             </Button>
           </div>
         }

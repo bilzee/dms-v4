@@ -19,10 +19,11 @@ import { toast } from 'sonner'
 
 const roleColumns: ColumnDef<Role>[] = [
   { key: 'name', header: 'Role', render: (role) => <span className="font-medium">{role.name}</span> },
-  { key: 'description', header: 'Description' },
+  { key: 'description', header: 'Description', hideOnMobile: true },
   {
     key: 'permissions',
     header: 'Permissions',
+    hideOnMobile: true,
     render: (role) => (
       <div className="flex flex-wrap gap-1">
         {role.permissions.slice(0, 3).map((rp) => (
@@ -46,6 +47,7 @@ const roleColumns: ColumnDef<Role>[] = [
   {
     key: 'createdAt',
     header: 'Created',
+    hideOnMobile: true,
     render: (role) => new Date(role.createdAt).toLocaleDateString(),
   },
 ]
@@ -155,14 +157,14 @@ export default function RolesPage() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold">Role Management</h1>
-              <p className="text-gray-600">Manage system roles and permissions</p>
+              <p className="text-gray-600 hidden sm:block">Manage system roles and permissions</p>
             </div>
             
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Role
+                  <Plus className="sm:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Create Role</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

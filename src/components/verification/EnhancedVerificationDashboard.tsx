@@ -79,7 +79,7 @@ export function EnhancedVerificationDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Verification Management</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             Review and approve assessments and response submissions from field teams
           </p>
         </div>
@@ -92,8 +92,8 @@ export function EnhancedVerificationDashboard() {
           }}
           disabled={metricsLoading || responseMetricsLoading}
         >
-          <RefreshCw className={cn('h-4 w-4 mr-2', (metricsLoading || responseMetricsLoading) && 'animate-spin')} />
-          Refresh
+          <RefreshCw className={cn('h-4 w-4 sm:mr-2', (metricsLoading || responseMetricsLoading) && 'animate-spin')} />
+          <span className="hidden sm:inline">Refresh</span>
         </Button>
       </div>
 

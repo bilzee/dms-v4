@@ -53,7 +53,7 @@ export default function SeverityThresholdsPage() {
             <Settings className="h-6 w-6 text-blue-600" />
             <h1 className="text-2xl font-bold text-gray-900">Severity Threshold Management</h1>
           </div>
-          <p className="text-gray-600">
+          <p className="text-gray-600 hidden sm:block">
             Configure the severity thresholds for impact badges in the Situation Dashboard
           </p>
         </div>

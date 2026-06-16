@@ -43,8 +43,10 @@ import {
   Filter,
   RefreshCw,
   FileText,
-  Link
+  Link,
+  ChevronDown
 } from '@/lib/icons'
+import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 
 const incidentColumns: ColumnDef<any>[] = [
@@ -82,6 +84,7 @@ const incidentColumns: ColumnDef<any>[] = [
   {
     key: 'populationImpact',
     header: 'Population Impact',
+    hideOnMobile: true,
     render: (incident) => {
       const impact = incident.populationImpact || {}
       const totalPopulation = impact.totalPopulation || 0
@@ -106,6 +109,7 @@ const incidentColumns: ColumnDef<any>[] = [
   {
     key: 'assessments',
     header: 'Linked Assessments',
+    hideOnMobile: true,
     render: (incident) => (
       <div className="space-y-1">
         <div className="flex items-center gap-1">
@@ -174,6 +178,7 @@ interface IncidentManagementState {
   availablePreliminaryAssessments: any[]
   linkedPreliminaryAssessments: any[]
   selectedAssessmentIds: string[]
+  filtersExpanded?: boolean
 }
 
 
@@ -261,7 +266,8 @@ export function IncidentManagement({
     incidentToLink: null,
     availablePreliminaryAssessments: [],
     linkedPreliminaryAssessments: [],
-    selectedAssessmentIds: []
+    selectedAssessmentIds: [],
+    filtersExpanded: true
   })
 
   // Real-time updates interval is handled by TanStack Query refetchInterval
@@ -482,7 +488,7 @@ export function IncidentManagement({
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold">Incident Management</h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             Manage and monitor disaster incidents
             {enableRealTimeUpdates && " • Real-time updates enabled"}
           </p>
@@ -498,7 +504,7 @@ export function IncidentManagement({
                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
               >
                 <Plus className="h-4 w-4" />
-                New Incident
+                <span className="hidden sm:inline">New Incident</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-card shadow-2xl border border-border backdrop-blur-sm"
@@ -528,12 +534,19 @@ export function IncidentManagement({
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between"
+            onClick={() => setState(prev => ({ ...prev, filtersExpanded: prev.filtersExpanded === false ? true : false }))}
+          >
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filters
+            </CardTitle>
+            <ChevronDown className={cn("h-5 w-5 text-muted-foreground transition-transform md:hidden", state.filtersExpanded === false && "-rotate-90")} />
+          </button>
         </CardHeader>
-        <CardContent>
+        <CardContent className={cn(state.filtersExpanded === false && 'hidden md:block')}>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div className="space-y-2">

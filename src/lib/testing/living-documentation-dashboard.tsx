@@ -19,11 +19,11 @@ import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { 
-  AlertTriangle, 
-  CheckCircle, 
-  XCircle, 
-  TrendingUp, 
+import {
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  TrendingUp,
   TrendingDown,
   Activity,
   Target,
@@ -35,6 +35,8 @@ import {
   PlayCircle,
   PauseCircle
 } from '@/lib/icons'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 
 // ==================== Types ====================
 
@@ -169,7 +171,7 @@ export function LivingDocumentationDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Living Test Dashboard</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             Real-time view of what actually works vs what tests claim works
           </p>
         </div>
@@ -216,61 +218,12 @@ export function LivingDocumentationDashboard() {
       )}
 
       {/* Key Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Manual Fixes</CardTitle>
-            <Bug className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalFixes}</div>
-            <p className="text-xs text-muted-foreground">
-              Fixes captured this session
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tests Generated</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.testsGenerated}</div>
-            <p className="text-xs text-muted-foreground">
-              Auto-generated from fixes
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Coverage Gap</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.coverageGap}%</div>
-            <Progress value={stats.coverageGap} className="mt-2" />
-            <p className="text-xs text-muted-foreground">
-              Tests vs reality gap
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Regression Risk</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.regressionRisk}%</div>
-            <Progress value={stats.regressionRisk} className="mt-2" />
-            <p className="text-xs text-muted-foreground">
-              Risk of future breaks
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <StatCardGrid columns={4}>
+        <StatCard label="Manual Fixes" value={stats.totalFixes} icon={Bug} severity="neutral" />
+        <StatCard label="Tests Generated" value={stats.testsGenerated} icon={FileText} severity="info" />
+        <StatCard label="Coverage Gap" value={`${stats.coverageGap}%`} icon={Target} severity="warning" />
+        <StatCard label="Regression Risk" value={`${stats.regressionRisk}%`} icon={AlertTriangle} severity="critical" />
+      </StatCardGrid>
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="coverage-gap" className="space-y-4">

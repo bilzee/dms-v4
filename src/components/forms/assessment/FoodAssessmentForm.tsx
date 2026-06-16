@@ -235,7 +235,7 @@ export function FoodAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Incident Information</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Select the incident this assessment is related to
               </CardDescription>
             </CardHeader>
@@ -253,7 +253,7 @@ export function FoodAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Assessment Location</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Select the entity being assessed
               </CardDescription>
             </CardHeader>
@@ -274,7 +274,7 @@ export function FoodAssessmentForm({
           <Card className="bg-sky-50/50 dark:bg-sky-950/20">
             <CardHeader>
               <CardTitle>Food Availability & Access</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Evaluate food availability and access patterns
               </CardDescription>
             </CardHeader>
@@ -362,7 +362,7 @@ export function FoodAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Current Food Sources</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Identify the main food sources for the affected population
               </CardDescription>
             </CardHeader>
@@ -383,7 +383,7 @@ export function FoodAssessmentForm({
                 <Package className="h-5 w-5" />
                 Food Supply Details
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Estimate food supply duration and additional requirements
               </CardDescription>
             </CardHeader>
@@ -554,7 +554,7 @@ export function FoodAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Photo Documentation</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Add photos of food distribution points, storage facilities, and affected populations
               </CardDescription>
             </CardHeader>
@@ -572,7 +572,7 @@ export function FoodAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Additional Details</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Any additional food security information
               </CardDescription>
             </CardHeader>

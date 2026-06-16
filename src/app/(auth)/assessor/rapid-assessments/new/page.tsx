@@ -249,7 +249,7 @@ function NewAssessmentContent() {
             <h1 className="text-3xl font-bold text-foreground">
               {showForm ? `${selectedAssessment?.label}` : 'Create New Assessment'}
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2 hidden sm:block">
               {showForm 
                 ? `Complete the ${selectedAssessment?.label.toLowerCase()} form below`
                 : 'Select the type of assessment you want to create'

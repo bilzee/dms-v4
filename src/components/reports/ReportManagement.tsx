@@ -282,18 +282,18 @@ export function ReportManagement({ className }: ReportManagementProps) {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h2 className="text-2xl font-semibold">Report Management</h2>
-          <p className="text-gray-600">
+          <p className="text-gray-600 hidden sm:block">
             Manage your report configurations and view generation history
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Button onClick={refreshData} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+            <RefreshCw className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
           <Button size="sm" onClick={() => { setNewConfigStep(0); setNewConfigForm({ templateId: '', name: '', dateFrom: '', dateTo: '', entityFilter: '', scheduleFrequency: '', scheduleStartDate: '' }); setShowNewConfigDialog(true); }}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Configuration
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">New Configuration</span>
           </Button>
         </div>
       </div>

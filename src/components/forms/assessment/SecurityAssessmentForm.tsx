@@ -169,7 +169,7 @@ export function SecurityAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Incident Information</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Select the incident this assessment is related to
               </CardDescription>
             </CardHeader>
@@ -187,7 +187,7 @@ export function SecurityAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Assessment Location</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Select the entity being assessed
               </CardDescription>
             </CardHeader>
@@ -210,7 +210,7 @@ export function SecurityAssessmentForm({
                 <AlertTriangle className="h-5 w-5 text-red-500" />
                 Violence & Safety Assessment
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Evaluate violence risks and general safety conditions
               </CardDescription>
             </CardHeader>
@@ -274,7 +274,7 @@ export function SecurityAssessmentForm({
                 <Shield className="h-5 w-5" />
                 Security & Protection Services
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Assess available security and protection services
               </CardDescription>
             </CardHeader>
@@ -339,7 +339,7 @@ export function SecurityAssessmentForm({
                 <Users className="h-5 w-5" />
                 Vulnerable Groups Protection
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Assess protection access for vulnerable populations
               </CardDescription>
             </CardHeader>
@@ -378,7 +378,7 @@ export function SecurityAssessmentForm({
                 <Lightbulb className="h-5 w-5" />
                 Environmental Safety
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Assess environmental safety conditions
               </CardDescription>
             </CardHeader>
@@ -453,7 +453,7 @@ export function SecurityAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Photo Documentation</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Add photos of security conditions, protection facilities, and vulnerable areas (ensure no subjects are identifiable)
               </CardDescription>
             </CardHeader>
@@ -471,7 +471,7 @@ export function SecurityAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Additional Details</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Any additional security or protection-related information
               </CardDescription>
             </CardHeader>

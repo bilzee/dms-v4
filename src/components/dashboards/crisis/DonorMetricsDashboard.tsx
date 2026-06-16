@@ -72,7 +72,7 @@ export function DonorMetricsDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Donor Metrics</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             Comprehensive donor performance and response verification metrics
           </p>
         </div>
@@ -92,8 +92,8 @@ export function DonorMetricsDashboard() {
             onClick={handleRefresh}
             disabled={isLoading}
           >
-            <RefreshCw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
-            Refresh
+            <RefreshCw className={cn('h-4 w-4 sm:mr-2', isLoading && 'animate-spin')} />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>

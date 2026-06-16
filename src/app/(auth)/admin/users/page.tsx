@@ -44,6 +44,7 @@ const userColumns: ColumnDef<User>[] = [
   {
     key: 'email',
     header: 'Email',
+    hideOnMobile: true,
     render: (user) => <span className="text-muted-foreground">{user.email}</span>,
   },
   {
@@ -79,6 +80,7 @@ const userColumns: ColumnDef<User>[] = [
   {
     key: 'createdAt',
     header: 'Joined',
+    hideOnMobile: true,
     render: (user) => new Date(user.createdAt).toLocaleDateString(),
   },
 ]
@@ -251,15 +253,15 @@ export default function UsersPage() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold">User Management</h1>
-              <p className="text-gray-600">Manage system users and their role assignments</p>
+              <p className="text-gray-600 hidden sm:block">Manage system users and their role assignments</p>
             </div>
             
             <div className="flex items-center gap-3">
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="mr-2 h-5 w-5" />
-                  Create User
+                  <Plus className="sm:mr-2 h-5 w-5" />
+                  <span className="hidden sm:inline">Create User</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

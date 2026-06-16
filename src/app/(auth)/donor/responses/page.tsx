@@ -156,7 +156,7 @@ function DonorResponsesPageContent() {
                   
                   <div>
                     <h1 className="text-2xl font-bold">All Commitment Status</h1>
-                    <p className="text-muted-foreground">Track responses from your commitments</p>
+                    <p className="text-muted-foreground hidden sm:block">Track responses from your commitments</p>
                   </div>
                 </div>
 
@@ -188,7 +188,7 @@ function DonorResponsesPageContent() {
                 
                 <div>
                   <h1 className="text-2xl font-bold">All Commitment Status</h1>
-                  <p className="text-muted-foreground">Track responses from your commitments</p>
+                  <p className="text-muted-foreground hidden sm:block">Track responses from your commitments</p>
                 </div>
               </div>
 

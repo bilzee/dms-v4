@@ -44,7 +44,7 @@ function SystemHealthContent() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">System Health</h1>
-          <p className="text-gray-600 mt-2">Real-time system monitoring and health status</p>
+          <p className="text-gray-600 mt-2 hidden sm:block">Real-time system monitoring and health status</p>
         </div>
         <div className="flex items-center gap-4">
           {lastChecked && (
@@ -53,8 +53,8 @@ function SystemHealthContent() {
             </span>
           )}
           <Button variant="outline" size="sm" onClick={fetchHealth} disabled={loading}>
-            <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
-            Refresh
+            <RefreshCw className={cn("h-4 w-4 sm:mr-2", loading && "animate-spin")} />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>

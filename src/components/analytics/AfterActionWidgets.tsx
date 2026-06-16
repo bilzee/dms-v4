@@ -153,7 +153,7 @@ function RejectionAnalysis({ data }: { data: AfterActionData }) {
               No rejections in this period.
             </div>
           ) : (
-            <div className="h-64">
+            <div className="h-48 sm:h-64">
               <Doughnut data={chartData} options={doughnutOptions} />
             </div>
           )}
@@ -173,7 +173,7 @@ function RejectionAnalysis({ data }: { data: AfterActionData }) {
               No assessor rejections.
             </div>
           ) : (
-            <div className="overflow-auto max-h-64">
+            <div className="overflow-auto max-h-48 sm:max-h-64">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left text-muted-foreground">

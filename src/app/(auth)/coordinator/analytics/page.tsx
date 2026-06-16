@@ -46,7 +46,7 @@ export default function CoordinatorAnalyticsHub() {
               <BarChart3 className="h-6 w-6" />
               Analytics Hub
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-1 hidden sm:block">
               Operational analytics for disaster response coordination.
             </p>
           </div>
@@ -74,8 +74,8 @@ export default function CoordinatorAnalyticsHub() {
                 coordinatorQuery.refetch()
               }}
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+              <RefreshCw className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Refresh</span>
             </Button>
             <Button
               variant="outline"
@@ -92,8 +92,8 @@ export default function CoordinatorAnalyticsHub() {
                 URL.revokeObjectURL(url)
               }}
             >
-              <Download className="h-4 w-4 mr-1" />
-              CSV
+              <Download className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">CSV</span>
             </Button>
           </div>
         </div>

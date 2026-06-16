@@ -71,10 +71,10 @@ export default function AssessorDashboard() {
   return (
     <RoleBasedRoute requiredRole="ASSESSOR">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Assessor Dashboard</h1>
-            <p className="text-muted-foreground mt-2">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-foreground sm:text-3xl">Assessor Dashboard</h1>
+            <p className="text-muted-foreground mt-2 hidden sm:block">
               Manage and create rapid assessments for affected communities
             </p>
           </div>
@@ -98,8 +98,8 @@ export default function AssessorDashboard() {
               disabled={!selectedType}
               data-testid="new-assessment-button"
             >
-              <PlusCircle className="h-4 w-4 mr-2" />
-              New Assessment
+              <PlusCircle className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">New Assessment</span>
             </Button>
           </div>
         </div>

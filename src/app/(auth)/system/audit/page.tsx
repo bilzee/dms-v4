@@ -51,7 +51,7 @@ export default async function AuditPage({ searchParams }: AuditPageProps) {
           <h1 className="text-3xl font-bold tracking-tight">
             Audit Trail & Monitoring
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             Comprehensive system activity tracking, security monitoring, and compliance reporting
           </p>
         </div>

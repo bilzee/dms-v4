@@ -391,7 +391,7 @@ export function PreliminaryAssessmentForm({
         <Card>
           <CardHeader>
             <CardTitle>Impact Assessment</CardTitle>
-            <CardDescription>
+            <CardDescription className="hidden sm:block">
               Numerical assessment of disaster impact on people and housing
             </CardDescription>
           </CardHeader>
@@ -468,7 +468,7 @@ export function PreliminaryAssessmentForm({
         <Card>
           <CardHeader>
             <CardTitle>Infrastructure Impact</CardTitle>
-            <CardDescription>
+            <CardDescription className="hidden sm:block">
               Description of affected infrastructure and facilities
             </CardDescription>
           </CardHeader>
@@ -573,7 +573,7 @@ export function PreliminaryAssessmentForm({
         <Card>
           <CardHeader>
             <CardTitle>Related Incident</CardTitle>
-            <CardDescription>
+            <CardDescription className="hidden sm:block">
               Select an existing incident if this assessment is related to one
             </CardDescription>
           </CardHeader>
@@ -607,7 +607,7 @@ export function PreliminaryAssessmentForm({
               <Camera className="h-5 w-5" />
               Media Attachments
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="hidden sm:block">
               Attach photos related to the assessment
             </CardDescription>
           </CardHeader>

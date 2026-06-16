@@ -28,11 +28,13 @@ import {
   Filter,
   Eye,
   MapPin,
+  ChevronDown,
   Calendar,
   Loader2,
   Clock
 } from '@/lib/icons'
 import { DataTable, type ColumnDef, type RowAction } from '@/components/shared/DataTable'
+import { cn } from '@/lib/utils'
 
 interface DeliveryQueueItem {
   id: string
@@ -102,6 +104,7 @@ const formatDateTime = (dateString: string) => {
 
 export default function DeliveryVerificationQueuePage() {
   const [selectedDelivery, setSelectedDelivery] = useState<DeliveryQueueItem | null>(null)
+  const [filtersExpanded, setFiltersExpanded] = useState(true)
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
   const [verificationAction, setVerificationAction] = useState<'approve' | 'reject' | 'request_info'>('approve')
   const [rejectionReason, setRejectionReason] = useState('')
@@ -201,6 +204,7 @@ export default function DeliveryVerificationQueuePage() {
     {
       key: 'responder',
       header: 'Responder',
+      hideOnMobile: true,
       render: (delivery) => (
         <div>
           <div className="font-medium">{delivery.responder.name}</div>
@@ -211,6 +215,7 @@ export default function DeliveryVerificationQueuePage() {
     {
       key: 'type',
       header: 'Type',
+      hideOnMobile: true,
       render: (delivery) => <Badge variant="outline">{delivery.type}</Badge>,
     },
     {
@@ -248,6 +253,7 @@ export default function DeliveryVerificationQueuePage() {
     {
       key: 'location',
       header: 'Location',
+      hideOnMobile: true,
       render: (delivery) => (
         <div className="flex items-center gap-1">
           <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -288,7 +294,7 @@ export default function DeliveryVerificationQueuePage() {
           <Package className="h-8 w-8 text-blue-600" />
           Delivery Verification Queue
         </h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-muted-foreground mt-2 hidden sm:block">
           Review and verify deliveries submitted by responders
         </p>
       </div>
@@ -296,12 +302,19 @@ export default function DeliveryVerificationQueuePage() {
       {/* Filters */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between"
+            onClick={() => setFiltersExpanded(v => !v)}
+          >
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filters
+            </CardTitle>
+            <ChevronDown className={cn("h-5 w-5 text-muted-foreground transition-transform md:hidden", !filtersExpanded && "-rotate-90")} />
+          </button>
         </CardHeader>
-        <CardContent>
+        <CardContent className={cn(!filtersExpanded && 'hidden md:block')}>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <Select
               value={filters.status}

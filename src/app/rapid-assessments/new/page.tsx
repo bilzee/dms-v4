@@ -178,7 +178,7 @@ function NewRapidAssessmentContent() {
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-foreground">New Rapid Assessment</h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-1 hidden sm:block">
               Create a new rapid assessment for affected communities
             </p>
           </div>

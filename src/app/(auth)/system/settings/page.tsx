@@ -166,7 +166,7 @@ export default function SystemSettingsPage() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">System Settings</h1>
-            <p className="text-muted-foreground">Configure system-wide parameters and preferences</p>
+            <p className="text-muted-foreground hidden sm:block">Configure system-wide parameters and preferences</p>
           </div>
         </div>
 

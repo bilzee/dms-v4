@@ -22,6 +22,7 @@ export interface ColumnDef<T> {
   header: string;
   width?: string;
   render?: (item: T) => React.ReactNode;
+  hideOnMobile?: boolean;
 }
 
 export interface RowAction {
@@ -144,7 +145,7 @@ export function DataTable<T extends { id?: string }>({
     <Card className={cn(className)}>
       {hasContent && (
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               {title && <CardTitle className="text-lg font-semibold leading-none tracking-tight">{title}</CardTitle>}
               {description && <CardDescription className="mt-1.5">{description}</CardDescription>}
@@ -187,7 +188,7 @@ export function DataTable<T extends { id?: string }>({
                   )}
                   {expandable && <TableHead className="w-[36px]" />}
                   {columns.map((col) => (
-                    <TableHead key={col.key} style={col.width ? { width: col.width } : undefined}>
+                    <TableHead key={col.key} style={col.width ? { width: col.width } : undefined} className={col.hideOnMobile ? 'hidden md:table-cell' : undefined}>
                       {col.header}
                     </TableHead>
                   ))}
@@ -243,7 +244,7 @@ export function DataTable<T extends { id?: string }>({
                           </TableCell>
                         )}
                         {columns.map((col) => (
-                          <TableCell key={col.key}>
+                          <TableCell key={col.key} className={col.hideOnMobile ? 'hidden md:table-cell' : undefined}>
                             {col.render ? col.render(item) : String((item as Record<string, unknown>)[col.key] ?? '')}
                           </TableCell>
                         ))}
@@ -347,8 +348,18 @@ function PaginationBar({
   const start = (currentPage - 1) * pageSize + 1;
   const end = Math.min(currentPage * pageSize, total);
 
+  const maxButtons = 5;
+  const half = Math.floor(maxButtons / 2);
+  let startPage = Math.max(1, currentPage - half);
+  const endPage = Math.min(totalPages, startPage + maxButtons - 1);
+  if (endPage - startPage + 1 < maxButtons) {
+    startPage = Math.max(1, endPage - maxButtons + 1);
+  }
+  const pages: number[] = [];
+  for (let p = startPage; p <= endPage; p++) pages.push(p);
+
   return (
-    <div className="flex items-center justify-between py-3 text-sm text-muted-foreground">
+    <div className="flex flex-col gap-2 py-3 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
       <span>
         Showing {start}-{end} of {total}
       </span>
@@ -356,30 +367,53 @@ function PaginationBar({
         <Button
           variant="outline"
           size="sm"
-          className="h-9 w-9 p-0"
+          className="h-8 w-8 p-0 sm:h-9 sm:w-9"
           disabled={currentPage <= 1}
           onClick={() => onPageChange(currentPage - 1)}
         >
           &lsaquo;
         </Button>
-        {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
-          const page = i + 1;
-          return (
+        {startPage > 1 && (
+          <>
             <Button
-              key={page}
-              variant={page === currentPage ? 'default' : 'outline'}
+              variant="outline"
               size="sm"
-              className="h-9 w-9 p-0"
-              onClick={() => onPageChange(page)}
+              className="h-8 w-8 p-0 sm:hidden"
+              onClick={() => onPageChange(1)}
             >
-              {page}
+              1
             </Button>
-          );
-        })}
+            {startPage > 2 && <span className="px-1 text-muted-foreground">…</span>}
+          </>
+        )}
+        {pages.map((page) => (
+          <Button
+            key={page}
+            variant={page === currentPage ? 'default' : 'outline'}
+            size="sm"
+            className="h-8 w-8 p-0 sm:h-9 sm:w-9"
+            onClick={() => onPageChange(page)}
+          >
+            {page}
+          </Button>
+        ))}
+        {endPage < totalPages && (
+          <>
+            {endPage < totalPages - 1 && <span className="px-1 text-muted-foreground">…</span>}
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden h-9 w-9 p-0 sm:inline-flex"
+              onClick={() => onPageChange(totalPages)}
+            >
+              {totalPages}
+            </Button>
+          </>
+        )}
         <Button
           variant="outline"
           size="sm"
-          className="h-9 w-9 p-0"
+          className="h-8 w-8 p-0 sm:h-9 sm:w-9"
           disabled={currentPage >= totalPages}
           onClick={() => onPageChange(currentPage + 1)}
         >

@@ -207,7 +207,7 @@ export function DonorDashboard() {
                                   </Avatar>
                                   <div>
                                     <h1 className="text-2xl font-bold" data-testid="dashboard-title">{donor?.name || 'Donor Dashboard'}</h1>
-                                    <p className="text-gray-600" data-testid="dashboard-subtitle">Donor Dashboard</p>
+                                    <p className="text-gray-600 hidden sm:block" data-testid="dashboard-subtitle">Donor Dashboard</p>
                                   </div>
                                 </div>
                                 
@@ -217,8 +217,8 @@ export function DonorDashboard() {
                                   onClick={retry}
                                   disabled={isLoading}
                                 >
-                                  <RefreshCw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
-                                  Refresh
+                                  <RefreshCw className={cn('h-4 w-4 sm:mr-2', isLoading && 'animate-spin')} />
+                                  <span className="hidden sm:inline">Refresh</span>
                                 </Button>
                               </div>
 
@@ -529,7 +529,7 @@ export function DonorDashboard() {
                                   {/* Leaderboard Preview */}
                                   <Card>
                                     <CardHeader>
-                                      <CardTitle className="flex items-center justify-between">
+                                      <CardTitle className="flex flex-wrap items-center justify-between gap-2">
                                         <div className="flex items-center">
                                           <Trophy className="mr-2 h-5 w-5" />
                                           Leaderboard
@@ -598,7 +598,7 @@ export function DonorDashboard() {
                                   {/* Full Performance Dashboard */}
                                   <Card>
                                     <CardHeader>
-                                      <CardTitle className="flex items-center justify-between">
+                                      <CardTitle className="flex flex-wrap items-center justify-between gap-2">
                                         <div className="flex items-center">
                                           <Star className="mr-2 h-5 w-5" />
                                           Comprehensive Performance Dashboard

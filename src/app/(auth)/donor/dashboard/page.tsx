@@ -111,14 +111,14 @@ export default function DonorDashboardPage() {
     <RoleBasedRoute requiredRole="DONOR">
       <div className="space-y-6">
         <div>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Donor Dashboard</h1>
-              <div className="text-gray-600 mt-2">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold text-gray-900 sm:text-3xl">Donor Dashboard</h1>
+              <div className="text-gray-600 mt-2 hidden sm:block">
                 Welcome back, {user?.name}. Your current role is: <Badge variant="outline">{currentRole}</Badge>
               </div>
             </div>
-            <Link href="/donor/profile">
+            <Link href="/donor/profile" className="flex-shrink-0">
               <Button variant="outline" size="sm">
                 <User className="h-4 w-4 mr-2" />
                 My Profile

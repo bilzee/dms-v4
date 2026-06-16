@@ -197,7 +197,7 @@ function CoordinatorEntitiesPageContent() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">Entity Assignment Management</h2>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground hidden sm:block">
               Assign entities to assessors, responders, and donors for role-based access control
             </p>
           </div>
@@ -358,6 +358,7 @@ function CoordinatorEntitiesPageContent() {
                           {
                             key: 'organization',
                             header: 'Organization',
+                            hideOnMobile: true,
                             render: (user: any) => user.organization || 'N/A',
                           },
                         ]}
@@ -410,6 +411,7 @@ function CoordinatorEntitiesPageContent() {
                         {
                           key: 'assignedAt',
                           header: 'Assigned Date',
+                          hideOnMobile: true,
                           render: (user: any) => new Date(user.assignedAt).toLocaleDateString(),
                         },
                       ]}
@@ -456,6 +458,7 @@ function CoordinatorEntitiesPageContent() {
                       {
                         key: 'entity.type',
                         header: 'Entity Type',
+                        hideOnMobile: true,
                         render: (assignment: any) => (
                           <Badge variant="outline">{assignment.entity.type}</Badge>
                         ),
@@ -463,11 +466,13 @@ function CoordinatorEntitiesPageContent() {
                       {
                         key: 'entity.location',
                         header: 'Location',
+                        hideOnMobile: true,
                         render: (assignment: any) => assignment.entity.location || 'N/A',
                       },
                       {
                         key: 'assignedAt',
                         header: 'Assigned',
+                        hideOnMobile: true,
                         render: (assignment: any) => new Date(assignment.assignedAt).toLocaleDateString(),
                       },
                     ]}

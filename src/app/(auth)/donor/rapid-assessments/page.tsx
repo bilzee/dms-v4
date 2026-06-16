@@ -87,13 +87,13 @@ export default function DonorAssessmentsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Assessments</h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-gray-600 mt-2 hidden sm:block">
               View disaster assessments and response needs (Read-only access)
             </p>
           </div>
           <Button variant="outline" onClick={() => fetchAssessments()} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            <RefreshCw className={`h-4 w-4 sm:mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
 

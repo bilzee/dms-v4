@@ -37,7 +37,13 @@ export const AppShell = ({
     if (sidebarOpen) {
       const firstButton = sidebarRef.current?.querySelector('button');
       firstButton?.focus();
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [sidebarOpen]);
 
   useEffect(() => {
@@ -78,12 +84,19 @@ export const AppShell = ({
         aria-modal="true"
         aria-label="Navigation menu"
         className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-background shadow-lg transform transition-transform duration-300 ease-in-out lg:hidden
+        fixed inset-y-0 left-0 z-50 w-64 bg-background shadow-lg transform transition-transform duration-300 ease-in-out lg:hidden flex flex-col
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}
       >
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Navigation</h2>
+        <div className="flex h-16 items-center justify-between px-4 border-b">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            {headerIconUrl ? (
+              <img src={headerIconUrl} alt="" className="h-6 w-6 object-contain" />
+            ) : (
+              <Shield className="h-6 w-6 text-primary" />
+            )}
+            <span className="font-semibold text-foreground">{appName}</span>
+          </Link>
           <Button
             variant="ghost"
             size="sm"
@@ -92,7 +105,13 @@ export const AppShell = ({
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <Navigation />
+        <div className="flex-1 overflow-y-auto">
+          <Navigation />
+          <div className="px-4 pb-4 pt-2 space-y-2">
+            <SyncIndicator />
+            <OfflineIndicator />
+          </div>
+        </div>
       </div>
 
       {/* Desktop sidebar */}
@@ -113,12 +132,10 @@ export const AppShell = ({
           {/* Navigation */}
           <div className="flex-1 overflow-y-auto">
             <Navigation />
-          </div>
-          
-          {/* Status indicators */}
-          <div className="p-4 border-t space-y-2">
-            <SyncIndicator />
-            <OfflineIndicator />
+            <div className="px-4 pb-4 pt-2 space-y-2">
+              <SyncIndicator />
+              <OfflineIndicator />
+            </div>
           </div>
         </div>
       </div>
@@ -136,13 +153,16 @@ export const AppShell = ({
           </Button>
           
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div className="flex flex-1 items-center">
-            </div>
+            <Link href="/dashboard" className="flex flex-1 items-center gap-2 min-w-0">
+              {headerIconUrl ? (
+                <img src={headerIconUrl} alt="" className="h-6 w-6 object-contain flex-shrink-0" />
+              ) : (
+                <Shield className="h-6 w-6 text-primary flex-shrink-0" />
+              )}
+              <span className="font-semibold text-foreground truncate">{appName}</span>
+            </Link>
             
             <div className="flex items-center gap-x-4 lg:gap-x-6">
-              <div className="hidden sm:block">
-                <SyncIndicator />
-              </div>
               <OfflineIndicator />
             </div>
           </div>

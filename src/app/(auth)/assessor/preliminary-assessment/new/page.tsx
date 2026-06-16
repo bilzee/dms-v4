@@ -74,7 +74,7 @@ export default function NewPreliminaryAssessmentPage() {
           </Link>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Create Preliminary Assessment</h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 hidden sm:block">
               Create initial disaster impact assessments for incident response
             </p>
           </div>

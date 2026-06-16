@@ -306,11 +306,11 @@ export default function DatabaseManagementPage() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">Database Management</h1>
-            <p className="text-gray-600">Database administration and maintenance tools</p>
+            <p className="text-gray-600 hidden sm:block">Database administration and maintenance tools</p>
           </div>
           <Button variant="outline" onClick={() => { fetchStats(); fetchTables(); fetchBackups(); }}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
+            <RefreshCw className="sm:mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
 

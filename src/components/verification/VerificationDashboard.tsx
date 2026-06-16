@@ -519,7 +519,7 @@ export function VerificationDashboard({ initialTab, highlightId }: VerificationD
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Verification Queue</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             Review and verify assessment submissions and response deliveries
           </p>
         </div>
@@ -529,8 +529,8 @@ export function VerificationDashboard({ initialTab, highlightId }: VerificationD
           onClick={() => refetchMetrics()}
           disabled={metricsLoading}
         >
-          <RefreshCw className={cn('h-4 w-4 mr-2', metricsLoading && 'animate-spin')} />
-          Refresh
+          <RefreshCw className={cn('h-4 w-4 sm:mr-2', metricsLoading && 'animate-spin')} />
+          <span className="hidden sm:inline">Refresh</span>
         </Button>
       </div>
 

@@ -190,7 +190,7 @@ export function PeerComparison({
           <Skeleton className="h-6 w-48" />
         </CardHeader>
         <CardContent className="space-y-4">
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-48 sm:h-64 w-full" />
           <div className="grid grid-cols-2 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-16 w-full" />
@@ -294,7 +294,7 @@ export function PeerComparison({
           <CardTitle>Performance Comparison</CardTitle>
         </CardHeader>
         <CardContent>
-          <div role="img" aria-label={`Performance comparison chart: ${radarData ? radarData.map(d => `${d.metric}: You ${d['You'].toFixed(0)}%, Top 25% ${d['Top 25%'].toFixed(0)}%, Average ${d['Average'].toFixed(0)}%`).join(', ') : 'No data'}`} className="h-80">
+          <div role="img" aria-label={`Performance comparison chart: ${radarData ? radarData.map(d => `${d.metric}: You ${d['You'].toFixed(0)}%, Top 25% ${d['Top 25%'].toFixed(0)}%, Average ${d['Average'].toFixed(0)}%`).join(', ') : 'No data'}`} className="h-64 sm:h-80">
             {currentChartType === 'radar' && radarData && (
               <Radar
                 data={{

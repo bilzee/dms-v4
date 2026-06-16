@@ -167,7 +167,7 @@ export default function ResponseDetailsPage() {
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold">Response Details</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             {response.type} Response for {response.entity.name}
           </p>
         </div>

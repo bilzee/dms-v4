@@ -110,6 +110,8 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    env_file:
+      - .env
     volumes:
       - redis_data:/data
     healthcheck:
@@ -128,9 +130,11 @@ services:
     image: minio/minio:latest
     restart: unless-stopped
     command: server /data --console-address ":9001"
+    env_file:
+      - .env
     environment:
-      MINIO_ROOT_USER: MINIO_USER_REPLACE_ME
-      MINIO_ROOT_PASSWORD: MINIO_PASS_REPLACE_ME
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
       - minio_data:/data
     healthcheck:
@@ -151,12 +155,11 @@ services:
       minio:
         condition: service_healthy
     restart: "no"
-    environment:
-      MINIO_ROOT_USER: MINIO_USER_REPLACE_ME
-      MINIO_ROOT_PASSWORD: MINIO_PASS_REPLACE_ME
+    env_file:
+      - .env
     entrypoint: >
       /bin/sh -c "
-      mc alias set myminio http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD;
+      mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
       mc mb myminio/dms-storage --ignore-existing;
       mc mb myminio/db-backups --ignore-existing;
       echo 'MinIO buckets ready: dms-storage, db-backups';

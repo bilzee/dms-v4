@@ -863,7 +863,7 @@ export function ResponsePlanningForm({
                   </div>
 
                   {/* Submit Buttons */}
-                  <div className="flex justify-between items-center pt-4">
+                  <div className="flex flex-wrap justify-between items-center gap-2 pt-4">
                     {mode === 'create' ? (
                       <>
                         <Button

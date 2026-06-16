@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { apiGet } from '@/lib/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -381,7 +382,7 @@ export function EntityMetrics({ entitiesData, isLoading }: EntityMetricsProps) {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Entity Performance</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <StatCardGrid columns={3}>
         <StatCard
           label="Total Entities"
           value={totalEntities}
@@ -406,7 +407,7 @@ export function EntityMetrics({ entitiesData, isLoading }: EntityMetricsProps) {
           icon={Activity}
           loading={isLoading}
         />
-      </div>
+      </StatCardGrid>
     </div>
   )
 }

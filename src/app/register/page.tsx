@@ -29,7 +29,7 @@ export default function DonorRegistrationPage() {
             <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="registration-form-title">
               Register Your Organization
             </h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto hidden sm:block">
               Join our disaster response platform and start making a difference in communities affected by disasters. 
               Register your organization to access resources and coordinate relief efforts.
             </p>

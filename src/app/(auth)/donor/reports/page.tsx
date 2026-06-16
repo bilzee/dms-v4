@@ -166,14 +166,14 @@ export default function DonorReportsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Donor Reports</h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2 hidden sm:block">
               Generate comprehensive reports for your donor activities and impact
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh Data
+              <RefreshCw className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Refresh Data</span>
             </Button>
           </div>
         </div>

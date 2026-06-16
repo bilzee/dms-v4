@@ -311,7 +311,7 @@ export function PopulationAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Incident Information</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Select the incident this assessment is related to
               </CardDescription>
             </CardHeader>
@@ -329,7 +329,7 @@ export function PopulationAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Assessment Location</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Select the entity being assessed
               </CardDescription>
             </CardHeader>
@@ -349,7 +349,7 @@ export function PopulationAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Basic Population Data</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Total population and households
               </CardDescription>
             </CardHeader>
@@ -480,7 +480,7 @@ export function PopulationAssessmentForm({
                 <Heart className="h-5 w-5" />
                 Vulnerable Groups
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Identify and count vulnerable population groups requiring special attention
               </CardDescription>
             </CardHeader>
@@ -674,7 +674,7 @@ export function PopulationAssessmentForm({
                 <AlertTriangle className="h-5 w-5 text-red-500" />
                 Casualties and Injuries
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Document the human impact of the disaster
               </CardDescription>
             </CardHeader>
@@ -778,7 +778,7 @@ export function PopulationAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Photo Documentation</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Add photos showing population conditions and affected areas
               </CardDescription>
             </CardHeader>
@@ -796,7 +796,7 @@ export function PopulationAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Additional Details</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Any additional population-related information
               </CardDescription>
             </CardHeader>

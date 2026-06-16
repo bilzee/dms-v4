@@ -172,7 +172,7 @@ export function VerificationAnalytics({ className }: VerificationAnalyticsProps)
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Verification Analytics</h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             Performance metrics and trends for verification queues
           </p>
         </div>
@@ -196,13 +196,13 @@ export function VerificationAnalytics({ className }: VerificationAnalyticsProps)
             onClick={refreshData}
             disabled={isLoading}
           >
-            <RefreshCw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
-            Refresh
+            <RefreshCw className={cn('h-4 w-4 sm:mr-2', isLoading && 'animate-spin')} />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
           
           <Button variant="outline" onClick={exportData}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Export</span>
           </Button>
         </div>
       </div>
@@ -503,7 +503,7 @@ function PriorityBreakdown({ data }: { data: any }) {
 function TrendsChart({ data }: { data: any[] }) {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-4">
+      <StatCardGrid columns={3}>
         <StatCard
           variant="centered"
           label="Total Assessments"
@@ -522,7 +522,7 @@ function TrendsChart({ data }: { data: any[] }) {
           value={data.reduce((sum, item) => sum + item.verified, 0).toLocaleString()}
           severity="success"
         />
-      </div>
+      </StatCardGrid>
       
       <ProcessingMetricsChart data={data} />
     </div>

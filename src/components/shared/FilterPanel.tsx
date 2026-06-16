@@ -462,6 +462,7 @@ export function FilterPanel<T extends FilterState = FilterState>({
   className
 }: FilterPanelProps<T>) {
   const [advancedExpanded, setAdvancedExpanded] = useState(!defaultAdvancedCollapsed);
+  const [mobileExpanded, setMobileExpanded] = useState(false);
   const [savedFilters, setSavedFilters] = useLocalStorage<SavedFilter[]>(
     savedFiltersKey || 'filter-panel-saved', 
     []
@@ -607,12 +608,19 @@ export function FilterPanel<T extends FilterState = FilterState>({
   return (
     <Card className={cn('w-full max-w-4xl', className)}>
       <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              {title}
-            </CardTitle>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="flex items-center gap-2"
+              onClick={() => setMobileExpanded(v => !v)}
+            >
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                {title}
+              </CardTitle>
+              <ChevronDown className={cn("h-5 w-5 text-muted-foreground transition-transform md:hidden", !mobileExpanded && "-rotate-90")} />
+            </button>
             {description && (
               <p className="text-sm text-muted-foreground mt-1">{description}</p>
             )}
@@ -629,7 +637,7 @@ export function FilterPanel<T extends FilterState = FilterState>({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent className={cn('space-y-6', !mobileExpanded && 'hidden md:block')}>
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>

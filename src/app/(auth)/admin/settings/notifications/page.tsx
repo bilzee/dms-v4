@@ -381,25 +381,25 @@ export default function NotificationConfigPage() {
                 <Bell className="h-5 w-5 text-primary" />
                 <h1 className="text-2xl font-bold text-foreground">Notification Settings</h1>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-1 hidden sm:block">
                 Configure notifications, channels, and action signal visibility
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleReset} disabled={isSaving}>
-              <RotateCcw className="h-4 w-4 mr-1" />
-              Defaults
+              <RotateCcw className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Defaults</span>
             </Button>
             {hasChanges && (
               <Button variant="ghost" size="sm" onClick={handleDiscard} disabled={isSaving}>
-                <X className="h-4 w-4 mr-1" />
-                Discard
+                <X className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Discard</span>
               </Button>
             )}
             <Button size="sm" onClick={handleSave} disabled={isSaving || !hasChanges}>
-              <Save className="h-4 w-4 mr-1" />
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              <Save className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">{isSaving ? 'Saving...' : 'Save Changes'}</span>
             </Button>
           </div>
         </div>

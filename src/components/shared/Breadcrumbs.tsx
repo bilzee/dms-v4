@@ -324,23 +324,38 @@ export const Breadcrumbs = ({ className, ...props }: React.HTMLAttributes<HTMLEl
         <Home className="h-4 w-4" />
       </Link>
       
-      {breadcrumbs.map((item, index) => (
-        <React.Fragment key={item.href}>
-          <ChevronRight className="h-4 w-4 flex-shrink-0" />
-          {index === breadcrumbs.length - 1 ? (
-            <span className="text-foreground font-medium" aria-current="page">
-              {item.name}
-            </span>
-          ) : (
-            <Link
-              href={item.href}
-              className="hover:text-foreground transition-colors"
-            >
-              {item.name}
-            </Link>
-          )}
-        </React.Fragment>
-      ))}
+      {breadcrumbs.map((item, index) => {
+        const isLast = index === breadcrumbs.length - 1;
+        const isMiddle = !isLast && index > 0;
+        const hasMiddleItems = breadcrumbs.length > 2;
+        
+        return (
+          <React.Fragment key={item.href}>
+            {isMiddle && hasMiddleItems && index === 1 && (
+              <>
+                <ChevronRight className="h-4 w-4 flex-shrink-0 sm:hidden" />
+                <span className="sm:hidden text-muted-foreground">…</span>
+              </>
+            )}
+            <ChevronRight className={cn("h-4 w-4 flex-shrink-0", isMiddle && hasMiddleItems && "hidden sm:block")} />
+            {isLast ? (
+              <span className="text-foreground font-medium truncate" aria-current="page">
+                {item.name}
+              </span>
+            ) : (
+              <Link
+                href={item.href}
+                className={cn(
+                  "hover:text-foreground transition-colors",
+                  isMiddle && hasMiddleItems && "hidden sm:inline"
+                )}
+              >
+                {item.name}
+              </Link>
+            )}
+          </React.Fragment>
+        );
+      })}
     </nav>
   );
 };

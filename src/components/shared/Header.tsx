@@ -47,11 +47,15 @@ export const Header = ({ fullWidth = false }: HeaderProps) => {
               {appName}
             </Link>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1 sm:gap-4 justify-end">
             {isAuthenticated && (
               <>
-                <SyncIndicator />
-                <OfflineIndicator />
+                <div className="hidden sm:block">
+                  <SyncIndicator />
+                </div>
+                <div className="hidden sm:block">
+                  <OfflineIndicator />
+                </div>
               </>
             )}
             <ThemeToggle />
@@ -59,17 +63,17 @@ export const Header = ({ fullWidth = false }: HeaderProps) => {
               <NotificationBell />
             )}
             {isAuthenticated && user && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <RoleSwitcher />
-                <span className="text-sm text-muted-foreground hidden sm:inline">
-                  {user.name || user.email}
-                </span>
                 <AlertDialog open={logoutOpen} onOpenChange={setLogoutOpen}>
                   <AlertDialogTrigger asChild>
                     <button
                       className="px-3 py-1 text-sm text-destructive hover:text-destructive-foreground hover:bg-destructive/10 rounded transition-colors"
                     >
-                      Logout
+                      <span className="hidden sm:inline">Logout</span>
+                      <svg className="h-4 w-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
                     </button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>

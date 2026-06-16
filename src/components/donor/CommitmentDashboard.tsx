@@ -192,13 +192,13 @@ export function CommitmentDashboard({ donorId, preSelectedEntityId, preSelectedI
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">My Commitments</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             Manage and track your aid commitments
           </p>
         </div>
         <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
-          New Commitment
+          <span className="hidden sm:inline">New Commitment</span>
         </Button>
       </div>
 

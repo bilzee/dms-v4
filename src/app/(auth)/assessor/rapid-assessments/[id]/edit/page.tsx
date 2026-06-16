@@ -259,7 +259,7 @@ function EditAssessmentContent() {
             <h1 className="text-3xl font-bold text-gray-900">
               Edit Assessment
             </h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-gray-600 mt-2 hidden sm:block">
               Update the {selectedAssessmentType?.label.toLowerCase()} to resubmit for verification
             </p>
           </div>

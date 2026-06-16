@@ -131,7 +131,7 @@ export default function PreliminaryAssessmentPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Preliminary Assessments</h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-gray-600 mt-2 hidden sm:block">
               Manage and view preliminary disaster impact assessments
             </p>
           </div>
@@ -141,8 +141,8 @@ export default function PreliminaryAssessmentPage() {
             onClick={() => router.push('/assessor/preliminary-assessment/new')}
             className="flex items-center gap-2"
           >
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Create New Assessment
+            <PlusCircle className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Create New Assessment</span>
           </Button>
         </div>
 

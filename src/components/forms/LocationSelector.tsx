@@ -82,7 +82,7 @@ export function LocationSelector({ onLocationSelect, initialCoordinates }: Locat
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-sm text-muted-foreground">
           Selected: {position[0].toFixed(6)}, {position[1].toFixed(6)}
         </div>

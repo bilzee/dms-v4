@@ -74,7 +74,7 @@ function PopulationTrendChart({ data }: { data: PopulationData }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
+          <div className="flex items-center justify-center h-48 sm:h-64 text-muted-foreground">
             No population impact data available.
           </div>
         </CardContent>
@@ -91,7 +91,7 @@ function PopulationTrendChart({ data }: { data: PopulationData }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-80">
+        <div className="h-64 sm:h-80">
           <Line data={chartData} options={options} />
         </div>
       </CardContent>

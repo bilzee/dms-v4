@@ -44,18 +44,18 @@ export default function ResourceDonationManagement() {
               </Link>
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Resource & Donation Management</h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-gray-600 mt-2 hidden sm:block">
               Coordinate resource allocation and manage donation workflows for effective crisis response
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4 mr-2" />
-              Management Settings
+              <Settings className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Management Settings</span>
             </Button>
             <Button>
-              <Package className="h-4 w-4 mr-2" />
-              New Resource Request
+              <Package className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">New Resource Request</span>
             </Button>
           </div>
         </div>

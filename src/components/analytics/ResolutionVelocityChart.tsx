@@ -87,7 +87,7 @@ export function ResolutionVelocityChart({ data }: ResolutionVelocityChartProps) 
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
+          <div className="flex items-center justify-center h-48 sm:h-64 text-muted-foreground">
             No resolution data available.
           </div>
         </CardContent>
@@ -104,7 +104,7 @@ export function ResolutionVelocityChart({ data }: ResolutionVelocityChartProps) 
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-80">
+        <div className="h-64 sm:h-80">
           <Bar data={chartData} options={options} />
         </div>
       </CardContent>

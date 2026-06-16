@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,6 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { FormActionBar } from '@/components/shared/FormActionBar'
 import { TagPillSelect } from '@/components/shared/TagPillSelect'
 import { StickyFormHeader } from '@/components/shared/StickyFormHeader'
+import { SectionProgress } from '@/components/shared/SectionProgress'
+import { Button } from '@/components/ui/button'
+import { useRapidAssessmentDrafts } from '@/hooks/useRapidAssessmentDrafts'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -21,7 +24,7 @@ import { IncidentSelector } from '@/components/shared/IncidentSelector'
 import { HealthAssessmentFormProps, HealthAssessment } from '@/types/rapid-assessment'
 import { getCurrentUserName, getAssessmentLocationData } from '@/utils/assessment-utils'
 import { cn } from '@/lib/utils'
-import { Hospital, Activity, Pill, Baby, AlertTriangle } from '@/lib/icons'
+import { Hospital, Activity, Pill, Baby, AlertTriangle, Save } from '@/lib/icons'
 
 const HealthAssessmentSchema = z.object({
   hasFunctionalClinic: z.boolean(),
@@ -108,6 +111,19 @@ export function HealthAssessmentForm({
   const [selectedIncident, setSelectedIncident] = useState<string>(incidentId || (initialData as any)?.rapidAssessment?.incidentId || '')
   const [selectedEntityData, setSelectedEntityData] = useState<any>(null)
   const [hasInteracted, setHasInteracted] = useState(isReassessment)
+  const [draftSaved, setDraftSaved] = useState(false)
+  const { drafts, currentDraft, saveDraft } = useRapidAssessmentDrafts('HEALTH')
+  const formContainerRef = useRef<HTMLDivElement>(null)
+  const formSections = [
+    { id: 'section-incident', label: 'Incident' },
+    { id: 'section-facilities', label: 'Facilities' },
+    { id: 'section-details', label: 'Details' },
+    { id: 'section-services', label: 'Services' },
+    { id: 'section-issues', label: 'Health Issues' },
+    { id: 'section-location', label: 'Location' },
+    { id: 'section-photos', label: 'Photos' },
+    { id: 'section-additional', label: 'Additional' },
+  ]
 
   const healthData = (initialData as any)?.healthAssessment || (initialData as any);
 
@@ -161,6 +177,26 @@ export function HealthAssessmentForm({
       additionalHealthDetails: healthData?.additionalHealthDetails || ''
     }
   })
+
+  // Auto-save draft every 30 seconds when form is dirty
+  const isDirty = form.formState.isDirty
+  useEffect(() => {
+    if (!isDirty || disabled) return
+    const interval = setInterval(() => {
+      const formData = form.getValues()
+      saveDraft(formData as Record<string, unknown>, selectedEntity, selectedIncident, true)
+      setDraftSaved(true)
+      setTimeout(() => setDraftSaved(false), 2000)
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [isDirty, disabled, form, saveDraft, selectedEntity, selectedIncident])
+
+  const handleSaveDraft = () => {
+    const formData = form.getValues()
+    saveDraft(formData as Record<string, unknown>, selectedEntity, selectedIncident, false)
+    setDraftSaved(true)
+    setTimeout(() => setDraftSaved(false), 2000)
+  }
 
   // Handle incident and entity changes
   const handleIncidentChange = (incidentId: string) => {
@@ -235,8 +271,13 @@ export function HealthAssessmentForm({
   }, [hasInteracted])
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6" data-testid="health-assessment-form">
+    <div className="max-w-4xl mx-auto space-y-6" data-testid="health-assessment-form" ref={formContainerRef as React.RefObject<HTMLDivElement>}>
       {/* Gap Analysis Summary */}
+      <SectionProgress
+        containerRef={formContainerRef}
+        sections={formSections}
+      />
+
       <StickyFormHeader
         icon={<Hospital className="h-5 w-5" />}
         title="Health Assessment"
@@ -251,10 +292,10 @@ export function HealthAssessmentForm({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
           {/* Incident Selection */}
-          <Card>
+          <Card id="section-incident">
             <CardHeader>
               <CardTitle>Incident Information</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Select the incident this assessment is related to
               </CardDescription>
             </CardHeader>
@@ -269,10 +310,10 @@ export function HealthAssessmentForm({
           </Card>
 
           {/* Entity Selection */}
-          <Card>
+          <Card id="section-entity">
             <CardHeader>
               <CardTitle>Assessment Location</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Select the entity being assessed
               </CardDescription>
             </CardHeader>
@@ -287,10 +328,10 @@ export function HealthAssessmentForm({
           </Card>
 
           {/* Gap Assessment — Healthcare Facilities */}
-          <Card className="bg-sky-50/50 dark:bg-sky-950/20">
+          <Card id="section-facilities" className="bg-sky-50/50 dark:bg-sky-950/20">
             <CardHeader>
               <CardTitle>Healthcare Facilities</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Evaluate the availability and functionality of healthcare facilities
               </CardDescription>
             </CardHeader>
@@ -352,10 +393,10 @@ export function HealthAssessmentForm({
           </Card>
 
           {/* Context — Healthcare Facility Details */}
-          <Card>
+          <Card id="section-details">
             <CardHeader>
               <CardTitle>Facility Details</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Provide details about healthcare facilities in the area
               </CardDescription>
             </CardHeader>
@@ -445,10 +486,10 @@ export function HealthAssessmentForm({
           </Card>
 
           {/* Gap Assessment — Services and Supplies */}
-          <Card className="bg-sky-50/50 dark:bg-sky-950/20">
+          <Card id="section-services" className="bg-sky-50/50 dark:bg-sky-950/20">
             <CardHeader>
               <CardTitle>Services and Supplies</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Assess available medical services and supplies
               </CardDescription>
             </CardHeader>
@@ -562,10 +603,10 @@ export function HealthAssessmentForm({
           </Card>
 
           {/* Common Health Issues */}
-          <Card>
+          <Card id="section-issues">
             <CardHeader>
               <CardTitle>Common Health Issues</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Select the most common health issues observed
               </CardDescription>
             </CardHeader>
@@ -604,10 +645,10 @@ export function HealthAssessmentForm({
           )}
 
           {/* GPS Location */}
-          <Card>
+          <Card id="section-location">
             <CardHeader>
               <CardTitle>Location Information</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Capture GPS coordinates of the assessment location
               </CardDescription>
             </CardHeader>
@@ -622,10 +663,10 @@ export function HealthAssessmentForm({
           </Card>
 
           {/* Media Attachments */}
-          <Card>
+          <Card id="section-photos">
             <CardHeader>
               <CardTitle>Photo Documentation</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Add photos of healthcare facilities and conditions
               </CardDescription>
             </CardHeader>
@@ -641,10 +682,10 @@ export function HealthAssessmentForm({
           </Card>
 
           {/* Additional Details */}
-          <Card>
+          <Card id="section-additional">
             <CardHeader>
               <CardTitle>Additional Details</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Any additional health-related information
               </CardDescription>
             </CardHeader>
@@ -670,14 +711,38 @@ export function HealthAssessmentForm({
             </CardContent>
           </Card>
 
-          <FormActionBar
-            onCancel={onCancel}
-            submitLabel="Submit Health Assessment"
-            loading={isSubmitting}
-            disabled={isSubmitting || disabled || !selectedEntity}
-            variant="bordered"
-            data-testid="health-submit"
-          />
+          {draftSaved && (
+            <p className="text-sm text-green-600 dark:text-green-400 text-center">
+              Draft saved successfully
+            </p>
+          )}
+          {drafts.length > 0 && !currentDraft && (
+            <p className="text-sm text-muted-foreground text-center">
+              {drafts.length} draft{drafts.length > 1 ? 's' : ''} saved for this assessment type
+            </p>
+          )}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSaveDraft}
+              disabled={disabled || !isDirty}
+              className="flex items-center gap-2 sm:order-first"
+            >
+              <Save className="h-4 w-4" />
+              Save Draft
+            </Button>
+            <div className="flex-1">
+              <FormActionBar
+                onCancel={onCancel}
+                submitLabel="Submit Health Assessment"
+                loading={isSubmitting}
+                disabled={isSubmitting || disabled || !selectedEntity}
+                variant="bordered"
+                data-testid="health-submit"
+              />
+            </div>
+          </div>
         </form>
       </Form>
     </div>

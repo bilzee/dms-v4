@@ -72,7 +72,7 @@ export default function GapFieldManagementPage() {
             <Settings className="h-6 w-6 text-blue-600" />
             <h1 className="text-2xl font-bold text-gray-900">Gap Field Severity Management</h1>
           </div>
-          <p className="text-gray-600">
+          <p className="text-gray-600 hidden sm:block">
             Configure the severity levels for assessment gap fields to customize priority calculations
           </p>
         </div>

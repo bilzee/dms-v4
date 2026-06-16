@@ -180,7 +180,7 @@ export default function BrandingSettingsPage() {
                 <Settings className="h-5 w-5 text-primary" />
                 <h1 className="text-2xl font-bold text-foreground">Brand Settings</h1>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-1 hidden sm:block">
                 Customize app name, description, and icons
               </p>
             </div>
@@ -188,13 +188,13 @@ export default function BrandingSettingsPage() {
           <div className="flex items-center gap-2">
             {hasChanges && (
               <Button variant="ghost" size="sm" onClick={handleDiscard} disabled={isSaving}>
-                <X className="h-4 w-4 mr-1" />
-                Discard
+                <X className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Discard</span>
               </Button>
             )}
             <Button size="sm" onClick={handleSave} disabled={isSaving || isUploading !== null || !hasChanges}>
-              <Save className="h-4 w-4 mr-1" />
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              <Save className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">{isSaving ? 'Saving...' : 'Save Changes'}</span>
             </Button>
           </div>
         </div>

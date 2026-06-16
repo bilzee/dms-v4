@@ -93,7 +93,7 @@ export const ConflictSummary = ({
           <div className="grid grid-cols-3 gap-2 text-xs">
             <div className="text-center">
               <div className="font-medium text-foreground">{summary.conflictsByType.assessment}</div>
-              <div className="text-muted-foreground">Assessments</div>
+              <div className="text-muted-foreground">Assess.</div>
             </div>
             <div className="text-center">
               <div className="font-medium text-foreground">{summary.conflictsByType.response}</div>

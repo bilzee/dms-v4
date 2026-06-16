@@ -208,7 +208,7 @@ export default function AssessmentDetailsPage() {
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold">Assessment Details</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground hidden sm:block">
             {assessment.rapidAssessmentType} Assessment for {assessment.entity.name}
           </p>
         </div>

@@ -276,7 +276,7 @@ export default function AssessorRapidAssessmentsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Rapid Assessments</h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2 hidden sm:block">
               Manage and create rapid assessments for affected communities
             </p>
           </div>
@@ -301,8 +301,8 @@ export default function AssessorRapidAssessmentsPage() {
               disabled={!selectedType}
               data-testid="new-assessment-button"
             >
-              <PlusCircle className="h-4 w-4 mr-2" />
-              New Assessment
+              <PlusCircle className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">New Assessment</span>
             </Button>
           </div>
         </div>

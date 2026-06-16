@@ -41,7 +41,7 @@ export default function HelpPage() {
           <HelpCircle className="h-8 w-8 text-blue-600" />
           Help & Support
         </h1>
-        <p className="text-gray-600 mt-2">Find answers to common questions and get support</p>
+        <p className="text-gray-600 mt-2 hidden sm:block">Find answers to common questions and get support</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

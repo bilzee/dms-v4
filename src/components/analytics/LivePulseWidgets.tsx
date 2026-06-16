@@ -3,6 +3,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Activity, Flame, Gauge } from '@/lib/icons'
+import { StatCard } from '@/components/shared/StatCard'
+import { StatCardGrid } from '@/components/shared/StatCardGrid'
 import type { LivePulseData } from '@/hooks/useCoordinatorAnalytics'
 
 const SEVERITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'UNCLASSIFIED'] as const
@@ -12,13 +14,6 @@ const SEVERITY_COLORS: Record<string, string> = {
   MEDIUM: 'text-yellow-600 dark:text-yellow-400',
   LOW: 'text-blue-600 dark:text-blue-400',
   UNCLASSIFIED: 'text-gray-600 dark:text-gray-400',
-}
-const SEVERITY_BG: Record<string, string> = {
-  CRITICAL: 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-800',
-  HIGH: 'bg-orange-100 dark:bg-orange-900/30 border-orange-300 dark:border-orange-800',
-  MEDIUM: 'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-800',
-  LOW: 'bg-blue-100 dark:bg-blue-900/30 border-blue-300 dark:border-blue-800',
-  UNCLASSIFIED: 'bg-gray-100 dark:bg-gray-900/30 border-gray-300 dark:border-gray-800',
 }
 
 const EVENT_TYPE_ICONS: Record<string, string> = {
@@ -49,32 +44,37 @@ function timeAgo(dateStr: string): string {
   return `${diffDay}d ago`
 }
 
+const SEVERITY_STAT: Record<string, 'critical' | 'warning' | 'info' | 'success' | 'neutral'> = {
+  CRITICAL: 'critical',
+  HIGH: 'warning',
+  MEDIUM: 'warning',
+  LOW: 'info',
+  UNCLASSIFIED: 'neutral',
+}
+
 export function AlertPulseDashboard({ data }: { data: LivePulseData }) {
-  const totalAlerts = data.alertCounts.reduce((s, a) => s + a.count, 0)
+  const alertCards = SEVERITY_ORDER
+    .map(sev => {
+      const found = data.alertCounts.find(a => a.priority === sev)
+      const count = found?.count ?? 0
+      if (sev === 'UNCLASSIFIED' && count === 0) return null
+      return (
+        <StatCard
+          key={sev}
+          label={sev}
+          value={count}
+          severity={SEVERITY_STAT[sev]}
+          variant="compact"
+        />
+      )
+    })
+    .filter(Boolean)
 
   return (
     <>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {SEVERITY_ORDER.map(sev => {
-          const found = data.alertCounts.find(a => a.priority === sev)
-          const count = found?.count ?? 0
-          if (sev === 'UNCLASSIFIED' && count === 0) return null
-          return (
-            <div
-              key={sev}
-              className={`rounded-lg border p-4 text-center ${SEVERITY_BG[sev]}`}
-            >
-              <div className={`text-3xl font-bold ${SEVERITY_COLORS[sev]}`}>
-                {count}
-              </div>
-              <div className="text-xs font-medium mt-1">{sev}</div>
-              <div className="text-xs text-muted-foreground">
-                {totalAlerts > 0 ? ((count / totalAlerts) * 100).toFixed(0) : 0}% of alerts
-              </div>
-            </div>
-          )
-        })}
-      </div>
+      <StatCardGrid columns={4}>
+        {alertCards}
+      </StatCardGrid>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <SeverityTimeline severityTimeline={data.severityTimeline} />

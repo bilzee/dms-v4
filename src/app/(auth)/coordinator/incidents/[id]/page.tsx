@@ -98,7 +98,7 @@ export default function IncidentDetailPage({ params }: IncidentDetailPageProps) 
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold">{incidentData.type} Incident</h1>
-          <p className="text-muted-foreground mt-1">{incidentData.description}</p>
+          <p className="text-muted-foreground mt-1 hidden sm:block">{incidentData.description}</p>
         </div>
         <div className="flex gap-2">
           <StatusBadge 

@@ -253,7 +253,7 @@ export function WASHAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Incident Information</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Select the incident this assessment is related to
               </CardDescription>
             </CardHeader>
@@ -271,7 +271,7 @@ export function WASHAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Assessment Location</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Select the entity being assessed
               </CardDescription>
             </CardHeader>
@@ -293,7 +293,7 @@ export function WASHAssessmentForm({
           <Card className="bg-sky-50/50 dark:bg-sky-950/20">
             <CardHeader>
               <CardTitle>Water Access and Availability</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Evaluate water access and sufficiency
               </CardDescription>
             </CardHeader>
@@ -359,7 +359,7 @@ export function WASHAssessmentForm({
                 <Toilet className="h-5 w-5" />
                 Sanitation Assessment
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Assess sanitation and hygiene gaps
               </CardDescription>
             </CardHeader>
@@ -447,7 +447,7 @@ export function WASHAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Water Sources</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Identify available water sources for the affected population
               </CardDescription>
             </CardHeader>
@@ -465,7 +465,7 @@ export function WASHAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Sanitation Facilities</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Record functional latrine infrastructure
               </CardDescription>
             </CardHeader>
@@ -578,7 +578,7 @@ export function WASHAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Photo Documentation</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Add photos of water sources, sanitation facilities, and hygiene stations
               </CardDescription>
             </CardHeader>
@@ -596,7 +596,7 @@ export function WASHAssessmentForm({
           <Card>
             <CardHeader>
               <CardTitle>Additional Details</CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Any additional WASH-related information
               </CardDescription>
             </CardHeader>
