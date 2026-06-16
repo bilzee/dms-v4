@@ -22,7 +22,7 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 // Icons
-import { Plus, Trash2, Package, AlertTriangle, Save, X, Wifi, WifiOff, Cloud, CloudOff, FileText, Download } from '@/lib/icons'
+import { Plus, Trash2, Package, AlertTriangle, Save, X, WifiOff, Cloud, CloudOff, FileText, Download } from '@/lib/icons'
 
 // Shared components
 import { EntitySelector } from '@/components/shared/EntitySelector'
@@ -524,9 +524,6 @@ export function ResponsePlanningForm({
           <div className="flex items-center gap-2">
             <Package className="h-5 w-5" />
             {mode === 'create' ? 'Create Response Plan' : mode === 'resubmit' ? 'Re-Submit Response' : 'Edit Response Plan'}
-            <Badge variant="outline">
-              {mode === 'create' ? 'PLANNING' : mode === 'resubmit' ? 'RESUBMITTING' : 'EDITING'}
-            </Badge>
             {commitmentImportData && (
               <Badge variant="secondary" className="text-blue-700 border-blue-300">
                 <Download className="h-3 w-3 mr-1" />
@@ -535,14 +532,9 @@ export function ResponsePlanningForm({
             )}
           </div>
 
-          {/* Connection Status */}
+          {/* Connection Status - Only show when offline */}
           <div className="flex items-center gap-2">
-            {isOnline ? (
-              <Badge variant="outline" className="text-green-700 border-green-300">
-                <Wifi className="h-3 w-3 mr-1" />
-                Online
-              </Badge>
-            ) : (
+            {!isOnline && (
               <Badge variant="outline" className="text-orange-700 border-orange-300">
                 <WifiOff className="h-3 w-3 mr-1" />
                 Offline
@@ -607,8 +599,8 @@ export function ResponsePlanningForm({
         {mode === 'create' && (
           <Tabs value={inputMode} onValueChange={(value) => setInputMode(value as 'manual' | 'commitment')} className="mb-6">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="manual">Manual Planning</TabsTrigger>
-              <TabsTrigger value="commitment">Import from Commitment</TabsTrigger>
+              <TabsTrigger value="manual" className="text-xs sm:text-sm">Manual Planning</TabsTrigger>
+              <TabsTrigger value="commitment" className="text-xs sm:text-sm">Import from Commitment</TabsTrigger>
             </TabsList>
             
             <TabsContent value="manual" className="space-y-6">

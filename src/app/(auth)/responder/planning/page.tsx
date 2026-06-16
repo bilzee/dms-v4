@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 
 // UI components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
@@ -105,9 +104,6 @@ function ResponsePlanningPageContent() {
                   <ArrowLeft className="h-4 w-4" />
                   Back to Response Plans
                 </Button>
-                <Badge variant="outline">
-                  {showCreateForm ? 'NEW RESPONSE PLAN' : 'EDITING RESPONSE PLAN'}
-                </Badge>
               </div>
               
               <ResponsePlanningForm
@@ -154,16 +150,14 @@ function ResponsePlanningPageContent() {
 
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Badge variant="outline">
-                  RESPONSE PLANNING MODE
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {new Date().toLocaleDateString()}
-                </span>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="min-w-0">
+                <h1 className="text-xl font-bold text-foreground sm:text-3xl">Response Planning</h1>
+                <p className="text-muted-foreground mt-2 hidden sm:block">
+                  Plan and manage response operations for affected communities
+                </p>
               </div>
-              
+
               <Button
                 variant="default"
                 size="lg"
@@ -171,7 +165,8 @@ function ResponsePlanningPageContent() {
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 shadow-lg"
               >
                 <CheckCircle className="h-5 w-5" />
-                View Response Deliveries
+                <span className="hidden sm:inline">View Response Deliveries</span>
+                <span className="sm:hidden">Deliveries</span>
               </Button>
             </div>
             

@@ -21,7 +21,7 @@ import { SafeDataLoader } from '@/components/shared/SafeDataLoader'
 import { EmptyResponses } from '@/components/shared/EmptyState'
 
 // Icons
-import { Package, Truck, Clock, CheckCircle, ArrowLeft, Plus, AlertTriangle, User, X, Edit, Info, Shield } from '@/lib/icons'
+import { Package, Truck, Clock, CheckCircle, ArrowLeft, Plus, AlertTriangle, User, X, Edit, Info, Shield, Eye } from '@/lib/icons'
 
 import { DataCardList, type ExpandedCardProps } from '@/components/shared/DataCardList'
 import { type SeverityLevel } from '@/lib/utils/status-colors'
@@ -156,9 +156,7 @@ function ResponderResponsesPageContent() {
                   </Button>
                   
                   <div className="flex items-center gap-3">
-                    <Package className="h-6 w-6 text-blue-600" />
-                    <h1 className="text-3xl font-bold">Response Deliveries</h1>
-                    <Badge variant="outline">Responder</Badge>
+                    <h1 className="text-xl font-bold text-foreground sm:text-3xl">Response Deliveries</h1>
                   </div>
                 </div>
               </div>
@@ -183,9 +181,7 @@ function ResponderResponsesPageContent() {
                 </Button>
                 
                 <div className="flex items-center gap-3">
-                  <Package className="h-6 w-6 text-blue-600" />
-                  <h1 className="text-3xl font-bold">Response Deliveries</h1>
-                  <Badge variant="outline">Responder</Badge>
+                  <h1 className="text-xl font-bold text-foreground sm:text-3xl">Response Deliveries</h1>
                 </div>
               </div>
             </div>
@@ -243,10 +239,8 @@ function ResponderResponsesPageContent() {
               }}
               getSeverity={(response: any) => getResponseSeverity(response)}
               renderCard={(response: any, { isExpanded, toggleExpand }: ExpandedCardProps) => (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Truck className="h-5 w-5 text-blue-600" />
-                    <div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-medium">{response.type} Response</h3>
                         <Badge variant={
@@ -277,15 +271,16 @@ function ResponderResponsesPageContent() {
                         {new Date(response.createdAt).toLocaleTimeString()}
                       </p>
                     </div>
-                  </div>
                   
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-end gap-2">
                     {response.deliveryStatus === 'PLANNED' && (
                       <Button 
                         onClick={(e) => { e.stopPropagation(); handleNavigateToDelivery(response.id); }}
                         size="sm"
+                        className="flex items-center gap-1"
                       >
-                        Confirm Delivery
+                        <Truck className="h-4 w-4" />
+                        <span className="hidden sm:inline">Confirm Delivery</span>
                       </Button>
                     )}
                     {response.verificationStatus === 'REJECTED' && (
@@ -294,25 +289,26 @@ function ResponderResponsesPageContent() {
                           onClick={(e) => { e.stopPropagation(); handleEditResponse(response.id); }}
                           size="sm"
                           variant="outline"
-                          className="text-blue-600 hover:text-blue-700 border-blue-600 hover:border-blue-700"
+                          className="text-blue-600 hover:text-blue-700 border-blue-600 hover:border-blue-700 flex items-center gap-1"
                         >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit
+                          <Edit className="h-4 w-4" />
+                          <span className="hidden sm:inline">Edit</span>
                         </Button>
                         <Button 
                           onClick={(e) => { e.stopPropagation(); handleShowRejectionReason(response); }}
                           size="sm"
                           variant="outline"
-                          className="text-orange-600 hover:text-orange-700 border-orange-600 hover:border-orange-700"
+                          className="text-orange-600 hover:text-orange-700 border-orange-600 hover:border-orange-700 flex items-center gap-1"
                         >
-                          <Info className="h-4 w-4 mr-1" />
-                          Reason
+                          <Info className="h-4 w-4" />
+                          <span className="hidden sm:inline">Reason</span>
                         </Button>
                       </>
                     )}
                     <Link href={`/responder/responses/${response.id}`}>
-                      <Button variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
-                        View Details
+                      <Button variant="outline" size="sm" onClick={(e) => e.stopPropagation()} className="flex items-center gap-1">
+                        <Eye className="h-4 w-4" />
+                        <span className="hidden sm:inline">View Details</span>
                       </Button>
                     </Link>
                   </div>

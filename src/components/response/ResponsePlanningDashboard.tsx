@@ -295,7 +295,7 @@ export function ResponsePlanningDashboard({
                     className="flex items-center gap-1"
                   >
                     <Truck className="h-3 w-3" />
-                    Document Delivery
+                    <span className="hidden sm:inline">Document Delivery</span>
                   </Button>
                 )}
                 <Button
@@ -308,7 +308,7 @@ export function ResponsePlanningDashboard({
                   className="flex items-center gap-1"
                 >
                   <Edit className="h-3 w-3" />
-                  Edit
+                  <span className="hidden sm:inline">Edit</span>
                 </Button>
               </div>
             </div>
