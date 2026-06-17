@@ -26,6 +26,7 @@ import {
   Users,
 } from '@/lib/icons';
 import { useSignalDetail, resolveDetailRef } from '@/hooks/useSignalDetail';
+import { useCurrencySymbol } from '@/hooks/useCurrency';
 import { SignalPriorityBadge } from './SignalPriorityBadge';
 import { REASON_LABELS } from './SignalReasonIcon';
 import type { ActionSignalItem, SignalReason } from '@/types/action-signal';
@@ -63,6 +64,7 @@ const COMMITMENT_COLORS: Record<string, string> = {
 
 export function SignalDetailPanel({ signal, onClose, className }: SignalDetailPanelProps) {
   const { data: detail, isLoading, error } = useSignalDetail(signal);
+  const symbol = useCurrencySymbol();
 
   if (!signal) return null;
 
@@ -408,6 +410,8 @@ function ResponseDetail({ data }: { data: any }) {
 }
 
 function CommitmentDetail({ data }: { data: any }) {
+  const symbol = useCurrencySymbol();
+
   if (!data) return <DetailError message="No commitment data available" />;
 
   const items = data.items;
@@ -425,7 +429,7 @@ function CommitmentDetail({ data }: { data: any }) {
         <FieldRow label="Delivered" value={String(data.deliveredQuantity ?? 0)} icon={Truck} />
         <FieldRow label="Verified Delivered" value={String(data.verifiedDeliveredQuantity ?? 0)} icon={CheckCircle} />
         {data.totalValueEstimated != null && (
-          <FieldRow label="Est. Value" value={`$${Number(data.totalValueEstimated).toLocaleString()}`} icon={DollarSign} />
+          <FieldRow label="Est. Value" value={`${symbol}${Number(data.totalValueEstimated).toLocaleString()}`} icon={DollarSign} />
         )}
         <TimestampField label="Commitment Date" date={data.commitmentDate} />
         <TimestampField label="Last Updated" date={data.lastUpdated} />

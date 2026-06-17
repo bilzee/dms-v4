@@ -9,6 +9,7 @@ const BRANDING_DEFAULTS = {
   appDescription: 'Comprehensive disaster response management and humanitarian assessment PWA',
   headerIconUrl: '',
   pwaIconUrl: '',
+  loginLogoUrl: '',
 }
 
 export async function GET(_request: NextRequest) {
@@ -23,6 +24,7 @@ export async function GET(_request: NextRequest) {
       appDescription: map.get('appDescription') || BRANDING_DEFAULTS.appDescription,
       headerIconUrl: map.get('headerIconUrl') || '',
       pwaIconUrl: map.get('pwaIconUrl') || '',
+      loginLogoUrl: map.get('loginLogoUrl') || '',
     })
   } catch (error) {
     return successResponse(BRANDING_DEFAULTS)

@@ -411,7 +411,7 @@ export function AssessmentCategorySummary({
               {hasGap ? (
                 <>
                   <GapIndicator hasGap={true} severity={severity} size="sm" />
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                  <span className="text-[11px] text-muted-foreground bg-muted px-2 py-1 rounded">
                     {fieldCount.gaps} of {fieldCount.total}
                   </span>
                 </>

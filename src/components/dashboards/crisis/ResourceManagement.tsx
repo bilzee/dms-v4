@@ -35,6 +35,7 @@ import {
   Edit
 } from '@/lib/icons';
 import { useAuth } from '@/hooks/useAuth';
+import { useCurrencySymbol } from '@/hooks/useCurrency';
 import { apiGet } from '@/lib/api';
 import { ResourceGapAnalysis } from './ResourceGapAnalysis';
 import { DonorCommitment, Donor, Entity, Incident } from '@/types/commitment';
@@ -62,6 +63,7 @@ const STATUS_ICONS = {
 
 export function ResourceManagement({ className }: ResourceManagementProps) {
   const { token, isAuthenticated } = useAuth();
+  const symbol = useCurrencySymbol();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
@@ -426,7 +428,7 @@ export function ResourceManagement({ className }: ResourceManagementProps) {
                                   <div key={index} className="flex justify-between">
                                     <span>{item.quantity} {item.unit} of {item.name}</span>
                                     <span className="text-muted-foreground">
-                                      ${(item.estimatedValue || 0) * item.quantity}
+                                      {symbol}{(item.estimatedValue || 0) * item.quantity}
                                     </span>
                                   </div>
                                 ))}

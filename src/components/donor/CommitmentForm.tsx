@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Plus, Trash2, Package, MapPin, AlertTriangle, DollarSign, CheckCircle2, ArrowLeft, FileText, Info } from '@/lib/icons'
 
 import { apiGet, apiPost, extractArray } from '@/lib/api'
+import { useCurrencySymbol } from '@/hooks/useCurrency'
 
 const RESPONSE_TYPES = ['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY', 'POPULATION', 'LOGISTICS'] as const
 
@@ -74,6 +75,7 @@ interface CommitmentFormProps {
 
 export function CommitmentForm({ donorId, onSuccess, onCancel, initialData, preSelectedEntityId, preSelectedIncidentId }: CommitmentFormProps) {
   const router = useRouter()
+  const symbol = useCurrencySymbol()
   const [inputMode, setInputMode] = useState<'manual' | 'from-plan'>('manual')
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null)
 
@@ -616,7 +618,7 @@ export function CommitmentForm({ donorId, onSuccess, onCancel, initialData, preS
           <Alert className="mt-6">
             <DollarSign className="h-4 w-4" />
             <AlertDescription>
-              Total Estimated Value: <span className="font-bold text-green-600">${totalEstimatedValue.toFixed(2)}</span>
+              Total Estimated Value: <span className="font-bold text-green-600">{symbol}{totalEstimatedValue.toFixed(2)}</span>
             </AlertDescription>
           </Alert>
 

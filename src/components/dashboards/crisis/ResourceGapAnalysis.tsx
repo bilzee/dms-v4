@@ -31,6 +31,7 @@ import {
   Eye
 } from '@/lib/icons';
 import { useAuth } from '@/hooks/useAuth';
+import { useCurrencySymbol } from '@/hooks/useCurrency';
 import { apiGet, extractArray } from '@/lib/api';
 import { Entity, Incident, Donor } from '@/types/commitment';
 
@@ -69,7 +70,8 @@ interface DonorRecommendation {
 
 export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
   const { token, isAuthenticated } = useAuth();
-  
+  const symbol = useCurrencySymbol();
+
   const [activeView, setActiveView] = useState('gaps');
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
@@ -253,7 +255,7 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
           />
           <StatCard
             label="Gap Value"
-            value={`$${(gapAnalysisData.summary.totalGapValue || 0).toLocaleString()}`}
+            value={`${symbol}${(gapAnalysisData.summary.totalGapValue || 0).toLocaleString()}`}
             severity="high"
             icon={BarChart3}
           />

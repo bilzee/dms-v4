@@ -4,11 +4,7 @@ import { prisma } from '@/lib/db/client';
 import { v4 as uuidv4 } from 'uuid';
 import { handleApiError } from '@/lib/api/response';
 import { getScoringConfig } from '@/lib/services/scoring-config.service';
-
-function getCurrencySymbol(currency: string): string {
-  const symbols: Record<string, string> = { NGN: '₦', USD: '$', EUR: '€', GBP: '£' };
-  return symbols[currency] || currency;
-}
+import { getCurrencySymbol } from '@/lib/currency';
 
 export const GET = withAuth(async (request: NextRequest, context) => {
   try {
@@ -22,7 +18,7 @@ export const GET = withAuth(async (request: NextRequest, context) => {
     }
 
     const config = await getScoringConfig();
-    const curSym = getCurrencySymbol(config.valueCurrency);
+    const curSym = await getCurrencySymbol();
     const dW = config.deliveryWeight;
     const sW = config.speedWeight;
     const vW = config.valueWeight;

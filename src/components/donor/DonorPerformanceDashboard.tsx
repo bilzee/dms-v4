@@ -28,6 +28,7 @@ import {
   Trophy
 } from '@/lib/icons';
 import { cn } from '@/lib/utils';
+import { useCurrencySymbol } from '@/hooks/useCurrency';
 import { GameBadgeSystem, BadgeProgress } from './GameBadgeSystem';
 import { ExportButton } from './ExportButton';
 import type { 
@@ -57,6 +58,7 @@ export function DonorPerformanceDashboard({
   compact = false,
   className
 }: DonorPerformanceDashboardProps) {
+  const symbol = useCurrencySymbol();
   // State for timeframe and granularity
   const [timeframe, setTimeframe] = useState<'3m' | '6m' | '1y' | '2y'>('1y');
   const [granularity, setGranularity] = useState<'week' | 'month' | 'quarter'>('month');
@@ -375,7 +377,7 @@ export function DonorPerformanceDashboard({
 
           <StatCard
             label="Total Value"
-            value={`$${(performanceMetrics.totalValue / 1000).toFixed(1)}k`}
+            value={`${symbol}${(performanceMetrics.totalValue / 1000).toFixed(1)}k`}
             severity="info"
             icon={Award}
           />

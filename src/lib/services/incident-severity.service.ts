@@ -18,13 +18,28 @@ function highestSeverity(a: SeverityLevel | null, b: SeverityLevel): SeverityLev
 class IncidentSeverityService {
 
   async computeIncidentSeverity(incidentId: string): Promise<SeverityLevel | null> {
+    // Bottom-up severity derivation:
+    // For each (entity, assessmentType) pair, take the LATEST verified rapid
+    // assessment's priority. Then reduce to the highest severity across all
+    // such pairs. This matches the "latest per type per entity per incident"
+    // rule used by the Situation Dashboard.
     const [rapidAssessments, preliminaryAssessment] = await Promise.all([
       db.rapidAssessment.findMany({
         where: {
           incidentId,
           verificationStatus: { in: ['VERIFIED', 'AUTO_VERIFIED'] },
         },
-        select: { priority: true },
+        select: {
+          entityId: true,
+          rapidAssessmentType: true,
+          rapidAssessmentDate: true,
+          priority: true,
+        },
+        orderBy: [
+          { entityId: 'asc' },
+          { rapidAssessmentType: 'asc' },
+          { rapidAssessmentDate: 'desc' },
+        ],
       }),
       db.preliminaryAssessment.findFirst({
         where: { incidentId },
@@ -38,11 +53,21 @@ class IncidentSeverityService {
     ])
 
     if (rapidAssessments.length > 0) {
-      let max: SeverityLevel | null = null
+      // Deduplicate to the latest per (entityId, rapidAssessmentType).
+      // Because results are ordered by date desc within each group, the
+      // first row we encounter for a given key is the latest.
+      const latestByKey = new Map<string, SeverityLevel>()
       for (const ra of rapidAssessments) {
+        const key = `${ra.entityId}::${ra.rapidAssessmentType}`
+        if (latestByKey.has(key)) continue
         if (ra.priority && ra.priority !== 'UNCLASSIFIED') {
-          max = highestSeverity(max, ra.priority as SeverityLevel)
+          latestByKey.set(key, ra.priority as SeverityLevel)
         }
+      }
+
+      let max: SeverityLevel | null = null
+      for (const sev of latestByKey.values()) {
+        max = highestSeverity(max, sev)
       }
       if (max) return max
     }

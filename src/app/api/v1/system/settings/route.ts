@@ -36,7 +36,14 @@ const SETTINGS_DEFAULTS: Record<string, Record<string, any>> = {
     appName: 'DRMS',
     appDescription: 'Comprehensive disaster response management and humanitarian assessment PWA',
     headerIconUrl: '',
-    pwaIconUrl: ''
+    pwaIconUrl: '',
+    loginLogoUrl: ''
+  },
+  currency: {
+    code: 'NGN',
+    symbol: '₦',
+    displaySymbol: '₦',
+    iconStyle: 'text'
   }
 }
 

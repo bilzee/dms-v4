@@ -31,11 +31,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
 import { apiGet } from '@/lib/api';
+import { useCurrencySymbol } from '@/hooks/useCurrency';
 
 
 export function DonorMetricsDashboard() {
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [selectedDonor, setSelectedDonor] = useState<string | null>(null);
+  const configuredSymbol = useCurrencySymbol();
 
   const { data: criteriaData } = useQuery({
     queryKey: ['leaderboard-criteria'],
@@ -47,7 +49,7 @@ export function DonorMetricsDashboard() {
   });
   const formulaText = criteriaData?.criteria?.calculation?.formula || 'Score = (Delivery \u00d7 0.6) + (Speed \u00d7 0.2) + (Value \u00d7 0.1) + (Consistency \u00d7 0.1)';
   const config = criteriaData?.criteria?.config;
-  const curSym = config?.valueCurrency === 'NGN' ? '\u20a6' : config?.valueCurrency === 'USD' ? '$' : config?.valueCurrency === 'EUR' ? '\u20ac' : '\u20a6';
+  const curSym = configuredSymbol;
   const valueDesc = config ? `Value: ${curSym} commitment value (cap ${curSym}${(config.valueCap / 1000000).toFixed(1)}M).` : 'Value: \u20a6 commitment value.';
   const speedDesc = config ? `Speed: score drops to 0 after ${config.speedZeroScoreHours}h.` : 'Speed: response time.';
 

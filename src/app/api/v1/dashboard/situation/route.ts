@@ -382,6 +382,7 @@ interface AggregateMetrics {
   totalAssessmentsCount: number;
   verifiedAssessmentsCount: number;
   responsesCount: number;
+  totalResponsePlans: number;
   deliveryRate: number;
   coverageRate: number;
   trends?: {
@@ -697,22 +698,25 @@ async function getPopulationImpact(incidentId: string): Promise<PopulationImpact
 }
 
 async function getAggregateMetrics(incidentId: string): Promise<AggregateMetrics> {
-  // Get affected entities count via rapid assessments
+  // Get affected entities count — entities with at least one verified/auto-verified
+  // assessment for this incident (consistent with the rest of the dashboard).
   const affectedEntitiesCount = await prisma.entity.count({
     where: {
       rapidAssessments: {
         some: {
           incidentId: incidentId,
+          verificationStatus: { in: ['VERIFIED', 'AUTO_VERIFIED'] },
         },
       },
       isActive: true,
     },
   });
 
-  // Get assessment counts
+  // Get assessment counts — only non-draft assessments are counted.
   const totalAssessmentsCount = await prisma.rapidAssessment.count({
     where: {
       incidentId: incidentId,
+      verificationStatus: { in: ['SUBMITTED', 'VERIFIED', 'AUTO_VERIFIED'] },
     },
   });
 
@@ -723,21 +727,34 @@ async function getAggregateMetrics(incidentId: string): Promise<AggregateMetrics
     },
   });
 
-  // Get response counts
-  const responsesCount = await prisma.rapidResponse.count({
+  // Get response counts — delivered responses plus planned (not yet delivered) responses.
+  const deliveredResponsesCount = await prisma.rapidResponse.count({
     where: {
       assessment: {
         incidentId: incidentId,
       },
+      deliveryStatus: 'DELIVERED',
     },
   });
+
+  const plannedResponsesCount = await prisma.rapidResponse.count({
+    where: {
+      assessment: {
+        incidentId: incidentId,
+      },
+      deliveryStatus: 'PLANNED',
+    },
+  });
+
+  const totalResponsePlans = deliveredResponsesCount + plannedResponsesCount;
 
   return {
     affectedEntitiesCount,
     totalAssessmentsCount,
     verifiedAssessmentsCount,
-    responsesCount,
-    deliveryRate: totalAssessmentsCount > 0 ? responsesCount / totalAssessmentsCount : 0,
+    responsesCount: deliveredResponsesCount,
+    totalResponsePlans,
+    deliveryRate: totalResponsePlans > 0 ? deliveredResponsesCount / totalResponsePlans : 0,
     coverageRate: affectedEntitiesCount > 0 ? totalAssessmentsCount / affectedEntitiesCount : 0,
   };
 }
@@ -836,12 +853,12 @@ async function getEntityAssessments(incidentId: string, entityId?: string): Prom
   // Fetch detailed assessment data for each entity
   for (const [entityId, entityData] of entityMap) {
     const assessments = await Promise.all([
-      getLatestHealthAssessment(entityId),
-      getLatestFoodAssessment(entityId),
-      getLatestWASHAssessment(entityId),
-      getLatestShelterAssessment(entityId),
-      getLatestSecurityAssessment(entityId),
-      getLatestPopulationAssessment(entityId)
+      getLatestHealthAssessment(entityId, incidentId),
+      getLatestFoodAssessment(entityId, incidentId),
+      getLatestWASHAssessment(entityId, incidentId),
+      getLatestShelterAssessment(entityId, incidentId),
+      getLatestSecurityAssessment(entityId, incidentId),
+      getLatestPopulationAssessment(entityId, incidentId)
     ]);
 
     entityData.latestAssessments = {
@@ -991,11 +1008,12 @@ async function getAggregatedAssessments(incidentId: string): Promise<AggregatedA
 }
 
 // Individual assessment fetchers
-async function getLatestHealthAssessment(entityId: string): Promise<(HealthAssessmentData & { gapAnalysis: HealthGapAnalysis }) | null> {
+async function getLatestHealthAssessment(entityId: string, incidentId?: string): Promise<(HealthAssessmentData & { gapAnalysis: HealthGapAnalysis }) | null> {
   const assessment = await prisma.healthAssessment.findFirst({
     where: {
       rapidAssessment: {
         entityId: entityId,
+        incidentId: incidentId,
         verificationStatus: { in: ['VERIFIED', 'AUTO_VERIFIED'] },
       },
     },
@@ -1049,11 +1067,12 @@ async function getLatestHealthAssessment(entityId: string): Promise<(HealthAsses
   };
 }
 
-async function getLatestFoodAssessment(entityId: string): Promise<(FoodAssessmentData & { gapAnalysis: FoodGapAnalysis }) | null> {
+async function getLatestFoodAssessment(entityId: string, incidentId?: string): Promise<(FoodAssessmentData & { gapAnalysis: FoodGapAnalysis }) | null> {
   const assessment = await prisma.foodAssessment.findFirst({
     where: {
       rapidAssessment: {
         entityId: entityId,
+        incidentId: incidentId,
         verificationStatus: { in: ['VERIFIED', 'AUTO_VERIFIED'] },
       },
     },
@@ -1104,11 +1123,12 @@ async function getLatestFoodAssessment(entityId: string): Promise<(FoodAssessmen
   };
 }
 
-async function getLatestWASHAssessment(entityId: string): Promise<(WASHAssessmentData & { gapAnalysis: WASHGapAnalysis }) | null> {
+async function getLatestWASHAssessment(entityId: string, incidentId?: string): Promise<(WASHAssessmentData & { gapAnalysis: WASHGapAnalysis }) | null> {
   const assessment = await prisma.wASHAssessment.findFirst({
     where: {
       rapidAssessment: {
         entityId: entityId,
+        incidentId: incidentId,
         verificationStatus: { in: ['VERIFIED', 'AUTO_VERIFIED'] },
       },
     },
@@ -1159,11 +1179,12 @@ async function getLatestWASHAssessment(entityId: string): Promise<(WASHAssessmen
   };
 }
 
-async function getLatestShelterAssessment(entityId: string): Promise<(ShelterAssessmentData & { gapAnalysis: ShelterGapAnalysis }) | null> {
+async function getLatestShelterAssessment(entityId: string, incidentId?: string): Promise<(ShelterAssessmentData & { gapAnalysis: ShelterGapAnalysis }) | null> {
   const assessment = await prisma.shelterAssessment.findFirst({
     where: {
       rapidAssessment: {
         entityId: entityId,
+        incidentId: incidentId,
         verificationStatus: { in: ['VERIFIED', 'AUTO_VERIFIED'] },
       },
     },
@@ -1214,11 +1235,12 @@ async function getLatestShelterAssessment(entityId: string): Promise<(ShelterAss
   };
 }
 
-async function getLatestSecurityAssessment(entityId: string): Promise<(SecurityAssessmentData & { gapAnalysis: SecurityGapAnalysis }) | null> {
+async function getLatestSecurityAssessment(entityId: string, incidentId?: string): Promise<(SecurityAssessmentData & { gapAnalysis: SecurityGapAnalysis }) | null> {
   const assessment = await prisma.securityAssessment.findFirst({
     where: {
       rapidAssessment: {
         entityId: entityId,
+        incidentId: incidentId,
         verificationStatus: { in: ['VERIFIED', 'AUTO_VERIFIED'] },
       },
     },
@@ -1268,14 +1290,15 @@ async function getLatestSecurityAssessment(entityId: string): Promise<(SecurityA
   };
 }
 
-async function getLatestPopulationAssessment(entityId: string): Promise<PopulationAssessmentData | null> {
+async function getLatestPopulationAssessment(entityId: string, incidentId?: string): Promise<PopulationAssessmentData | null> {
   const assessment = await prisma.populationAssessment.findFirst({
     where: {
       rapidAssessment: {
         entityId: entityId,
+        incidentId: incidentId,
         verificationStatus: { in: ['VERIFIED', 'AUTO_VERIFIED'] },
       },
-    },
+   },
     include: {
       rapidAssessment: {
         select: {
@@ -1883,29 +1906,52 @@ async function getEntityLocations(
     const processedEntities: EntityLocation[] = [];
     
     for (const entity of entitiesWithLocations) {
-      // Get gap analysis for this entity
-      const gapAnalysisQuery = await prisma.$queryRaw`
-        SELECT 
-          ra."rapidAssessmentType",
-          ra."gapAnalysis",
-          ra."verificationStatus"
-        FROM rapid_assessments ra
-        WHERE ra."entityId" = ${entity.id}
-          AND ra."verificationStatus" IN ('VERIFIED', 'AUTO_VERIFIED')
-        ORDER BY ra."assessmentDate" DESC
-      ` as unknown as Array<{
-        rapidAssessmentType: string;
-        gapAnalysis: any;
-        verificationStatus: string;
-      }>;
+      // Get gap analysis for this entity, scoped to the incident when provided.
+      // Use latest-per-type to match the bottom-up severity rule.
+      const gapAnalysisQuery = incidentId
+        ? await prisma.$queryRaw`
+            SELECT
+              ra."rapidAssessmentType",
+              ra."gapAnalysis",
+              ra."verificationStatus"
+            FROM rapid_assessments ra
+            WHERE ra."entityId" = ${entity.id}
+              AND ra."incidentId" = ${incidentId}
+              AND ra."verificationStatus" IN ('VERIFIED', 'AUTO_VERIFIED')
+            ORDER BY ra."rapidAssessmentDate" DESC
+          ` as unknown as Array<{
+            rapidAssessmentType: string;
+            gapAnalysis: any;
+            verificationStatus: string;
+          }>
+        : await prisma.$queryRaw`
+            SELECT
+              ra."rapidAssessmentType",
+              ra."gapAnalysis",
+              ra."verificationStatus"
+            FROM rapid_assessments ra
+            WHERE ra."entityId" = ${entity.id}
+              AND ra."verificationStatus" IN ('VERIFIED', 'AUTO_VERIFIED')
+            ORDER BY ra."rapidAssessmentDate" DESC
+          ` as unknown as Array<{
+            rapidAssessmentType: string;
+            gapAnalysis: any;
+            verificationStatus: string;
+          }>;
 
-      // Calculate gap summary
+      // Calculate gap summary — only count the LATEST assessment per type
+      // (query is ordered by date desc, so the first row per type wins).
       let totalGaps = 0;
       let totalNoGaps = 0;
       let criticalGaps = 0;
       let worstSeverity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW';
 
+      const seenTypes = new Set<string>();
       for (const assessment of gapAnalysisQuery) {
+        // Skip older assessments of the same type (latest-per-type rule)
+        if (seenTypes.has(assessment.rapidAssessmentType)) continue;
+        seenTypes.add(assessment.rapidAssessmentType);
+
         if (assessment.gapAnalysis && typeof assessment.gapAnalysis === 'object') {
           const gapData = assessment.gapAnalysis as any;
           if (gapData.hasGap) {
@@ -1973,7 +2019,7 @@ async function getEntityLocations(
         name: entity.name,
         type: entity.type,
         coordinates,
-        severity: entity.severity,
+        severity: totalGaps > 0 ? worstSeverity : 'LOW',
         gapSummary: {
           totalGaps,
           totalNoGaps,
@@ -2122,17 +2168,38 @@ export const GET = withAuth(async (request: NextRequest, context) => {
 
       const rawIncidents = await incidentQuery;
 
+      // Recompute incident severity bottom-up so the dashboard never shows a
+      // stale stored value (e.g. seed defaults or a value from before a
+      // verification change). Best-effort: failures fall back to stored value.
+      const { incidentSeverityService } = await import('@/lib/services/incident-severity.service');
+      const computedSeverityById = new Map<string, 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'>();
+      await Promise.all(rawIncidents.map(async (incident) => {
+        try {
+          const computed = await incidentSeverityService.computeIncidentSeverity(incident.id);
+          if (computed) {
+            computedSeverityById.set(incident.id, computed);
+            // Persist the refreshed value so other consumers stay in sync.
+            await prisma.incident.update({
+              where: { id: incident.id },
+              data: { severity: computed },
+            }).catch(() => {});
+          }
+        } catch {}
+      }));
+
       return rawIncidents.map(incident => {
         const populationImpact = incident.preliminaryAssessments.reduce(
           (sum, assessment) => sum + (assessment.numberDisplaced || 0),
           0
         );
 
+        const recomputedSeverity = computedSeverityById.get(incident.id);
+
         return {
           id: incident.id,
           type: incident.type,
           subType: incident.subType || 'N/A',
-          severity: incident.severity as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW',
+          severity: (recomputedSeverity || incident.severity) as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW',
           status: incident.status as 'ACTIVE' | 'CONTAINED' | 'RESOLVED',
           description: incident.description,
           location: incident.location,
@@ -2199,12 +2266,12 @@ export const GET = withAuth(async (request: NextRequest, context) => {
           securityAssessment,
           populationAssessment
         ] = await Promise.all([
-          getLatestHealthAssessment(entity.id),
-          getLatestFoodAssessment(entity.id),
-          getLatestWASHAssessment(entity.id),
-          getLatestShelterAssessment(entity.id),
-          getLatestSecurityAssessment(entity.id),
-          getLatestPopulationAssessment(entity.id)
+          getLatestHealthAssessment(entity.id, queryParams.incidentId),
+          getLatestFoodAssessment(entity.id, queryParams.incidentId),
+          getLatestWASHAssessment(entity.id, queryParams.incidentId),
+          getLatestShelterAssessment(entity.id, queryParams.incidentId),
+          getLatestSecurityAssessment(entity.id, queryParams.incidentId),
+          getLatestPopulationAssessment(entity.id, queryParams.incidentId)
         ]);
 
         // Build latest assessments object with only existing assessments

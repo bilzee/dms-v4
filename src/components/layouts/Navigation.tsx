@@ -31,7 +31,8 @@ import {
   Image,
   LogOut,
   Menu,
-  Bell
+  Bell,
+  DollarSign
 } from '@/lib/icons';
 
 interface NavItem {
@@ -446,6 +447,12 @@ const getNavigationItems = (role: string | null): { roleItems: NavItem[]; utilit
             href: '/admin/settings/branding',
             icon: Image,
             description: 'Customize app name, logo, and PWA icon'
+          },
+          {
+            name: 'Currency Settings',
+            href: '/admin/settings/currency',
+            icon: DollarSign,
+            description: 'Configure currency symbol and display style'
           }
         ]
       }

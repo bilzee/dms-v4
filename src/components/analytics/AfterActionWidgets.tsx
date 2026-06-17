@@ -246,7 +246,7 @@ function DonorReliabilityTable({ data }: { data: AfterActionData }) {
                 <th className="pb-2 pr-4 font-medium">Type</th>
                 <th className="pb-2 pr-4 font-medium text-right">Committed</th>
                 <th className="pb-2 pr-4 font-medium text-right">Delivered</th>
-                <th className="pb-2 pr-4 font-medium text-right">Delivery Rate</th>
+                <th className="pb-2 pr-4 font-medium text-right">Fulfillment Rate</th>
                 <th className="pb-2 font-medium text-right">Completed</th>
               </tr>
             </thead>
@@ -259,11 +259,11 @@ function DonorReliabilityTable({ data }: { data: AfterActionData }) {
                   <td className="py-2 pr-4 text-right">{d.totalDelivered.toLocaleString()}</td>
                   <td className="py-2 pr-4 text-right">
                     <span className={`font-semibold ${
-                      d.deliveryRate >= 80 ? 'text-green-600 dark:text-green-400' :
-                      d.deliveryRate >= 50 ? 'text-yellow-600 dark:text-yellow-400' :
+                      d.fulfillmentRate >= 80 ? 'text-green-600 dark:text-green-400' :
+                      d.fulfillmentRate >= 50 ? 'text-yellow-600 dark:text-yellow-400' :
                       'text-red-600 dark:text-red-400'
                     }`}>
-                      {d.deliveryRate.toFixed(1)}%
+                      {d.fulfillmentRate.toFixed(1)}%
                     </span>
                   </td>
                   <td className="py-2 text-right">

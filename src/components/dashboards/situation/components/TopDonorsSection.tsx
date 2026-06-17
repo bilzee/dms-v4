@@ -17,6 +17,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { apiGet, extractArray } from '@/lib/api';
 import { ContentSkeleton } from '@/components/shared/ContentSkeleton';
+import { useCurrencySymbol } from '@/hooks/useCurrency';
 
 interface TopDonorsProps {
   incidentId?: string;
@@ -70,6 +71,8 @@ export function TopDonorsSection({ incidentId, className }: TopDonorsProps) {
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  const configuredSymbol = useCurrencySymbol();
 
   // Handle loading state
   if (isLoading) {
@@ -136,7 +139,7 @@ export function TopDonorsSection({ incidentId, className }: TopDonorsProps) {
 
   const formulaText = criteriaData?.criteria?.calculation?.formula || 'Score = (Delivery \u00d7 0.6) + (Speed \u00d7 0.2) + (Value \u00d7 0.1) + (Consistency \u00d7 0.1)';
   const config = criteriaData?.criteria?.config;
-  const curSym = config?.valueCurrency === 'NGN' ? '\u20a6' : config?.valueCurrency === 'USD' ? '$' : config?.valueCurrency === 'EUR' ? '\u20ac' : '\u20a6';
+  const curSym = configuredSymbol;
   const valueDesc = config ? `Value: ${curSym} commitment value (cap ${curSym}${(config.valueCap / 1000000).toFixed(1)}M).` : 'Value: \u20a6 commitment value.';
   const speedDesc = config ? `Speed: score drops to 0 after ${config.speedZeroScoreHours}h.` : 'Speed: response time.';
 

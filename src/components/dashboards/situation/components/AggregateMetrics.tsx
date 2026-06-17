@@ -33,6 +33,7 @@ interface AggregateMetricsData {
   totalAssessmentsCount: number;
   verifiedAssessmentsCount: number;
   responsesCount: number;
+  totalResponsePlans: number;
   deliveryRate: number;
   coverageRate: number;
   trends?: {
@@ -108,6 +109,7 @@ const fetchAggregateMetrics = async (incidentId?: string): Promise<AggregateMetr
         totalAssessmentsCount: data.entities?.length || 0,
         verifiedAssessmentsCount: 0,
         responsesCount: 0,
+        totalResponsePlans: 0,
         deliveryRate: 0,
         coverageRate: 0
       };
@@ -117,6 +119,7 @@ const fetchAggregateMetrics = async (incidentId?: string): Promise<AggregateMetr
     totalAssessmentsCount: selectedIncident.totalAssessmentsCount || 0,
     verifiedAssessmentsCount: selectedIncident.verifiedAssessmentsCount || 0,
     responsesCount: selectedIncident.responsesCount || 0,
+    totalResponsePlans: selectedIncident.totalResponsePlans || 0,
     deliveryRate: selectedIncident.deliveryRate || 0,
     coverageRate: selectedIncident.coverageRate || 0,
     trends: selectedIncident.trends
@@ -349,7 +352,7 @@ export function AggregateMetrics({ incidentId, className }: AggregateMetricsProp
           />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{formatPercentage(metricsData.deliveryRate)} delivered</span>
-            <span>{metricsData.responsesCount} of {metricsData.totalAssessmentsCount} assessments</span>
+            <span>{metricsData.responsesCount} of {metricsData.totalResponsePlans} Response Plans</span>
           </div>
         </div>
 

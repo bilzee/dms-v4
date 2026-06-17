@@ -10,6 +10,7 @@ import { ExecutivePanelLayout } from '@/components/dashboards/situation/layouts/
 import { AggregateMetrics } from '@/components/dashboards/situation/components/AggregateMetrics';
 import { TopDonorsSection } from '@/components/dashboards/situation/components/TopDonorsSection';
 import { ModeToggle, type DashboardMode } from '@/components/dashboards/situation/shared/ModeToggle';
+import { ZoomAdjustmentHint } from '@/components/dashboards/situation/shared/ZoomAdjustmentHint';
 import { useIncidentSelection, useIncidentActions } from '@/stores/dashboardLayout.store';
 import { apiGet } from '@/lib/api';
 import { ExportButton } from '@/components/dashboards/shared/exports/ExportButton';
@@ -75,7 +76,7 @@ export default function SituationDashboardPage() {
   const currentIncidentId = selectedIncidentId || '';
 
   return (
-    <div className="w-full h-screen overflow-hidden">
+    <div className="situation-dashboard-zoom w-full h-screen overflow-hidden">
         {/* Enhanced header with mode toggle */}
         <div className="mb-2 px-1 py-2 bg-white border-b border-gray-100">
           <div className="flex items-center justify-between mb-2">
@@ -96,6 +97,9 @@ export default function SituationDashboardPage() {
           </div>
         </div>
         
+        {/* Zoom adjustment hint */}
+        <ZoomAdjustmentHint />
+
         {/* Dynamic dashboard layout */}
         <div className="relative w-full h-full">
           <SituationDashboardLayout>

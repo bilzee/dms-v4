@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const CURRENCY_SYMBOL_DEFAULT = '₦';
+
 export interface CSVExportOptions {
   /** Field delimiter */
   delimiter?: string;
@@ -270,7 +272,7 @@ export class CSVGenerator {
   /**
    * Generate CSV from response data
    */
-  generateFromResponses(responses: any[], options?: CSVExportOptions): string {
+  generateFromResponses(responses: any[], options?: CSVExportOptions, currencySymbol: string = CURRENCY_SYMBOL_DEFAULT): string {
     const columns: CSVColumn[] = [
       {
         header: 'ID',
@@ -372,14 +374,14 @@ export class CSVGenerator {
         accessor: 'costEstimate',
         type: 'number',
         width: 15,
-        formatter: (value) => value ? `$${value.toFixed(2)}` : '',
+        formatter: (value) => value ? `${currencySymbol}${value.toFixed(2)}` : '',
       },
       {
         header: 'Actual Cost',
         accessor: 'actualCost',
         type: 'number',
         width: 15,
-        formatter: (value) => value ? `$${value.toFixed(2)}` : '',
+        formatter: (value) => value ? `${currencySymbol}${value.toFixed(2)}` : '',
       },
       {
         header: 'Notes',
@@ -693,7 +695,7 @@ export class CSVGenerator {
   /**
    * Generate CSV from commitment data
    */
-  generateFromCommitments(commitments: any[], options?: CSVExportOptions): string {
+  generateFromCommitments(commitments: any[], options?: CSVExportOptions, currencySymbol: string = CURRENCY_SYMBOL_DEFAULT): string {
     const columns: CSVColumn[] = [
       {
         header: 'ID',
@@ -779,7 +781,7 @@ export class CSVGenerator {
         accessor: 'totalEstimatedValue',
         type: 'number',
         width: 25,
-        formatter: (value) => value ? `$${value.toFixed(2)}` : '',
+        formatter: (value) => value ? `${currencySymbol}${value.toFixed(2)}` : '',
       },
       {
         header: 'Notes',
@@ -982,8 +984,8 @@ export const generateAssessmentsCSV = (assessments: any[], options?: CSVExportOp
   return csvGenerator.generateFromAssessments(assessments, options);
 };
 
-export const generateResponsesCSV = (responses: any[], options?: CSVExportOptions): string => {
-  return csvGenerator.generateFromResponses(responses, options);
+export const generateResponsesCSV = (responses: any[], options?: CSVExportOptions, currencySymbol?: string): string => {
+  return csvGenerator.generateFromResponses(responses, options, currencySymbol);
 };
 
 export const generateEntitiesCSV = (entities: any[], options?: CSVExportOptions): string => {
@@ -994,8 +996,8 @@ export const generateIncidentsCSV = (incidents: any[], options?: CSVExportOption
   return csvGenerator.generateFromIncidents(incidents, options);
 };
 
-export const generateCommitmentsCSV = (commitments: any[], options?: CSVExportOptions): string => {
-  return csvGenerator.generateFromCommitments(commitments, options);
+export const generateCommitmentsCSV = (commitments: any[], options?: CSVExportOptions, currencySymbol?: string): string => {
+  return csvGenerator.generateFromCommitments(commitments, options, currencySymbol);
 };
 
 // CSVGenerator and CSVData are already exported above

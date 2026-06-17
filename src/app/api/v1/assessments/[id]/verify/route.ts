@@ -119,6 +119,24 @@ export const POST = withAuth(async (
       return updatedAssessment;
     });
 
+    // After verification, recalculate gap analysis (updates assessment priority)
+    // and incident severity (bottom-up propagation).
+    try {
+      const { RapidAssessmentService } = await import('@/lib/services/rapid-assessment.service');
+      await RapidAssessmentService.triggerGapAnalysis(assessmentId);
+    } catch (e) {
+      console.error('[AssessmentVerify] post-verify gap analysis recalc failed:', e);
+    }
+
+    if (result.incidentId) {
+      try {
+        const { incidentSeverityService } = await import('@/lib/services/incident-severity.service');
+        await incidentSeverityService.recalculateIncidentSeverity(result.incidentId);
+      } catch (e) {
+        console.error('[AssessmentVerify] post-verify incident severity recalc failed:', e);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: result,

@@ -29,6 +29,7 @@ interface BrandingSettings {
   appDescription: string;
   headerIconUrl: string;
   pwaIconUrl: string;
+  loginLogoUrl: string;
 }
 
 const DEFAULT_BRANDING: BrandingSettings = {
@@ -36,6 +37,7 @@ const DEFAULT_BRANDING: BrandingSettings = {
   appDescription: 'Comprehensive disaster response management and humanitarian assessment PWA',
   headerIconUrl: '',
   pwaIconUrl: '',
+  loginLogoUrl: '',
 };
 
 export default function BrandingSettingsPage() {
@@ -43,6 +45,7 @@ export default function BrandingSettingsPage() {
   const invalidateBranding = useInvalidateBranding();
   const headerInputRef = useRef<HTMLInputElement>(null);
   const pwaInputRef = useRef<HTMLInputElement>(null);
+  const loginLogoInputRef = useRef<HTMLInputElement>(null);
 
   const [settings, setSettings] = useState<BrandingSettings>({ ...DEFAULT_BRANDING });
   const [original, setOriginal] = useState<BrandingSettings>({ ...DEFAULT_BRANDING });
@@ -64,6 +67,7 @@ export default function BrandingSettingsPage() {
           appDescription: data.branding.appDescription || DEFAULT_BRANDING.appDescription,
           headerIconUrl: data.branding.headerIconUrl || '',
           pwaIconUrl: data.branding.pwaIconUrl || '',
+          loginLogoUrl: data.branding.loginLogoUrl || '',
         };
         setSettings(branding);
         setOriginal(branding);
@@ -85,7 +89,7 @@ export default function BrandingSettingsPage() {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleUpload = async (file: File, field: 'headerIconUrl' | 'pwaIconUrl') => {
+  const handleUpload = async (file: File, field: 'headerIconUrl' | 'pwaIconUrl' | 'loginLogoUrl') => {
     if (!['image/png', 'image/jpeg', 'image/svg+xml'].includes(file.type)) {
       toast.error('Invalid file type. Allowed: PNG, JPG, SVG.');
       return;
@@ -111,7 +115,11 @@ export default function BrandingSettingsPage() {
       if (!result.success) throw new Error(result.error || 'Upload failed');
 
       updateField(field, result.data.url);
-      toast.success(`${field === 'headerIconUrl' ? 'Header' : 'PWA'} icon uploaded`);
+      toast.success(`${
+        field === 'headerIconUrl' ? 'Header' :
+        field === 'pwaIconUrl' ? 'PWA' :
+        'Login logo'
+      } uploaded`);
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -134,6 +142,7 @@ export default function BrandingSettingsPage() {
           appDescription: settings.appDescription.trim(),
           headerIconUrl: settings.headerIconUrl,
           pwaIconUrl: settings.pwaIconUrl,
+          loginLogoUrl: settings.loginLogoUrl,
         },
       });
       if (!result.success) throw new Error((result as any).error || 'Failed to save');
@@ -356,6 +365,63 @@ export default function BrandingSettingsPage() {
                 </div>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="h-5 w-5 text-purple-500" />
+                  <div>
+                    <CardTitle className="text-base">Login Page Logo</CardTitle>
+                    <CardDescription>Image displayed centred above the app name on the login page</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <input
+                  ref={loginLogoInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/svg+xml"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleUpload(file, 'loginLogoUrl');
+                    e.target.value = '';
+                  }}
+                />
+                {settings.loginLogoUrl ? (
+                  <div className="flex items-center gap-3">
+                    <img src={settings.loginLogoUrl} alt="Login logo" className="h-16 w-16 object-contain rounded border" />
+                    <div className="flex-1">
+                      <p className="text-sm text-muted-foreground truncate max-w-[200px]">{settings.loginLogoUrl}</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateField('loginLogoUrl', '')}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No login logo set. The login page will show only the app name.</p>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => loginLogoInputRef.current?.click()}
+                  disabled={isUploading === 'loginLogoUrl'}
+                >
+                  <Upload className="h-4 w-4 mr-1" />
+                  {isUploading === 'loginLogoUrl' ? 'Uploading...' : 'Upload Login Logo'}
+                </Button>
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    Recommended: up to 1024×1024px PNG/JPG/SVG. Displayed at 256×256px on the login page.
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           <div className="space-y-6">
@@ -394,6 +460,13 @@ export default function BrandingSettingsPage() {
                 <div>
                   <h4 className="text-sm font-medium mb-2">Login Page Preview</h4>
                   <div className="border rounded-lg p-6 text-center bg-gray-50 dark:bg-gray-900">
+                    {settings.loginLogoUrl ? (
+                      <img
+                        src={settings.loginLogoUrl}
+                        alt="Login logo"
+                        className="h-16 w-16 object-contain rounded mx-auto mb-3"
+                      />
+                    ) : null}
                     <h3 className="text-lg font-bold">{settings.appName || 'DRMS'}</h3>
                     <p className="text-xs text-muted-foreground mt-1">{settings.appDescription || 'No description'}</p>
                   </div>

@@ -29,6 +29,7 @@ import {
   CheckCircle2,
 } from '@/lib/icons';
 import { useRouter } from 'next/navigation';
+import { useCurrencySymbol } from '@/hooks/useCurrency';
 
 interface ScoringConfig {
   deliveryWeight: number;
@@ -53,16 +54,6 @@ const DEFAULT_CONFIG: ScoringConfig = {
   valueCurrency: 'NGN',
   consistencyMaxActivitiesPerDay: 0.1,
 };
-
-function getCurrencySymbol(currency: string): string {
-  const symbols: Record<string, string> = {
-    NGN: '₦',
-    USD: '$',
-    EUR: '€',
-    GBP: '£',
-  };
-  return symbols[currency] || currency;
-}
 
 function buildFormulaString(config: ScoringConfig): string {
   return `Score = (Delivery × ${config.deliveryWeight / 100}) + (Speed × ${config.speedWeight / 100}) + (Value × ${config.valueWeight / 100}) + (Consistency × ${config.consistencyWeight / 100})`;
@@ -90,6 +81,7 @@ function computePreviewScore(config: ScoringConfig, inputs: { delivery: number; 
 
 export default function ScoringConfigPage() {
   const router = useRouter();
+  const configuredSymbol = useCurrencySymbol();
   const [config, setConfig] = useState<ScoringConfig>({ ...DEFAULT_CONFIG });
   const [originalConfig, setOriginalConfig] = useState<ScoringConfig>({ ...DEFAULT_CONFIG });
   const [isLoading, setIsLoading] = useState(true);
@@ -437,7 +429,7 @@ export default function ScoringConfigPage() {
 
                   <div className="rounded-lg border bg-muted/50 p-4">
                     <p className="text-sm font-mono">
-                      Value Score = min(100, (totalValue ÷ {getCurrencySymbol(config.valueCurrency)}{config.valueCap.toLocaleString()}) × 100)
+                      Value Score = min(100, (totalValue ÷ {configuredSymbol}{config.valueCap.toLocaleString()}) × 100)
                     </p>
                   </div>
 
@@ -446,7 +438,7 @@ export default function ScoringConfigPage() {
                       <Label htmlFor="valueCap">Value Cap</Label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                          {getCurrencySymbol(config.valueCurrency)}
+                          {configuredSymbol}
                         </span>
                         <Input
                           id="valueCap"
@@ -576,7 +568,7 @@ export default function ScoringConfigPage() {
                     <div className="flex items-center justify-between">
                       <Label className="text-xs flex items-center gap-1">
                         <TrendingUp className="h-3 w-3" />
-                        Value ({getCurrencySymbol(config.valueCurrency)})
+                        Value ({configuredSymbol})
                       </Label>
                       <span className="text-xs font-medium">{valuePreview} pts × {config.valueWeight}%</span>
                     </div>
@@ -622,7 +614,7 @@ export default function ScoringConfigPage() {
                   </div>
                   <div className="rounded border bg-card p-2 text-center">
                     <div className="text-xs text-muted-foreground">Value cap</div>
-                    <div className="text-sm font-semibold">{getCurrencySymbol(config.valueCurrency)}{(config.valueCap / 1000000).toFixed(1)}M</div>
+                    <div className="text-sm font-semibold">{configuredSymbol}{(config.valueCap / 1000000).toFixed(1)}M</div>
                   </div>
                 </div>
               </CardContent>

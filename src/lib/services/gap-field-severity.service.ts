@@ -35,7 +35,7 @@ export interface GapAnalysisResult {
  */
 let severityCache: Map<AssessmentType, Map<string, Priority>> = new Map()
 let cacheTimestamp: number = 0
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+const CACHE_DURATION = 30 * 1000 // 30 seconds — short window to avoid stale severities after coordinator updates
 
 class GapFieldSeverityService {
   

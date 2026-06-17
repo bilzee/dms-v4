@@ -186,3 +186,25 @@ input, textarea, select {
   background-color: hsl(var(--severity-info) / 0.15);
   color: hsl(var(--severity-info));
 }
+
+/* ──────────────────────────────────────────────
+   Situation Dashboard — viewport-aware zoom
+   Compensates for monitor resolution + OS scaling
+   so content fits without manual browser zoom.
+   ────────────────────────────────────────────── */
+
+/* 4K (3840×2160) — 95% zoom */
+@media (min-width: 3400px) {
+  .situation-dashboard-zoom {
+    zoom: 0.95;
+  }
+}
+
+/* QHD (2560×1440) — 100% zoom (no scaling needed) */
+
+/* Full HD (1920×1080) — 75% zoom */
+@media (min-width: 1820px) and (max-width: 2200px) {
+  .situation-dashboard-zoom {
+    zoom: 0.75;
+  }
+}

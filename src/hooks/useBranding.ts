@@ -8,6 +8,7 @@ interface BrandingSettings {
   appDescription: string
   headerIconUrl: string
   pwaIconUrl: string
+  loginLogoUrl: string
 }
 
 const BRANDING_DEFAULTS: BrandingSettings = {
@@ -15,6 +16,7 @@ const BRANDING_DEFAULTS: BrandingSettings = {
   appDescription: 'Comprehensive disaster response management and humanitarian assessment PWA',
   headerIconUrl: '',
   pwaIconUrl: '',
+  loginLogoUrl: '',
 }
 
 export function useBranding() {
@@ -28,6 +30,7 @@ export function useBranding() {
           appDescription: result.data.appDescription || BRANDING_DEFAULTS.appDescription,
           headerIconUrl: result.data.headerIconUrl || '',
           pwaIconUrl: result.data.pwaIconUrl || '',
+          loginLogoUrl: result.data.loginLogoUrl || '',
         }
       }
       return BRANDING_DEFAULTS
@@ -41,6 +44,7 @@ export function useBranding() {
     appDescription: data?.appDescription ?? BRANDING_DEFAULTS.appDescription,
     headerIconUrl: data?.headerIconUrl ?? '',
     pwaIconUrl: data?.pwaIconUrl ?? '',
+    loginLogoUrl: data?.loginLogoUrl ?? '',
   }
 }
 

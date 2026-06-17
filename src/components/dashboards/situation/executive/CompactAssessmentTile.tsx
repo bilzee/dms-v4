@@ -48,9 +48,9 @@ const assessmentTypeConfig: Record<string, {
   label: string 
 }> = {
   'HEALTH': { icon: Heart, color: 'text-red-600', label: 'Health' },
+  'FOOD': { icon: Wheat, color: 'text-orange-600', label: 'Food Security' },
   'WASH': { icon: Droplets, color: 'text-blue-600', label: 'WASH' },
   'SHELTER': { icon: Home, color: 'text-green-600', label: 'Shelter' },
-  'FOOD': { icon: Wheat, color: 'text-orange-600', label: 'Food Security' },
   'SECURITY': { icon: Shield, color: 'text-purple-600', label: 'Security' },
   'POPULATION': { icon: Users, color: 'text-muted-foreground', label: 'Population' },
   'LOGISTICS': { icon: Truck, color: 'text-yellow-600', label: 'Logistics' }
@@ -83,7 +83,7 @@ const fetchAssessmentsData = async (incidentId: string): Promise<AssessmentsData
     throw new Error(dashboardResponse.error || 'Failed to fetch dashboard data');
   }
 
-  const assessmentTypes = ['HEALTH', 'WASH', 'SHELTER', 'FOOD', 'SECURITY'];
+  const assessmentTypes = ['HEALTH', 'FOOD', 'WASH', 'SHELTER', 'SECURITY'];
   const assessmentSummaries: AssessmentSummary[] = [];
   
   // Use aggregatedAssessments for severity information

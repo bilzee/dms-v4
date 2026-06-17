@@ -37,6 +37,9 @@ export type ResourceData = {
   totalCommitments: number
   byStatus: Array<{ status: string; totalCommitted: number; totalDelivered: number; totalVerified: number }>
   byType: Array<{ type: string; totalCommitted: number; totalDelivered: number }>
+  deliveredResponses: number
+  totalResponsePlans: number
+  responseDeliveryRate: number
 }
 
 export type WorkloadData = {
@@ -109,7 +112,7 @@ export type AfterActionData = {
     totalVerified: number
     totalCommitments: number
     completedCommitments: number
-    deliveryRate: number
+    fulfillmentRate: number
   }>
   incidentComparison: Array<{
     incidentId: string

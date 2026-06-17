@@ -221,6 +221,7 @@ export class CoordinatorAnalyticsService {
     const entityFilter = input.entityId
       ? Prisma.sql`AND dc."entityId" = ${input.entityId}`
       : Prisma.sql``
+    const nonCancelled = Prisma.sql`AND dc.status != 'CANCELLED'`
 
     const commitmentRows = await prisma.$queryRaw<Array<{
       status: string
@@ -245,12 +246,29 @@ export class CoordinatorAnalyticsService {
         SUM(dc."totalCommittedQuantity")::int as total_committed,
         SUM(dc."deliveredQuantity")::int as total_delivered
       FROM donor_commitments dc
-      WHERE 1=1 ${incidentFilter} ${entityFilter}
+      WHERE 1=1 ${nonCancelled} ${incidentFilter} ${entityFilter}
       GROUP BY dc.type`
 
     const countRow = await prisma.$queryRaw<Array<{ cnt: bigint }>>`
       SELECT COUNT(*)::int as cnt FROM donor_commitments dc
-      WHERE 1=1 ${incidentFilter} ${entityFilter}`
+      WHERE 1=1 ${nonCancelled} ${incidentFilter} ${entityFilter}`
+
+    const responseDeliveryRows = await prisma.$queryRaw<Array<{
+      delivered_count: bigint
+      planned_count: bigint
+    }>>`
+      SELECT
+        COUNT(*) FILTER (WHERE rr."deliveryStatus" = 'DELIVERED')::int as delivered_count,
+        COUNT(*) FILTER (WHERE rr."deliveryStatus" = 'PLANNED')::int as planned_count
+      FROM rapid_responses rr
+      JOIN rapid_assessments ra ON ra.id = rr."assessmentId"
+      WHERE 1=1
+        ${input.incidentId ? Prisma.sql`AND ra."incidentId" = ${input.incidentId}` : Prisma.sql``}
+        ${input.entityId ? Prisma.sql`AND rr."entityId" = ${input.entityId}` : Prisma.sql``}`
+
+    const respDelivered = Number(responseDeliveryRows[0]?.delivered_count ?? 0)
+    const respPlanned = Number(responseDeliveryRows[0]?.planned_count ?? 0)
+    const respTotal = respDelivered + respPlanned
 
     return {
       totalCommitments: Number(countRow[0]?.cnt ?? 0),
@@ -265,6 +283,9 @@ export class CoordinatorAnalyticsService {
         totalCommitted: Number(r.total_committed),
         totalDelivered: Number(r.total_delivered),
       })),
+      deliveredResponses: respDelivered,
+      totalResponsePlans: respTotal,
+      responseDeliveryRate: respTotal > 0 ? Math.round((respDelivered / respTotal) * 10000) / 100 : 0,
     }
   }
 
@@ -597,7 +618,8 @@ export class CoordinatorAnalyticsService {
         COUNT(*) FILTER (WHERE dc.status = 'COMPLETE')::int as completed_commitments
       FROM donors d
       JOIN donor_commitments dc ON dc."donorId" = d.id
-      WHERE 1=1 ${input.incidentId ? Prisma.sql`AND dc."incidentId" = ${input.incidentId}` : Prisma.sql``}
+      WHERE dc.status != 'CANCELLED'
+        ${input.incidentId ? Prisma.sql`AND dc."incidentId" = ${input.incidentId}` : Prisma.sql``}
       GROUP BY d.id, d.name, d.type
       HAVING SUM(dc."totalCommittedQuantity") > 0
       ORDER BY total_committed DESC`
@@ -660,7 +682,7 @@ export class CoordinatorAnalyticsService {
         totalVerified: Number(r.total_verified),
         totalCommitments: Number(r.total_commitments),
         completedCommitments: Number(r.completed_commitments),
-        deliveryRate: Number(r.total_committed) > 0
+        fulfillmentRate: Number(r.total_committed) > 0
           ? Math.round((Number(r.total_delivered) / Number(r.total_committed)) * 10000) / 100
           : 0,
       })),
@@ -691,7 +713,7 @@ export class CoordinatorAnalyticsService {
     const emptyPipeline = { draft: 0, submitted: 0, verified: 0, responsePlanned: 0, responseVerified: 0, delivered: 0, deliveryVerified: 0 }
     const emptyThroughput = { assessmentTurnaround: [], responseTurnaround: [], distribution: [] }
     const emptyPopulation = { trend: [], demographics: { totalPopulation: 0, totalHouseholds: 0, populationMale: 0, populationFemale: 0, populationUnder5: 0, pregnantWomen: 0, lactatingMothers: 0, personWithDisability: 0, elderlyPersons: 0, separatedChildren: 0 } }
-    const emptyResources = { totalCommitments: 0, byStatus: [], byType: [] }
+    const emptyResources = { totalCommitments: 0, byStatus: [], byType: [], deliveredResponses: 0, totalResponsePlans: 0, responseDeliveryRate: 0 }
     const emptyWorkload = { assessors: [], responders: [] }
     const emptyFreshness: any[] = []
     const emptyGapRadar = { summary: [], entityGaps: [] }

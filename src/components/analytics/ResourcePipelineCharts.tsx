@@ -6,7 +6,7 @@ import '@/lib/utils/chart-registration'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatCard } from '@/components/shared/StatCard'
 import { StatCardGrid } from '@/components/shared/StatCardGrid'
-import { Package, DollarSign, ClipboardList } from '@/lib/icons'
+import { Package, ClipboardList } from '@/lib/icons'
 import type { ResourceData } from '@/hooks/useCoordinatorAnalytics'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -34,9 +34,10 @@ const TYPE_LABELS: Record<string, string> = {
 }
 
 function CommitmentPipelineChart({ data }: { data: ResourceData }) {
-  const totalCommitted = data.byStatus.reduce((s, r) => s + r.totalCommitted, 0)
-  const totalDelivered = data.byStatus.reduce((s, r) => s + r.totalDelivered, 0)
-  const totalVerified = data.byStatus.reduce((s, r) => s + r.totalVerified, 0)
+  const activeStatuses = data.byStatus.filter(s => s.status !== 'CANCELLED')
+  const totalCommitted = activeStatuses.reduce((s, r) => s + r.totalCommitted, 0)
+  const totalDelivered = activeStatuses.reduce((s, r) => s + r.totalDelivered, 0)
+  const totalVerified = activeStatuses.reduce((s, r) => s + r.totalVerified, 0)
 
   const chartData = useMemo(() => {
     const statuses = data.byStatus.filter(s => s.status !== 'CANCELLED')
@@ -83,12 +84,12 @@ function CommitmentPipelineChart({ data }: { data: ResourceData }) {
     },
   }), [])
 
-  const deliveryRate = totalCommitted > 0 ? Math.round((totalDelivered / totalCommitted) * 100) : 0
+  const fulfillmentRate = totalCommitted > 0 ? Math.round((totalDelivered / totalCommitted) * 100) : 0
   const verificationRate = totalDelivered > 0 ? Math.round((totalVerified / totalDelivered) * 100) : 0
 
   return (
     <>
-      <StatCardGrid columns={4}>
+      <StatCardGrid columns={5}>
         <StatCard
           label="Commitments"
           value={data.totalCommitments}
@@ -102,10 +103,16 @@ function CommitmentPipelineChart({ data }: { data: ResourceData }) {
           icon={Package}
         />
         <StatCard
-          label="Delivery Rate"
-          value={`${deliveryRate}%`}
-          severity={deliveryRate >= 80 ? 'success' : deliveryRate >= 50 ? 'warning' : 'critical'}
-          icon={DollarSign}
+          label="Response Delivery Rate"
+          value={`${data.responseDeliveryRate}%`}
+          severity={data.responseDeliveryRate >= 80 ? 'success' : data.responseDeliveryRate >= 50 ? 'warning' : 'critical'}
+          icon={ClipboardList}
+        />
+        <StatCard
+          label="Donor Fulfillment Rate"
+          value={`${fulfillmentRate}%`}
+          severity={fulfillmentRate >= 80 ? 'success' : fulfillmentRate >= 50 ? 'warning' : 'critical'}
+          icon={Package}
         />
         <StatCard
           label="Verification Rate"
@@ -117,7 +124,6 @@ function CommitmentPipelineChart({ data }: { data: ResourceData }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Package className="h-5 w-5" />
             Commitment Pipeline by Status
           </CardTitle>
         </CardHeader>
@@ -181,7 +187,6 @@ function ResourceTypeBreakdown({ data }: { data: ResourceData }) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <DollarSign className="h-5 w-5" />
           Resource Breakdown by Type
         </CardTitle>
       </CardHeader>

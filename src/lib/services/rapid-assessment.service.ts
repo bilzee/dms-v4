@@ -256,7 +256,11 @@ export class RapidAssessmentService {
     })
 
     // Automatically trigger gap analysis calculation after successful creation
-    await this.triggerGapAnalysis(result.rapidAssessment.id)
+    try {
+      await this.triggerGapAnalysis(result.rapidAssessment.id)
+    } catch (gapError) {
+      console.error('[RapidAssessmentService] Gap analysis failed during create; assessment will retain default priority. Manual recalculation required:', gapError)
+    }
 
     // Recalculate incident severity bottom-up
     if (input.incidentId) {
@@ -719,8 +723,8 @@ export class RapidAssessmentService {
 
       console.log(`Gap analysis calculated for assessment ${assessmentId} (${assessment.rapidAssessmentType})`)
     } catch (error) {
-      console.error('Error calculating gap analysis:', error)
-      // Don't throw error to avoid breaking submission workflow
+      console.error(`[RapidAssessmentService] triggerGapAnalysis failed for ${assessmentId}:`, error)
+      throw error
     }
   }
 
