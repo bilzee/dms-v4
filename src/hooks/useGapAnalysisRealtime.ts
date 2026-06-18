@@ -6,13 +6,14 @@ import { getAuthToken } from '@/lib/auth/token-utils';
 interface GapAnalysisSummaryData {
   totalEntities: number;
   severityDistribution: {
+    critical: number;
     high: number;
     medium: number;
     low: number;
   };
   assessmentTypeGaps: {
     [assessmentType: string]: {
-      severity: 'high' | 'medium' | 'low';
+      severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
       entitiesAffected: number;
       percentage: number;
     };

@@ -67,7 +67,8 @@ export function exportGapAnalysisToCsv(
     rows.push('# SUMMARY STATISTICS');
     rows.push('Metric,Value,Percentage');
     
-    const totalEntitiesWithGaps = data.severityDistribution.high + 
+    const totalEntitiesWithGaps = data.severityDistribution.critical + 
+                                   data.severityDistribution.high + 
                                    data.severityDistribution.medium + 
                                    data.severityDistribution.low;
     
@@ -81,6 +82,7 @@ export function exportGapAnalysisToCsv(
     rows.push('Severity,Count,Percentage of Gaps');
     
     const totalGaps = totalEntitiesWithGaps || 1; // Avoid division by zero
+    rows.push(`Critical Priority,${data.severityDistribution.critical},${((data.severityDistribution.critical / totalGaps) * 100).toFixed(1)}%`);
     rows.push(`High Priority,${data.severityDistribution.high},${((data.severityDistribution.high / totalGaps) * 100).toFixed(1)}%`);
     rows.push(`Medium Priority,${data.severityDistribution.medium},${((data.severityDistribution.medium / totalGaps) * 100).toFixed(1)}%`);
     rows.push(`Low Priority,${data.severityDistribution.low},${((data.severityDistribution.low / totalGaps) * 100).toFixed(1)}%`);
@@ -101,7 +103,7 @@ export function exportGapAnalysisToCsv(
     Object.entries(data.assessmentTypeGaps).forEach(([type, gapData]) => {
       const typeName = assessmentTypeNames[type as keyof typeof assessmentTypeNames] || type;
       rows.push(
-        `${typeName},${gapData.entitiesAffected},${gapData.percentage.toFixed(1)}%,${gapData.severity.toUpperCase()}`
+        `${typeName},${gapData.entitiesAffected},${gapData.percentage.toFixed(1)}%,${gapData.severity}`
       );
     });
 
@@ -175,7 +177,7 @@ export function validateGapAnalysisData(data: any): { isValid: boolean; error?: 
     return { isValid: false, error: 'Missing or invalid severityDistribution' };
   }
 
-  const requiredSeverityFields = ['high', 'medium', 'low'];
+  const requiredSeverityFields = ['critical', 'high', 'medium', 'low'];
   for (const field of requiredSeverityFields) {
     if (typeof data.severityDistribution[field] !== 'number') {
       return { isValid: false, error: `Missing or invalid severityDistribution.${field}` };

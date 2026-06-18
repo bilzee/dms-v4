@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { apiGet } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { getBadgeClasses } from '@/components/shared/StatusBadge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
   Command,
@@ -51,6 +52,8 @@ const severityVariants = {
   MEDIUM: 'outline',
   LOW: 'outline'
 } as const;
+
+// Note: severity badges now use getBadgeClasses for consistent design system colors
 
 // Fetch incidents from dashboard API
 const fetchIncidents = async (includeHistorical = false): Promise<IncidentOption[]> => {
@@ -216,7 +219,7 @@ export function IncidentSelector({
                   <Badge variant={statusVariants[selectedIncident.status]} className="text-xs">
                     {selectedIncident.status}
                   </Badge>
-                  <Badge variant={severityVariants[selectedIncident.severity]} className="text-xs">
+                  <Badge variant="outline" className={cn("text-xs", getBadgeClasses('severity', selectedIncident.severity))}>
                     {selectedIncident.severity}
                   </Badge>
                 </div>
@@ -288,7 +291,7 @@ export function IncidentSelector({
                           </span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Badge variant={severityVariants[incident.severity]} className="text-xs">
+                          <Badge variant="outline" className={cn("text-xs", getBadgeClasses('severity', incident.severity))}>
                             {incident.severity}
                           </Badge>
                           {selectedIncidentId === incident.id && (
@@ -321,7 +324,7 @@ export function IncidentSelector({
                           </span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Badge variant={severityVariants[incident.severity]} className="text-xs">
+                          <Badge variant="outline" className={cn("text-xs", getBadgeClasses('severity', incident.severity))}>
                             {incident.severity}
                           </Badge>
                           {selectedIncidentId === incident.id && (

@@ -72,7 +72,7 @@ const getSeverityConfig = (severity: string) => {
       };
     case 'LOW':
       return {
-        badgeClass: 'bg-blue-600 text-white border-2 border-blue-300',
+        badgeClass: 'bg-green-600 text-white border-2 border-green-300',
         icon: CheckCircle,
         iconClass: 'text-white'
       };

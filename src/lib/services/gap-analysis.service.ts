@@ -11,11 +11,14 @@ import { AssessmentType, Priority } from '@prisma/client'
 import { gapFieldSeverityService } from './gap-field-severity.service'
 
 // Types for gap analysis results
+type FieldSeverityMap = Record<string, 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'>;
+
 export interface HealthGapAnalysis {
   hasGap: boolean;
   gapFields: string[];
   severity: Priority;
   recommendations: string[];
+  fieldSeverityMap?: FieldSeverityMap;
 }
 
 export interface FoodGapAnalysis {
@@ -23,6 +26,7 @@ export interface FoodGapAnalysis {
   gapFields: string[];
   severity: Priority;
   recommendations: string[];
+  fieldSeverityMap?: FieldSeverityMap;
 }
 
 export interface WASHGapAnalysis {
@@ -30,6 +34,7 @@ export interface WASHGapAnalysis {
   gapFields: string[];
   severity: Priority;
   recommendations: string[];
+  fieldSeverityMap?: FieldSeverityMap;
 }
 
 export interface ShelterGapAnalysis {
@@ -37,6 +42,7 @@ export interface ShelterGapAnalysis {
   gapFields: string[];
   severity: Priority;
   recommendations: string[];
+  fieldSeverityMap?: FieldSeverityMap;
 }
 
 export interface SecurityGapAnalysis {
@@ -44,6 +50,7 @@ export interface SecurityGapAnalysis {
   gapFields: string[];
   severity: Priority;
   recommendations: string[];
+  fieldSeverityMap?: FieldSeverityMap;
 }
 
 // Gap analysis calculation functions
@@ -59,7 +66,15 @@ export async function analyzeHealthGaps(data: any): Promise<HealthGapAnalysis> {
   if (!data.hasMedicalSupplies) { gapFields.push('hasMedicalSupplies'); hasGap = true; }
   if (!data.hasMaternalChildServices) { gapFields.push('hasMaternalChildServices'); hasGap = true; }
 
-  // NEW: Use dynamic severity calculation from database
+  // Build per-field severity map from database config
+  const fieldSeverityMap: FieldSeverityMap = {};
+  for (const fieldName of gapFields) {
+    fieldSeverityMap[fieldName] = await gapFieldSeverityService.calculateFieldSeverity(
+      AssessmentType.HEALTH, fieldName
+    ) as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  }
+
+  // Use dynamic severity calculation from database
   const severity = await gapFieldSeverityService.calculateAssessmentSeverity(
     AssessmentType.HEALTH, 
     gapFields
@@ -67,7 +82,7 @@ export async function analyzeHealthGaps(data: any): Promise<HealthGapAnalysis> {
 
   const recommendations = generateHealthRecommendations(gapFields);
 
-  return { hasGap, gapFields, severity, recommendations };
+  return { hasGap, gapFields, severity, recommendations, fieldSeverityMap };
 }
 
 export async function analyzeFoodGaps(data: any): Promise<FoodGapAnalysis> {
@@ -78,7 +93,15 @@ export async function analyzeFoodGaps(data: any): Promise<FoodGapAnalysis> {
   if (!data.hasRegularMealAccess) { gapFields.push('hasRegularMealAccess'); hasGap = true; }
   if (!data.hasInfantNutrition) { gapFields.push('hasInfantNutrition'); hasGap = true; }
 
-  // NEW: Use dynamic severity calculation from database
+  // Build per-field severity map from database config
+  const fieldSeverityMap: FieldSeverityMap = {};
+  for (const fieldName of gapFields) {
+    fieldSeverityMap[fieldName] = await gapFieldSeverityService.calculateFieldSeverity(
+      AssessmentType.FOOD, fieldName
+    ) as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  }
+
+  // Use dynamic severity calculation from database
   const severity = await gapFieldSeverityService.calculateAssessmentSeverity(
     AssessmentType.FOOD, 
     gapFields
@@ -86,7 +109,7 @@ export async function analyzeFoodGaps(data: any): Promise<FoodGapAnalysis> {
 
   const recommendations = generateFoodRecommendations(gapFields);
 
-  return { hasGap, gapFields, severity, recommendations };
+  return { hasGap, gapFields, severity, recommendations, fieldSeverityMap };
 }
 
 export async function analyzeWASHGaps(data: any): Promise<WASHGapAnalysis> {
@@ -99,7 +122,15 @@ export async function analyzeWASHGaps(data: any): Promise<WASHGapAnalysis> {
   if (!data.hasHandwashingFacilities) { gapFields.push('hasHandwashingFacilities'); hasGap = true; }
   if (data.hasOpenDefecationConcerns) { gapFields.push('hasOpenDefecationConcerns'); hasGap = true; }
 
-  // NEW: Use dynamic severity calculation from database
+  // Build per-field severity map from database config
+  const fieldSeverityMap: FieldSeverityMap = {};
+  for (const fieldName of gapFields) {
+    fieldSeverityMap[fieldName] = await gapFieldSeverityService.calculateFieldSeverity(
+      AssessmentType.WASH, fieldName
+    ) as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  }
+
+  // Use dynamic severity calculation from database
   const severity = await gapFieldSeverityService.calculateAssessmentSeverity(
     AssessmentType.WASH, 
     gapFields
@@ -107,7 +138,7 @@ export async function analyzeWASHGaps(data: any): Promise<WASHGapAnalysis> {
 
   const recommendations = generateWASHRecommendations(gapFields);
 
-  return { hasGap, gapFields, severity, recommendations };
+  return { hasGap, gapFields, severity, recommendations, fieldSeverityMap };
 }
 
 export async function analyzeShelterGaps(data: any): Promise<ShelterGapAnalysis> {
@@ -119,7 +150,15 @@ export async function analyzeShelterGaps(data: any): Promise<ShelterGapAnalysis>
   if (data.areOvercrowded) { gapFields.push('areOvercrowded'); hasGap = true; }
   if (!data.provideWeatherProtection) { gapFields.push('provideWeatherProtection'); hasGap = true; }
 
-  // NEW: Use dynamic severity calculation from database
+  // Build per-field severity map from database config
+  const fieldSeverityMap: FieldSeverityMap = {};
+  for (const fieldName of gapFields) {
+    fieldSeverityMap[fieldName] = await gapFieldSeverityService.calculateFieldSeverity(
+      AssessmentType.SHELTER, fieldName
+    ) as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  }
+
+  // Use dynamic severity calculation from database
   const severity = await gapFieldSeverityService.calculateAssessmentSeverity(
     AssessmentType.SHELTER, 
     gapFields
@@ -127,7 +166,7 @@ export async function analyzeShelterGaps(data: any): Promise<ShelterGapAnalysis>
 
   const recommendations = generateShelterRecommendations(gapFields);
 
-  return { hasGap, gapFields, severity, recommendations };
+  return { hasGap, gapFields, severity, recommendations, fieldSeverityMap };
 }
 
 export async function analyzeSecurityGaps(data: any): Promise<SecurityGapAnalysis> {
@@ -141,7 +180,15 @@ export async function analyzeSecurityGaps(data: any): Promise<SecurityGapAnalysi
   if (!data.vulnerableGroupsHaveAccess) { gapFields.push('vulnerableGroupsHaveAccess'); hasGap = true; }
   if (!data.hasLighting) { gapFields.push('hasLighting'); hasGap = true; }
 
-  // NEW: Use dynamic severity calculation from database
+  // Build per-field severity map from database config
+  const fieldSeverityMap: FieldSeverityMap = {};
+  for (const fieldName of gapFields) {
+    fieldSeverityMap[fieldName] = await gapFieldSeverityService.calculateFieldSeverity(
+      AssessmentType.SECURITY, fieldName
+    ) as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  }
+
+  // Use dynamic severity calculation from database
   const severity = await gapFieldSeverityService.calculateAssessmentSeverity(
     AssessmentType.SECURITY, 
     gapFields
@@ -149,7 +196,7 @@ export async function analyzeSecurityGaps(data: any): Promise<SecurityGapAnalysi
 
   const recommendations = generateSecurityRecommendations(gapFields);
 
-  return { hasGap, gapFields, severity, recommendations };
+  return { hasGap, gapFields, severity, recommendations, fieldSeverityMap };
 }
 
 // Recommendation generation functions

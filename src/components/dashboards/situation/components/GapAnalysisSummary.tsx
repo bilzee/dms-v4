@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { Heart, Wheat, Droplets, Home, Shield } from '@/lib/icons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getDotColor } from '@/components/shared/StatusBadge';
@@ -26,13 +27,14 @@ interface GapAnalysisSummaryProps {
   data?: {
     totalEntities: number;
     severityDistribution: {
+      critical: number;
       high: number;
       medium: number;
       low: number;
     };
     assessmentTypeGaps: {
       [assessmentType: string]: {
-        severity: 'high' | 'medium' | 'low';
+        severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
         entitiesAffected: number;
         percentage: number;
       };
@@ -48,38 +50,38 @@ interface GapAnalysisSummaryProps {
 const assessmentTypeConfig = {
   HEALTH: {
     title: 'Health Services',
-    icon: '🏥',
+    Icon: Heart,
     color: 'text-red-600',
     bgColor: 'bg-red-50',
     borderColor: 'border-red-200'
   },
   FOOD: {
     title: 'Food Security',
-    icon: '🍲',
+    Icon: Wheat,
     color: 'text-orange-600',
     bgColor: 'bg-orange-50',
     borderColor: 'border-orange-200'
   },
   WASH: {
     title: 'Water & Sanitation',
-    icon: '💧',
+    Icon: Droplets,
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200'
   },
   SHELTER: {
     title: 'Shelter & Housing',
-    icon: '🏠',
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50',
-    borderColor: 'border-purple-200'
-  },
-  SECURITY: {
-    title: 'Security & Protection',
-    icon: '🛡️',
+    Icon: Home,
     color: 'text-green-600',
     bgColor: 'bg-green-50',
     borderColor: 'border-green-200'
+  },
+  SECURITY: {
+    title: 'Security & Protection',
+    Icon: Shield,
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50',
+    borderColor: 'border-purple-200'
   }
 } as const;
 
@@ -130,9 +132,10 @@ export function GapAnalysisSummary({
 
     const { totalEntities, severityDistribution, assessmentTypeGaps } = data;
     
-    // Calculate percentages for severity distribution
-    const totalWithGaps = severityDistribution.high + severityDistribution.medium + severityDistribution.low;
+    // Calculate totals and percentages for severity distribution (4 buckets)
+    const totalWithGaps = severityDistribution.critical + severityDistribution.high + severityDistribution.medium + severityDistribution.low;
     const severityPercentages = {
+      critical: totalWithGaps > 0 ? (severityDistribution.critical / totalWithGaps) * 100 : 0,
       high: totalWithGaps > 0 ? (severityDistribution.high / totalWithGaps) * 100 : 0,
       medium: totalWithGaps > 0 ? (severityDistribution.medium / totalWithGaps) * 100 : 0,
       low: totalWithGaps > 0 ? (severityDistribution.low / totalWithGaps) * 100 : 0
@@ -142,11 +145,12 @@ export function GapAnalysisSummary({
     const entitiesWithGaps = totalWithGaps;
     const gapCoverageRate = totalEntities > 0 ? (entitiesWithGaps / totalEntities) * 100 : 0;
 
-    // Determine overall status
-    let overallStatus: 'critical' | 'high' | 'medium' | 'low' = 'low';
-    if (severityDistribution.high > 0) overallStatus = 'critical';
-    else if (severityDistribution.medium > 0) overallStatus = 'high';
-    else if (severityDistribution.low > 0) overallStatus = 'medium';
+    // Determine overall status from highest severity bucket with entities
+    let overallStatus: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW';
+    if (severityDistribution.critical > 0) overallStatus = 'CRITICAL';
+    else if (severityDistribution.high > 0) overallStatus = 'HIGH';
+    else if (severityDistribution.medium > 0) overallStatus = 'MEDIUM';
+    else if (severityDistribution.low > 0) overallStatus = 'LOW';
 
     return {
       totalEntities,
@@ -212,12 +216,12 @@ export function GapAnalysisSummary({
             <div className="flex items-center gap-2">
               <GapIndicator 
                 hasGap={(metrics?.gapCoverageRate || 0) > 0}
-                severity={(metrics?.overallStatus || 'low').toUpperCase() as any}
+                severity={(metrics?.overallStatus || 'LOW') as any}
                 size="sm"
                 showLabel={false}
               />
               <span className="text-sm font-medium">
-                {(metrics?.overallStatus || 'low').toUpperCase()}
+                {metrics?.overallStatus || 'LOW'}
               </span>
             </div>
             
@@ -250,12 +254,24 @@ export function GapAnalysisSummary({
 
       <CardContent className="pt-0 overflow-y-auto flex-1">
         {/* Severity Distribution */}
-        <div className="mb-4"> {/* Reduced from mb-6 */}
+        <div className="mb-4">
           <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
             <PieChart className="h-4 w-4" />
             Severity Distribution
           </h3>
           <div className="space-y-3">
+            {/* Critical severity */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={cn("w-3 h-3 rounded-full", getDotColor('severity', 'CRITICAL'))} />
+                <span className="text-sm font-medium">Critical Priority</span>
+              </div>
+              <span className="text-sm text-gray-600">
+                {data?.severityDistribution.critical || 0} entities ({(metrics?.severityPercentages.critical || 0).toFixed(1)}%)
+              </span>
+            </div>
+            <Progress value={metrics?.severityPercentages.critical || 0} className="h-1.5" />
+
             {/* High severity */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -266,10 +282,7 @@ export function GapAnalysisSummary({
                 {data?.severityDistribution.high || 0} entities ({(metrics?.severityPercentages.high || 0).toFixed(1)}%)
               </span>
             </div>
-            <Progress 
-              value={metrics?.severityPercentages.high || 0} 
-              className="h-1.5"  // Reduced from h-2
-            />
+            <Progress value={metrics?.severityPercentages.high || 0} className="h-1.5" />
 
             {/* Medium severity */}
             <div className="flex items-center justify-between">
@@ -281,10 +294,7 @@ export function GapAnalysisSummary({
                 {data?.severityDistribution.medium || 0} entities ({(metrics?.severityPercentages.medium || 0).toFixed(1)}%)
               </span>
             </div>
-            <Progress 
-              value={metrics?.severityPercentages.medium || 0} 
-              className="h-1.5"  // Reduced from h-2
-            />
+            <Progress value={metrics?.severityPercentages.medium || 0} className="h-1.5" />
 
             {/* Low severity */}
             <div className="flex items-center justify-between">
@@ -296,10 +306,7 @@ export function GapAnalysisSummary({
                 {data?.severityDistribution.low || 0} entities ({(metrics?.severityPercentages.low || 0).toFixed(1)}%)
               </span>
             </div>
-            <Progress 
-              value={metrics?.severityPercentages.low || 0} 
-              className="h-1.5"  // Reduced from h-2
-            />
+            <Progress value={metrics?.severityPercentages.low || 0} className="h-1.5" />
           </div>
         </div>
 
@@ -325,7 +332,7 @@ export function GapAnalysisSummary({
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">{config.icon}</span>
+                      <config.Icon className={cn('h-4 w-4', config.color)} />
                       <div>
                         <div className={cn("font-medium text-sm", config.color)}>
                           {config.title}
@@ -339,7 +346,7 @@ export function GapAnalysisSummary({
                     <div className="flex items-center gap-2">
                       <GapIndicator
                         hasGap={gapData.entitiesAffected > 0}
-                        severity={gapData.severity.toUpperCase() as any}
+                        severity={gapData.severity as any}
                         size="sm"
                       />
                       <span className="text-sm font-medium">

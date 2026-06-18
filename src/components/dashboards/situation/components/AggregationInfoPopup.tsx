@@ -171,7 +171,7 @@ export function AggregationInfoPopup({ isOpen, onClose }: AggregationInfoPopupPr
               
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-orange-600 rounded-full"></div>
                   <span className="text-sm font-medium">Orange (High)</span>
                 </div>
                 <p className="text-xs text-muted-foreground pl-5">
@@ -181,7 +181,7 @@ export function AggregationInfoPopup({ isOpen, onClose }: AggregationInfoPopupPr
               
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-yellow-600 rounded-full"></div>
                   <span className="text-sm font-medium">Yellow (Medium)</span>
                 </div>
                 <p className="text-xs text-muted-foreground pl-5">

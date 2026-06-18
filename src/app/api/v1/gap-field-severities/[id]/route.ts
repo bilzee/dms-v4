@@ -141,6 +141,41 @@ export const PUT = withAuth(async (
       }
     })
 
+    // Invalidate the gap-field severity cache so subsequent reads pick up the new config
+    try {
+      const { gapFieldSeverityService } = await import('@/lib/services/gap-field-severity.service')
+      gapFieldSeverityService.clearCache()
+    } catch {}
+
+    // Fire-and-forget: re-run gap analysis on all affected assessments so stored
+    // priority and gapAnalysis JSON reflect the new severity config immediately.
+    if (existingField.severity !== severity) {
+      try {
+        const affected = await prisma.rapidAssessment.findMany({
+          where: {
+            rapidAssessmentType: existingField.assessmentType,
+            verificationStatus: { in: ['VERIFIED', 'AUTO_VERIFIED'] },
+          },
+          select: { id: true, incidentId: true },
+        })
+
+        const { RapidAssessmentService } = await import('@/lib/services/rapid-assessment.service')
+        const incidentIds = new Set<string>()
+        for (const ra of affected) {
+          RapidAssessmentService.triggerGapAnalysis(ra.id).catch(() => {})
+          if (ra.incidentId) incidentIds.add(ra.incidentId)
+        }
+
+        // Recalculate incident severity for all affected incidents
+        const { incidentSeverityService } = await import('@/lib/services/incident-severity.service')
+        for (const incidentId of incidentIds) {
+          incidentSeverityService.recalculateIncidentSeverity(incidentId).catch(() => {})
+        }
+      } catch (e) {
+        console.error('[GapFieldSeverity] Post-update recalculation failed:', e)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: updatedField,

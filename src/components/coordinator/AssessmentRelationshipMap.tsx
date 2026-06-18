@@ -443,7 +443,7 @@ export function AssessmentRelationshipMap({
                         </div>
 
                         {/* Assessment Types Available */}
-                        {entityAssessments.data.latestAssessments?.length > 0 && (
+                        {entityAssessments?.data?.latestAssessments?.length > 0 && (
                           <div className="space-y-2">
                             <h4 className="font-medium text-sm">Available Assessment Types:</h4>
                             <div className="flex flex-wrap gap-1">
@@ -460,7 +460,7 @@ export function AssessmentRelationshipMap({
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Verified Responses:</span>
                           <span className="font-medium">
-                            {entityAssessments.data.entity.verifiedResponses || entityAssessments.data.entity.responseCount || 0}
+                            {entityAssessments?.data?.entity?.verifiedResponses || entityAssessments?.data?.entity?.responseCount || 0}
                           </span>
                         </div>
                       </div>

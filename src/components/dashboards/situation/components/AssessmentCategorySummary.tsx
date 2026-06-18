@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { getBadgeClasses } from '@/components/shared/StatusBadge';
-import { Calendar, User, AlertTriangle, CheckCircle, Info, AlertCircle } from '@/lib/icons';
+import { Calendar, User, AlertTriangle, CheckCircle, Info, AlertCircle, Heart, Wheat, Droplets, Home, Shield, Users } from '@/lib/icons';
 import { GapIndicator } from './GapIndicator';
+import { apiGet } from '@/lib/api';
 import type { 
   HealthAssessmentData, 
   FoodAssessmentData, 
@@ -31,42 +32,42 @@ interface AssessmentCategorySummaryProps {
 const categoryConfig = {
   health: {
     title: 'Health Assessment',
-    icon: '🏥',
+    Icon: Heart,
     color: 'text-red-600',
     bgColor: 'bg-red-50',
     borderColor: 'border-red-200'
   },
   food: {
     title: 'Food Security',
-    icon: '🍲',
+    Icon: Wheat,
     color: 'text-orange-600',
     bgColor: 'bg-orange-50',
     borderColor: 'border-orange-200'
   },
   wash: {
     title: 'WASH (Water & Sanitation)',
-    icon: '💧',
+    Icon: Droplets,
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200'
   },
   shelter: {
     title: 'Shelter & Housing',
-    icon: '🏠',
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50',
-    borderColor: 'border-purple-200'
-  },
-  security: {
-    title: 'Security & Protection',
-    icon: '🛡️',
+    Icon: Home,
     color: 'text-green-600',
     bgColor: 'bg-green-50',
     borderColor: 'border-green-200'
   },
+  security: {
+    title: 'Security & Protection',
+    Icon: Shield,
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50',
+    borderColor: 'border-purple-200'
+  },
   population: {
     title: 'Population Overview',
-    icon: '👥',
+    Icon: Users,
     color: 'text-muted-foreground',
     bgColor: 'bg-muted',
     borderColor: 'border-border'
@@ -285,19 +286,13 @@ export function AssessmentCategorySummary({
     const assessmentType = assessmentTypeMap[category];
     
     try {
-      // Call the API to get field severity
-      const response = await fetch(
+      // Call the API to get field severity (with auth)
+      const result = await apiGet<{ severity: string }>(
         `/api/v1/gap-field-severities?assessmentType=${assessmentType}&fieldName=${fieldName}`
       );
-      
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
+
       if (result.success && result.data?.severity) {
-        return result.data.severity;
+        return result.data.severity as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
       } else {
         console.warn('API returned error for field severity:', result.error);
         throw new Error(result.error || 'API error');
@@ -379,7 +374,7 @@ export function AssessmentCategorySummary({
       <Card className={cn("opacity-60 border-dashed border-2", config.borderColor, className)}>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base text-muted-foreground">
-            <span className="opacity-50">{config.icon}</span>
+            <config.Icon className={cn("h-4 w-4 opacity-50", config.color)} />
             {config.title}
           </CardTitle>
         </CardHeader>
@@ -502,7 +497,7 @@ export function AssessmentCategorySummary({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
-            <span>{config.icon}</span>
+            <config.Icon className={cn("h-4 w-4", config.color)} />
             {config.title}
           </CardTitle>
           {gapAnalysis && (

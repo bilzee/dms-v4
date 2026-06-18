@@ -443,13 +443,14 @@ interface GapAnalysis {
 interface GapAnalysisSummary {
   totalEntities: number;
   severityDistribution: {
+    critical: number;
     high: number;
     medium: number;
     low: number;
   };
   assessmentTypeGaps: {
     [assessmentType: string]: {
-      severity: 'high' | 'medium' | 'low';
+      severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
       entitiesAffected: number;
       percentage: number;
     };
@@ -1024,6 +1025,8 @@ async function getLatestHealthAssessment(entityId: string, incidentId?: string):
           rapidAssessmentDate: true,
           verificationStatus: true,
           assessorName: true,
+          gapAnalysis: true,
+          priority: true,
           assessor: {
             select: {
               name: true,
@@ -1059,7 +1062,8 @@ async function getLatestHealthAssessment(entityId: string, incidentId?: string):
     assessorName: assessment.rapidAssessment.assessorName || assessment.rapidAssessment.assessor?.name || 'Unknown',
   };
 
-  const gapAnalysis = await analyzeHealthGaps(data);
+  const storedGapAnalysis = assessment.rapidAssessment.gapAnalysis as unknown as HealthGapAnalysis;
+  const gapAnalysis = storedGapAnalysis ?? await analyzeHealthGaps(data);
 
   return {
     ...data,
@@ -1083,6 +1087,8 @@ async function getLatestFoodAssessment(entityId: string, incidentId?: string): P
           rapidAssessmentDate: true,
           verificationStatus: true,
           assessorName: true,
+          gapAnalysis: true,
+          priority: true,
           assessor: {
             select: {
               name: true,
@@ -1115,7 +1121,8 @@ async function getLatestFoodAssessment(entityId: string, incidentId?: string): P
     assessorName: assessment.rapidAssessment.assessorName || assessment.rapidAssessment.assessor?.name || 'Unknown',
   };
 
-  const gapAnalysis = await analyzeFoodGaps(data);
+  const storedGapAnalysis = assessment.rapidAssessment.gapAnalysis as unknown as FoodGapAnalysis;
+  const gapAnalysis = storedGapAnalysis ?? await analyzeFoodGaps(data);
 
   return {
     ...data,
@@ -1139,6 +1146,8 @@ async function getLatestWASHAssessment(entityId: string, incidentId?: string): P
           rapidAssessmentDate: true,
           verificationStatus: true,
           assessorName: true,
+          gapAnalysis: true,
+          priority: true,
           assessor: {
             select: {
               name: true,
@@ -1171,7 +1180,8 @@ async function getLatestWASHAssessment(entityId: string, incidentId?: string): P
     assessorName: assessment.rapidAssessment.assessorName || assessment.rapidAssessment.assessor?.name || 'Unknown',
   };
 
-  const gapAnalysis = await analyzeWASHGaps(data);
+  const storedGapAnalysis = assessment.rapidAssessment.gapAnalysis as unknown as WASHGapAnalysis;
+  const gapAnalysis = storedGapAnalysis ?? await analyzeWASHGaps(data);
 
   return {
     ...data,
@@ -1195,6 +1205,8 @@ async function getLatestShelterAssessment(entityId: string, incidentId?: string)
           rapidAssessmentDate: true,
           verificationStatus: true,
           assessorName: true,
+          gapAnalysis: true,
+          priority: true,
           assessor: {
             select: {
               name: true,
@@ -1227,7 +1239,8 @@ async function getLatestShelterAssessment(entityId: string, incidentId?: string)
     assessorName: assessment.rapidAssessment.assessorName || assessment.rapidAssessment.assessor?.name || 'Unknown',
   };
 
-  const gapAnalysis = await analyzeShelterGaps(data);
+  const storedGapAnalysis = assessment.rapidAssessment.gapAnalysis as unknown as ShelterGapAnalysis;
+  const gapAnalysis = storedGapAnalysis ?? await analyzeShelterGaps(data);
 
   return {
     ...data,
@@ -1251,6 +1264,8 @@ async function getLatestSecurityAssessment(entityId: string, incidentId?: string
           rapidAssessmentDate: true,
           verificationStatus: true,
           assessorName: true,
+          gapAnalysis: true,
+          priority: true,
           assessor: {
             select: {
               name: true,
@@ -1282,7 +1297,8 @@ async function getLatestSecurityAssessment(entityId: string, incidentId?: string
     assessorName: assessment.rapidAssessment.assessorName || assessment.rapidAssessment.assessor?.name || 'Unknown',
   };
 
-  const gapAnalysis = await analyzeSecurityGaps(data);
+  const storedGapAnalysis = assessment.rapidAssessment.gapAnalysis as unknown as SecurityGapAnalysis;
+  const gapAnalysis = storedGapAnalysis ?? await analyzeSecurityGaps(data);
 
   return {
     ...data,
@@ -1407,16 +1423,19 @@ async function calculateFieldLevelGaps(assessments: any[], gapIndicators: Array<
     }
   }
 
-  // Calculate overall severity (highest among field severities)
-  const severities = Object.values(fieldSeverityMap);
+  // Calculate overall severity from stored gapAnalysis.severity of each assessment
+  // This is the bottom-up max rule: take the highest stored severity across all assessments
+  const SEVERITY_ORDER: Record<string, number> = { LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 4 };
   let overallSeverity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW';
-  
-  if (severities.includes('CRITICAL')) {
-    overallSeverity = 'CRITICAL';
-  } else if (severities.includes('HIGH')) {
-    overallSeverity = 'HIGH';
-  } else if (severities.includes('MEDIUM')) {
-    overallSeverity = 'MEDIUM';
+
+  for (const assessment of assessments) {
+    const stored = assessment?.gapAnalysis;
+    if (stored && stored.hasGap && stored.severity) {
+      const sev = stored.severity as string;
+      if (SEVERITY_ORDER[sev] > SEVERITY_ORDER[overallSeverity]) {
+        overallSeverity = sev as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+      }
+    }
   }
 
   // Return the analysis results
@@ -1617,18 +1636,19 @@ async function getGapAnalysisSummary(incidentId: string): Promise<GapAnalysisSum
   const totalEntities = entityAssessments.length;
 
   // Initialize assessment type gaps
-  const assessmentTypeGaps: { [key: string]: { severity: 'high' | 'medium' | 'low'; entitiesAffected: number; percentage: number } } = {
-    HEALTH: { severity: 'low', entitiesAffected: 0, percentage: 0 },
-    FOOD: { severity: 'low', entitiesAffected: 0, percentage: 0 },
-    WASH: { severity: 'low', entitiesAffected: 0, percentage: 0 },
-    SHELTER: { severity: 'low', entitiesAffected: 0, percentage: 0 },
-    SECURITY: { severity: 'low', entitiesAffected: 0, percentage: 0 }
+  const assessmentTypeGaps: { [key: string]: { severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'; entitiesAffected: number; percentage: number } } = {
+    HEALTH: { severity: 'LOW', entitiesAffected: 0, percentage: 0 },
+    FOOD: { severity: 'LOW', entitiesAffected: 0, percentage: 0 },
+    WASH: { severity: 'LOW', entitiesAffected: 0, percentage: 0 },
+    SHELTER: { severity: 'LOW', entitiesAffected: 0, percentage: 0 },
+    SECURITY: { severity: 'LOW', entitiesAffected: 0, percentage: 0 }
   };
 
-  // Initialize severity distribution
-  const severityDistribution = { high: 0, medium: 0, low: 0 };
+  // Initialize severity distribution (4 buckets)
+  const severityDistribution = { critical: 0, high: 0, medium: 0, low: 0 };
 
-  // Analyze real gap data from entities using the correct data structure
+  // Track max stored severity per assessment type across all entities
+  const SEVERITY_ORDER: Record<string, number> = { LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 4 };
   const assessmentTypeCounts = {
     HEALTH: { entitiesWithGaps: 0, totalEntities: 0 },
     FOOD: { entitiesWithGaps: 0, totalEntities: 0 },
@@ -1637,85 +1657,41 @@ async function getGapAnalysisSummary(incidentId: string): Promise<GapAnalysisSum
     SECURITY: { entitiesWithGaps: 0, totalEntities: 0 },
   };
 
-  // Analyze each entity's assessments using the proper structure
+  // Analyze each entity's assessments using stored gapAnalysis.severity
   for (const entityAssessment of entityAssessments) {
-    let entitySeverity: 'high' | 'medium' | 'low' = 'low';
+    let entitySeverity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW';
     
     // Check each assessment type for gaps using latestAssessments
     const latestAssessments = entityAssessment.latestAssessments;
 
-    // Health assessment
-    if (latestAssessments.health) {
-      assessmentTypeCounts.HEALTH.totalEntities++;
-      const healthGapData = latestAssessments.health.gapAnalysis;
-      if (healthGapData && healthGapData.hasGap) {
-        assessmentTypeCounts.HEALTH.entitiesWithGaps++;
-        if (healthGapData.severity === 'CRITICAL' || healthGapData.severity === 'HIGH') {
-          entitySeverity = 'high';
-        } else if (healthGapData.severity === 'MEDIUM' && (entitySeverity as string) !== 'high') {
-          entitySeverity = 'medium';
+    const assessmentTypes: Array<{ key: keyof typeof assessmentTypeCounts; data: any }> = [
+      { key: 'HEALTH', data: latestAssessments.health },
+      { key: 'FOOD', data: latestAssessments.food },
+      { key: 'WASH', data: latestAssessments.wash },
+      { key: 'SHELTER', data: latestAssessments.shelter },
+      { key: 'SECURITY', data: latestAssessments.security },
+    ];
+
+    for (const { key, data } of assessmentTypes) {
+      if (!data) continue;
+      assessmentTypeCounts[key].totalEntities++;
+      const gapData = data.gapAnalysis;
+      if (gapData && gapData.hasGap) {
+        assessmentTypeCounts[key].entitiesWithGaps++;
+        const sev = gapData.severity as string;
+        // Update per-type max severity
+        if (SEVERITY_ORDER[sev] > SEVERITY_ORDER[assessmentTypeGaps[key].severity]) {
+          assessmentTypeGaps[key].severity = sev as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+        }
+        // Update entity severity (max across all assessment types)
+        if (SEVERITY_ORDER[sev] > SEVERITY_ORDER[entitySeverity]) {
+          entitySeverity = sev as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
         }
       }
     }
 
-    // Food assessment
-    if (latestAssessments.food) {
-      assessmentTypeCounts.FOOD.totalEntities++;
-      const foodGapData = latestAssessments.food.gapAnalysis;
-      if (foodGapData && foodGapData.hasGap) {
-        assessmentTypeCounts.FOOD.entitiesWithGaps++;
-        if (foodGapData.severity === 'CRITICAL' || foodGapData.severity === 'HIGH') {
-          entitySeverity = 'high';
-        } else if (foodGapData.severity === 'MEDIUM' && (entitySeverity as string) !== 'high') {
-          entitySeverity = 'medium';
-        }
-      }
-    }
-
-    // WASH assessment
-    if (latestAssessments.wash) {
-      assessmentTypeCounts.WASH.totalEntities++;
-      const washGapData = latestAssessments.wash.gapAnalysis;
-      if (washGapData && washGapData.hasGap) {
-        assessmentTypeCounts.WASH.entitiesWithGaps++;
-        if (washGapData.severity === 'CRITICAL' || washGapData.severity === 'HIGH') {
-          entitySeverity = 'high';
-        } else if (washGapData.severity === 'MEDIUM' && (entitySeverity as string) !== 'high') {
-          entitySeverity = 'medium';
-        }
-      }
-    }
-
-    // Shelter assessment
-    if (latestAssessments.shelter) {
-      assessmentTypeCounts.SHELTER.totalEntities++;
-      const shelterGapData = latestAssessments.shelter.gapAnalysis;
-      if (shelterGapData && shelterGapData.hasGap) {
-        assessmentTypeCounts.SHELTER.entitiesWithGaps++;
-        if (shelterGapData.severity === 'CRITICAL' || shelterGapData.severity === 'HIGH') {
-          entitySeverity = 'high';
-        } else if (shelterGapData.severity === 'MEDIUM' && (entitySeverity as string) !== 'high') {
-          entitySeverity = 'medium';
-        }
-      }
-    }
-
-    // Security assessment
-    if (latestAssessments.security) {
-      assessmentTypeCounts.SECURITY.totalEntities++;
-      const securityGapData = latestAssessments.security.gapAnalysis;
-      if (securityGapData && securityGapData.hasGap) {
-        assessmentTypeCounts.SECURITY.entitiesWithGaps++;
-        if (securityGapData.severity === 'CRITICAL' || securityGapData.severity === 'HIGH') {
-          entitySeverity = 'high';
-        } else if (securityGapData.severity === 'MEDIUM' && (entitySeverity as string) !== 'high') {
-          entitySeverity = 'medium';
-        }
-      }
-    }
-
-    // Update severity distribution
-    severityDistribution[entitySeverity]++;
+    // Update severity distribution (4 buckets)
+    severityDistribution[entitySeverity.toLowerCase() as keyof typeof severityDistribution]++;
   }
 
   // Calculate percentages for assessment types
@@ -1727,13 +1703,6 @@ async function getGapAnalysisSummary(incidentId: string): Promise<GapAnalysisSum
     
     assessmentTypeGaps[key].entitiesAffected = entitiesAffected;
     assessmentTypeGaps[key].percentage = percentage;
-    
-    // Determine severity based on gap analysis severity instead of percentage
-    // Use high severity if any entity has critical/high gap in this assessment type
-    assessmentTypeGaps[key].severity = 'medium'; // Default to medium
-    if (percentage === 100 && entitiesAffected > 0) {
-      assessmentTypeGaps[key].severity = 'high'; // All entities with this assessment have gaps
-    }
   }
 
   return {

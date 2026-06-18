@@ -80,7 +80,6 @@ const createEntityIcon = (entity: EntityLocation, isSelected: boolean, showDonor
   
   // Get background color class based on severity
   const getSeverityClasses = (sev: string) => {
-    const dot = getDotColor('severity', sev);
     const sevMap: Record<string, string> = {
       CRITICAL: 'bg-red-600 border-red-700 shadow-red-300',
       HIGH: 'bg-orange-600 border-orange-700 shadow-orange-300',

@@ -1,13 +1,15 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Settings, AlertTriangle, Info, ArrowLeft, Heart, UtensilsCrossed, Droplets, Home, Shield } from '@/lib/icons'
+import { Settings, AlertTriangle, Info, ArrowLeft, Heart, UtensilsCrossed, Droplets, Home, Shield, RefreshCw, Loader2 } from '@/lib/icons'
 import { useRouter } from 'next/navigation'
 import { GapFieldTable } from '@/components/settings/GapFieldTable'
+import { toast } from 'sonner'
+import { apiPost } from '@/lib/api'
 
 /**
  * Gap Field Management Page
@@ -21,6 +23,32 @@ import { GapFieldTable } from '@/components/settings/GapFieldTable'
  */
 export default function GapFieldManagementPage() {
   const router = useRouter()
+  const [isRecalculating, setIsRecalculating] = useState(false)
+
+  const handleRecalculate = async () => {
+    setIsRecalculating(true)
+    try {
+      const prioritiesRes = await apiPost('/api/v1/rapid-assessments/update-priorities')
+      if (!prioritiesRes.success) {
+        throw new Error(prioritiesRes.error || 'Failed to update assessment priorities')
+      }
+
+      const severityRes = await apiPost('/api/v1/admin/severity/recalculate')
+      if (!severityRes.success) {
+        throw new Error(severityRes.error || 'Failed to recalculate incident severities')
+      }
+
+      toast.success('Recalculation complete', {
+        description: `Assessments updated and incident severities recalculated.`,
+      })
+    } catch (error: any) {
+      toast.error('Recalculation failed', {
+        description: error.message || 'An unexpected error occurred',
+      })
+    } finally {
+      setIsRecalculating(false)
+    }
+  }
 
   const assessmentTypes = [
     { 
@@ -155,6 +183,50 @@ export default function GapFieldManagementPage() {
               </TabsContent>
             ))}
           </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Recalculate All Card */}
+      <Card className="border-orange-200 bg-orange-50">
+        <CardHeader>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5 text-orange-600" />
+              <div>
+                <CardTitle className="text-base text-orange-900">Recalculate All Assessments</CardTitle>
+                <CardDescription className="text-orange-700">
+                  Re-run gap analysis on every assessment and update incident severities with the current config
+                </CardDescription>
+              </div>
+            </div>
+            <Button
+              onClick={handleRecalculate}
+              disabled={isRecalculating}
+              variant="default"
+              size="sm"
+              className="shrink-0"
+            >
+              {isRecalculating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  Recalculating...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-1" />
+                  Recalculate All
+                </>
+              )}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2">
+            <Info className="h-4 w-4 text-orange-600 shrink-0" />
+            <span className="text-xs text-orange-800">
+              This re-computes the gap analysis and priority for all assessments using the current field severity settings above, then updates incident severity. Use this after bulk changes to ensure the Situation Dashboard reflects the latest configuration.
+            </span>
+          </div>
         </CardContent>
       </Card>
 
