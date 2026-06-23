@@ -106,7 +106,7 @@ export const AppShell = ({
           </Button>
         </div>
         <div className="flex-1 overflow-y-auto">
-          <Navigation />
+          <Navigation onNavigate={() => setSidebarOpen(false)} />
           <div className="px-4 pb-4 pt-2 space-y-2">
             <SyncIndicator />
             <OfflineIndicator />

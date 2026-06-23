@@ -180,8 +180,8 @@ export default function EntityManagementPage() {
             <div className="flex items-center gap-4 mb-2">
               <Link href="/coordinator/dashboard">
                 <Button variant="outline" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
+                  <ArrowLeft className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Back to Dashboard</span>
                 </Button>
               </Link>
               <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
@@ -296,7 +296,7 @@ export default function EntityManagementPage() {
                   setActiveFilter('all');
                 }}
               >
-                Clear Filters
+                <span className="hidden sm:inline">Clear Filters</span>
               </Button>
             </div>
           </CardContent>
@@ -340,8 +340,8 @@ export default function EntityManagementPage() {
                 </p>
                 {!searchTerm && typeFilter === 'all' && activeFilter === 'all' && (
                   <Button onClick={() => setShowCreateForm(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create First Entity
+                    <Plus className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Create First Entity</span>
                   </Button>
                 )}
               </div>
@@ -414,8 +414,8 @@ export default function EntityManagementPage() {
                                 size="sm"
                                 onClick={() => setEditingEntity(entity)}
                               >
-                                <Edit className="h-4 w-4 mr-1" />
-                                Edit
+                                <Edit className="h-4 w-4 sm:mr-1" />
+                                <span className="hidden sm:inline">Edit</span>
                               </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-4xl">
@@ -440,8 +440,8 @@ export default function EntityManagementPage() {
                             onClick={() => handleDeleteEntity(entity.id)}
                             disabled={deleteEntityMutation.isPending}
                           >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Delete
+                            <Trash2 className="h-4 w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">Delete</span>
                           </Button>
                         </div>
                       </div>

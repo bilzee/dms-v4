@@ -9,7 +9,6 @@ import { ResponseOfflineGuard } from '@/components/offline/OfflineGuard'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 // Icons
@@ -44,12 +43,9 @@ function NewResponsePlanningPageContent() {
           onClick={handleCancel}
           className="flex items-center gap-2"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Response Plans
+          <ArrowLeft className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Back to Response Plans</span>
         </Button>
-        <Badge variant="outline">
-          NEW RESPONSE PLAN
-        </Badge>
       </div>
       
       {/* Form */}

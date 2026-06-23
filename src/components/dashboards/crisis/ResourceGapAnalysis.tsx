@@ -7,7 +7,7 @@ import { StatCard } from '@/components/shared/StatCard';
 import { StatCardGrid } from '@/components/shared/StatCardGrid';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { StatusBadge, getBadgeClasses } from '@/components/shared/StatusBadge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -16,23 +16,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Target,
-  TrendingUp,
   AlertTriangle,
-  Package,
   Users,
   Search,
   Filter,
   BarChart3,
-  ArrowUpRight,
-  ArrowDownRight,
   Lightbulb,
   RefreshCw,
   Download,
   Eye
 } from '@/lib/icons';
 import { useAuth } from '@/hooks/useAuth';
-import { useCurrencySymbol } from '@/hooks/useCurrency';
 import { apiGet, extractArray } from '@/lib/api';
+import { severityCardColors } from '@/lib/utils/status-colors';
 import { Entity, Incident, Donor } from '@/types/commitment';
 
 interface ResourceGapAnalysisProps {
@@ -44,16 +40,22 @@ interface GapAnalysis {
   entity: Entity;
   gaps: Array<{
     resourceName: string;
-    requiredQuantity: number;
+    requiredQuantity: number | null;
     committedQuantity: number;
     deliveredQuantity: number;
     gap: number;
     percentageMet: number;
-    severity: 'HIGH' | 'MEDIUM' | 'LOW';
-    priority: number;
+    sourcePriority: string;
   }>;
-  totalGapValue: number;
   criticalGaps: number;
+  severityCounts: {
+    CRITICAL: number;
+    HIGH: number;
+    MEDIUM: number;
+    LOW: number;
+    UNCLASSIFIED: number;
+  };
+  entitySeverity: string;
 }
 
 interface DonorRecommendation {
@@ -70,7 +72,6 @@ interface DonorRecommendation {
 
 export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
   const { token, isAuthenticated } = useAuth();
-  const symbol = useCurrencySymbol();
 
   const [activeView, setActiveView] = useState('gaps');
   const [searchTerm, setSearchTerm] = useState('');
@@ -88,7 +89,7 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
       totalEntities: number;
       totalGaps: number;
       criticalGaps: number;
-      totalGapValue: number;
+      avgDelivery: number;
       bySeverity: Record<string, number>;
     };
   }>({
@@ -102,7 +103,8 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
 
       const result = await apiGet(`/api/v1/dashboard/resource-management/gap-analysis?${params}`)
       if (!result.success) throw new Error(result.error || 'Failed to fetch gap analysis')
-      return (result.data as any)?.data || result.data || { data: [], summary: {} };
+      const inner = result.data as any
+      return inner?.data ? inner : { data: [], summary: {} };
     },
     refetchInterval: 60000 // Refresh every minute
   });
@@ -116,7 +118,8 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
     queryFn: async () => {
       const result = await apiGet(`/api/v1/entities/${selectedEntity}/donor-recommendations`)
       if (!result.success) throw new Error(result.error || 'Failed to fetch donor recommendations')
-      return (result.data as any)?.data || result.data || { data: [] };
+      const inner = result.data as any;
+      return inner?.data ? inner : { data: [] };
     }
   });
 
@@ -144,23 +147,6 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
-  const getSeverityBadge = (severity: string) => {
-    const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-      HIGH: AlertTriangle,
-      MEDIUM: TrendingUp,
-      LOW: Package
-    };
-    const Icon = iconMap[severity] || Package;
-
-    return (
-      <StatusBadge
-        domain="severity"
-        status={severity}
-        icon={Icon}
-      />
-    );
   };
 
   const getCompatibilityBadge = (score: number) => {
@@ -236,7 +222,7 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
       {gapAnalysisData?.summary && (
         <StatCardGrid columns={4} className="mb-6">
           <StatCard
-            label="Entities with Gaps"
+            label="Entities with Resource Gaps"
             value={gapAnalysisData.summary.totalEntities}
             severity="warning"
             icon={Users}
@@ -248,15 +234,15 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
             icon={Target}
           />
           <StatCard
-            label="Critical Gaps"
+            label="Critical Assessment Gaps"
             value={gapAnalysisData.summary.criticalGaps}
             severity="critical"
             icon={AlertTriangle}
           />
           <StatCard
-            label="Gap Value"
-            value={`${symbol}${(gapAnalysisData.summary.totalGapValue || 0).toLocaleString()}`}
-            severity="high"
+            label="Avg. Delivery"
+            value={`${gapAnalysisData.summary.avgDelivery || 0}%`}
+            severity="success"
             icon={BarChart3}
           />
         </StatCardGrid>
@@ -288,7 +274,8 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Severities</SelectItem>
-                <SelectItem value="HIGH">Critical</SelectItem>
+                <SelectItem value="CRITICAL">Critical</SelectItem>
+                <SelectItem value="HIGH">High</SelectItem>
                 <SelectItem value="MEDIUM">Medium</SelectItem>
                 <SelectItem value="LOW">Low</SelectItem>
               </SelectContent>
@@ -365,8 +352,11 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
             </div>
           ) : (
             <div className="space-y-6">
-              {filteredGaps?.map((gapAnalysis) => (
-                <Card key={gapAnalysis.entityId} className="bg-orange-500/5 border-orange-500/15">
+              {filteredGaps?.map((gapAnalysis) => {
+                const entitySevKey = (gapAnalysis.entitySeverity || 'UNCLASSIFIED').toLowerCase();
+                const entityCardClass = severityCardColors[entitySevKey as keyof typeof severityCardColors] || severityCardColors.neutral;
+                return (
+                <Card key={gapAnalysis.entityId} className={entityCardClass}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">{gapAnalysis.entity.name}</CardTitle>
@@ -375,6 +365,21 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
                         {gapAnalysis.criticalGaps > 0 && (
                           <Badge className="bg-red-100 text-red-800">
                             {gapAnalysis.criticalGaps} critical
+                          </Badge>
+                        )}
+                        {(gapAnalysis.severityCounts?.CRITICAL ?? 0) > 0 && (
+                          <Badge className="bg-red-100 text-red-800">
+                            {gapAnalysis.severityCounts.CRITICAL} CRITICAL
+                          </Badge>
+                        )}
+                        {(gapAnalysis.severityCounts?.HIGH ?? 0) > 0 && (
+                          <Badge className="bg-orange-100 text-orange-800">
+                            {gapAnalysis.severityCounts.HIGH} HIGH
+                          </Badge>
+                        )}
+                        {(gapAnalysis.severityCounts?.MEDIUM ?? 0) > 0 && (
+                          <Badge className="bg-yellow-100 text-yellow-800">
+                            {gapAnalysis.severityCounts.MEDIUM} MEDIUM
                           </Badge>
                         )}
                         <Button
@@ -390,13 +395,13 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {gapAnalysis.gaps.map((gap, index) => (
-                        <div key={index} className="border rounded-lg p-4">
+                      {gapAnalysis.gaps.map((gap, index) => {
+                        const itemSevKey = (gap.sourcePriority || 'UNCLASSIFIED').toLowerCase();
+                        const itemCardClass = severityCardColors[itemSevKey as keyof typeof severityCardColors] || severityCardColors.neutral;
+                        return (
+                        <div key={index} className={`border rounded-lg p-4 ${itemCardClass}`}>
                           <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <h4 className="font-medium">{gap.resourceName}</h4>
-                              {getSeverityBadge(gap.severity)}
-                            </div>
+                            <h4 className="font-medium">{gap.resourceName}</h4>
                             <div className="text-right">
                               <div className="font-semibold text-red-600">
                                 Gap: {gap.gap.toLocaleString()} units
@@ -410,14 +415,14 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
                           <div className="mb-3">
                             <div className="flex justify-between text-sm mb-1">
                               <span>Progress</span>
-                              <span>{gap.deliveredQuantity} / {gap.requiredQuantity} units</span>
+                              <span>{gap.deliveredQuantity} / {gap.requiredQuantity !== null ? gap.requiredQuantity.toLocaleString() : 'unspecified'} units</span>
                             </div>
                             <Progress value={gap.percentageMet} className="h-2" />
                           </div>
                           
                           <div className="grid gap-2 md:grid-cols-3 text-sm">
                             <div>
-                              <strong>Required:</strong> {gap.requiredQuantity.toLocaleString()} units
+                              <strong>Required:</strong> {gap.requiredQuantity !== null ? `${gap.requiredQuantity.toLocaleString()} units` : 'unspecified'}
                             </div>
                             <div>
                               <strong>Committed:</strong> {gap.committedQuantity.toLocaleString()} units
@@ -427,22 +432,13 @@ export function ResourceGapAnalysis({ className }: ResourceGapAnalysisProps) {
                             </div>
                           </div>
                         </div>
-                      ))}
-                      
-                      {gapAnalysis.totalGapValue > 0 && (
-                        <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                          <div className="flex justify-between items-center">
-                            <span className="font-medium">Total Gap Value:</span>
-                            <span className="text-lg font-bold text-red-600">
-                              ${gapAnalysis.totalGapValue.toLocaleString()}
-                            </span>
-                          </div>
-                        </div>
-                      )}
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           )}
         </TabsContent>

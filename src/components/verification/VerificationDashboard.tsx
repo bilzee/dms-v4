@@ -590,10 +590,10 @@ export function VerificationDashboard({ initialTab, highlightId }: VerificationD
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="queue">Assessments</TabsTrigger>
-          <TabsTrigger value="responses" data-tab="responses">Responses</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+          <TabsTrigger value="queue" className="text-xs sm:text-sm">Assessments</TabsTrigger>
+          <TabsTrigger value="responses" data-tab="responses" className="text-xs sm:text-sm">Responses</TabsTrigger>
+          <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">

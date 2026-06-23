@@ -151,6 +151,9 @@ describe('ResourceManagement', () => {
       totalCommittedQuantity: 1000,
       totalDeliveredQuantity: 750,
       averageDeliveryRate: 75,
+      responseDeliveryRate: 60,
+      deliveredResponses: 6,
+      totalResponsePlans: 10,
       byStatus: { PLANNED: 10, PARTIAL: 8, COMPLETE: 7 },
       criticalGaps: 3
     };
@@ -170,7 +173,7 @@ describe('ResourceManagement', () => {
 
     await waitFor(() => {
       expect(screen.getByText('25')).toBeInTheDocument(); // Total Commitments
-      expect(screen.getByText('75%')).toBeInTheDocument(); // Delivery Progress
+      expect(screen.getByText('60%')).toBeInTheDocument(); // Response Delivery Rate
       expect(screen.getByText('10 planned')).toBeInTheDocument(); // Active Donors
       expect(screen.getByText('0')).toBeInTheDocument(); // Critical Gaps
     });

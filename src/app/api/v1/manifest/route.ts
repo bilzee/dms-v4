@@ -51,12 +51,13 @@ export async function GET() {
     }
 
     if (pwaIconUrl) {
-      const iconType = pwaIconUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/png'
+      const PUBLIC_ICON_URL = '/api/branding/icon'
       manifest.icons = [
-        { src: pwaIconUrl, sizes: '512x512', type: iconType, purpose: 'maskable any' },
-        { src: pwaIconUrl, sizes: '192x192', type: iconType, purpose: 'maskable any' },
-        { src: pwaIconUrl, sizes: '144x144', type: iconType, purpose: 'maskable any' },
-        ...STATIC_MANIFEST.icons,
+        { src: PUBLIC_ICON_URL, sizes: '512x512', type: 'image/png', purpose: 'any' },
+        { src: PUBLIC_ICON_URL, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        { src: PUBLIC_ICON_URL, sizes: '192x192', type: 'image/png', purpose: 'any' },
+        { src: PUBLIC_ICON_URL, sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+        { src: PUBLIC_ICON_URL, sizes: '144x144', type: 'image/png', purpose: 'any' },
       ]
     }
 

@@ -237,8 +237,8 @@ export default function PreliminaryAssessmentPage() {
                     ward: ''
                   })}
                 >
-                  <X className="h-4 w-4 mr-2" />
-                  Clear Filters
+                  <X className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Clear Filters</span>
                 </Button>
               </div>
             </CardContent>
@@ -288,8 +288,8 @@ export default function PreliminaryAssessmentPage() {
               <div className="flex items-center gap-2">
                 <Link href={`/assessor/preliminary-assessment/${assessment.id}`}>
                   <Button variant="outline" size="sm">
-                    <Eye className="h-4 w-4 mr-1" />
-                    View Details
+                    <Eye className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">View Details</span>
                   </Button>
                 </Link>
               </div>

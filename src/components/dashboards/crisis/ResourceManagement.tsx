@@ -50,6 +50,9 @@ interface CommitmentStats {
   totalCommittedQuantity: number;
   totalDeliveredQuantity: number;
   averageDeliveryRate: number;
+  responseDeliveryRate: number;
+  deliveredResponses: number;
+  totalResponsePlans: number;
   byStatus: Record<string, number>;
   criticalGaps: number;
 }
@@ -106,7 +109,8 @@ export function ResourceManagement({ className }: ResourceManagementProps) {
 
       const result = await apiGet(`/api/v1/dashboard/resource-management/commitments?${params}`)
       if (!result.success) throw new Error(result.error || 'Failed to fetch commitments')
-      return (result.data as any)?.data || result.data || { data: [], pagination: {} };
+      const inner = result.data as any
+      return inner?.data ? inner : { data: [], pagination: {} };
     },
     refetchInterval: 30000
   });
@@ -176,6 +180,9 @@ export function ResourceManagement({ className }: ResourceManagementProps) {
     totalCommittedQuantity: 0,
     totalDeliveredQuantity: 0,
     averageDeliveryRate: 0,
+    responseDeliveryRate: 0,
+    deliveredResponses: 0,
+    totalResponsePlans: 0,
     byStatus: {},
     criticalGaps: 0
   };
@@ -232,9 +239,9 @@ export function ResourceManagement({ className }: ResourceManagementProps) {
             icon={Package}
           />
           <StatCard
-            label="Delivery Progress"
-            value={`${calculateDeliveryProgress(displayStats.totalCommittedQuantity || 0, displayStats.totalDeliveredQuantity || 0)}%`}
-            severity="success"
+            label="Response Delivery Rate"
+            value={`${displayStats.responseDeliveryRate || 0}%`}
+            severity={(displayStats.responseDeliveryRate || 0) >= 80 ? 'success' : (displayStats.responseDeliveryRate || 0) >= 50 ? 'warning' : 'critical'}
             icon={Target}
           />
           <StatCard

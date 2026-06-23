@@ -20,6 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
   let appDescription = 'Comprehensive disaster response management and humanitarian assessment PWA';
 
   let headerIconUrl = '';
+  let pwaIconUrl = '';
 
   try {
     const settings = await prisma.systemSetting.findMany({
@@ -29,10 +30,14 @@ export async function generateMetadata(): Promise<Metadata> {
     appName = brandingMap.get('appName') || DEFAULT_APP_NAME;
     appDescription = brandingMap.get('appDescription') || appDescription;
     headerIconUrl = brandingMap.get('headerIconUrl') || '';
+    pwaIconUrl = brandingMap.get('pwaIconUrl') || '';
   } catch {}
 
-  const icons = headerIconUrl
-    ? { icon: headerIconUrl, apple: headerIconUrl }
+  const publicIconUrl = pwaIconUrl ? '/api/branding/icon' : undefined;
+  const headerIcon = headerIconUrl || publicIconUrl;
+
+  const icons = headerIcon
+    ? { icon: headerIcon, apple: publicIconUrl || headerIcon }
     : undefined;
 
   return {

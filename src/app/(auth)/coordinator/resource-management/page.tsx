@@ -63,54 +63,6 @@ export default function ResourceDonationManagement() {
         {/* Resource Management Section */}
         <ResourceManagement />
 
-        {/* Information Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Resource Management Overview</CardTitle>
-            <CardDescription>
-              Understanding the resource and donation coordination system
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-semibold text-sm mb-2">Key Capabilities:</h4>
-                <ul className="text-sm text-gray-600 space-y-1 ml-4">
-                  <li>• Real-time resource inventory tracking</li>
-                  <li>• Donation flow monitoring and management</li>
-                  <li>• Automated resource allocation optimization</li>
-                  <li>• Multi-agency coordination support</li>
-                  <li>• Priority-based distribution planning</li>
-                  <li>• Comprehensive reporting and analytics</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold text-sm mb-2">Resource Categories:</h4>
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                  <div className="text-sm">
-                    <p className="font-medium mb-1">Emergency Supplies:</p>
-                    <ul className="text-gray-600 space-y-1">
-                      <li>• Medical equipment and supplies</li>
-                      <li>• Food and water provisions</li>
-                      <li>• Shelter and blankets</li>
-                      <li>• Personal protective equipment</li>
-                    </ul>
-                  </div>
-                  <div className="text-sm">
-                    <p className="font-medium mb-1">Operational Resources:</p>
-                    <ul className="text-gray-600 space-y-1">
-                      <li>• Transportation vehicles</li>
-                      <li>• Communication equipment</li>
-                      <li>• Personnel deployment</li>
-                      <li>• Temporary infrastructure</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Quick Actions */}
         <Card>
           <CardHeader>

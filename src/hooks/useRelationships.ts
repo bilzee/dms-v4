@@ -63,7 +63,7 @@ export function useRelationshipTimeline(params?: Record<string, string>) {
     queryFn: async () => {
       const result = await apiGet(`/api/v1/relationships/timeline?${searchParams}`)
       if (!result.success) throw new Error(result.error || 'Failed to fetch timeline')
-      return result.data!
+      return result as any
     },
     enabled: !!getAuthToken(),
     staleTime: 5 * 60 * 1000,

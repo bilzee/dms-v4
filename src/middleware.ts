@@ -14,6 +14,8 @@ const PUBLIC_ROUTES = [
   '/api/health',
   '/_next',
   '/manifest.json',
+  '/api/branding/icon',
+  '/api/v1/manifest',
   '/favicon.ico',
   '/offline.html',
 ];

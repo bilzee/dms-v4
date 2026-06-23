@@ -38,8 +38,8 @@ export default function AutoApprovalManagement() {
             <div className="flex items-center gap-4 mb-2">
               <Link href="/coordinator/dashboard">
                 <Button variant="outline" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
+                  <ArrowLeft className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Back to Dashboard</span>
                 </Button>
               </Link>
             </div>
@@ -118,14 +118,14 @@ export default function AutoApprovalManagement() {
             <div className="grid gap-4 md:grid-cols-2">
               <Link href="/coordinator/verification">
                 <Button variant="outline" className="w-full justify-start">
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Verification Queue
+                  <CheckCircle className="sm:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Verification Queue</span>
                 </Button>
               </Link>
               <Link href="/coordinator/dashboard">
                 <Button variant="outline" className="w-full justify-start">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Coordinator Dashboard
+                  <Settings className="sm:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Coordinator Dashboard</span>
                 </Button>
               </Link>
             </div>

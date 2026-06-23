@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db/client';
 import { auditLog } from '@/lib/services/audit.service';
 import { withAuth, AuthContext } from '@/lib/auth/middleware';
@@ -37,7 +38,8 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       statusCounts,
       totalValue,
       totalQuantities,
-      criticalGapsCount
+      criticalGapsCount,
+      responseDeliveryRows
     ] = await Promise.all([
       prisma.donorCommitment.count({ where: whereClause }),
 
@@ -60,7 +62,17 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
         }
       }),
 
-      Promise.resolve(5)
+      Promise.resolve(5),
+
+      prisma.$queryRaw<Array<{ delivered_count: bigint; planned_count: bigint }>>`
+        SELECT
+          COUNT(*) FILTER (WHERE rr."deliveryStatus" = 'DELIVERED')::int as delivered_count,
+          COUNT(*) FILTER (WHERE rr."deliveryStatus" = 'PLANNED')::int as planned_count
+        FROM rapid_responses rr
+        JOIN rapid_assessments ra ON ra.id = rr."assessmentId"
+        WHERE 1=1
+          ${entityId && entityId !== 'all' ? Prisma.sql`AND rr."entityId" = ${entityId}` : Prisma.sql``}
+          ${incidentId && incidentId !== 'all' ? Prisma.sql`AND ra."incidentId" = ${incidentId}` : Prisma.sql``}`
     ]);
 
     const byStatus = statusCounts.reduce((acc, status) => {
@@ -72,12 +84,20 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
     const totalDelivered = totalQuantities._sum.deliveredQuantity || 0;
     const averageDeliveryRate = totalCommitted > 0 ? (totalDelivered / totalCommitted) * 100 : 0;
 
+    const respDelivered = Number(responseDeliveryRows[0]?.delivered_count ?? 0);
+    const respPlanned = Number(responseDeliveryRows[0]?.planned_count ?? 0);
+    const respTotal = respDelivered + respPlanned;
+    const responseDeliveryRate = respTotal > 0 ? Math.round((respDelivered / respTotal) * 10000) / 100 : 0;
+
     const stats = {
       totalCommitments,
       totalValue: totalValue._sum.totalValueEstimated || 0,
       totalCommittedQuantity: totalCommitted,
       totalDeliveredQuantity: totalDelivered,
       averageDeliveryRate: Math.round(averageDeliveryRate * 100) / 100,
+      responseDeliveryRate,
+      deliveredResponses: respDelivered,
+      totalResponsePlans: respTotal,
       byStatus,
       criticalGaps: criticalGapsCount
     };

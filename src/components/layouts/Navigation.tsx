@@ -463,7 +463,7 @@ const getNavigationItems = (role: string | null): { roleItems: NavItem[]; utilit
   return { roleItems: items, utilityItems };
 };
 
-export const Navigation = () => {
+export const Navigation = ({ onNavigate }: { onNavigate?: () => void } = {}) => {
   const pathname = usePathname();
   const router = useRouter();
   const { currentRole } = useAuth();
@@ -623,7 +623,7 @@ export const Navigation = () => {
     }
 
     return (
-      <Link href={item.href}>
+      <Link href={item.href} onClick={() => { if (!isItemActive && onNavigate) onNavigate(); }}>
         <Button
           variant="ghost"
           className={cn(
