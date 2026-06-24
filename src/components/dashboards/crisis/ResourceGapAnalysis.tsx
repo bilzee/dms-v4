@@ -40,6 +40,8 @@ interface GapAnalysis {
   entity: Entity;
   gaps: Array<{
     resourceName: string;
+    sourceId: string;
+    sourceType: 'plan' | 'commitment';
     requiredQuantity: number | null;
     committedQuantity: number;
     deliveredQuantity: number;

@@ -6,6 +6,8 @@ import { successResponse, errorResponse, handleApiError } from '@/lib/api/respon
 
 interface ResourceAgg {
   resourceName: string;
+  sourceId: string;
+  sourceType: 'plan' | 'commitment';
   requiredQuantity: number | null;
   committedQuantity: number;
   deliveredQuantity: number;
@@ -70,13 +72,6 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       }
     });
 
-    const commitments = await prisma.donorCommitment.findMany({
-      where: { ...entityWhere, ...incidentWhere },
-      include: {
-        entity: { select: { id: true, name: true, type: true, location: true } },
-      }
-    });
-
     const entityMap = new Map<string, EntityAgg>();
 
     function ensureEntity(eid: string, entity: any) {
@@ -86,22 +81,25 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       return entityMap.get(eid)!;
     }
 
-    function ensureResource(entry: EntityAgg, name: string, priority: string): ResourceAgg {
-      if (!entry.resources.has(name)) {
-        entry.resources.set(name, {
+    function ensureResource(entry: EntityAgg, key: string, name: string, sourceId: string, sourceType: 'plan' | 'commitment', priority: string): ResourceAgg {
+      if (!entry.resources.has(key)) {
+        entry.resources.set(key, {
           resourceName: name,
+          sourceId,
+          sourceType,
           requiredQuantity: null,
           committedQuantity: 0,
           deliveredQuantity: 0,
           sourcePriority: priority,
         });
       } else {
-        const existing = entry.resources.get(name)!;
+        const existing = entry.resources.get(key)!;
         existing.sourcePriority = highestSeverity(existing.sourcePriority, priority);
       }
-      return entry.resources.get(name)!;
+      return entry.resources.get(key)!;
     }
 
+    // Phase 1: Process Response Plan items (these define requiredQuantity)
     for (const plan of responsePlans) {
       if (incidentId && incidentId !== 'all' && plan.assessment?.incidentId !== incidentId) continue;
 
@@ -111,7 +109,8 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
 
       for (const item of items) {
         const name = item?.name || 'Unknown';
-        const resource = ensureResource(entry, name, planPriority);
+        const key = `plan:${plan.id}:${name}`;
+        const resource = ensureResource(entry, key, name, plan.id, 'plan', planPriority);
         resource.requiredQuantity = (resource.requiredQuantity || 0) + (item?.quantity || 0);
 
         if (plan.deliveryStatus === 'DELIVERED') {
@@ -120,37 +119,20 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       }
     }
 
-    for (const commitment of commitments) {
-      const entry = ensureEntity(commitment.entityId, commitment.entity);
-      const items = (Array.isArray(commitment.items) ? commitment.items : []) as any[];
-
-      const commitmentPriority = commitment.sourcePlanId
-        ? (responsePlans.find(p => p.id === commitment.sourcePlanId)?.assessment?.priority ||
-           responsePlans.find(p => p.id === commitment.sourcePlanId)?.priority ||
-           'UNCLASSIFIED') as string
-        : 'UNCLASSIFIED';
-
-      for (const item of items) {
-        const name = item?.name || 'Unknown';
-        const resource = ensureResource(entry, name, commitmentPriority);
-        resource.committedQuantity += item?.quantity || 0;
-        resource.deliveredQuantity += Math.round(
-          commitment.totalCommittedQuantity > 0
-            ? (commitment.deliveredQuantity / commitment.totalCommittedQuantity) * (item?.quantity || 0)
-            : 0
-        );
-      }
-    }
-
+    // Phase 2: Process commitments linked to Response Plans via PlanCommitment join table
+    // These contribute committedQuantity/deliveredQuantity to their plan's resource entries
     for (const plan of responsePlans) {
       const planPriority = (plan.assessment?.priority || plan.priority || 'UNCLASSIFIED') as string;
+      const entry = ensureEntity(plan.entityId, plan.entity);
+
       for (const pc of plan.planCommitments) {
         const c = pc.commitment;
         const items = (Array.isArray(c.items) ? c.items : []) as any[];
-        const entry = ensureEntity(plan.entityId, plan.entity);
+
         for (const item of items) {
           const name = item?.name || 'Unknown';
-          const resource = ensureResource(entry, name, planPriority);
+          const key = `commitment:${c.id}:${name}`;
+          const resource = ensureResource(entry, key, name, c.id, 'commitment', planPriority);
           resource.committedQuantity += item?.quantity || 0;
           resource.deliveredQuantity += Math.round(
             c.totalCommittedQuantity > 0
@@ -160,6 +142,51 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
         }
       }
     }
+
+    // Phase 3: Process commitments linked via sourcePlanId (but not via PlanCommitment join)
+    // These also contribute to plan-linked resource entries
+    const planIds = new Set(responsePlans.map(p => p.id));
+    const linkedCommitmentIds = new Set<string>();
+    for (const plan of responsePlans) {
+      for (const pc of plan.planCommitments) {
+        linkedCommitmentIds.add(pc.commitment.id);
+      }
+    }
+
+    const sourcePlanCommitments = await prisma.donorCommitment.findMany({
+      where: {
+        ...entityWhere,
+        ...incidentWhere,
+        sourcePlanId: { in: Array.from(planIds) },
+        id: { notIn: Array.from(linkedCommitmentIds) },
+      },
+      include: {
+        entity: { select: { id: true, name: true, type: true, location: true } },
+      }
+    });
+
+    for (const commitment of sourcePlanCommitments) {
+      const entry = ensureEntity(commitment.entityId, commitment.entity);
+      const items = (Array.isArray(commitment.items) ? commitment.items : []) as any[];
+
+      const linkedPlan = responsePlans.find(p => p.id === commitment.sourcePlanId);
+      const commitmentPriority = (linkedPlan?.assessment?.priority || linkedPlan?.priority || 'UNCLASSIFIED') as string;
+
+      for (const item of items) {
+        const name = item?.name || 'Unknown';
+        const key = `commitment:${commitment.id}:${name}`;
+        const resource = ensureResource(entry, key, name, commitment.id, 'commitment', commitmentPriority);
+        resource.committedQuantity += item?.quantity || 0;
+        resource.deliveredQuantity += Math.round(
+          commitment.totalCommittedQuantity > 0
+            ? (commitment.deliveredQuantity / commitment.totalCommittedQuantity) * (item?.quantity || 0)
+            : 0
+        );
+      }
+    }
+
+    // Standalone commitments (no sourcePlanId, not linked via PlanCommitment) are deliberately excluded —
+    // they have no Response Plan defining a requirement to gap against.
 
     const assessments = await prisma.rapidAssessment.findMany({
       where: { ...entityWhere, ...incidentWhere },
@@ -173,7 +200,6 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
     });
 
     const entitySeverityMap = new Map<string, { CRITICAL: number; HIGH: number; MEDIUM: number; LOW: number; UNCLASSIFIED: number }>();
-    const entityHighestSeverity = new Map<string, string>();
     const seenTypePerEntity = new Set<string>();
 
     for (const a of assessments) {
@@ -184,13 +210,6 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
       const sevMap = entitySeverityMap.get(key)!;
       const sevKey = a.priority as keyof typeof sevMap;
       sevMap[sevKey]++;
-
-      const typeKey = `${a.entityId}:${a.rapidAssessmentType}`;
-      if (!seenTypePerEntity.has(typeKey)) {
-        seenTypePerEntity.add(typeKey);
-        const current = entityHighestSeverity.get(key) || 'UNCLASSIFIED';
-        entityHighestSeverity.set(key, highestSeverity(current, a.priority));
-      }
     }
 
     const gapAnalysisData = Array.from(entityMap.values()).map(entry => {
@@ -205,6 +224,8 @@ export const GET = withAuth(async (request: NextRequest, context: AuthContext) =
 
         return {
           resourceName: resource.resourceName,
+          sourceId: resource.sourceId,
+          sourceType: resource.sourceType,
           requiredQuantity: required,
           committedQuantity: committed,
           deliveredQuantity: delivered,
